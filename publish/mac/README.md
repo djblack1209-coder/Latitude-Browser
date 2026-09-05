@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This document defines the macOS packaging plan for Ant Browser.
+This document defines the macOS packaging plan for Latitude Browser.
 
 The goal is to turn the current codebase into a macOS build that can:
 
@@ -11,6 +11,29 @@ The goal is to turn the current codebase into a macOS build that can:
 - keep user-writable state outside the `.app` bundle
 - bundle required proxy runtime binaries
 - avoid breaking existing Windows and Linux packaging flows
+
+## macOS Dock Icon Pipeline
+
+The source icon is `build/appicon.png`. Wails v2 reads that file during every
+Darwin build and generates `Contents/Resources/iconfile.icns`; the bundle's
+`Info.plist` points to that generated file through `CFBundleIconFile=iconfile`.
+Changing the PNG does not mutate an already-installed `.app` in
+`/Applications`, so the app must be rebuilt and reinstalled before the Dock can
+show the new logo. The packaging script runs
+`tools/runtime/verify-macos-app-icon.sh` and refuses to package a bundle whose
+ICNS is older than the current source icon (including accidental
+`--skip-build` packaging). The verifier also decodes every ICNS slot and checks
+that every pixel is opaque with a mostly black canvas, preventing macOS from
+showing the green mark on a white or transparent Dock square. After replacing an app under `/Applications`, re-register the
+exact bundle with LaunchServices using:
+
+```bash
+bash tools/runtime/refresh-macos-app-icon.sh "/Applications/Latitude Browser.app" --source build/appicon.png
+```
+
+Use `--restart-dock` only as a final display refresh when Finder or Dock has not
+picked up the re-registered icon; restarting Dock alone does not repair a bad
+ICNS asset.
 
 ## Current Entry Command
 
@@ -60,9 +83,9 @@ The repository now includes the first macOS writable-state implementation for ap
 
 The current initial macOS packaging scaffold intentionally places helper binaries and seed files under:
 
-- `Ant Browser.app/Contents/MacOS/bin`
-- `Ant Browser.app/Contents/MacOS/config.yaml`
-- `Ant Browser.app/Contents/MacOS/chrome/README.md`
+- `Latitude Browser.app/Contents/MacOS/bin`
+- `Latitude Browser.app/Contents/MacOS/config.yaml`
+- `Latitude Browser.app/Contents/MacOS/chrome/README.md`
 
 This is not the prettiest final bundle layout, but it matches the current runtime path resolution and avoids a larger refactor in Phase 1.
 
@@ -112,9 +135,9 @@ Why:
 
 Recommended structure inside the built app:
 
-- `Ant Browser.app/Contents/MacOS/ant-chrome`
-- `Ant Browser.app/Contents/Resources/bin/xray`
-- `Ant Browser.app/Contents/Resources/bin/sing-box`
+- `Latitude Browser.app/Contents/MacOS/ant-chrome`
+- `Latitude Browser.app/Contents/Resources/bin/xray`
+- `Latitude Browser.app/Contents/Resources/bin/sing-box`
 - optional placeholder `chrome/README.md` if you want to keep behavior aligned with Linux
 
 ### User-Writable State
