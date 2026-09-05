@@ -4,7 +4,7 @@ import { Badge, Button, Card, ConfirmModal, Table, toast } from '../../../shared
 import type { TableColumn } from '../../../shared/components/Table'
 import type { BrowserCore, BrowserCoreInput, BrowserCoreValidateResult, BrowserSettings, BrowserCoreExtended, BrowserProxy } from '../types'
 import { fetchBrowserCores, saveBrowserCore, deleteBrowserCore, setDefaultBrowserCore, validateBrowserCorePath, openCorePath, fetchBrowserSettings, saveBrowserSettings, fetchCoreExtendedInfo, scanBrowserCores, importLocalBrowserCore, BrowserCoreDownload, fetchBrowserProxies, redownloadBrowserCore } from '../api'
-import { Environment, EventsOn, EventsOff } from '../../../wailsjs/runtime/runtime'
+import { Environment, EventsOn } from '../../../wailsjs/runtime/runtime'
 import { CoreDownloadModal } from './coreManagement/CoreDownloadModal'
 import { CoreEditModal } from './coreManagement/CoreEditModal'
 import { CoreSettingsCard } from './coreManagement/CoreSettingsCard'
@@ -85,7 +85,12 @@ export function CoreManagementPage() {
         setDownloadProgress(null) // 清理进度使其可以重新开始
       }
     }
-    EventsOn('download:progress', onDownloadProgress)
+    // The browser preview has no Wails bridge. Keep the page usable without
+    // subscribing to events that require the desktop-injected runtime.
+    const runtime = typeof window !== 'undefined' ? (window as any).runtime : undefined
+    if (typeof runtime?.EventsOn !== 'function') return
+
+    const offDownloadProgress = EventsOn('download:progress', onDownloadProgress)
 
     const onImportProgress = (data: { phase: string; progress: number; message: string }) => {
       setImportProgress(data)
@@ -93,11 +98,11 @@ export function CoreManagementPage() {
         setTimeout(() => setImportProgress(null), 1200)
       }
     }
-    EventsOn('core-import:progress', onImportProgress)
+    const offImportProgress = EventsOn('core-import:progress', onImportProgress)
 
     return () => {
-      EventsOff('download:progress')
-      EventsOff('core-import:progress')
+      offDownloadProgress?.()
+      offImportProgress?.()
     }
   }, [])
 

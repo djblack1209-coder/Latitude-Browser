@@ -81,6 +81,11 @@ export function BrowserDetailPage() {
       void loadTabs()
     }
 
+    // Browser preview pages run outside Wails, so the injected runtime may not exist.
+    // Skip event subscriptions there while keeping the desktop event behavior intact.
+    const runtime = typeof window !== 'undefined' ? (window as any).runtime : undefined
+    if (typeof runtime?.EventsOn !== 'function') return
+
     const offStarted = EventsOn('browser:instance:started', handleRuntimeChange)
     const offUpdated = EventsOn('browser:instance:updated', handleRuntimeChange)
     const offStopped = EventsOn('browser:instance:stopped', handleRuntimeChange)
