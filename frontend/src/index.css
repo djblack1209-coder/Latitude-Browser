@@ -16,12 +16,13 @@ html {
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans SC', sans-serif;
+  font-family: 'IBM Plex Sans', 'SF Pro Text', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans SC', sans-serif;
   background: var(--color-bg-base);
   color: var(--color-text-primary);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   line-height: 1.5;
+  letter-spacing: -0.005em;
   transition: background-color 0.2s ease, color 0.2s ease;
 }
 
@@ -114,6 +115,11 @@ input, select, textarea {
   animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
+/* 极客工作台辅助文本 */
+.font-mono {
+  font-family: 'JetBrains Mono', 'SFMono-Regular', Consolas, 'Liberation Mono', monospace;
+}
+
 /* 文本截断 */
 .line-clamp-1 {
   display: -webkit-box;
@@ -203,4 +209,125 @@ input, select, textarea {
 
 .animate-slide-in-bottom {
   animation: slideInBottom 0.3s ease-out;
+}
+
+/* Signal Noir instance workspace: dense operational surfaces over ornamental cards. */
+.browser-instance-panel {
+  border-radius: var(--radius-sm);
+  box-shadow: none;
+}
+
+.browser-instance-table table {
+  border-collapse: collapse;
+}
+
+.browser-instance-table tbody td {
+  white-space: nowrap;
+}
+
+.browser-instance-table thead th {
+  padding: 0.625rem 0.75rem;
+  border-bottom: 1px solid var(--color-border-strong);
+  color: var(--color-text-muted);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  line-height: 1.25;
+  text-transform: uppercase;
+}
+
+.browser-instance-table tbody td {
+  padding: 0.625rem 0.75rem;
+  vertical-align: middle;
+  line-height: 1.35;
+}
+
+.browser-instance-table tbody tr {
+  transition: background-color 150ms ease;
+}
+
+.browser-instance-table tbody tr:hover {
+  background: var(--color-bg-muted);
+}
+
+.browser-profile-grid {
+  min-height: 20rem;
+}
+
+.browser-profile-card:hover {
+  box-shadow: var(--shadow-xs);
+}
+
+.browser-list-filter {
+  border-color: var(--color-border-muted);
+}
+
+.browser-batch-toolbar {
+  min-height: 2.5rem;
+}
+
+/* Keep dense proxy headers and row actions legible when the table is narrower
+   than its full operational column set; the table's own overflow handles the
+   horizontal affordance instead of stacking characters vertically. */
+.proxy-pool-table thead th,
+.proxy-pool-table thead th * {
+  white-space: nowrap;
+}
+
+.proxy-pool-table tbody td:last-child {
+  white-space: nowrap;
+}
+
+/* Apple-minimal secondary surfaces: quiet chrome, thin dividers, no ornamental cards. */
+.apple-page {
+  animation: fadeIn 0.2s ease-out;
+}
+
+.apple-page-header {
+  align-items: flex-end;
+  border-bottom: 1px solid var(--color-border-muted);
+  gap: 1rem;
+  padding-bottom: 1rem;
+}
+
+.apple-page-header h1 {
+  letter-spacing: -0.025em;
+}
+
+.apple-section {
+  border-radius: var(--radius-sm) !important;
+  box-shadow: none !important;
+}
+
+.apple-section > div:first-child {
+  border-radius: inherit;
+}
+
+.apple-row {
+  border: 1px solid var(--color-border-muted);
+  border-radius: var(--radius-sm);
+  box-shadow: none !important;
+  transition: background-color 150ms ease, border-color 150ms ease;
+}
+
+.apple-row:hover {
+  border-color: var(--color-border-default);
+  background: var(--color-bg-subtle);
+}
+
+.apple-empty-state {
+  border: 1px dashed var(--color-border-default);
+  border-radius: var(--radius-sm);
+  background: transparent;
+}
+
+.apple-control-strip {
+  border-radius: var(--radius-sm);
+  box-shadow: none !important;
+}
+
+.apple-page input,
+.apple-page select,
+.apple-page textarea {
+  border-radius: var(--radius-sm);
 }

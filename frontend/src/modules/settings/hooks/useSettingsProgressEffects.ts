@@ -108,6 +108,9 @@ export function useSettingsProgressEffects({
       })
     }
 
+    const runtime = typeof window !== 'undefined' ? (window as any).runtime : undefined
+    if (typeof runtime?.EventsOnMultiple !== 'function') return
+
     EventsOn('backup:export:progress', onExportProgress)
     return () => {
       EventsOff('backup:export:progress')
@@ -127,6 +130,9 @@ export function useSettingsProgressEffects({
 
       setImportProgress(next)
     }
+
+    const runtime = typeof window !== 'undefined' ? (window as any).runtime : undefined
+    if (typeof runtime?.EventsOnMultiple !== 'function') return
 
     EventsOn('backup:import:progress', onImportProgress)
     return () => {
@@ -149,6 +155,9 @@ export function useSettingsProgressEffects({
           .catch(() => {})
       }
     }
+
+    const runtime = typeof window !== 'undefined' ? (window as any).runtime : undefined
+    if (typeof runtime?.EventsOnMultiple !== 'function') return
 
     EventsOn('automation:runtime:progress', onAutomationProgress)
     return () => {

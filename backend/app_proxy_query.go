@@ -52,6 +52,15 @@ func (a *App) TestProxyRealConnectivity(proxyId string) ProxyTestResult {
 	return buildProxyTestResult(result)
 }
 
+// TestProxyRealConnectivityWithConfig 使用调用方提供的代理配置执行真实 HTTP 测试。
+// proxyId 仅作为结果标识，不会覆盖 proxyConfig，也不会写入代理池。
+func (a *App) TestProxyRealConnectivityWithConfig(proxyId string, proxyConfig string) ProxyTestResult {
+	proxies := a.getLatestProxies()
+	connectorType := config.NormalizeBrowserConnectorType(a.config.Browser.DefaultConnectorType)
+	result := proxy.TestRealConnectivityWithRawConfig(proxyId, proxyConfig, proxies, a.xrayMgr, a.singboxMgr, a.clashMgr, connectorType, a.proxySpeedTestConfig())
+	return buildProxyTestResult(result)
+}
+
 // BrowserProxyWarmupBridge 只预热本地代理桥接，不执行外网测速。
 func (a *App) BrowserProxyWarmupBridge(proxyId string) ProxyBridgeWarmupResult {
 	proxies := a.getLatestProxies()

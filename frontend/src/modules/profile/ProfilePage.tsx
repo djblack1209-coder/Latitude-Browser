@@ -69,11 +69,11 @@ export function ProfilePage() {
   ].filter((item) => item.label.trim())
 
   return (
-    <div className="mx-auto max-w-5xl space-y-6 animate-fade-in">
-      <Card padding="lg" className="rounded-[26px]">
+    <div className="apple-page mx-auto max-w-5xl space-y-6">
+      <Card padding="lg" className="apple-section">
         <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
           <div className="flex min-w-0 flex-col gap-5 sm:flex-row sm:items-start">
-            <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-[20px] bg-[#1f2d46] text-[34px] font-bold tracking-[0.08em] text-white shadow-sm">
+            <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-md border border-[var(--color-border-default)] bg-[var(--color-bg-muted)] text-[34px] font-bold tracking-[0.08em] text-[var(--color-text-primary)]">
               {authorInfo.initial}
             </div>
 
@@ -116,7 +116,7 @@ export function ProfilePage() {
             {authorInfo.github ? (
               <Button
                 variant="ghost"
-                className="h-11 rounded-2xl border border-transparent px-4 text-[var(--color-text-primary)] hover:border-[var(--color-border-default)] hover:bg-[var(--color-bg-muted)]"
+                className="h-9 rounded-md border border-[var(--color-border-default)] px-3 text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-bg-muted)]"
                 onClick={() => openExternal(authorInfo.github)}
               >
                 <Github className="h-4 w-4" />
@@ -133,12 +133,12 @@ export function ProfilePage() {
           const iconClassName = CHANNEL_ICON_CLASS[channel.icon || 'globe'] || 'text-[var(--color-text-primary)]'
           const content = (
             <Card
-              className="h-full rounded-[22px] border-[var(--color-border-default)] transition-all duration-200 hover:-translate-y-0.5 hover:border-[var(--color-border-strong)] hover:shadow-[var(--shadow-md)]"
+              className="apple-section h-full border-[var(--color-border-default)]"
               padding="lg"
             >
               <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center gap-5">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--color-bg-muted)]">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-md border border-[var(--color-border-muted)] bg-[var(--color-bg-muted)]">
                     <Icon className={`h-5 w-5 ${iconClassName}`} />
                   </div>
                   <div className="space-y-1 text-left">
@@ -175,7 +175,7 @@ export function ProfilePage() {
       <Card
         title="技术栈"
         actions={<Terminal className="h-4 w-4 text-[var(--color-text-muted)]" />}
-        className="rounded-[24px]"
+        className="apple-section"
         padding="lg"
       >
         <div className="flex flex-wrap gap-x-8 gap-y-4 text-[15px] font-semibold text-[var(--color-text-primary)]">
@@ -188,17 +188,17 @@ export function ProfilePage() {
       <Card
         title="关于本项目"
         actions={<Coffee className="h-4 w-4 text-[var(--color-text-muted)]" />}
-        className="rounded-[24px]"
+        className="apple-section"
         padding="lg"
       >
         <div className="space-y-4 text-[15px] leading-8 text-[var(--color-text-secondary)]">
           <p>
-            <Badge className="mr-1 rounded-xl px-3 py-1">{projectInfo.introBadge}</Badge>
+            <Badge className="mr-1 rounded-md px-2 py-0.5">{projectInfo.introBadge}</Badge>
             {projectInfo.introText}
           </p>
           <div className="flex flex-wrap gap-2">
             {projectInfo.techStack.map((item) => (
-              <Badge key={item} className="rounded-xl px-3 py-1">
+              <Badge key={item} className="rounded-md px-2 py-0.5">
                 {item}
               </Badge>
             ))}
@@ -211,7 +211,7 @@ export function ProfilePage() {
                 <Button
                   key={action.label}
                   variant="ghost"
-                  className="h-10 rounded-xl border border-[var(--color-border-default)] px-3 text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-muted)]"
+                  className="h-9 rounded-md border border-[var(--color-border-default)] px-3 text-sm text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-muted)]"
                   onClick={() => openExternal(action.href)}
                 >
                   <Icon className="h-4 w-4" />

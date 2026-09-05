@@ -332,6 +332,8 @@ export function TestProxyConnectivity(arg1:string,arg2:string):Promise<backend.P
 
 export function TestProxyRealConnectivity(arg1:string):Promise<backend.ProxyTestResult>;
 
+export function TestProxyRealConnectivityWithConfig(arg1:string,arg2:string):Promise<backend.ProxyTestResult>;
+
 export function TriggerGC():Promise<void>;
 
 export function UpdateGroup(arg1:string,arg2:browser.GroupInput):Promise<browser.Group>;

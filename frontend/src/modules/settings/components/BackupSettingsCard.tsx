@@ -93,7 +93,7 @@ export function BackupSettingsCard({
   onOpenImport,
 }: BackupSettingsCardProps) {
   return (
-    <Card title="配置备份与恢复" subtitle="初始化、导出、加载全量配置与浏览器数据">
+    <Card title="配置备份与恢复" subtitle="初始化、导出、加载全量配置与浏览器数据" className="apple-section">
       <div className="space-y-3">
         <p className="text-xs text-[var(--color-text-muted)]">
           加载配置时可选择先初始化后全量恢复，或在现有数据上按规则判重合并。

@@ -23,8 +23,8 @@ const levelVariant = (level: string) => {
 
 const levelColor = (level: string) => {
   switch (level) {
-    case 'ERROR': return 'text-red-500'
-    case 'WARN': return 'text-yellow-500'
+    case 'ERROR': return 'text-[var(--color-error)]'
+    case 'WARN': return 'text-[var(--color-warning)]'
     case 'DEBUG': return 'text-[var(--color-text-muted)]'
     default: return 'text-[var(--color-text-secondary)]'
   }
@@ -32,6 +32,7 @@ const levelColor = (level: string) => {
 
 async function fetchLogs(): Promise<LogEntry[]> {
   try {
+    if (!(globalThis as any).go?.main?.App) return []
     const bindings: any = await import('../../../wailsjs/go/main/App')
     return (await bindings.GetAppLogs()) || []
   } catch { return [] }
@@ -39,6 +40,7 @@ async function fetchLogs(): Promise<LogEntry[]> {
 
 async function clearLogs() {
   try {
+    if (!(globalThis as any).go?.main?.App) return
     const bindings: any = await import('../../../wailsjs/go/main/App')
     await bindings.ClearAppLogs()
   } catch { /* ignore */ }
@@ -139,8 +141,8 @@ export function BrowserLogsPage() {
   }
 
   return (
-    <div className="space-y-4 animate-fade-in">
-      <div className="flex items-center justify-between">
+    <div className="apple-page space-y-4">
+      <div className="apple-page-header flex flex-wrap justify-between">
         <div>
           <h1 className="text-xl font-semibold text-[var(--color-text-primary)]">日志查看</h1>
           <p className="text-sm text-[var(--color-text-muted)] mt-1">应用运行日志，每 3 秒自动刷新</p>
@@ -155,7 +157,7 @@ export function BrowserLogsPage() {
         </div>
       </div>
 
-      <div className="rounded-xl border border-[var(--color-border-default)] bg-[var(--color-bg-surface)] p-3">
+      <div className="apple-control-strip border border-[var(--color-border-default)] bg-[var(--color-bg-surface)] p-3">
         <div className="flex flex-wrap items-center gap-2">
           {LEVELS.map(l => (
             <button
@@ -267,7 +269,7 @@ export function BrowserLogsPage() {
       </div>
 
       {/* 日志列表 */}
-      <Card padding="none">
+      <Card padding="none" className="apple-section">
         <div
           ref={logContainerRef}
           className="overflow-auto font-mono text-xs"

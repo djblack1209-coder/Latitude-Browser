@@ -38,12 +38,12 @@ export function Modal({
   return createPortal(
     <div className="fixed inset-0 z-[9990] flex items-center justify-center">
       <div
-        className="absolute inset-0 bg-black/50 backdrop-blur-sm animate-fade-in"
+        className="absolute inset-0 bg-black/60 animate-fade-in"
         onClick={closable ? onClose : undefined}
       />
 
       <div
-        className="relative bg-[var(--color-bg-elevated)] rounded-xl shadow-2xl animate-scale-in max-h-[90vh] w-full flex flex-col"
+        className="relative bg-[var(--color-bg-elevated)] rounded-lg shadow-[var(--shadow-lg)] animate-scale-in max-h-[90vh] w-full flex flex-col"
         style={{ width, maxWidth: '90vw' }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -57,7 +57,7 @@ export function Modal({
             {closable && (
               <button
                 onClick={onClose}
-                className="p-1.5 rounded-lg text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-bg-muted)] transition-colors ml-auto"
+                className="p-1.5 rounded-md text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-bg-muted)] transition-colors ml-auto"
               >
                 <X className="w-5 h-5" />
               </button>

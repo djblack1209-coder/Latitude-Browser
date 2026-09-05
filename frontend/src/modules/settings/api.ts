@@ -6,6 +6,7 @@ import { defaultSettings } from './types'
 const SETTINGS_KEY = 'app_settings'
 
 const getBindings = async () => {
+  if (!(globalThis as any).go?.main?.App) return null
   try {
     return await import('../../wailsjs/go/main/App')
   } catch {

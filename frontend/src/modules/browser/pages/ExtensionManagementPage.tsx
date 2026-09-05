@@ -409,7 +409,7 @@ export function ExtensionManagementPage() {
     : '下载代理'
 
   return (
-    <div className="space-y-4 animate-fade-in">
+    <div className="apple-page space-y-4">
       <ExtensionManagementHeader
         proxyButtonText={proxyButtonText}
         loading={loading}

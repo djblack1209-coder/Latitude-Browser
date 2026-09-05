@@ -34,7 +34,7 @@ export function BatchToolbar({
   if (selectedCount === 0) return null
 
   return (
-    <div className="flex items-center gap-3 px-4 py-2.5 bg-[var(--color-accent)]/10 border border-[var(--color-accent)]/20 rounded-lg">
+    <div className="browser-batch-toolbar flex items-center gap-3 rounded-sm border border-[var(--color-accent)]/20 bg-[var(--color-accent)]/10 px-3 py-2">
       <span className="text-sm font-medium text-[var(--color-accent)]">已选 {selectedCount} / {totalCount}</span>
       <div className="flex gap-1.5 ml-auto">
         <Button size="sm" variant="ghost" onClick={onSelectAll}>全选</Button>
@@ -56,7 +56,7 @@ export function BatchToolbar({
           variant="ghost"
           onClick={onBatchDelete}
           title="批量删除"
-          className="text-red-500 hover:text-red-600"
+          className="text-[var(--color-error)] hover:text-[var(--color-error-hover)]"
         >
           <Trash2 className="w-3.5 h-3.5" />删除
         </Button>
@@ -120,14 +120,14 @@ export function LaunchCodeCell({ profileId, code, onRefresh }: LaunchCodeCellPro
 
   return (
     <div className="flex items-center gap-1">
-      <code className="text-xs font-mono bg-[var(--color-bg-secondary)] px-1.5 py-0.5 rounded text-[var(--color-accent)]">{code}</code>
-      <button onClick={handleCopy} className="p-0.5 hover:text-[var(--color-accent)] text-[var(--color-text-muted)] transition-colors" title="复制">
+      <code className="rounded-sm border border-[var(--color-border-default)] bg-[var(--color-bg-secondary)] px-1.5 py-0.5 text-xs font-mono text-[var(--color-accent)]">{code}</code>
+      <button type="button" aria-label="复制快捷码" onClick={handleCopy} className="rounded-sm p-0.5 text-[var(--color-text-muted)] transition-colors hover:bg-[var(--color-bg-muted)] hover:text-[var(--color-accent)] focus:outline-none focus:ring-1 focus:ring-[var(--color-accent)]" title="复制">
         <Copy className="w-3 h-3" />
       </button>
-      <button onClick={handleRegenerate} disabled={loading} className="p-0.5 hover:text-[var(--color-accent)] text-[var(--color-text-muted)] transition-colors disabled:opacity-50" title="重新生成">
+      <button type="button" aria-label="重新生成快捷码" onClick={handleRegenerate} disabled={loading} className="rounded-sm p-0.5 text-[var(--color-text-muted)] transition-colors hover:bg-[var(--color-bg-muted)] hover:text-[var(--color-accent)] focus:outline-none focus:ring-1 focus:ring-[var(--color-accent)] disabled:opacity-50" title="重新生成">
         <RefreshCw className="w-3 h-3" />
       </button>
-      <button onClick={handleCustomCode} disabled={loading} className="p-0.5 hover:text-[var(--color-accent)] text-[var(--color-text-muted)] transition-colors disabled:opacity-50" title="自定义">
+      <button type="button" aria-label="自定义快捷码" onClick={handleCustomCode} disabled={loading} className="rounded-sm p-0.5 text-[var(--color-text-muted)] transition-colors hover:bg-[var(--color-bg-muted)] hover:text-[var(--color-accent)] focus:outline-none focus:ring-1 focus:ring-[var(--color-accent)] disabled:opacity-50" title="自定义">
         <Pencil className="w-3 h-3" />
       </button>
     </div>
@@ -166,13 +166,13 @@ export function KeywordInlineRow({ keywords }: KeywordInlineRowProps) {
     <div className="flex items-start gap-4 w-full min-w-0">
       <div
         ref={containerRef}
-        className={`flex flex-wrap gap-2 flex-1 min-w-0 transition-all duration-300 ${expanded ? '' : 'overflow-hidden max-h-[32px]'}`}
+        className={`flex min-w-0 flex-1 flex-wrap gap-1.5 ${expanded ? '' : 'max-h-[32px] overflow-hidden'}`}
       >
         {keywords.map((keyword, index) => (
           <button
             type="button"
             key={index}
-            className="inline-flex max-w-full min-w-0 items-center gap-1.5 rounded-md border border-[var(--color-border-default)] bg-[var(--color-bg-surface)] px-2.5 py-1 text-left text-xs text-[var(--color-text-secondary)] transition-colors hover:border-[var(--color-accent)] hover:text-[var(--color-accent)] focus:outline-none focus:ring-1 focus:ring-[var(--color-accent)]"
+            className="inline-flex max-w-full min-w-0 items-center gap-1 rounded-sm border border-[var(--color-border-default)] bg-[var(--color-bg-surface)] px-2 py-0.5 text-left text-xs text-[var(--color-text-secondary)] transition-colors hover:border-[var(--color-accent)] hover:text-[var(--color-accent)] focus:outline-none focus:ring-1 focus:ring-[var(--color-accent)]"
             title={`点击复制：${keyword}`}
             onClick={() => { void handleCopyKeyword(keyword) }}
           >
@@ -183,8 +183,11 @@ export function KeywordInlineRow({ keywords }: KeywordInlineRowProps) {
       </div>
       {isOverflowing && (
         <button
+          type="button"
+          aria-expanded={expanded}
+          aria-label={expanded ? '收起关键字详情' : '展开关键字详情'}
           onClick={() => setExpanded((prev) => !prev)}
-          className="shrink-0 flex items-center gap-1 text-xs font-medium text-[var(--color-accent)] hover:text-indigo-400 mt-1 focus:outline-none"
+          className="mt-1 flex shrink-0 items-center gap-1 text-xs font-medium text-[var(--color-accent)] hover:text-[var(--color-accent-hover)] focus:outline-none focus:ring-1 focus:ring-[var(--color-accent)]"
         >
           {expanded ? (
             <>收回 <ChevronUp className="w-3.5 h-3.5" /></>

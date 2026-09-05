@@ -30,10 +30,10 @@ export function Card({
   return (
     <div 
       className={clsx(
-        'bg-[var(--color-bg-surface)] rounded-xl overflow-hidden',
+        'bg-[var(--color-bg-surface)] rounded-md overflow-hidden',
         'border border-[var(--color-border-default)]',
-        'transition-all duration-200',
-        hover && 'hover:shadow-[var(--shadow-md)] hover:border-[var(--color-border-strong)]',
+        'transition-[border-color,box-shadow] duration-200',
+        hover && 'hover:shadow-[var(--shadow-sm)] hover:border-[var(--color-border-strong)]',
         className
       )}
     >

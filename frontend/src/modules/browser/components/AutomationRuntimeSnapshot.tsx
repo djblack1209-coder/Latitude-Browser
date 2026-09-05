@@ -81,22 +81,25 @@ export function AutomationRuntimeSnapshot({
 
     void loadState(false)
 
-    const offRuntimeProgress = EventsOn('automation:runtime:progress', (payload: unknown) => {
-      const nextProgress = normalizeRuntimeProgress(payload)
-      if (!nextProgress) {
-        return
-      }
+    const runtime = typeof window !== 'undefined' ? (window as any).runtime : undefined
+    const offRuntimeProgress = typeof runtime?.EventsOnMultiple === 'function'
+      ? EventsOn('automation:runtime:progress', (payload: unknown) => {
+          const nextProgress = normalizeRuntimeProgress(payload)
+          if (!nextProgress) {
+            return
+          }
 
-      setRuntimeProgress(nextProgress)
+          setRuntimeProgress(nextProgress)
 
-      if (nextProgress.phase === 'done' || nextProgress.phase === 'error') {
-        void loadState(false)
-      }
-    })
+          if (nextProgress.phase === 'done' || nextProgress.phase === 'error') {
+            void loadState(false)
+          }
+        })
+      : undefined
 
     return () => {
       disposed = true
-      offRuntimeProgress()
+      offRuntimeProgress?.()
     }
   }, [])
 

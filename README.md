@@ -1,5 +1,8 @@
-﻿# Ant Browser
+﻿# Latitude Browser
 
+
+> 本仓库是基于 Ant Browser 的本地二次开发工作树。上游仓库当前未附带独立 LICENSE，
+> 在获得作者明确授权或上游补充许可证前，请将本项目视为私有/内部使用，不要直接公开分发修改后的安装包或源码。
 > 面向多账号隔离、代理绑定和本地环境管理的桌面浏览器工具（Windows / Linux / macOS unsigned）。
 
 [![Release](https://img.shields.io/github/v/release/black-ant/Ant-Browser?sort=semver)](https://github.com/black-ant/Ant-Browser/releases)
@@ -8,15 +11,15 @@
 
 ## 推荐内核项目
 
-Ant Browser 当前推荐配套使用的浏览器内核，来源于开源项目 [fingerprint-chromium](https://github.com/adryfish/fingerprint-chromium)。
+Latitude Browser 当前推荐配套使用的浏览器内核，来源于开源项目 [fingerprint-chromium](https://github.com/adryfish/fingerprint-chromium)。
 
 如果你正在寻找可直接下载和维护的指纹内核版本，建议先查看它的 Releases 页面：
 
 - <https://github.com/adryfish/fingerprint-chromium/releases>
 
-这个项目为 Ant Browser 的内核准备提供了直接可用的基础来源，这里先对原项目做明确推荐与致谢。
+这个项目为 Latitude Browser 的内核准备提供了直接可用的基础来源，这里先对原项目做明确推荐与致谢。
 
-Ant Browser 的目标很明确：在一台桌面设备上，帮助用户稳定管理多个彼此隔离的浏览器实例，并配合代理池、浏览器内核和快捷启动能力完成日常运营或测试工作。
+Latitude Browser 的目标很明确：在一台桌面设备上，帮助用户稳定管理多个彼此隔离的浏览器实例，并配合代理池、浏览器内核和快捷启动能力完成日常运营或测试工作。
 
 ## 目录
 
@@ -35,7 +38,7 @@ Ant Browser 的目标很明确：在一台桌面设备上，帮助用户稳定�
 
 ## 项目简介
 
-Ant Browser 适合以下场景：
+Latitude Browser 适合以下场景：
 
 - 多账号环境隔离
 - 跨境电商与社媒账号运营
@@ -185,10 +188,10 @@ Ant Browser 适合以下场景：
 ### 下载与运行
 
 1. 前往 Releases 页面下载最新版本：<https://github.com/black-ant/Ant-Browser/releases>
-2. 安装版直接运行 `AntBrowser-Setup-*.exe`
+2. 安装版直接运行 `LatitudeBrowser-Setup-*.exe`
 3. 便携版解压后运行 `ant-chrome.exe`
-4. Linux 包下载后可直接安装 `ant-browser_<version>_<arch>.deb`，或解压 `tar.gz` 后运行 `ant-chrome`
-5. macOS unsigned 包解压后运行 `AntBrowser-<version>-macos-<arch>.app`；如被 Gatekeeper 拦截，请对本机测试包执行 `xattr -dr com.apple.quarantine <app路径>` 后再打开
+4. Linux 包下载后可直接安装 `latitude-browser_<version>_<arch>.deb`，或解压 `tar.gz` 后运行 `ant-chrome`
+5. macOS unsigned 包解压后运行 `LatitudeBrowser-<version>-macos-<arch>.app`；如被 Gatekeeper 拦截，请对本机测试包执行 `xattr -dr com.apple.quarantine <app路径>` 后再打开
 
 ### 从源码运行
 
@@ -329,7 +332,7 @@ chrome/
 
 先检查代理节点本身是否可用，再确认该实例已经正确绑定代理。建议启动后访问 IP 检测网站复核当前出口。
 
-如果代理池里本地客户端可用节点很多，但 Ant Browser 中“只展示可用”数量明显偏少，先确认当前 `default_connector_type` 是否与本地客户端一致。Ant Browser 不会在 `xray` 组合栈和 `mihomo` 栈之间自动混用；切换连接栈后需要重新测速。
+如果代理池里本地客户端可用节点很多，但 Latitude Browser 中“只展示可用”数量明显偏少，先确认当前 `default_connector_type` 是否与本地客户端一致。Latitude Browser 不会在 `xray` 组合栈和 `mihomo` 栈之间自动混用；切换连接栈后需要重新测速。
 
 ### 3. 实例太多，怎么快速找到目标实例？
 

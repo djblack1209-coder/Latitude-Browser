@@ -33,13 +33,13 @@ export function AutomationCardsSection({
   const selectedScriptIdSet = new Set(selectedScriptIds);
 
   return (
-      <section className="rounded-[28px] border border-[var(--color-border-default)] bg-[var(--color-bg-subtle)] p-3 shadow-[var(--shadow-sm)] md:p-4">
+      <section className="apple-section border border-[var(--color-border-default)] bg-[var(--color-bg-surface)] p-3 md:p-4">
         {loading ? (
-          <div className="rounded-2xl border border-dashed border-[var(--color-border-default)] bg-[var(--color-bg-surface)] px-6 py-12 text-center text-sm text-[var(--color-text-muted)]">
+          <div className="apple-empty-state px-6 py-12 text-center text-sm text-[var(--color-text-muted)]">
             正在加载脚本列表...
           </div>
         ) : cards.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-[var(--color-border-default)] bg-[var(--color-bg-surface)] px-6 py-14 text-center">
+          <div className="apple-empty-state px-6 py-14 text-center">
             <div className="text-base font-medium text-[var(--color-text-primary)]">
               还没有脚本
             </div>

@@ -1,4 +1,4 @@
-﻿import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { BrowserGroupWithCount, BrowserProfile, BrowserProxy } from '../../types'
 import { fetchBrowserProfiles, fetchBrowserProxies, fetchGroups } from '../../api'
 import { EventsOn } from '../../../../wailsjs/runtime/runtime'
@@ -113,21 +113,34 @@ export function useBrowserListData({ loadCores }: UseBrowserListDataOptions) {
       }
     }
 
-    const offStarted = EventsOn('browser:instance:started', (payload: any) => {
-      clearPending(payload)
-      void loadProfiles({ silent: true, syncRuntimeState: true })
-    })
-    const offUpdated = EventsOn('browser:instance:updated', () => {
-      void loadProfiles({ silent: true, syncRuntimeState: true })
-    })
-    const offStopped = EventsOn('browser:instance:stopped', (payload: any) => {
-      clearPending(payload)
-      void loadProfiles({ silent: true, syncRuntimeState: true })
-    })
-    const offCrashed = EventsOn('browser:instance:crashed', (payload: any) => {
-      clearPending(payload)
-      void loadProfiles({ silent: true, syncRuntimeState: true })
-    })
+    // Wails injects `window.runtime` only inside the desktop shell. The list page
+    // should still be usable in a browser/Vite preview, so register runtime
+    // listeners only when the bridge is present.
+    const runtime = (window as any).runtime
+    const canListen = typeof runtime?.EventsOn === 'function'
+    const offStarted = canListen
+      ? EventsOn('browser:instance:started', (payload: any) => {
+          clearPending(payload)
+          void loadProfiles({ silent: true, syncRuntimeState: true })
+        })
+      : undefined
+    const offUpdated = canListen
+      ? EventsOn('browser:instance:updated', () => {
+          void loadProfiles({ silent: true, syncRuntimeState: true })
+        })
+      : undefined
+    const offStopped = canListen
+      ? EventsOn('browser:instance:stopped', (payload: any) => {
+          clearPending(payload)
+          void loadProfiles({ silent: true, syncRuntimeState: true })
+        })
+      : undefined
+    const offCrashed = canListen
+      ? EventsOn('browser:instance:crashed', (payload: any) => {
+          clearPending(payload)
+          void loadProfiles({ silent: true, syncRuntimeState: true })
+        })
+      : undefined
 
     const timer = window.setInterval(() => {
       if (document.visibilityState !== 'visible') return

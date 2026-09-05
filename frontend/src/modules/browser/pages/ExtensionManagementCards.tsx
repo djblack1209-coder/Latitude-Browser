@@ -5,15 +5,15 @@ import { extensionStoreURL, formatExtensionSource, formatExtensionTime, getExten
 
 export function ProxyStatePill({ useProxy, proxy }: { useProxy: boolean; proxy?: BrowserProxy }) {
   if (!useProxy) {
-    return <span className="rounded-full bg-[var(--color-bg-muted)] px-2 py-0.5 text-xs text-[var(--color-text-muted)]">直连下载</span>
+    return <span className="rounded-md border border-[var(--color-border-muted)] bg-[var(--color-bg-muted)] px-2 py-0.5 text-xs text-[var(--color-text-muted)]">直连下载</span>
   }
   if (!proxy) {
-    return <span className="rounded-full bg-red-50 px-2 py-0.5 text-xs text-red-600">代理未选择</span>
+    return <span className="rounded-md border border-[var(--color-error)]/30 bg-[var(--color-error)]/10 px-2 py-0.5 text-xs text-[var(--color-error)]">代理未选择</span>
   }
   const state = getProxySpeedState(proxy)
   const status = state?.ok ? `${state.latencyMs}ms` : state ? '不可用' : '未测试'
   return (
-    <span className="rounded-full bg-green-50 px-2 py-0.5 text-xs text-green-700">
+    <span className="rounded-md border border-[var(--color-success)]/30 bg-[var(--color-success)]/10 px-2 py-0.5 text-xs text-[var(--color-success)]">
       使用代理：{proxy.proxyName || proxy.proxyId} · {status}
     </span>
   )
@@ -46,7 +46,7 @@ export function ExtensionManagementHeader({
   onRefresh,
 }: ExtensionManagementHeaderProps) {
   return (
-    <div className="flex items-center justify-between gap-3">
+    <div className="apple-page-header flex flex-wrap justify-between">
       <h1 className="text-xl font-semibold text-[var(--color-text-primary)]">插件包管理</h1>
       <div className="flex gap-2">
         <Button size="sm" variant="secondary" onClick={onOpenProxy}>
@@ -112,7 +112,7 @@ export function ExtensionInstallCard({
   onInstall,
 }: ExtensionInstallCardProps) {
   return (
-    <Card>
+    <Card className="apple-section">
       <div className="flex flex-col gap-3 md:flex-row">
         <Input
           value={query}
@@ -145,7 +145,7 @@ export function ExtensionInstallCard({
       </div>
 
       {lookup ? (
-        <div className="mt-3 flex flex-col gap-3 rounded-xl border border-[var(--color-border-default)] bg-[var(--color-bg-muted)] p-3 md:flex-row md:items-center md:justify-between">
+        <div className="apple-row mt-3 flex flex-col gap-3 bg-[var(--color-bg-muted)] p-3 md:flex-row md:items-center md:justify-between">
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2 font-medium text-[var(--color-text-primary)]">
               <span>{lookup.name || lookup.extensionId}</span>
@@ -196,7 +196,7 @@ export interface InstalledExtensionsListProps {
 
 export function InstalledExtensionsList({ items, busyId, busyAction, updatingId, onRestrictProfiles, onUpdate, onToggle, onDelete }: InstalledExtensionsListProps) {
   return (
-    <Card>
+    <Card className="apple-section">
       <div className="mb-3 flex items-center justify-between">
         <div className="text-sm font-medium text-[var(--color-text-primary)]">已安装插件（{items.length}）</div>
       </div>
@@ -216,7 +216,7 @@ export function InstalledExtensionsList({ items, busyId, busyAction, updatingId,
         ))}
 
         {items.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-[var(--color-border-default)] bg-[var(--color-bg-muted)] px-4 py-8 text-center text-sm text-[var(--color-text-muted)]">
+          <div className="apple-empty-state px-4 py-8 text-center text-sm text-[var(--color-text-muted)]">
             暂无插件，先通过上方输入插件 ID 或商店链接安装。
           </div>
         ) : null}
@@ -239,12 +239,12 @@ export interface InstalledExtensionCardProps {
 export function InstalledExtensionCard({ item, busy, busyAction, updating, onRestrictProfiles, onUpdate, onToggle, onDelete }: InstalledExtensionCardProps) {
   const meta = getExtensionManifestMeta(item)
   const storeUrl = extensionStoreURL(item)
-  const actionButtonClass = 'min-w-[72px] will-change-transform hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98]'
+  const actionButtonClass = 'min-w-[72px] '
   return (
-    <div className="rounded-xl border border-[var(--color-border-default)] bg-[var(--color-bg-surface)] p-3 shadow-[var(--shadow-xs)]">
+    <div className="apple-row bg-[var(--color-bg-surface)] p-3">
       <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
         <div className="flex min-w-0 gap-3">
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-[var(--color-border-default)] bg-[var(--color-bg-muted)]">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-md border border-[var(--color-border-default)] bg-[var(--color-bg-muted)]">
             {item.iconDataUrl ? (
               <img src={item.iconDataUrl} alt="" className="h-9 w-9 object-contain" />
             ) : (
@@ -270,9 +270,9 @@ export function InstalledExtensionCard({ item, busy, busyAction, updating, onRes
             {meta.permissions.length > 0 || meta.hostPermissionCount > 0 ? (
               <div className="mt-2 flex flex-wrap gap-1.5">
                 {meta.permissions.map((permission) => (
-                  <span key={permission} className="rounded-full bg-[var(--color-bg-muted)] px-2 py-0.5 text-xs text-[var(--color-text-muted)]">{permission}</span>
+                  <span key={permission} className="rounded-md border border-[var(--color-border-muted)] bg-[var(--color-bg-muted)] px-2 py-0.5 text-xs text-[var(--color-text-muted)]">{permission}</span>
                 ))}
-                {meta.hostPermissionCount > 0 ? <span className="rounded-full bg-[var(--color-bg-muted)] px-2 py-0.5 text-xs text-[var(--color-text-muted)]">站点权限 {meta.hostPermissionCount}</span> : null}
+                {meta.hostPermissionCount > 0 ? <span className="rounded-md border border-[var(--color-border-muted)] bg-[var(--color-bg-muted)] px-2 py-0.5 text-xs text-[var(--color-text-muted)]">站点权限 {meta.hostPermissionCount}</span> : null}
               </div>
             ) : null}
           </div>
@@ -284,7 +284,7 @@ export function InstalledExtensionCard({ item, busy, busyAction, updating, onRes
               商店
             </Button>
           ) : null}
-          <Button type="button" size="sm" variant="secondary" onClick={() => onRestrictProfiles(item)} className="min-w-[96px] will-change-transform hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98]">
+          <Button type="button" size="sm" variant="secondary" onClick={() => onRestrictProfiles(item)} className="min-w-[96px] ">
             <Users className="h-4 w-4" />
             限制实例
           </Button>

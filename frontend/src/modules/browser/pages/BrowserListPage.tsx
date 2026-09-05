@@ -4,6 +4,7 @@ import type { BrowserProfile, BrowserProfileCopyOptions, BrowserProxy } from '..
 import { BrowserCoreEditorModal, BrowserListHeader, BrowserListSettingsModal } from '../components/BrowserListLayout'
 import { BatchToolbar } from '../components/BrowserListWidgets'
 import { BrowserProfilesPanel } from '../components/BrowserProfilesPanel'
+import { EMPTY_FILTERS, isFiltersEmpty } from '../components/InstanceFilterBar'
 import { BrowserBackupModal } from '../components/BrowserBackupModal'
 import { ProxyPickerModal } from '../components/ProxyPickerModal'
 import { ProfileExtensionModal } from '../components/ProfileExtensionModal'
@@ -486,6 +487,9 @@ export function BrowserListPage() {
   const copyConfirmDisabled =
     !copyName.trim() || !isBrowserProfileCopyOptionsValid(copyOptions)
 
+  const hasActiveFilters = !isFiltersEmpty(filters)
+  const clearFilters = () => setFilters({ ...EMPTY_FILTERS, tags: new Set() })
+
   const saveProfileProxy = async (profile: BrowserProfile, proxy: BrowserProxy) => {
     try {
       const updated = await updateBrowserProfile(profile.profileId, {
@@ -572,6 +576,9 @@ export function BrowserListPage() {
 
       <BrowserProfilesPanel
         loading={loading}
+        totalProfileCount={profiles.length}
+        hasActiveFilters={hasActiveFilters}
+        onClearFilters={clearFilters}
         viewMode={viewMode}
         profiles={filteredProfiles}
         proxies={proxies}

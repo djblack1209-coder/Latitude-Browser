@@ -1,31 +1,37 @@
-/* 深色主题 - 沉稳专业 */
+/* Signal Noir: dark workspace theme for focused, high-density operations */
 
 [data-theme='dark'] {
-  --color-bg-base: #0c0c0e;
-  --color-bg-surface: #18181b;
-  --color-bg-elevated: #27272a;
-  --color-bg-muted: #27272a;
-  --color-bg-subtle: #18181b;
+  --color-bg-base: #090c0d;
+  --color-bg-surface: #0f1415;
+  --color-bg-elevated: #151b1d;
+  --color-bg-muted: #182023;
+  --color-bg-subtle: #0c1112;
 
-  --color-border-default: #27272a;
-  --color-border-muted: #1f1f23;
-  --color-border-strong: #3f3f46;
+  --color-border-default: #263235;
+  --color-border-muted: #1a2426;
+  --color-border-strong: #354448;
+  --color-border: var(--color-border-default);
 
-  --color-text-primary: #fafafa;
-  --color-text-secondary: #a1a1aa;
-  --color-text-muted: #71717a;
-  --color-text-inverse: #18181b;
+  --color-text-primary: #edf6ef;
+  --color-text-secondary: #b2c2b7;
+  --color-text-muted: #71817a;
+  --color-text-inverse: #07110a;
 
-  --color-accent: #fafafa;
-  --color-accent-hover: #e4e4e7;
-  --color-accent-muted: #27272a;
+  --color-accent: #72f59a;
+  --color-accent-hover: #93ffb2;
+  --color-accent-muted: rgba(114, 245, 154, 0.1);
+  --color-accent-border: rgba(114, 245, 154, 0.2);
+  --color-primary: var(--color-accent);
+  --color-surface-elevated: var(--color-bg-elevated);
 
-  --color-success: #4ade80;
-  --color-warning: #fbbf24;
-  --color-error: #f87171;
-  --color-info: #60a5fa;
+  --color-success: #72f59a;
+  --color-warning: #f7c35f;
+  --color-error: #ff7777;
+  --color-info: #7fc9ff;
+  --color-error-hover: #ff9494;
 
-  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.4);
-  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.5);
-  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.6);
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.32);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.38);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.28);
+  --shadow-lg: 0 18px 48px rgba(0, 0, 0, 0.34);
 }

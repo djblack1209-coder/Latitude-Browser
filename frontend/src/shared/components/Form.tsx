@@ -25,7 +25,7 @@ export function FormItem({ label, required, hint, error, children, className }: 
           {hint && (
             <span className="group relative inline-flex" tabIndex={0} aria-label={hint} title={hint}>
               <span className="flex h-4 w-4 cursor-help items-center justify-center rounded-full border border-[var(--color-border-muted)] text-[10px] font-semibold leading-none text-[var(--color-text-muted)]">?</span>
-              <span className="pointer-events-none absolute left-0 top-5 z-50 hidden w-64 rounded-lg border border-[var(--color-border-default)] bg-[var(--color-bg-surface)] px-3 py-2 text-xs font-normal leading-5 text-[var(--color-text-secondary)] shadow-lg group-hover:block group-focus:block">
+              <span className="pointer-events-none absolute left-0 top-5 z-50 hidden w-64 rounded-md border border-[var(--color-border-default)] bg-[var(--color-bg-surface)] px-3 py-2 text-xs font-normal leading-5 text-[var(--color-text-secondary)] shadow-lg group-hover:block group-focus:block">
                 {hint}
               </span>
             </span>
@@ -48,7 +48,7 @@ export function Input({ error, className, ...props }: InputProps) {
       className={clsx(
         'block h-9 px-3 text-sm',
         'bg-[var(--color-bg-surface)] text-[var(--color-text-primary)]',
-        'border border-[var(--color-border-default)] rounded-lg',
+        'border border-[var(--color-border-default)] rounded-md',
         'placeholder:text-[var(--color-text-muted)]',
         'focus:outline-none focus:border-[var(--color-border-strong)] focus:ring-1 focus:ring-[var(--color-border-strong)]',
         'disabled:bg-[var(--color-bg-muted)] disabled:text-[var(--color-text-muted)] disabled:cursor-not-allowed',
@@ -74,8 +74,7 @@ export function Select({ error, options, className, style, ...props }: SelectPro
       className={clsx(
         'block h-9 appearance-none px-3 pr-10 text-sm',
         'bg-[var(--color-bg-surface)] text-[var(--color-text-primary)]',
-        'border border-[var(--color-border-default)] rounded-lg',
-        'shadow-[var(--shadow-xs)]',
+        'border border-[var(--color-border-default)] rounded-md',
         'hover:border-[var(--color-border-strong)]',
         'focus:outline-none focus:border-[var(--color-border-strong)] focus:ring-1 focus:ring-[var(--color-border-strong)]',
         'disabled:bg-[var(--color-bg-muted)] disabled:text-[var(--color-text-muted)] disabled:cursor-not-allowed',
@@ -114,7 +113,7 @@ export function Textarea({ error, className, ...props }: TextareaProps) {
       className={clsx(
         'block w-full px-3 py-2 text-sm',
         'bg-[var(--color-bg-surface)] text-[var(--color-text-primary)]',
-        'border border-[var(--color-border-default)] rounded-lg',
+        'border border-[var(--color-border-default)] rounded-md',
         'placeholder:text-[var(--color-text-muted)]',
         'focus:outline-none focus:border-[var(--color-border-strong)] focus:ring-1 focus:ring-[var(--color-border-strong)]',
         'disabled:bg-[var(--color-bg-muted)] disabled:text-[var(--color-text-muted)] disabled:cursor-not-allowed',

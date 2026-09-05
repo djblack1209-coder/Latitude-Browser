@@ -2,6 +2,7 @@ package backend
 
 import (
 	"ant-chrome/backend/internal/logger"
+	"ant-chrome/backend/internal/proxy"
 	"fmt"
 	"os/exec"
 	"path/filepath"
@@ -90,7 +91,7 @@ func (a *App) startBrowserProfileWithPlan(input browserStartInput, plan *browser
 				logger.F("profile_id", input.ProfileID),
 				logger.F("debug_port", stableDebugPort),
 				logger.F("pid", profile.Pid),
-				logger.F("proxy", plan.effectiveProxy),
+				logger.F("proxy", proxy.MaskProxyConfigForLog(plan.effectiveProxy)),
 				logger.F("memory_limit_mb", profile.MemoryLimitMB),
 				logger.F("attempt", attempt),
 				logger.F("max_attempts", plan.maxStartAttempts),

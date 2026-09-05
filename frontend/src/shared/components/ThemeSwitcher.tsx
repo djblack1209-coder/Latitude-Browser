@@ -7,7 +7,7 @@ interface ThemeSwitcherProps {
 }
 
 const themePreview: Record<ThemeType, { bg: string; sidebar: string; accent: string }> = {
-  dark: { bg: '#0c0c0e', sidebar: '#18181b', accent: '#fafafa' },
+  dark: { bg: '#090c0d', sidebar: '#0f1415', accent: '#72f59a' },
   light: { bg: '#f8fafc', sidebar: '#ffffff', accent: '#1e293b' },
   cream: { bg: '#faf7f2', sidebar: '#fffdf8', accent: '#8b7355' },
   mint: { bg: '#f6f9f8', sidebar: '#fbfdfc', accent: '#3d5a4c' },
@@ -29,7 +29,7 @@ export function ThemeSwitcher({ className }: ThemeSwitcherProps) {
               key={config.id}
               onClick={() => setTheme(config.id)}
               className={clsx(
-                'group relative flex flex-col items-center gap-2.5 p-3 rounded-xl border-2 transition-all duration-200',
+                'group relative flex flex-col items-center gap-2.5 rounded-md border p-3 transition-[background-color,border-color,color] duration-150',
                 isActive
                   ? 'border-[var(--color-accent)] bg-[var(--color-accent-muted)]'
                   : 'border-[var(--color-border-default)] hover:border-[var(--color-border-strong)] bg-[var(--color-bg-surface)]'
@@ -67,7 +67,7 @@ export function ThemeSwitcher({ className }: ThemeSwitcherProps) {
               
               {/* 主题名称 */}
               <span className={clsx(
-                'text-xs font-medium transition-colors',
+                'text-xs font-medium transition-[color] duration-150',
                 isActive ? 'text-[var(--color-text-primary)]' : 'text-[var(--color-text-secondary)]'
               )}>
                 {config.name.replace('主题', '')}

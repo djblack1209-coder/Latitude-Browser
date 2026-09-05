@@ -134,12 +134,15 @@ export function useProxyChecks({ proxies }: UseProxyChecksOptions) {
       return next
     })
 
-    const off = EventsOn('proxy:speed:result', (data: ProxySpeedTestResult) => {
-      const val = toLatencyValue(data.ok, data.latencyMs, data.error)
-      setLatencyMap(prev => ({ ...prev, [data.proxyId]: val }))
-      if (data.error) setLatencyErrorMap(prev => ({ ...prev, [data.proxyId]: data.error || '' }))
-      if (data.engine) setLatencyEngineMap(prev => ({ ...prev, [data.proxyId]: data.engine || '' }))
-    })
+    const runtime = typeof window !== 'undefined' ? (window as any).runtime : undefined
+    const off = typeof runtime?.EventsOnMultiple === 'function'
+      ? EventsOn('proxy:speed:result', (data: ProxySpeedTestResult) => {
+          const val = toLatencyValue(data.ok, data.latencyMs, data.error)
+          setLatencyMap(prev => ({ ...prev, [data.proxyId]: val }))
+          if (data.error) setLatencyErrorMap(prev => ({ ...prev, [data.proxyId]: data.error || '' }))
+          if (data.engine) setLatencyEngineMap(prev => ({ ...prev, [data.proxyId]: data.engine || '' }))
+        })
+      : undefined
 
     try {
       const proxyIds = testable.map(p => p.proxyId)
@@ -166,7 +169,7 @@ export function useProxyChecks({ proxies }: UseProxyChecksOptions) {
         return next
       })
     } finally {
-      off()
+      off?.()
       setTestingAll(false)
     }
   }
@@ -243,15 +246,18 @@ export function useProxyChecks({ proxies }: UseProxyChecksOptions) {
     const idSet = new Set(ids)
     setCheckingIPHealthIds(prev => new Set([...Array.from(prev), ...ids]))
 
-    const off = EventsOn('proxy:iphealth:result', (data: ProxyIPHealthResult) => {
-      if (!data?.proxyId || !idSet.has(data.proxyId)) return
-      setIPHealthMap(prev => ({ ...prev, [data.proxyId]: data }))
-      setCheckingIPHealthIds(prev => {
-        const next = new Set(prev)
-        next.delete(data.proxyId)
-        return next
-      })
-    })
+    const runtime = typeof window !== 'undefined' ? (window as any).runtime : undefined
+    const off = typeof runtime?.EventsOnMultiple === 'function'
+      ? EventsOn('proxy:iphealth:result', (data: ProxyIPHealthResult) => {
+          if (!data?.proxyId || !idSet.has(data.proxyId)) return
+          setIPHealthMap(prev => ({ ...prev, [data.proxyId]: data }))
+          setCheckingIPHealthIds(prev => {
+            const next = new Set(prev)
+            next.delete(data.proxyId)
+            return next
+          })
+        })
+      : undefined
 
     try {
       const results = await browserProxyBatchCheckIPHealth(ids, 10)
@@ -266,7 +272,7 @@ export function useProxyChecks({ proxies }: UseProxyChecksOptions) {
       if (failed > 0) toast.info(`IP 健康检测完成：成功 ${results.length - failed}，失败 ${failed}`)
       else toast.success(`IP 健康检测完成：共 ${results.length} 条`)
     } finally {
-      off()
+      off?.()
       setCheckingIPHealthIds(prev => {
         const next = new Set(prev)
         ids.forEach(id => next.delete(id))

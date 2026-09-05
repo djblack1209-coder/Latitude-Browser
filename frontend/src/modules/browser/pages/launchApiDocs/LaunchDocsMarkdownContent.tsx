@@ -12,7 +12,7 @@ export function LaunchDocsMarkdownContent({ content, docId }: { content: string;
   return (
     <div className="space-y-4">
       {showProjectRootAction ? (
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[var(--color-border-default)] bg-[var(--color-bg-elevated)] px-4 py-3 shadow-[var(--shadow-sm)]">
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-[var(--color-border-default)] bg-[var(--color-bg-elevated)] px-4 py-3">
           <span className="text-sm text-[var(--color-text-secondary)]">
             安装命令默认相对项目根目录执行。
           </span>
@@ -40,7 +40,7 @@ export function LaunchDocsMarkdownContent({ content, docId }: { content: string;
           ),
           h2: ({ children }) => (
             <h2 className="text-lg font-semibold text-[var(--color-text-primary)] mt-8 mb-3 flex items-center gap-2">
-              <span className="w-1 h-5 bg-[var(--color-accent)] rounded-full inline-block shrink-0" />
+              <span className="h-4 w-0.5 bg-[var(--color-accent)] inline-block shrink-0" />
               {children}
             </h2>
           ),
@@ -85,7 +85,7 @@ export function LaunchDocsMarkdownContent({ content, docId }: { content: string;
             return <LaunchDocsCodeBlock language={lang} code={codeText} />
           },
           table: ({ children }) => (
-            <div className="my-4 overflow-x-auto rounded-xl border border-[var(--color-border-default)] bg-[var(--color-bg-elevated)] shadow-[var(--shadow-sm)]">
+            <div className="my-4 overflow-x-auto rounded-md border border-[var(--color-border-default)] bg-[var(--color-bg-elevated)]">
               <table className="w-full text-sm">{children}</table>
             </div>
           ),

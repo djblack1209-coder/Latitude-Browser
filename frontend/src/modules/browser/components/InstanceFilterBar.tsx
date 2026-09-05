@@ -48,29 +48,31 @@ export function InstanceFilterBar({ filters, onChange, proxies, cores, allTags, 
   const activeCount = [searchValue, filters.status, filters.proxyId, filters.coreId, filters.groupId].filter(Boolean).length + filters.tags.size
 
   return (
-    <div className="space-y-2">
-      <div
-        className="flex items-center gap-1.5 cursor-pointer select-none text-xs text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] transition-colors"
+    <section className="browser-list-filter border-y border-[var(--color-border-muted)] py-2.5" aria-label="实例筛选">
+      <button
+        type="button"
+        className="flex items-center gap-1.5 text-xs font-medium text-[var(--color-text-secondary)] transition-colors hover:text-[var(--color-text-primary)] focus:outline-none focus-visible:ring-1 focus-visible:ring-[var(--color-accent)]"
         onClick={() => setCollapsed(prev => !prev)}
+        aria-expanded={!collapsed}
       >
         {collapsed ? <ChevronRight className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
         <Filter className="w-3.5 h-3.5" />
         <span>筛选</span>
-        {collapsed && activeCount > 0 && (
-          <span className="ml-1 px-1.5 py-0.5 text-[10px] font-medium bg-[var(--color-accent)]/10 text-[var(--color-accent)] rounded-full">
+        {activeCount > 0 && (
+          <span className="rounded-sm border border-[var(--color-accent)]/25 bg-[var(--color-accent)]/10 px-1.5 py-0.5 text-[10px] font-semibold tabular-nums text-[var(--color-accent)]">
             {activeCount}
           </span>
         )}
-      </div>
+      </button>
 
       {!collapsed && (
-        <>
-          <div className="flex items-center gap-2 flex-wrap">
+        <div className="mt-2.5 space-y-2">
+          <div className="flex flex-wrap items-center gap-2">
             <Input
               value={searchValue}
               onChange={e => onChange({ ...filters, keyword: e.target.value, kwSearch: '' })}
-              placeholder="搜索名称/快捷码/关键字..."
-              className="flex-1 min-w-[220px]"
+              placeholder="搜索名称、快捷码或关键字"
+              className="min-w-[220px] flex-1"
             />
             <Select
               value={filters.status}
@@ -113,8 +115,9 @@ export function InstanceFilterBar({ filters, onChange, proxies, cores, allTags, 
             />
             {hasFilter && (
               <button
+                type="button"
                 onClick={() => onChange({ ...EMPTY_FILTERS, tags: new Set() })}
-                className="flex items-center gap-1 px-2 py-1 text-xs text-[var(--color-text-muted)] hover:text-[var(--color-error)] hover:bg-[var(--color-bg-muted)] rounded transition-colors"
+                className="flex h-8 items-center gap-1 rounded-sm border border-transparent px-2 text-xs text-[var(--color-text-muted)] transition-colors hover:border-[var(--color-border-default)] hover:bg-[var(--color-bg-muted)] hover:text-[var(--color-error)] focus:outline-none focus-visible:ring-1 focus-visible:ring-[var(--color-accent)]"
               >
                 <X className="w-3.5 h-3.5" />
                 清除
@@ -126,8 +129,9 @@ export function InstanceFilterBar({ filters, onChange, proxies, cores, allTags, 
             selected={filters.tags}
             onChange={tags => set('tags', tags)}
           />
-        </>
+        </div>
       )}
-    </div>
+    </section>
   )
+
 }

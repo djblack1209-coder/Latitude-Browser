@@ -646,6 +646,10 @@ export function TestProxyRealConnectivity(arg1) {
   return window['go']['main']['App']['TestProxyRealConnectivity'](arg1);
 }
 
+export function TestProxyRealConnectivityWithConfig(arg1, arg2) {
+  return window['go']['main']['App']['TestProxyRealConnectivityWithConfig'](arg1, arg2);
+}
+
 export function TriggerGC() {
   return window['go']['main']['App']['TriggerGC']();
 }

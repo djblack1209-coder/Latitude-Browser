@@ -1,4 +1,4 @@
-/* 基础主题变量定义 - 默认使用浅色主题 */
+/* 基础主题变量定义，具体主题由 ThemeProvider 写入 data-theme */
 
 :root {
   --color-bg-base: #f8fafc;
@@ -28,6 +28,7 @@
   --color-accent: #1e293b;
   --color-accent-hover: #334155;
   --color-accent-muted: #f1f5f9;
+  --color-accent-border: rgba(30, 41, 59, 0.2);
   --color-primary: var(--color-accent);
   --color-surface-elevated: var(--color-bg-elevated);
 
@@ -35,6 +36,29 @@
   --color-warning: #f59e0b;
   --color-error: #ef4444;
   --color-info: #3b82f6;
+  --color-error-hover: #dc3f3f;
+
+  /* shadcn-compatible semantic aliases. Components may use these without
+     coupling themselves to a specific color theme. */
+  --background: var(--color-bg-base);
+  --foreground: var(--color-text-primary);
+  --card: var(--color-bg-surface);
+  --card-foreground: var(--color-text-primary);
+  --popover: var(--color-bg-elevated);
+  --popover-foreground: var(--color-text-primary);
+  --primary: var(--color-accent);
+  --primary-foreground: var(--color-text-inverse);
+  --secondary: var(--color-bg-muted);
+  --secondary-foreground: var(--color-text-secondary);
+  --muted: var(--color-bg-muted);
+  --muted-foreground: var(--color-text-muted);
+  --accent: var(--color-accent-muted);
+  --accent-foreground: var(--color-text-primary);
+  --destructive: var(--color-error);
+  --destructive-foreground: #ffffff;
+  --border: var(--color-border-default);
+  --input: var(--color-border-default);
+  --ring: var(--color-accent);
 
   --shadow-xs: 0 1px 2px 0 rgb(15 23 42 / 0.03);
   --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.04);

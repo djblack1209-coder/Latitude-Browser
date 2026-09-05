@@ -28,8 +28,8 @@ export interface AppSettings {
 }
 
 export const defaultSettings: AppSettings = {
-  appName: 'Ant Browser',
-  appDescription: '基于 Wails + React 的桌面应用',
+  appName: 'Latitude Browser',
+  appDescription: '面向多账号隔离、代理绑定和本地环境管理的隐私浏览器工作台',
   theme: 'light',
   primaryColor: '#3B82F6',
   language: 'zh-CN',

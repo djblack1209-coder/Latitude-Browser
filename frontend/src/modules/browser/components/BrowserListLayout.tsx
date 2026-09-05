@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { Archive, CheckCircle, ChevronRight, ChevronUp, Edit2, LayoutGrid, List, Play, Plus, RefreshCw, Sliders, Star, Trash2, Upload, XCircle } from 'lucide-react'
+import { Archive, CheckCircle, ChevronRight, ChevronUp, Edit2, LayoutGrid, List, Plus, RefreshCw, Sliders, Star, Trash2, Upload, XCircle } from 'lucide-react'
 
 import { Button, Card, FormItem, Input, Modal, Switch, Table, Textarea } from '../../../shared/components'
 import type { TableColumn } from '../../../shared/components/Table'
@@ -53,75 +53,75 @@ export function BrowserListHeader({
   importingProfiles = false,
   onViewModeChange,
 }: BrowserListHeaderProps) {
-  const statItems = [
-    { label: '总数', value: profileCount },
-    { label: '运行', value: runningCount },
-    { label: '停止', value: Math.max(0, profileCount - runningCount) },
-  ]
+  const filtered = filteredProfileCount !== profileCount
 
   return (
     <>
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex flex-wrap items-center gap-3 min-w-0">
-          <h1 className="text-xl font-semibold text-[var(--color-text-primary)]">实例列表</h1>
-          <div className="flex flex-wrap items-center gap-2">
-            {statItems.map((item) => (
-              <div
-                key={item.label}
-                className="flex h-8 items-center gap-2 rounded-lg border border-[var(--color-border-default)] bg-[var(--color-bg-elevated)] px-3 text-sm"
-              >
-                <span className="text-[var(--color-text-muted)]">{item.label}</span>
-                <span className="font-semibold text-[var(--color-text-primary)]">{item.value}</span>
-              </div>
-            ))}
-            {filteredProfileCount !== profileCount && (
-              <div className="flex h-8 items-center gap-2 rounded-lg border border-[var(--color-accent)]/30 bg-[var(--color-accent)]/5 px-3 text-sm">
-                <span className="text-[var(--color-text-muted)]">筛选</span>
-                <span className="font-semibold text-[var(--color-accent)]">{filteredProfileCount}</span>
-              </div>
-            )}
-          </div>
+      <div className="browser-list-header flex flex-wrap items-center justify-between gap-4">
+        <div className="flex min-w-0 items-baseline gap-3">
+          <h1 className="text-[22px] font-semibold tracking-[-0.02em] text-[var(--color-text-primary)]">实例</h1>
+          <span className="text-sm tabular-nums text-[var(--color-text-muted)]">
+            {filtered ? `${filteredProfileCount} / ${profileCount}` : profileCount}
+          </span>
+          <span className="hidden h-3.5 w-px bg-[var(--color-border-muted)] sm:block" />
+          <span className="hidden text-xs text-[var(--color-text-muted)] sm:inline">
+            {runningCount > 0 ? `${runningCount} 个运行中` : '当前没有运行中的实例'}
+          </span>
         </div>
-        <div className="flex flex-wrap justify-end gap-2">
-          <Button variant="secondary" size="sm" onClick={onToggleHeaderCollapsed}>
+
+        <div className="browser-list-actions flex flex-wrap items-center justify-end gap-1.5">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onToggleHeaderCollapsed}
+            aria-label={headerCollapsed ? '显示筛选' : '隐藏筛选'}
+            title={headerCollapsed ? '显示筛选' : '隐藏筛选'}
+            className="px-2"
+          >
             {headerCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
-            {headerCollapsed ? '展开面板' : '收起面板'}
+            <span className="hidden sm:inline">筛选</span>
           </Button>
-          <Button variant="secondary" size="sm" onClick={onRefresh}>
-            <RefreshCw className="w-4 h-4" />刷新
+          <Button variant="ghost" size="sm" onClick={onRefresh} aria-label="刷新实例" title="刷新" className="px-2">
+            <RefreshCw className="w-4 h-4" />
           </Button>
-          <Button variant="secondary" size="sm" onClick={onOpenSettings}>
-            <Sliders className="w-4 h-4" />基础配置
+          <Button variant="ghost" size="sm" onClick={onOpenSettings} aria-label="打开基础配置" title="基础配置" className="px-2">
+            <Sliders className="w-4 h-4" />
           </Button>
-          <Button variant="secondary" size="sm" onClick={onOpenTrash}>
-            <Trash2 className="w-4 h-4" />回收站
+          <Button variant="ghost" size="sm" onClick={onOpenTrash} aria-label="打开回收站" title="回收站" className="px-2">
+            <Trash2 className="w-4 h-4" />
           </Button>
-          <Button variant="secondary" size="sm" onClick={onImportProfiles} loading={importingProfiles}>
-            <Upload className="w-4 h-4" />导入实例
+          <Button variant="ghost" size="sm" onClick={onImportProfiles} loading={importingProfiles} aria-label="导入实例" title="导入实例" className="px-2">
+            <Upload className="w-4 h-4" />
           </Button>
-          <Button variant="secondary" size="sm" onClick={onOpenBackup}>
-            <Archive className="w-4 h-4" />备份
+          <Button variant="ghost" size="sm" onClick={onOpenBackup} aria-label="打开备份" title="备份" className="px-2">
+            <Archive className="w-4 h-4" />
           </Button>
-          <div className="flex items-center bg-[var(--color-bg-secondary)] rounded-md border border-[var(--color-border-default)] p-0.5 ml-2">
+          <div className="mx-1 h-5 w-px bg-[var(--color-border-muted)]" aria-hidden="true" />
+          <div className="flex items-center rounded-md border border-[var(--color-border-default)] bg-[var(--color-bg-muted)]/50 p-0.5" role="group" aria-label="视图模式">
             <button
-              className={`p-1.5 rounded text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] transition-colors ${viewMode === 'card' ? 'bg-[var(--color-bg-surface)] shadow-sm text-[var(--color-accent)]' : ''}`}
+              type="button"
+              aria-label="卡片视图"
+              aria-pressed={viewMode === 'card'}
+              className={`rounded-sm p-1.5 text-[var(--color-text-muted)] transition-colors hover:text-[var(--color-text-primary)] ${viewMode === 'card' ? 'bg-[var(--color-bg-surface)] text-[var(--color-accent)] shadow-[var(--shadow-xs)]' : ''}`}
               onClick={() => onViewModeChange('card')}
               title="卡片视图"
             >
               <LayoutGrid className="w-4 h-4" />
             </button>
             <button
-              className={`p-1.5 rounded text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] transition-colors ${viewMode === 'table' ? 'bg-[var(--color-bg-surface)] shadow-sm text-[var(--color-accent)]' : ''}`}
+              type="button"
+              aria-label="表格视图"
+              aria-pressed={viewMode === 'table'}
+              className={`rounded-sm p-1.5 text-[var(--color-text-muted)] transition-colors hover:text-[var(--color-text-primary)] ${viewMode === 'table' ? 'bg-[var(--color-bg-surface)] text-[var(--color-accent)] shadow-[var(--shadow-xs)]' : ''}`}
               onClick={() => onViewModeChange('table')}
               title="表格视图"
             >
               <List className="w-4 h-4" />
             </button>
           </div>
-          <span className="w-px h-4 bg-[var(--color-border-muted)] mx-1 self-center"></span>
           <Link to="/browser/edit/new">
-            <Button size="sm">
-              <Play className="w-4 h-4" />新建配置
+            <Button size="sm" className="ml-1 px-3.5">
+              <Plus className="w-4 h-4" />新建实例
             </Button>
           </Link>
         </div>
@@ -185,7 +185,7 @@ export function BrowserListSettingsModal({
     {
       key: 'isDefault',
       title: '默认',
-      render: (value) => (value ? <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" /> : null),
+      render: (value) => (value ? <Star className="h-4 w-4 fill-[var(--color-warning)] text-[var(--color-warning)]" /> : null),
     },
     {
       key: 'actions',
@@ -194,14 +194,14 @@ export function BrowserListSettingsModal({
       render: (_, record) => (
         <div className="flex justify-end gap-1">
           {!record.isDefault && (
-            <Button size="sm" variant="ghost" onClick={() => onSetDefaultCore(record.coreId)} title="设为默认">
+            <Button size="sm" variant="ghost" onClick={() => onSetDefaultCore(record.coreId)} aria-label={`设为默认内核：${record.coreName}`} title="设为默认">
               <Star className="w-4 h-4" />
             </Button>
           )}
-          <Button size="sm" variant="ghost" onClick={() => onEditCore(record)} title="编辑">
+          <Button size="sm" variant="ghost" onClick={() => onEditCore(record)} aria-label={`编辑内核：${record.coreName}`} title="编辑">
             <Edit2 className="w-4 h-4" />
           </Button>
-          <Button size="sm" variant="ghost" onClick={() => onDeleteCore(record.coreId)} title="删除">
+          <Button size="sm" variant="ghost" onClick={() => onDeleteCore(record.coreId)} aria-label={`删除内核：${record.coreName}`} title="删除">
             <Trash2 className="w-4 h-4" />
           </Button>
         </div>
@@ -269,7 +269,7 @@ export function BrowserListSettingsModal({
           />
         </FormItem>
         <FormItem label="轻启动模式" hint="先起空白页，实例就绪后再打开默认页面">
-          <div className="flex items-center justify-between rounded-lg border border-[var(--color-border-default)] px-3 py-2">
+          <div className="flex items-center justify-between rounded-md border border-[var(--color-border-default)] px-3 py-2">
             <span className="text-sm text-[var(--color-text-primary)]">延后打开启动页</span>
             <Switch
               checked={settings.lightStartEnabled}
@@ -278,7 +278,7 @@ export function BrowserListSettingsModal({
           </div>
         </FormItem>
         <FormItem label="默认恢复历史标签" hint="实例选择跟随内核时使用；不影响启动页和启动书签。实例未覆盖时，下次启动恢复之前的标签页和窗口。">
-          <div className="flex items-center justify-between rounded-lg border border-[var(--color-border-default)] px-3 py-2">
+          <div className="flex items-center justify-between rounded-md border border-[var(--color-border-default)] px-3 py-2">
             <div>
               <p className="text-sm text-[var(--color-text-primary)]">内核默认</p>
             </div>
@@ -376,7 +376,7 @@ export function BrowserCoreEditorModal({
             <Button variant="secondary" onClick={onValidate}>验证</Button>
           </div>
           {coreValidation && (
-            <div className={`flex items-center gap-1 mt-1 text-sm ${coreValidation.valid ? 'text-green-600' : 'text-red-600'}`}>
+            <div className={`mt-1 flex items-center gap-1 text-sm ${coreValidation.valid ? 'text-[var(--color-success)]' : 'text-[var(--color-error)]'}`}>
               {coreValidation.valid ? <CheckCircle className="w-4 h-4" /> : <XCircle className="w-4 h-4" />}
               {coreValidation.message}
             </div>

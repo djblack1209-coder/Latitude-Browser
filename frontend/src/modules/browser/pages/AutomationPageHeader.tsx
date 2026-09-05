@@ -23,7 +23,7 @@ export function AutomationPageHeader({
   onOpenHistory,
 }: AutomationPageHeaderProps) {
   return (
-      <div className="flex items-center justify-between gap-3 flex-wrap">
+      <div className="apple-page-header flex flex-wrap justify-between">
         <h1 className="text-xl font-semibold text-[var(--color-text-primary)]">
           脚本管理
         </h1>

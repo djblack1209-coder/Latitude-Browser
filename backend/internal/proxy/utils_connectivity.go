@@ -74,6 +74,34 @@ func TestRealConnectivityWithConfig(
 	return TestRealConnectivityWithRuntimeConfig(proxyId, proxies, xrayMgr, singboxMgr, nil, config.BrowserConnectorXray, cfg)
 }
 
+// TestRealConnectivityWithRawConfig 通过本次调用提供的代理配置进行真实 HTTP 测试。
+//
+// 与 TestRealConnectivityWithRuntimeConfig 不同，该入口不会按 proxyId 从代理池
+// 覆盖 proxyConfig，适用于自动配置向导中的自定义代理。proxyId 仅用于结果标识，
+// 不参与代理池查找或桥接缓存查找，因此不会修改或依赖代理池内容。
+func TestRealConnectivityWithRawConfig(
+	proxyId string,
+	proxyConfig string,
+	proxies []config.BrowserProxy,
+	xrayMgr *XrayManager,
+	singboxMgr *SingBoxManager,
+	clashMgr *ClashManager,
+	connectorType string,
+	cfg *SpeedTestConfig,
+) TestResult {
+	return testRealConnectivityWithSource(
+		strings.TrimSpace(proxyId),
+		strings.TrimSpace(proxyConfig),
+		"",
+		proxies,
+		xrayMgr,
+		singboxMgr,
+		clashMgr,
+		connectorType,
+		cfg,
+	)
+}
+
 func TestRealConnectivityWithRuntimeConfig(
 	proxyId string,
 	proxies []config.BrowserProxy,
@@ -83,10 +111,38 @@ func TestRealConnectivityWithRuntimeConfig(
 	connectorType string,
 	cfg *SpeedTestConfig,
 ) TestResult {
-	src := resolveProxyConfig("", proxies, proxyId)
-	engine := speedTestProbeEngine(src, proxies, proxyId, connectorType)
+	proxyId = strings.TrimSpace(proxyId)
+	return testRealConnectivityWithSource(
+		proxyId,
+		resolveProxyConfig("", proxies, proxyId),
+		proxyId,
+		proxies,
+		xrayMgr,
+		singboxMgr,
+		clashMgr,
+		connectorType,
+		cfg,
+	)
+}
+
+// testRealConnectivityWithSource executes the common probe using a resolved source.
+// sourceProxyId is intentionally separate from resultProxyId: raw custom configs must
+// not be re-resolved against a same-named proxy-pool entry.
+func testRealConnectivityWithSource(
+	resultProxyId string,
+	src string,
+	sourceProxyId string,
+	proxies []config.BrowserProxy,
+	xrayMgr *XrayManager,
+	singboxMgr *SingBoxManager,
+	clashMgr *ClashManager,
+	connectorType string,
+	cfg *SpeedTestConfig,
+) TestResult {
+	src = strings.TrimSpace(src)
+	engine := speedTestProbeEngine(src, proxies, sourceProxyId, connectorType)
 	if src == "" {
-		return TestResult{ProxyId: proxyId, Ok: false, Engine: engine, Error: "代理配置为空"}
+		return TestResult{ProxyId: resultProxyId, Ok: false, Engine: engine, Error: "代理配置为空"}
 	}
 
 	targetURLs := defaultRealConnectivityTargets()
@@ -104,12 +160,12 @@ func TestRealConnectivityWithRuntimeConfig(
 	}
 	targetURLs = uniqueSpeedTestURLs(targetURLs)
 	if len(targetURLs) == 0 {
-		return TestResult{ProxyId: proxyId, Ok: false, Engine: engine, Error: "真实连通性测试目标 URL 为空"}
+		return TestResult{ProxyId: resultProxyId, Ok: false, Engine: engine, Error: "真实连通性测试目标 URL 为空"}
 	}
 
-	client, err := buildProxyHTTPClient(src, proxyId, proxies, xrayMgr, singboxMgr, clashMgr, connectorType, timeout)
+	client, err := buildProxyHTTPClient(src, sourceProxyId, proxies, xrayMgr, singboxMgr, clashMgr, connectorType, timeout)
 	if err != nil {
-		return TestResult{ProxyId: proxyId, Ok: false, Engine: engine, Error: err.Error()}
+		return TestResult{ProxyId: resultProxyId, Ok: false, Engine: engine, Error: err.Error()}
 	}
 
 	var lastErr error
@@ -125,15 +181,15 @@ func TestRealConnectivityWithRuntimeConfig(
 		}
 		_ = resp.Body.Close()
 		if isSpeedTestSuccessStatus(resp.StatusCode) {
-			return TestResult{ProxyId: proxyId, Ok: true, LatencyMs: latency, Engine: engine}
+			return TestResult{ProxyId: resultProxyId, Ok: true, LatencyMs: latency, Engine: engine}
 		}
 		lastErr = fmt.Errorf("HTTP %d", resp.StatusCode)
 	}
 
 	if lastErr != nil {
-		return TestResult{ProxyId: proxyId, Ok: false, LatencyMs: lastLatency, Engine: engine, Error: "真实访问失败: " + lastErr.Error()}
+		return TestResult{ProxyId: resultProxyId, Ok: false, LatencyMs: lastLatency, Engine: engine, Error: "真实访问失败: " + lastErr.Error()}
 	}
-	return TestResult{ProxyId: proxyId, Ok: false, LatencyMs: lastLatency, Engine: engine, Error: "真实连通性测试失败"}
+	return TestResult{ProxyId: resultProxyId, Ok: false, LatencyMs: lastLatency, Engine: engine, Error: "真实连通性测试失败"}
 }
 
 func defaultRealConnectivityTargets() []string {

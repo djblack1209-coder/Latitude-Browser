@@ -21,6 +21,7 @@ const CHANNEL_ICON_BY_NAME: Record<string, IconKey> = {
 }
 
 const getBindings = async () => {
+  if (!(globalThis as any).go?.main?.App) return null
   try {
     return await import('../../wailsjs/go/main/App')
   } catch {

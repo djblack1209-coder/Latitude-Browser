@@ -118,6 +118,23 @@ export async function testProxyRealConnectivity(proxyId: string): Promise<ProxyS
   return { proxyId, ok: true, latencyMs: Math.floor(100 + Math.random() * 400), engine: 'mock', error: '' }
 }
 
+export async function testProxyRealConnectivityWithConfig(proxyId: string, proxyConfig: string): Promise<ProxySpeedTestResult> {
+  const bindings: any = await getBindings()
+  if (bindings?.TestProxyRealConnectivityWithConfig) {
+    return (await bindings.TestProxyRealConnectivityWithConfig(proxyId, proxyConfig)) || { proxyId, ok: false, latencyMs: 0, engine: 'unknown', error: '调用失败' }
+  }
+
+  // Keep compatibility with a desktop runtime whose generated App.js has not yet
+  // been regenerated after the backend binding was added.
+  const goApp = getGoApp()
+  if (goApp?.TestProxyRealConnectivityWithConfig) {
+    return (await goApp.TestProxyRealConnectivityWithConfig(proxyId, proxyConfig)) || { proxyId, ok: false, latencyMs: 0, engine: 'unknown', error: '调用失败' }
+  }
+
+  await sleep(300 + Math.random() * 500)
+  return { proxyId, ok: true, latencyMs: Math.floor(100 + Math.random() * 400), engine: 'mock', error: '' }
+}
+
 export async function browserProxyTestSpeed(proxyId: string): Promise<ProxySpeedTestResult> {
   const bindings: any = await getBindings()
   if (bindings?.BrowserProxyTestSpeed) {

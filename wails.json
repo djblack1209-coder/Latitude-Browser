@@ -1,6 +1,6 @@
 {
   "$schema": "https://wails.io/schemas/config.v2.json",
-  "name": "Ant Browser",
+  "name": "Latitude Browser",
   "outputfilename": "ant-chrome",
   "frontend:install": "npm install && npm run ensure:native",
   "frontend:build": "npm run build:clean",
@@ -9,11 +9,11 @@
     "email": "contact@antblack.de"
   },
   "info": {
-    "companyName": "Ant Chrome",
-    "productName": "Ant Browser",
+    "companyName": "Latitude Browser",
+    "productName": "Latitude Browser",
     "productVersion": "1.5.0",
     "copyright": "Copyright © 2026",
-    "comments": "面向多账号隔离、代理绑定和本地环境管理的桌面浏览器工具"
+    "comments": "面向多账号隔离、代理绑定和本地环境管理的隐私浏览器工作台"
   },
   "nsisType": "multiple",
   "obfuscated": false,

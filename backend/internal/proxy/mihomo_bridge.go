@@ -380,10 +380,18 @@ func (m *ClashManager) resolveMihomoBinary() (string, error) {
 	if configured := strings.TrimSpace(m.Config.Browser.ClashBinaryPath); configured != "" {
 		candidates = append(candidates, resolveEnvPath(configured, m.AppRoot))
 	}
-	for _, name := range []string{"mihomo.exe", "mihomo", "clash-meta.exe", "clash-meta", "clash.exe", "clash"} {
-		if path, err := exec.LookPath(name); err == nil {
-			candidates = append(candidates, path)
-		}
+	// Prefer the runtime bundled with the app over a globally installed Mihomo.
+	// This keeps packaged instances deterministic and prevents a host-level binary
+	// from silently changing the independent Mihomo connector stack.
+	if m.AppRoot != "" {
+		candidates = append(candidates,
+			filepath.Join(m.AppRoot, "bin", "mihomo.exe"),
+			filepath.Join(m.AppRoot, "bin", "mihomo"),
+			filepath.Join(m.AppRoot, "bin", runtime.GOOS+"-"+runtime.GOARCH, "mihomo", "mihomo.exe"),
+			filepath.Join(m.AppRoot, "bin", runtime.GOOS+"-"+runtime.GOARCH, "mihomo", "mihomo"),
+			filepath.Join(m.AppRoot, "bin", runtime.GOOS+"-"+runtime.GOARCH, "mihomo.exe"),
+			filepath.Join(m.AppRoot, "bin", runtime.GOOS+"-"+runtime.GOARCH, "mihomo"),
+		)
 	}
 	if runtime.GOOS == "windows" {
 		if appData := strings.TrimSpace(os.Getenv("APPDATA")); appData != "" {
@@ -394,15 +402,10 @@ func (m *ClashManager) resolveMihomoBinary() (string, error) {
 			)
 		}
 	}
-	if m.AppRoot != "" {
-		candidates = append(candidates,
-			filepath.Join(m.AppRoot, "bin", "mihomo.exe"),
-			filepath.Join(m.AppRoot, "bin", "mihomo"),
-			filepath.Join(m.AppRoot, "bin", runtime.GOOS+"-"+runtime.GOARCH, "mihomo", "mihomo.exe"),
-			filepath.Join(m.AppRoot, "bin", runtime.GOOS+"-"+runtime.GOARCH, "mihomo", "mihomo"),
-			filepath.Join(m.AppRoot, "bin", runtime.GOOS+"-"+runtime.GOARCH, "mihomo.exe"),
-			filepath.Join(m.AppRoot, "bin", runtime.GOOS+"-"+runtime.GOARCH, "mihomo"),
-		)
+	for _, name := range []string{"mihomo.exe", "mihomo", "clash-meta.exe", "clash-meta", "clash.exe", "clash"} {
+		if path, err := exec.LookPath(name); err == nil {
+			candidates = append(candidates, path)
+		}
 	}
 	for _, candidate := range candidates {
 		candidate = fsutil.NormalizePathInput(candidate)

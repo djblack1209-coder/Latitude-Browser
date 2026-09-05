@@ -36,7 +36,7 @@ export function Progress({
     <div className={clsx('flex items-center gap-3', className)}>
       <div className={clsx('flex-1 bg-[var(--color-bg-muted)] rounded-full overflow-hidden', sizeStyles[size])}>
         <div
-          className={clsx('h-full transition-all duration-300 rounded-full', statusColors[status])}
+          className={clsx('h-full transition-[width] duration-300 rounded-full', statusColors[status])}
           style={{ width: `${validPercent}%` }}
         />
       </div>
@@ -100,7 +100,7 @@ export function CircleProgress({
           strokeDasharray={circumference}
           strokeDashoffset={offset}
           strokeLinecap="round"
-          className="transition-all duration-300"
+          className="transition-[stroke-dashoffset] duration-300"
         />
       </svg>
       {showInfo && (

@@ -34,7 +34,8 @@ export function useBrowserListViewState() {
     return EMPTY_FILTERS
   })
   const [headerCollapsed, setHeaderCollapsed] = useState(() => {
-    return localStorage.getItem('browser:headerCollapsed') === 'true'
+    const saved = localStorage.getItem('browser:headerCollapsed')
+    return saved === null ? true : saved === 'true'
   })
 
   useEffect(() => {

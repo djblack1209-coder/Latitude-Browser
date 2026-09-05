@@ -1,181 +1,186 @@
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation } from 'react-router-dom'
 import {
   Activity,
+  Blocks,
+  BookOpenText,
   Bookmark,
-  BookOpen,
-  FileText,
-  LayoutDashboard,
-  ListChecks,
-  Monitor,
-  Settings,
-  Database,
+  Bot,
   ChevronLeft,
   ChevronRight,
-  Layers,
-  PieChart,
+  Clock3,
   Cpu,
+  FileText,
+  Fingerprint,
   Globe,
-  Bot,
-  Puzzle,
-  Tag,
+  LayoutDashboard,
+  Network,
+  Radar,
+  ScrollText,
+  Settings,
+  AlertTriangle,
+  Wand2,
   type LucideIcon,
-} from "lucide-react";
-import clsx from "clsx";
-import { useLayoutStore } from "../../store/layoutStore";
-import { projectConfig, navigationConfig } from "../../config";
-
-// 导入应用logo
-import logoImage from "../../resources/images/logo.png";
+} from 'lucide-react'
+import clsx from 'clsx'
+import { useLayoutStore } from '../../store/layoutStore'
+import { projectConfig, navigationConfig } from '../../config'
+import logoImage from '../../resources/images/logo.png'
 
 const iconMap: Record<string, LucideIcon> = {
-  LayoutDashboard,
-  Settings,
-  Database,
-  Layers,
-  PieChart,
-  Monitor,
-  ListChecks,
   Activity,
-  FileText,
-  Cpu,
-  Globe,
-  Bot,
-  Puzzle,
+  Blocks,
+  BookOpenText,
   Bookmark,
-  BookOpen,
-  Tag,
-};
+  Bot,
+  Clock3,
+  Cpu,
+  FileText,
+  Fingerprint,
+  Globe,
+  LayoutDashboard,
+  Network,
+  Radar,
+  ScrollText,
+  Settings,
+  AlertTriangle,
+  Wand2,
+}
 
 function getIcon(iconName: string): LucideIcon {
-  return iconMap[iconName] || LayoutDashboard;
+  return iconMap[iconName] || LayoutDashboard
+}
+
+function getRouteTarget(path: string) {
+  const [pathname, search = ''] = path.split('?')
+  return { pathname, search: search ? `?${search}` : '' }
 }
 
 export function Sidebar() {
-  const location = useLocation();
-  const { sidebarCollapsed, toggleSidebar } = useLayoutStore();
+  const location = useLocation()
+  const { sidebarCollapsed, toggleSidebar } = useLayoutStore()
 
   return (
     <aside
       className={clsx(
-        "bg-[var(--color-bg-surface)] flex flex-col transition-all duration-300 border-r border-[var(--color-border-default)]",
-        sidebarCollapsed ? "w-16" : "w-60",
+        'flex h-screen shrink-0 flex-col border-r border-[var(--color-border-default)] bg-[var(--color-bg-surface)] transition-[width] duration-200',
+        sidebarCollapsed ? 'w-[72px]' : 'w-64',
       )}
     >
-      {/* Logo */}
       <div
         className={clsx(
-          "h-14 flex items-center border-b border-[var(--color-border-muted)]",
-          sidebarCollapsed ? "justify-center px-2" : "px-5",
+          'flex h-[68px] shrink-0 items-center border-b border-[var(--color-border-muted)]',
+          sidebarCollapsed ? 'justify-center px-2' : 'px-4',
         )}
       >
-        {!sidebarCollapsed ? (
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded-full overflow-hidden flex-shrink-0 bg-[var(--color-accent)] flex items-center justify-center">
-              <img
-                src={logoImage}
-                alt="应用Logo"
-                className="w-full h-full object-cover"
-                onError={(e) => {
-                  // 图片加载失败时显示首字母
-                  e.currentTarget.style.display = "none";
-                  e.currentTarget.parentElement?.classList.add("fallback-logo");
-                }}
-              />
-              <span className="text-xs font-bold text-[var(--color-text-inverse)] hidden fallback-content">
-                {projectConfig.shortName.charAt(0)}
-              </span>
-            </div>
-            <h2 className="text-base font-semibold text-[var(--color-text-primary)] tracking-tight truncate">
-              {projectConfig.name}
-            </h2>
-          </div>
-        ) : (
-          <div className="w-8 h-8 rounded-full overflow-hidden bg-[var(--color-accent)] flex items-center justify-center">
+        <Link
+          to="/browser/list"
+          className={clsx(
+            'group flex min-w-0 items-center rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)]',
+            sidebarCollapsed ? 'justify-center' : 'gap-3',
+          )}
+          aria-label="返回实例总览"
+        >
+          <span className="relative flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-md border border-[var(--color-border-strong)] bg-[var(--color-bg-elevated)]">
             <img
               src={logoImage}
-              alt="应用Logo"
-              className="w-full h-full object-cover"
-              onError={(e) => {
-                // 图片加载失败时显示首字母
-                e.currentTarget.style.display = "none";
-                e.currentTarget.parentElement?.classList.add("fallback-logo");
+              alt="Latitude Browser"
+              className="h-full w-full object-cover"
+              onError={(event) => {
+                event.currentTarget.style.display = 'none'
+                event.currentTarget.parentElement?.classList.add('fallback-logo')
               }}
             />
-            <span className="text-xs font-bold text-[var(--color-text-inverse)] hidden fallback-content">
+            <span className="fallback-content hidden text-xs font-semibold text-[var(--color-accent)]">
               {projectConfig.shortName.charAt(0)}
             </span>
-          </div>
-        )}
+          </span>
+          {!sidebarCollapsed && (
+            <span className="min-w-0 truncate text-sm font-semibold tracking-tight text-[var(--color-text-primary)]">
+              {projectConfig.name}
+            </span>
+          )}
+        </Link>
       </div>
 
-      {/* Navigation */}
-      <nav className="flex-1 py-4 px-3 space-y-6 overflow-y-auto">
+      <nav className="flex-1 overflow-y-auto px-3 py-4" aria-label="主导航">
         {navigationConfig.map((section) => (
-          <div key={section.title}>
+          <section key={section.title} className="mb-5 last:mb-0">
             {!sidebarCollapsed && (
-              <h3 className="px-3 mb-2 text-[10px] font-semibold text-[var(--color-text-muted)] uppercase tracking-widest">
+              <h2 className="mb-2 px-2 text-[10px] font-medium uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
                 {section.title}
-              </h3>
+              </h2>
             )}
             <div className="space-y-1">
               {section.items.map((item) => {
-                const Icon = getIcon(item.icon);
-                const isActive =
-                  location.pathname === item.path ||
-                  (item.path !== "/" &&
-                    location.pathname.startsWith(`${item.path}/`));
+                const Icon = getIcon(item.icon)
+                const { pathname: itemPath, search: itemSearch } = getRouteTarget(item.path)
+                const isPathActive =
+                  location.pathname === itemPath ||
+                  (itemPath !== '/' && location.pathname.startsWith(`${itemPath}/`))
+                const isActive = isPathActive && (itemSearch ? location.search === itemSearch : location.search === '')
+                const isQuickEntry = section.title === '置顶入口'
 
                 return (
                   <Link
                     key={item.path}
                     to={item.path}
-                    title={sidebarCollapsed ? item.name : undefined}
+                    title={sidebarCollapsed ? item.name : item.description || item.name}
                     className={clsx(
-                      "flex items-center rounded-lg transition-all duration-150",
+                      'group flex min-h-10 items-center rounded-md border text-sm transition-[background-color,color,border-color] duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)]',
+                      sidebarCollapsed ? 'justify-center px-2' : 'gap-3 px-3',
                       isActive
-                        ? "bg-[var(--color-accent)] text-[var(--color-text-inverse)] shadow-sm"
-                        : "text-[var(--color-text-secondary)] hover:bg-[var(--color-accent-muted)] hover:text-[var(--color-text-primary)]",
-                      sidebarCollapsed
-                        ? "justify-center w-10 h-10 mx-auto"
-                        : "px-3 py-2.5 gap-3",
+                        ? 'border-[var(--color-accent-border)] bg-[var(--color-accent-muted)] text-[var(--color-accent)]'
+                        : isQuickEntry
+                          ? 'border-[var(--color-accent-border)] bg-[var(--color-bg-subtle)] text-[var(--color-text-primary)] hover:border-[var(--color-accent-border)] hover:bg-[var(--color-accent-muted)]'
+                          : 'border-transparent text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-muted)] hover:text-[var(--color-text-primary)]',
                     )}
                   >
-                    <Icon className="w-[18px] h-[18px] flex-shrink-0" />
+                    <Icon
+                      className={clsx(
+                        'h-[17px] w-[17px] shrink-0',
+                        isQuickEntry && 'text-[var(--color-accent)]',
+                      )}
+                      strokeWidth={isActive || isQuickEntry ? 2 : 1.7}
+                    />
                     {!sidebarCollapsed && (
-                      <span className="text-sm font-medium truncate">
+                      <span className="min-w-0 flex-1 truncate font-medium">
                         {item.name}
                       </span>
                     )}
+                    {!sidebarCollapsed && isQuickEntry && (
+                      <span className="font-mono text-[9px] uppercase tracking-wider text-[var(--color-accent)]/70">
+                        start
+                      </span>
+                    )}
                   </Link>
-                );
+                )
               })}
             </div>
-          </div>
+          </section>
         ))}
       </nav>
 
-      {/* Toggle Button */}
-      <div className="p-3 border-t border-[var(--color-border-muted)]">
+      <div className="shrink-0 border-t border-[var(--color-border-muted)] p-3">
         <button
+          type="button"
           onClick={toggleSidebar}
           className={clsx(
-            "flex items-center rounded-lg text-[var(--color-text-muted)] hover:bg-[var(--color-accent-muted)] hover:text-[var(--color-text-secondary)] transition-all duration-150",
-            sidebarCollapsed
-              ? "justify-center w-10 h-10 mx-auto"
-              : "w-full px-3 py-2 gap-3",
+            'flex min-h-9 items-center rounded-md text-[var(--color-text-muted)] transition-[background-color,color] duration-150 hover:bg-[var(--color-bg-muted)] hover:text-[var(--color-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)]',
+            sidebarCollapsed ? 'w-full justify-center' : 'w-full gap-3 px-3',
           )}
-          title={sidebarCollapsed ? "展开" : "收起"}
+          title={sidebarCollapsed ? '展开侧边栏' : '收起侧边栏'}
+          aria-label={sidebarCollapsed ? '展开侧边栏' : '收起侧边栏'}
         >
           {sidebarCollapsed ? (
-            <ChevronRight className="w-[18px] h-[18px]" />
+            <ChevronRight className="h-[17px] w-[17px]" />
           ) : (
             <>
-              <ChevronLeft className="w-[18px] h-[18px]" />
-              <span className="text-sm">收起侧边栏</span>
+              <ChevronLeft className="h-[17px] w-[17px]" />
+              <span className="text-xs">收起侧边栏</span>
             </>
           )}
         </button>
       </div>
     </aside>
-  );
+  )
 }

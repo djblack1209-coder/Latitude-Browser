@@ -81,9 +81,9 @@ export function AutomationScriptSummaryCard({
       tabIndex={cardClickable ? 0 : undefined}
       onClick={cardClickable ? handleCardClick : undefined}
       onKeyDown={cardClickable ? handleKeyDown : undefined}
-      className={`group relative flex h-full flex-col rounded-[22px] border border-[var(--color-border-default)] bg-[var(--color-bg-surface)] pb-3 pl-7 pr-3.5 pt-3 text-left shadow-[var(--shadow-xs)] transition-all duration-200 ${
+      className={`group relative flex h-full flex-col rounded-md border border-[var(--color-border-default)] bg-[var(--color-bg-surface)] pb-3 pl-7 pr-3.5 pt-3 text-left shadow-none transition-[border-color,background-color] duration-200 ${
         cardClickable
-          ? "cursor-pointer hover:border-[var(--color-border-strong)] hover:shadow-[var(--shadow-md)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)] focus-visible:ring-offset-2"
+          ? "cursor-pointer hover:border-[var(--color-border-strong)] hover:bg-[var(--color-bg-subtle)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)] focus-visible:ring-offset-2"
           : ""
       } ${selected ? "border-[var(--color-border-strong)] ring-2 ring-[var(--color-border-strong)] ring-offset-1" : ""}`}
     >
@@ -106,7 +106,7 @@ export function AutomationScriptSummaryCard({
         <div className={`min-w-0 text-[16px] font-semibold leading-5 text-[var(--color-text-primary)] ${selectable ? "pl-6" : ""}`}>
           {card.title}
         </div>
-        <div className="absolute right-0 top-0 rounded-full border border-[var(--color-border-default)] bg-[var(--color-bg-muted)] px-2 py-0.5 text-[10px] font-medium leading-4 text-[var(--color-text-secondary)]">
+        <div className="absolute right-0 top-0 rounded-md border border-[var(--color-border-default)] bg-[var(--color-bg-muted)] px-2 py-0.5 text-[10px] font-medium leading-4 text-[var(--color-text-secondary)]">
           {card.versionLabel}
         </div>
       </div>

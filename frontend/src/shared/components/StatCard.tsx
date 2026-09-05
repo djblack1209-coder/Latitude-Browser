@@ -15,10 +15,10 @@ export function StatCard({ title, value, icon, trend }: StatCardProps) {
   return (
     <div 
       className={clsx(
-        'min-w-0 bg-[var(--color-bg-surface)] rounded-xl overflow-hidden',
+        'min-w-0 bg-[var(--color-bg-surface)] rounded-md overflow-hidden',
         'border border-[var(--color-border-default)]',
-        'transition-all duration-200',
-        'hover:border-[var(--color-border-strong)]',
+        'transition-[border-color,box-shadow] duration-200',
+        'hover:border-[var(--color-border-strong)] hover:shadow-[var(--shadow-sm)]',
         'group'
       )}
     >
@@ -46,7 +46,7 @@ export function StatCard({ title, value, icon, trend }: StatCardProps) {
             )}
           </div>
           {icon && (
-            <div className="w-11 h-11 rounded-xl bg-[var(--color-bg-muted)] flex items-center justify-center text-[var(--color-text-secondary)] transition-colors group-hover:bg-[var(--color-accent-muted)]">
+            <div className="w-11 h-11 rounded-md bg-[var(--color-bg-muted)] flex items-center justify-center text-[var(--color-text-secondary)] transition-colors group-hover:bg-[var(--color-accent-muted)]">
               {icon}
             </div>
           )}

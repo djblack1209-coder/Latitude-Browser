@@ -64,6 +64,10 @@ export function useProxyCoreDownload() {
       }
       if (data.phase === 'error') toast.error(data.message || '代理内核下载失败')
     }
+
+    const runtime = typeof window !== 'undefined' ? (window as any).runtime : undefined
+    if (typeof runtime?.EventsOnMultiple !== 'function') return
+
     EventsOn('proxy-core:download:progress', onProgress)
     return () => EventsOff('proxy-core:download:progress')
   }, [refreshCurrentCoreStatus, refreshDownloadCoreStatus])

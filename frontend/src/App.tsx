@@ -14,7 +14,6 @@ import {
   QuitAppOnly as QuitAppOnlyApp,
 } from "./wailsjs/go/main/App";
 import {
-  Environment,
   Quit,
   WindowHide,
   WindowMinimise,
@@ -140,8 +139,17 @@ function CloseConfirmModal() {
 
   useEffect(() => {
     let cancelled = false;
+    const runtime = (window as any).runtime;
 
-    Environment()
+    // The Wails runtime is only injected inside the desktop shell. Keep the
+    // browser/Vite preview usable when it is not available.
+    if (typeof runtime?.Environment !== "function") {
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    Promise.resolve(runtime.Environment())
       .then((info) => {
         if (!cancelled && info?.platform) {
           setPlatform(info.platform);
@@ -162,11 +170,14 @@ function CloseConfirmModal() {
   const handleMinimize = () => {
     if (quitting) return;
     setOpen(false);
-    if (supportsTray) {
+    const runtime = (window as any).runtime;
+    if (supportsTray && typeof runtime?.WindowHide === "function") {
       WindowHide();
       return;
     }
-    WindowMinimise();
+    if (typeof runtime?.WindowMinimise === "function") {
+      WindowMinimise();
+    }
   };
 
   const handleQuitAppOnly = async () => {
@@ -189,7 +200,10 @@ function CloseConfirmModal() {
     } catch (error) {
       console.error("ForceQuit failed, falling back to runtime.Quit()", error);
     }
-    Quit();
+    const runtime = (window as any).runtime;
+    if (typeof runtime?.Quit === "function") {
+      Quit();
+    }
   };
 
   return (

@@ -16,7 +16,7 @@ export function LaunchDocsLayout({
   const hasContextRail = Boolean(contextRail)
 
   return (
-    <div className="-m-5 min-h-full bg-[var(--color-bg-subtle)]">
+    <div className="apple-page -m-5 min-h-full bg-[var(--color-bg-subtle)]">
       <div className={hasContextRail
         ? 'xl:grid xl:min-h-full xl:grid-cols-[280px_minmax(0,1fr)_360px]'
         : 'xl:grid xl:min-h-full xl:grid-cols-[280px_minmax(0,1fr)]'}

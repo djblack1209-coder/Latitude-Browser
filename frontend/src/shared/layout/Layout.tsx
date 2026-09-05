@@ -8,11 +8,11 @@ interface LayoutProps {
 
 export function Layout({ children }: LayoutProps) {
   return (
-    <div className="flex h-screen bg-[var(--color-bg-base)]">
+    <div className="flex h-screen min-h-0 overflow-hidden bg-[var(--color-bg-base)] text-[var(--color-text-primary)]">
       <Sidebar />
-      <div className="flex-1 flex flex-col overflow-hidden min-w-0">
+      <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
         <Topbar />
-        <main className="min-w-0 flex-1 overflow-auto p-5">
+        <main className="min-h-0 min-w-0 flex-1 overflow-auto bg-[var(--color-bg-base)] p-5">
           {children}
         </main>
       </div>

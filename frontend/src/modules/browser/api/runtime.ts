@@ -1,6 +1,14 @@
-﻿import type { BrowserCore, BrowserProfile, BrowserProxy, BrowserSettings } from '../types'
+import type { BrowserCore, BrowserProfile, BrowserProxy, BrowserSettings } from '../types'
 
 export async function getBindings() {
+  // Wails' generated bindings assume the desktop bridge exists at import-call
+  // time. The same frontend is also used by Vite preview and browser-based QA,
+  // where `window.go` is intentionally absent; return the mock path early
+  // instead of letting a generated wrapper throw `reading 'main'`.
+  if (!(globalThis as any).go?.main?.App) {
+    return null
+  }
+
   try {
     return await import('../../../wailsjs/go/main/App')
   } catch {

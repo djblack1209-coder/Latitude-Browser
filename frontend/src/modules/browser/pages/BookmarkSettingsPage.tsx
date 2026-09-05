@@ -119,8 +119,8 @@ export function BookmarkSettingsPage() {
   const handleDragEnd = () => setDragIndex(null)
 
   return (
-    <div className="space-y-5 animate-fade-in">
-      <div className="flex items-center justify-between">
+    <div className="apple-page space-y-5">
+      <div className="apple-page-header flex flex-wrap justify-between">
         <div>
           <h1 className="text-xl font-semibold text-[var(--color-text-primary)]">默认书签</h1>
           <p className="text-sm text-[var(--color-text-muted)] mt-1">新建实例首次启动时自动写入书签栏，已有书签不受影响</p>
@@ -138,12 +138,12 @@ export function BookmarkSettingsPage() {
         </div>
       </div>
 
-      <Card title={`内置检测（${protectedItems.length} 项）`}>
+      <Card title={`内置检测（${protectedItems.length} 项）`} className="apple-section">
         <div className="space-y-2">
           {protectedItems.map(({ item, index }) => (
             <div
               key={`${item.url}-${index}`}
-              className="flex items-center gap-2 p-2.5 rounded-xl bg-[var(--color-bg-muted)] shadow-[var(--shadow-sm)]"
+              className="apple-row flex items-center gap-2 p-2.5 bg-[var(--color-bg-muted)]"
             >
               <GripVertical className="w-4 h-4 text-[var(--color-text-muted)] opacity-40 shrink-0" />
               <Input
@@ -173,7 +173,7 @@ export function BookmarkSettingsPage() {
         </div>
       </Card>
 
-      <Card title={`书签列表（${regularItems.length} 项）`} subtitle="拖拽左侧图标可调整顺序">
+      <Card title={`书签列表（${regularItems.length} 项）`} subtitle="拖拽左侧图标可调整顺序" className="apple-section">
         <div className="space-y-2">
           {regularItems.map(({ item, index }) => (
             <div
@@ -182,7 +182,7 @@ export function BookmarkSettingsPage() {
               onDragStart={() => handleDragStart(index)}
               onDragOver={e => handleDragOver(e, index)}
               onDragEnd={handleDragEnd}
-              className={`flex items-center gap-2 p-2.5 rounded-xl shadow-[var(--shadow-sm)] transition-all duration-150 ${
+              className={`apple-row flex items-center gap-2 p-2.5 transition-all duration-150 ${
                 dragIndex === index
                   ? 'bg-[var(--color-accent-muted)] ring-1 ring-[var(--color-border-strong)]'
                   : 'bg-[var(--color-bg-muted)] hover:bg-[var(--color-bg-subtle)]'
@@ -213,7 +213,7 @@ export function BookmarkSettingsPage() {
               <button
                 type="button"
                 onClick={() => handleDelete(index)}
-                className="p-1.5 rounded text-[var(--color-text-muted)] hover:text-red-500 hover:bg-red-50 transition-colors shrink-0"
+                className="p-1.5 rounded text-[var(--color-text-muted)] hover:text-[var(--color-error)] hover:bg-[var(--color-error)]/10 transition-colors shrink-0"
               >
                 <Trash2 className="w-4 h-4" />
               </button>
@@ -230,7 +230,7 @@ export function BookmarkSettingsPage() {
         <button
           type="button"
           onClick={handleAdd}
-          className="mt-3 w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-[var(--color-bg-muted)] text-sm text-[var(--color-text-primary)] shadow-[var(--shadow-sm)] hover:bg-[var(--color-bg-subtle)] transition-colors"
+          className="mt-3 flex w-full items-center justify-center gap-2 rounded-md border border-[var(--color-border-muted)] bg-transparent py-2.5 text-sm text-[var(--color-text-primary)] transition-colors hover:border-[var(--color-border-default)] hover:bg-[var(--color-bg-muted)]"
         >
           <Plus className="w-4 h-4" />
           添加书签

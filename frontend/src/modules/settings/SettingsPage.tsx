@@ -385,9 +385,9 @@ export function SettingsPage() {
   }
 
   return (
-    <div className="space-y-6 w-full animate-fade-in">
+    <div className="apple-page w-full space-y-6">
       {/* 页面标题 */}
-      <div className="flex items-center justify-between">
+      <div className="apple-page-header flex flex-wrap justify-between">
         <div>
           <h1 className="text-xl font-semibold text-[var(--color-text-primary)]">系统设置</h1>
           <p className="text-sm text-[var(--color-text-muted)] mt-1">配置应用的各项参数</p>
@@ -405,7 +405,7 @@ export function SettingsPage() {
       </div>
 
       {/* 主题设置 */}
-      <Card title="主题设置" subtitle="选择您喜欢的界面主题">
+      <Card title="主题设置" subtitle="选择您喜欢的界面主题" className="apple-section">
         <ThemeSwitcher />
       </Card>
 

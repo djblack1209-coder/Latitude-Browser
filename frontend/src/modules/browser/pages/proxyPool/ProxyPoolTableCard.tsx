@@ -124,10 +124,14 @@ export function ProxyPoolTableCard({
     if (value === undefined) return <span className="text-[var(--color-text-muted)] text-xs">-</span>
     if (value === -1) return <span className="text-[var(--color-text-muted)] text-xs animate-pulse">测试中...</span>
     const error = latencyErrorMap[record.proxyId] || ''
-    if (value === -2) return <span className="text-red-500 text-xs" title={error || '测速超时'}>超时</span>
+    if (value === -2) return <span className="text-[var(--color-error)] text-xs" title={error || '测速超时'}>超时</span>
     if (value === -3) return <span className="text-gray-400 text-xs" title={error || '协议不支持'}>不支持</span>
-    if (value === -4) return <span className="text-red-500 text-xs" title={error || '测速失败'}>失败</span>
-    const color = value < 200 ? 'text-green-500' : value < 500 ? 'text-yellow-500' : 'text-red-500'
+    if (value === -4) return <span className="text-[var(--color-error)] text-xs" title={error || '测速失败'}>失败</span>
+    const color = value < 200
+      ? 'text-[var(--color-success)]'
+      : value < 500
+        ? 'text-[var(--color-warning)]'
+        : 'text-[var(--color-error)]'
     return <span className={`font-mono text-xs font-semibold tabular-nums ${color}`}>{value} ms</span>
   }
 
@@ -156,7 +160,7 @@ export function ProxyPoolTableCard({
     if (!result.ok) {
       return (
         <div className="flex items-center gap-2">
-          <span className="text-xs text-red-500 truncate max-w-[120px]" title={result.error || '检测失败'}>失败</span>
+          <span className="text-xs text-[var(--color-error)] truncate max-w-[120px]" title={result.error || '检测失败'}>失败</span>
           <Button size="sm" variant="ghost" onClick={(event) => { event.stopPropagation(); onOpenIPHealthDetail(record.proxyId) }}>原始</Button>
         </div>
       )
@@ -188,7 +192,7 @@ export function ProxyPoolTableCard({
           disabled={BUILTIN_PROXY_IDS.has(record.proxyId)}
           onChange={() => onToggleOne(record.proxyId)}
           onClick={event => event.stopPropagation()}
-          className="w-4 h-4 rounded border-[var(--color-border-default)] accent-[var(--color-accent)] cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
+          className="h-4 w-4 cursor-pointer rounded-sm border-[var(--color-border-default)] accent-[var(--color-accent)] disabled:cursor-not-allowed disabled:opacity-30"
         />
       ),
     },
@@ -405,7 +409,7 @@ export function ProxyPoolTableCard({
             type="checkbox"
             checked={filterAvailableOnly}
             onChange={event => onFilterAvailableOnlyChange(event.target.checked)}
-            className="w-4 h-4 rounded border-[var(--color-border-default)] accent-[var(--color-accent)] cursor-pointer"
+            className="h-4 w-4 cursor-pointer rounded-sm border-[var(--color-border-default)] accent-[var(--color-accent)]"
           />
           只展示可用
         </label>
@@ -439,7 +443,7 @@ export function ProxyPoolTableCard({
                 }
               }}
               onChange={onToggleAll}
-              className="w-4 h-4 rounded border-[var(--color-border-default)] accent-[var(--color-accent)] cursor-pointer"
+              className="h-4 w-4 cursor-pointer rounded-sm border-[var(--color-border-default)] accent-[var(--color-accent)]"
             />
             全选
           </label>

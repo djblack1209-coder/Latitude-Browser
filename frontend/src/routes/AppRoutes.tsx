@@ -17,6 +17,10 @@ const BrowserListPage = lazyNamed(
   () => import("../modules/browser/pages/BrowserListPage"),
   "BrowserListPage",
 );
+const AutoConfigPage = lazyNamed(
+  () => import("../modules/browser/pages/AutoConfigPage"),
+  "AutoConfigPage",
+);
 const BrowserDetailPage = lazyNamed(
   () => import("../modules/browser/pages/BrowserDetailPage"),
   "BrowserDetailPage",
@@ -74,6 +78,7 @@ export function AppRoutes() {
       <Route path="/settings" element={<SettingsPage />} />
       <Route path="/profile" element={<ProfilePage />} />
       <Route path="/browser/list" element={<BrowserListPage />} />
+      <Route path="/browser/auto-config" element={<AutoConfigPage />} />
       <Route path="/browser/detail/:id" element={<BrowserDetailPage />} />
       <Route path="/browser/edit/:id" element={<BrowserEditPage />} />
       <Route path="/browser/copy/:id" element={<BrowserCopyPage />} />

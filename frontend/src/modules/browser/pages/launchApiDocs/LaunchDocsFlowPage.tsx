@@ -71,8 +71,8 @@ POST ${baseUrl}/api/launch`,
   ]
 
   return (
-    <div className="space-y-5">
-      <Card className="bg-[var(--color-bg-elevated)] shadow-[var(--shadow-sm)]">
+    <div className="apple-page space-y-5">
+      <Card className="apple-section bg-[var(--color-bg-elevated)]">
         <div className="space-y-2">
           <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
             操作流程
@@ -86,13 +86,13 @@ POST ${baseUrl}/api/launch`,
         </div>
       </Card>
 
-      <Card className="bg-[var(--color-bg-elevated)] shadow-[var(--shadow-sm)]">
+      <Card className="apple-section bg-[var(--color-bg-elevated)]">
         <div className="relative">
           <div className="absolute bottom-4 left-[20px] top-4 w-px bg-[var(--color-border-default)]" />
           <div className="space-y-7">
             {steps.map((step) => (
               <section key={step.step} className="relative flex gap-4">
-                <div className="relative z-10 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--color-accent)] text-sm font-semibold text-[var(--color-text-inverse)] shadow-[var(--shadow-sm)]">
+                <div className="relative z-10 flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-[var(--color-accent)] bg-transparent text-sm font-semibold text-[var(--color-accent)]">
                   {step.step}
                 </div>
                 <div className="min-w-0 flex-1 space-y-3 pb-2">
@@ -105,7 +105,7 @@ POST ${baseUrl}/api/launch`,
                     </p>
                   </div>
 
-                  <div className="rounded-xl border border-[var(--color-border-default)] bg-[var(--color-bg-surface)] px-4 py-3">
+                  <div className="apple-row bg-[var(--color-bg-surface)] px-4 py-3">
                     <div className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--color-text-muted)]">
                       操作路径
                     </div>
@@ -115,7 +115,7 @@ POST ${baseUrl}/api/launch`,
                   </div>
 
                   {step.example ? (
-                    <pre className="overflow-x-auto rounded-xl border border-[var(--color-border-muted)] bg-[var(--color-bg-muted)] px-4 py-3 text-xs leading-6 text-[var(--color-text-secondary)]">
+                    <pre className="overflow-x-auto rounded-md border border-[var(--color-border-muted)] bg-[var(--color-bg-muted)] px-4 py-3 text-xs leading-6 text-[var(--color-text-secondary)]">
 {step.example}
                     </pre>
                   ) : null}

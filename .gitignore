@@ -58,7 +58,11 @@ publish/staging/
 publish/output/
 
 # Internal docs / scratch files
-docs/
+docs/*
+!docs/
+!docs/plan/
+!docs/plan/*.md
+!docs/proxy-connector-stacks.md
 DEPLOYMENT_GUIDE.md
 plan.md
 pic/

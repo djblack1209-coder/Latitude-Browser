@@ -125,10 +125,11 @@ SINGBOX_SRC="$RUNTIME_DIR/sing-box"
 APP_BIN_DIR="$ROOT_DIR/build/bin"
 CHROME_README_SRC="$ROOT_DIR/chrome/README.md"
 CONFIG_INIT_SRC="$ROOT_DIR/publish/config.init.mac.yaml"
-ZIP_NAME="AntBrowser-${VERSION}-macos-${ARCH}.zip"
-APP_EXPORT="$OUTPUT_DIR/AntBrowser-${VERSION}-macos-${ARCH}.app"
+APP_ICON_SRC="$ROOT_DIR/build/appicon.png"
+ZIP_NAME="LatitudeBrowser-${VERSION}-macos-${ARCH}.zip"
+APP_EXPORT="$OUTPUT_DIR/LatitudeBrowser-${VERSION}-macos-${ARCH}.app"
 STAGE_DIR="$STAGING_ROOT/$TARGET"
-APP_STAGE="$STAGE_DIR/Ant Browser.app"
+APP_STAGE="$STAGE_DIR/Latitude Browser.app"
 
 find_built_app_bundle() {
   python3 - "$APP_BIN_DIR" <<'PY'
@@ -169,7 +170,7 @@ PY
 }
 
 echo "========================================"
-echo "  Ant Browser macOS Publish"
+echo "  Latitude Browser macOS Publish"
 echo "========================================"
 echo "Target : $TARGET"
 echo "Version: $VERSION"
@@ -218,6 +219,11 @@ if [[ -z "$APP_SOURCE" || ! -d "$APP_SOURCE" ]]; then
   echo "[ERROR] failed to locate built .app bundle under $APP_BIN_DIR" >&2
   exit 1
 fi
+
+# Wails derives Contents/Resources/iconfile.icns from build/appicon.png.
+# Refuse to package a stale bundle when --skip-build is used, otherwise the
+# installed macOS Dock icon can silently remain on the previous branding.
+"$ROOT_DIR/tools/runtime/verify-macos-app-icon.sh" "$APP_SOURCE" "$APP_ICON_SRC"
 
 echo "[4/4] Assembling macOS app bundle..."
 rm -rf "$APP_STAGE" "$APP_EXPORT"

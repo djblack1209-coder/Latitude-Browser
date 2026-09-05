@@ -247,6 +247,7 @@ export function AutomationSettingsCard({
 
   return (
     <Card
+      className="apple-section"
       title={(
         <div className="flex items-center gap-2">
           <span>自动化支持</span>

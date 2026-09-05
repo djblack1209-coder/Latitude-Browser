@@ -588,9 +588,9 @@ function New-WindowsPortableArchive {
         New-Item -ItemType Directory -Path $outputDir -Force | Out-Null
     }
 
-    $archiveName = "AntBrowser-$script:ResolvedVersion-windows-amd64-portable.zip"
+    $archiveName = "LatitudeBrowser-$script:ResolvedVersion-windows-amd64-portable.zip"
     $archivePath = Join-Path $outputDir $archiveName
-    $rootName = "AntBrowser-$script:ResolvedVersion-windows-amd64-portable"
+    $rootName = "LatitudeBrowser-$script:ResolvedVersion-windows-amd64-portable"
     if (Test-Path -LiteralPath $archivePath) {
         Remove-Item -LiteralPath $archivePath -Force
     }
@@ -730,7 +730,7 @@ function Publish-Linux {
 }
 
 try {
-    Write-Section "Ant Browser - 发布打包脚本"
+    Write-Section "Latitude Browser - 发布打包脚本"
     Write-Host ""
     Write-Host "当前工作目录: $repoRoot"
     Write-Host ""
@@ -762,10 +762,10 @@ try {
     Write-Section "✓ 发布完成！"
     Write-Host ""
     if ($script:WindowsInstallerDone) {
-        Write-Host "Windows 安装包: publish\output\AntBrowser-Setup-$script:ResolvedVersion.exe"
+        Write-Host "Windows 安装包: publish\output\LatitudeBrowser-Setup-$script:ResolvedVersion.exe"
     }
     if ($script:WindowsPortableDone) {
-        Write-Host "Windows 便携包: publish\output\AntBrowser-$script:ResolvedVersion-windows-amd64-portable.zip"
+        Write-Host "Windows 便携包: publish\output\LatitudeBrowser-$script:ResolvedVersion-windows-amd64-portable.zip"
     }
     if ($script:LinuxDone) {
         Write-Host "Linux 产物目录: publish\output\"

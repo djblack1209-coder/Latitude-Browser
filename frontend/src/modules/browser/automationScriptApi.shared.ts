@@ -8,6 +8,7 @@ import {
 } from "./automationScripts";
 
 export const getBindings = async () => {
+  if (!(globalThis as any).go?.main?.App) return null
   try {
     return await import("../../wailsjs/go/main/App");
   } catch {
