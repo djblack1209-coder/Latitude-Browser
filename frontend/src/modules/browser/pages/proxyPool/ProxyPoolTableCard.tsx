@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
+import { ChevronDown, Search, Trash2, X } from 'lucide-react'
 
-import { Button, Card, Input, Switch, Table } from '../../../../shared/components'
+import { Button, Input, Switch, Table } from '../../../../shared/components'
 import type { SortOrder, TableColumn } from '../../../../shared/components/Table'
 import type { ProxyIPHealthResult } from '../../types'
 
@@ -127,7 +128,7 @@ export function ProxyPoolTableCard({
     if (value === -3) return <span className="text-gray-400 text-xs" title={error || '协议不支持'}>不支持</span>
     if (value === -4) return <span className="text-red-500 text-xs" title={error || '测速失败'}>失败</span>
     const color = value < 200 ? 'text-green-500' : value < 500 ? 'text-yellow-500' : 'text-red-500'
-    return <span className={`text-xs font-medium ${color}`}>{value} ms</span>
+    return <span className={`font-mono text-xs font-semibold tabular-nums ${color}`}>{value} ms</span>
   }
 
   const renderLatencyEngine = (record: ProxyDisplayInfo) => {
@@ -197,7 +198,7 @@ export function ProxyPoolTableCard({
       title: '分组',
       width: '100px',
       sortable: true,
-      render: (value) => value ? <span className="px-1.5 py-0.5 text-xs rounded bg-[var(--color-accent)]/10 text-[var(--color-accent)]">{value}</span> : '-',
+      render: (value) => value ? <span className="inline-flex rounded-sm border border-[var(--color-accent-border)] bg-[var(--color-accent-muted)] px-1.5 py-0.5 font-mono text-[10px] font-medium uppercase tracking-wide text-[var(--color-accent)]">{value}</span> : '-',
     },
     {
       key: 'source',
@@ -284,6 +285,8 @@ export function ProxyPoolTableCard({
                 size="sm"
                 variant="secondary"
                 aria-expanded={moreOpen}
+                aria-label="更多代理操作"
+                className="px-2"
                 onClick={(event) => {
                   event.stopPropagation()
                   if (moreOpen) {
@@ -294,10 +297,11 @@ export function ProxyPoolTableCard({
                   setOpenMoreProxyId(record.proxyId)
                 }}
               >
-                更多
+                <span className="sr-only">更多</span>
+                <ChevronDown className="h-3.5 w-3.5" aria-hidden="true" />
               </Button>
               {moreOpen && (
-                <div className={`absolute right-0 z-30 w-28 rounded-lg border border-[var(--color-border-default)] bg-[var(--color-bg-surface)] p-1 shadow-lg ${moreMenuPlacement === 'up' ? 'bottom-9' : 'top-9'}`}>
+                <div className={`absolute right-0 z-30 w-32 border border-[var(--color-border-default)] bg-[var(--color-bg-elevated)] p-1 shadow-[var(--shadow-md)] ${moreMenuPlacement === 'up' ? 'bottom-9' : 'top-9'}`}>
                   {hasSource && (
                     <Button
                       size="sm"
@@ -361,18 +365,22 @@ export function ProxyPoolTableCard({
   ])
 
   return (
-    <Card>
-      <div className="flex items-center gap-3 mb-4">
-        <Input
-          value={filterKeyword}
-          onChange={event => onFilterKeywordChange(event.target.value)}
-          placeholder="搜索名称或服务器..."
-          style={{ width: '220px' }}
-        />
+    <section className="overflow-hidden border border-[var(--color-border-default)] bg-[var(--color-bg-surface)]">
+      <div className="flex flex-col gap-3 border-b border-[var(--color-border-default)] bg-[var(--color-bg-subtle)] px-4 py-3 xl:flex-row xl:items-center">
+        <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
+        <div className="relative w-full sm:w-64">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[var(--color-text-muted)]" aria-hidden="true" />
+          <Input
+            value={filterKeyword}
+            onChange={event => onFilterKeywordChange(event.target.value)}
+            placeholder="搜索名称或服务器"
+            className="pl-8"
+          />
+        </div>
         <select
           value={filterProtocol}
           onChange={event => onFilterProtocolChange(event.target.value)}
-          className="h-9 px-3 text-sm rounded-lg border border-[var(--color-border-default)] bg-[var(--color-bg-surface)] text-[var(--color-text-primary)] focus:outline-none focus:border-[var(--color-border-strong)] focus:ring-1 focus:ring-[var(--color-border-strong)] transition-colors duration-150"
+          className="h-9 rounded-md border border-[var(--color-border-default)] bg-[var(--color-bg-surface)] px-3 text-sm text-[var(--color-text-primary)] transition-colors duration-150 focus:border-[var(--color-border-strong)] focus:outline-none focus:ring-1 focus:ring-[var(--color-border-strong)]"
         >
           {protocolOptions.map(protocol => (
             <option key={protocol} value={protocol}>{protocol === 'all' ? '全部协议' : protocol.toUpperCase()}</option>
@@ -381,15 +389,18 @@ export function ProxyPoolTableCard({
         <select
           value={filterGroup}
           onChange={event => onFilterGroupChange(event.target.value)}
-          className="h-9 px-3 text-sm rounded-lg border border-[var(--color-border-default)] bg-[var(--color-bg-surface)] text-[var(--color-text-primary)] focus:outline-none focus:border-[var(--color-border-strong)] focus:ring-1 focus:ring-[var(--color-border-strong)] transition-colors duration-150"
+          className="h-9 rounded-md border border-[var(--color-border-default)] bg-[var(--color-bg-surface)] px-3 text-sm text-[var(--color-text-primary)] transition-colors duration-150 focus:border-[var(--color-border-strong)] focus:outline-none focus:ring-1 focus:ring-[var(--color-border-strong)]"
         >
           <option value="all">全部分组</option>
           {groups.map(group => <option key={group} value={group}>{group}</option>)}
         </select>
         {hasActiveFilters && (
-          <Button size="sm" variant="ghost" onClick={onClearFilters}>清除筛选</Button>
+          <Button size="sm" variant="ghost" onClick={onClearFilters} className="gap-1.5 px-2">
+            <X className="h-3.5 w-3.5" aria-hidden="true" />
+            清除
+          </Button>
         )}
-        <label className="flex items-center gap-1.5 text-sm text-[var(--color-text-secondary)] cursor-pointer select-none">
+        <label className="flex h-9 items-center gap-1.5 px-1.5 text-xs text-[var(--color-text-secondary)] cursor-pointer select-none">
           <input
             type="checkbox"
             checked={filterAvailableOnly}
@@ -398,8 +409,8 @@ export function ProxyPoolTableCard({
           />
           只展示可用
         </label>
-        <div className="flex items-center gap-2 rounded-lg border border-[var(--color-border-default)] bg-[var(--color-bg-surface)] px-2 py-1.5">
-          <span className="text-xs text-[var(--color-text-muted)]">全局自动刷新</span>
+        <div className="flex h-9 items-center gap-2 border-l border-[var(--color-border-default)] pl-3">
+          <span className="whitespace-nowrap text-xs text-[var(--color-text-muted)]">自动刷新</span>
           <Switch
             checked={globalAutoRefreshEnabled}
             onChange={onGlobalAutoRefreshEnabledChange}
@@ -410,14 +421,15 @@ export function ProxyPoolTableCard({
             max={1440}
             value={globalRefreshIntervalM}
             onChange={event => onGlobalRefreshIntervalMChange(event.target.value)}
-            className="w-24"
+            className="h-8 w-20"
             disabled={!globalAutoRefreshEnabled}
           />
           <span className="text-xs text-[var(--color-text-muted)]">分钟</span>
         </div>
-        <div className="flex-1" />
+        </div>
+        <div className="flex flex-wrap items-center gap-2 xl:justify-end">
         {data.length > 0 && (
-          <label className="flex items-center gap-1.5 text-sm text-[var(--color-text-muted)] cursor-pointer select-none">
+          <label className="flex h-9 items-center gap-1.5 px-1.5 text-xs text-[var(--color-text-muted)] cursor-pointer select-none">
             <input
               type="checkbox"
               checked={allFilteredSelected}
@@ -433,11 +445,14 @@ export function ProxyPoolTableCard({
           </label>
         )}
         {selectedCount > 0 && (
-          <Button size="sm" variant="danger" onClick={onOpenBatchDelete}>
+          <Button size="sm" variant="danger" onClick={onOpenBatchDelete} className="gap-1.5">
+            <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
             删除所选 ({selectedCount})
           </Button>
         )}
+        </div>
       </div>
+      <div className="px-0 py-0">
       <Table
         columns={columns}
         data={data}
@@ -447,7 +462,9 @@ export function ProxyPoolTableCard({
         sortColumn={sortColumn}
         sortOrder={sortOrder}
         onSort={onSort}
+        className="proxy-pool-table"
       />
-    </Card>
+      </div>
+    </section>
   )
 }
