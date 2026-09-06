@@ -1,9 +1,10 @@
 ﻿# Latitude Browser
 
 
-> 本仓库是基于 Ant Browser 的本地二次开发工作树。上游仓库当前未附带独立 LICENSE，
+> Latitude Browser 是基于 Ant Browser 上游代码的本地二次开发工作树。上游仓库当前未附带独立 LICENSE，
 > 在获得作者明确授权或上游补充许可证前，请将本项目视为私有/内部使用，不要直接公开分发修改后的安装包或源码。
 > 面向多账号隔离、代理绑定和本地环境管理的桌面浏览器工具（Windows / Linux / macOS unsigned）。
+> 产品入口说明：正式产品名为 `Latitude Browser`。macOS 验收、Dock 配置和自动化测试统一使用 `/Applications/Latitude Browser.app`；`ant-chrome`、`ant-browser` 等仅是现有构建/存储兼容标识，不代表第二个产品入口。
 
 [![Release](https://img.shields.io/github/v/release/black-ant/Ant-Browser?sort=semver)](https://github.com/black-ant/Ant-Browser/releases)
 [![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-blue)](https://github.com/black-ant/Ant-Browser/releases)

@@ -5,7 +5,7 @@
   "frontend:install": "npm install && npm run ensure:native",
   "frontend:build": "npm run build:clean",
   "author": {
-    "name": "Ant Chrome Team",
+    "name": "Latitude Browser",
     "email": "contact@antblack.de"
   },
   "info": {
