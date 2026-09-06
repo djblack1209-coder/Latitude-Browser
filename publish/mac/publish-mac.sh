@@ -251,6 +251,18 @@ ditto "$APP_STAGE" "$APP_EXPORT"
 rm -f "$OUTPUT_DIR/$ZIP_NAME"
 ditto -c -k --sequesterRsrc --keepParent "$APP_EXPORT" "$OUTPUT_DIR/$ZIP_NAME"
 
+# Wails writes the source bundle into build/bin. It is only an assembly input;
+# leaving it there makes Spotlight/LaunchServices discover a second app with the
+# same Bundle ID and can make Dock or automated tests launch the wrong bundle.
+# Keep the distributable artifact in publish/output, but remove the transient
+# build bundle as soon as the package has been assembled.
+case "$APP_SOURCE" in
+  "$APP_BIN_DIR"/*.app)
+    rm -rf "$APP_SOURCE"
+    echo "Removed transient build bundle: $APP_SOURCE"
+    ;;
+esac
+
 echo "Artifacts generated:"
 echo "  - $APP_EXPORT"
 echo "  - $OUTPUT_DIR/$ZIP_NAME"

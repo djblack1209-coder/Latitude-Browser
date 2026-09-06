@@ -8,7 +8,7 @@
 - 迁移方式：直接克隆到当前项目目录，保留 `.git` 历史和 `origin` 远程地址。
 - 当前迁移基线：上游提交 `10b36b518650860749c55394099dbb3bcb406c37`（2026-08-13）。
 
-已安装的 `/Applications/AntBrowser.app` 和 `~/Library/Application Support/ant-browser` 没有被复制进源码仓库。它们属于已编译应用和本机运行时数据，可能包含浏览器实例、Cookie、代理凭据或其他私有信息，不适合作为 Git 源码的一部分。
+已安装的 `/Applications/Latitude Browser.app` 和 `~/Library/Application Support/ant-browser` 没有被复制进源码仓库。它们属于已编译应用和本机运行时数据，可能包含浏览器实例、Cookie、代理凭据或其他私有信息，不适合作为 Git 源码的一部分。
 
 ## 许可证核查结果
 
