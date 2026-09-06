@@ -1,5 +1,6 @@
+import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Archive, CheckCircle, ChevronRight, ChevronUp, Edit2, LayoutGrid, List, Plus, RefreshCw, Sliders, Star, Trash2, Upload, XCircle } from 'lucide-react'
+import { Archive, CheckCircle, ChevronRight, ChevronUp, Edit2, LayoutGrid, List, MoreHorizontal, Plus, RefreshCw, Sliders, Star, Trash2, Upload, XCircle } from 'lucide-react'
 
 import { Button, Card, FormItem, Input, Modal, Switch, Table, Textarea } from '../../../shared/components'
 import type { TableColumn } from '../../../shared/components/Table'
@@ -32,6 +33,76 @@ interface BrowserListHeaderProps {
   onViewModeChange: (next: BrowserViewMode) => void
 }
 
+function HeaderUtilityMenu({
+  onOpenSettings,
+  onOpenTrash,
+  onImportProfiles,
+  onOpenBackup,
+  importingProfiles,
+}: {
+  onOpenSettings: () => void
+  onOpenTrash: () => void
+  onImportProfiles: () => void
+  onOpenBackup: () => void
+  importingProfiles: boolean
+}) {
+  const [open, setOpen] = useState(false)
+  const menuRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!open) return
+    const handlePointerDown = (event: MouseEvent) => {
+      if (!menuRef.current?.contains(event.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', handlePointerDown)
+    return () => document.removeEventListener('mousedown', handlePointerDown)
+  }, [open])
+
+  const runAndClose = (handler: () => void) => {
+    handler()
+    setOpen(false)
+  }
+
+  const itemClass = 'flex w-full items-center gap-2 rounded-sm px-2.5 py-2 text-left text-xs text-[var(--color-text-secondary)] transition-[background-color,color] duration-150 hover:bg-[var(--color-bg-muted)] hover:text-[var(--color-text-primary)] focus:outline-none focus:ring-1 focus:ring-[var(--color-accent)] disabled:cursor-not-allowed disabled:opacity-50'
+
+  return (
+    <div ref={menuRef} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((value) => !value)}
+        aria-expanded={open}
+        aria-haspopup="menu"
+        aria-label="管理实例"
+        title="管理"
+        className="inline-flex h-8 items-center gap-1.5 rounded-md px-2 text-xs text-[var(--color-text-secondary)] transition-[background-color,color] duration-150 hover:bg-[var(--color-bg-muted)] hover:text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
+      >
+        <MoreHorizontal className="h-4 w-4" aria-hidden="true" />
+        <span className="hidden sm:inline">管理</span>
+      </button>
+      {open && (
+        <div role="menu" aria-label="实例管理" className="absolute right-0 top-full z-30 mt-2 w-40 rounded-md border border-[var(--color-border-default)] bg-[var(--color-bg-elevated)] p-1 shadow-[var(--shadow-sm)]">
+          <button type="button" role="menuitem" className={itemClass} onClick={() => runAndClose(onOpenSettings)}>
+            <Sliders className="h-3.5 w-3.5" aria-hidden="true" />
+            基础配置
+          </button>
+          <button type="button" role="menuitem" className={itemClass} onClick={() => runAndClose(onOpenTrash)}>
+            <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
+            回收站
+          </button>
+          <button type="button" role="menuitem" className={itemClass} onClick={() => runAndClose(onImportProfiles)} disabled={importingProfiles}>
+            {importingProfiles ? <RefreshCw className="h-3.5 w-3.5 animate-spin" aria-hidden="true" /> : <Upload className="h-3.5 w-3.5" aria-hidden="true" />}
+            {importingProfiles ? '导入中' : '导入实例'}
+          </button>
+          <button type="button" role="menuitem" className={itemClass} onClick={() => runAndClose(onOpenBackup)}>
+            <Archive className="h-3.5 w-3.5" aria-hidden="true" />
+            备份与恢复
+          </button>
+        </div>
+      )}
+    </div>
+  )
+}
+
 export function BrowserListHeader({
   profileCount,
   filteredProfileCount,
@@ -57,7 +128,7 @@ export function BrowserListHeader({
 
   return (
     <>
-      <div className="browser-list-header flex flex-wrap items-center justify-between gap-4">
+      <div className="browser-list-header apple-page-header flex flex-wrap items-center justify-between gap-4">
         <div className="flex min-w-0 items-baseline gap-3">
           <h1 className="text-[22px] font-semibold tracking-[-0.02em] text-[var(--color-text-primary)]">实例</h1>
           <span className="text-sm tabular-nums text-[var(--color-text-muted)]">
@@ -70,6 +141,19 @@ export function BrowserListHeader({
         </div>
 
         <div className="browser-list-actions flex flex-wrap items-center justify-end gap-1.5">
+          <Link to="/browser/edit/new">
+            <Button size="sm" className="px-3.5">
+              <Plus className="w-4 h-4" />新建实例
+            </Button>
+          </Link>
+          <div className="mx-1 h-5 w-px bg-[var(--color-border-muted)]" aria-hidden="true" />
+          <HeaderUtilityMenu
+            onOpenSettings={onOpenSettings}
+            onOpenTrash={onOpenTrash}
+            onImportProfiles={onImportProfiles}
+            onOpenBackup={onOpenBackup}
+            importingProfiles={importingProfiles}
+          />
           <Button
             variant="ghost"
             size="sm"
@@ -84,20 +168,7 @@ export function BrowserListHeader({
           <Button variant="ghost" size="sm" onClick={onRefresh} aria-label="刷新实例" title="刷新" className="px-2">
             <RefreshCw className="w-4 h-4" />
           </Button>
-          <Button variant="ghost" size="sm" onClick={onOpenSettings} aria-label="打开基础配置" title="基础配置" className="px-2">
-            <Sliders className="w-4 h-4" />
-          </Button>
-          <Button variant="ghost" size="sm" onClick={onOpenTrash} aria-label="打开回收站" title="回收站" className="px-2">
-            <Trash2 className="w-4 h-4" />
-          </Button>
-          <Button variant="ghost" size="sm" onClick={onImportProfiles} loading={importingProfiles} aria-label="导入实例" title="导入实例" className="px-2">
-            <Upload className="w-4 h-4" />
-          </Button>
-          <Button variant="ghost" size="sm" onClick={onOpenBackup} aria-label="打开备份" title="备份" className="px-2">
-            <Archive className="w-4 h-4" />
-          </Button>
-          <div className="mx-1 h-5 w-px bg-[var(--color-border-muted)]" aria-hidden="true" />
-          <div className="flex items-center rounded-md border border-[var(--color-border-default)] bg-[var(--color-bg-muted)]/50 p-0.5" role="group" aria-label="视图模式">
+          <div className="ml-1 flex items-center rounded-md border border-[var(--color-border-default)] bg-[var(--color-bg-muted)]/50 p-0.5" role="group" aria-label="视图模式">
             <button
               type="button"
               aria-label="卡片视图"
@@ -119,11 +190,6 @@ export function BrowserListHeader({
               <List className="w-4 h-4" />
             </button>
           </div>
-          <Link to="/browser/edit/new">
-            <Button size="sm" className="ml-1 px-3.5">
-              <Plus className="w-4 h-4" />新建实例
-            </Button>
-          </Link>
         </div>
       </div>
       {!headerCollapsed && (

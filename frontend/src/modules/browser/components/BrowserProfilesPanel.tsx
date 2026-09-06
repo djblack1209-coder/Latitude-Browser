@@ -159,7 +159,9 @@ function ProfileMoreActions({
   onOpenKeywords,
   onOpenExtensions,
   onOpenDataDir,
+  onOpenCopy,
   onExport,
+  onDelete,
 }: {
   label?: string
   open: boolean
@@ -170,7 +172,9 @@ function ProfileMoreActions({
   onOpenKeywords: () => void
   onOpenExtensions: () => void
   onOpenDataDir: () => void
+  onOpenCopy: () => void
   onExport: () => void
+  onDelete: () => void
 }) {
   const triggerRef = useRef<HTMLDivElement>(null)
   const menuRef = useRef<HTMLDivElement>(null)
@@ -182,7 +186,7 @@ function ProfileMoreActions({
       const rect = triggerRef.current?.getBoundingClientRect()
       if (!rect) return
       const menuWidth = 128
-      const menuHeight = 208
+      const menuHeight = 304
       const gap = 8
       const left = Math.max(8, Math.min(rect.right - menuWidth, window.innerWidth - menuWidth - 8))
       const belowTop = rect.bottom + gap
@@ -278,10 +282,28 @@ function ProfileMoreActions({
             type="button"
             role="menuitem"
             className="flex w-full items-center gap-2 rounded-sm px-2.5 py-2 text-left text-xs text-[var(--color-text-secondary)] transition-colors hover:bg-[var(--color-bg-muted)] hover:text-[var(--color-text-primary)] focus:outline-none focus:ring-1 focus:ring-[var(--color-accent)]"
+            onClick={() => runAndClose(onOpenCopy)}
+          >
+            <Copy className="w-3.5 h-3.5" />
+            克隆
+          </button>
+          <button
+            type="button"
+            role="menuitem"
+            className="flex w-full items-center gap-2 rounded-sm px-2.5 py-2 text-left text-xs text-[var(--color-text-secondary)] transition-colors hover:bg-[var(--color-bg-muted)] hover:text-[var(--color-text-primary)] focus:outline-none focus:ring-1 focus:ring-[var(--color-accent)]"
             onClick={() => runAndClose(onExport)}
           >
             <Download className="w-3.5 h-3.5" />
             导出
+          </button>
+          <button
+            type="button"
+            role="menuitem"
+            className="mt-1 flex w-full items-center gap-2 border-t border-[var(--color-border-muted)] px-2.5 py-2 pt-2 text-left text-xs text-[var(--color-error)] transition-colors hover:bg-[var(--color-error)]/10 focus:outline-none focus:ring-1 focus:ring-[var(--color-error)]"
+            onClick={() => runAndClose(onDelete)}
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+            删除
           </button>
         </div>,
         document.body
@@ -337,11 +359,11 @@ function BrowserProfileCard({
 
   return (
     <div
-      className={`browser-profile-card relative flex h-[304px] flex-col overflow-visible rounded-sm border bg-[var(--color-bg-surface)] p-3 shadow-none transition-[border-color,box-shadow] duration-150
-        ${isSelected ? 'border-[var(--color-accent)] ring-1 ring-[var(--color-accent)]/20' : 'border-[var(--color-border-default)] hover:border-[var(--color-accent)]'}
+      className={`browser-profile-card relative flex min-h-[176px] flex-col overflow-visible rounded-md border bg-[var(--color-bg-surface)] p-4 shadow-none transition-[border-color,background-color] duration-150
+        ${isSelected ? 'border-[var(--color-accent)] bg-[var(--color-accent-muted)]/35' : 'border-[var(--color-border-default)] hover:border-[var(--color-border-strong)]'}
       `}
     >
-      <div className="flex items-center gap-2 border-b border-[var(--color-border-muted)]/50 pb-3">
+      <div className="flex items-start gap-3">
         {profile.running ? (
           <Button size="sm" variant="secondary" onClick={() => onStop(profile.profileId)} aria-label={isStopping ? `停止实例中：${profile.profileName}` : `停止实例：${profile.profileName}`} title={isStopping ? '停止中' : '停止'} loading={isStopping} className="shrink-0">
             {!isStopping && <Square className="w-3.5 h-3.5" />}
@@ -367,15 +389,10 @@ function BrowserProfileCard({
             </Link>
             <Badge variant={status.variant} dot dotClassName="h-1.5 w-1.5 shrink-0">{status.label}</Badge>
           </div>
-          {profile.tags && profile.tags.length > 0 && (
-            <div className="mt-1 flex gap-1 overflow-hidden">
-              {profile.tags.slice(0, 3).map(tag => <Badge variant="default" key={tag}>{tag}</Badge>)}
-            </div>
-          )}
+          <p className="mt-1 truncate text-xs text-[var(--color-text-muted)]">{coreLabel}</p>
         </div>
         <div className="flex shrink-0 items-center gap-1">
           <Link to={`/browser/edit/${profile.profileId}`}><Button size="sm" variant="ghost" aria-label={`配置实例：${profile.profileName}`} title="配置" className="px-2" disabled={isBusy}><Settings className="w-3.5 h-3.5" /></Button></Link>
-          <Button size="sm" variant="ghost" onClick={() => onOpenCopy(profile)} aria-label={`克隆实例：${profile.profileName}`} title="克隆" className="px-2" disabled={isBusy}><Copy className="w-3.5 h-3.5" /></Button>
           <ProfileMoreActions
             label={profile.profileName}
             open={moreOpen}
@@ -386,30 +403,24 @@ function BrowserProfileCard({
             onOpenKeywords={() => onOpenKeywords(profile)}
             onOpenExtensions={() => onOpenExtensions(profile)}
             onOpenDataDir={() => onOpenDataDir(profile)}
+            onOpenCopy={() => onOpenCopy(profile)}
             onExport={() => onExport(profile)}
+            onDelete={() => onDelete(profile.profileId)}
           />
-          <Button size="sm" variant="ghost" onClick={() => onDelete(profile.profileId)} aria-label={`删除实例：${profile.profileName}`} title="删除" className="px-2 text-[var(--color-error)] hover:bg-[var(--color-error)]/10 hover:text-[var(--color-error-hover)]" disabled={isBusy}><Trash2 className="w-3.5 h-3.5" /></Button>
         </div>
       </div>
 
-      <div className="flex min-w-0 items-center gap-4 py-3 text-xs">
-        <div className="flex min-w-0 items-center gap-1.5 text-[var(--color-text-muted)]">
-          <span>内核</span>
-          <span className="truncate text-[var(--color-text-secondary)]">{coreLabel}</span>
-        </div>
-        <div className="flex min-w-0 flex-1 items-center gap-1.5 text-[var(--color-text-muted)]">
-          <span>代理</span>
-          <ProxyInlineActions
-            profile={profile}
-            proxy={proxy}
-            isBusy={isBusy}
-            onOpenProxyPicker={onOpenProxyPicker}
-            maxWidthClass="min-w-0 max-w-full"
-          />
-        </div>
+      <div className="mt-auto flex min-w-0 items-center justify-between gap-3 border-t border-[var(--color-border-muted)] pt-3 text-xs">
+        <ProxyInlineActions
+          profile={profile}
+          proxy={proxy}
+          isBusy={isBusy}
+          onOpenProxyPicker={onOpenProxyPicker}
+          maxWidthClass="min-w-0 max-w-full"
+        />
         {profile.launchCode && (
           <div className="hidden shrink-0 items-center gap-1.5 text-[var(--color-text-muted)] md:flex">
-            <span>快捷码</span>
+            <span className="sr-only">快捷码</span>
             <LaunchCodeCell profileId={profile.profileId} code={profile.launchCode} onRefresh={onRefreshProfiles} />
           </div>
         )}
@@ -510,18 +521,13 @@ export function BrowserProfilesPanel({
     {
       key: 'profileName',
       title: '实例名称',
-      width: 320,
+      width: 280,
       render: (value, record) => (
-        <div className="flex min-w-0 max-w-[240px] items-center gap-2 whitespace-nowrap">
-          <Link className="block min-w-0 truncate text-[var(--color-accent)] text-sm font-medium hover:underline" to={`/browser/detail/${record.profileId}`} title={String(value || '')}>
+        <div className="min-w-0 max-w-[280px]">
+          <Link className="block truncate text-sm font-medium text-[var(--color-text-primary)] hover:text-[var(--color-accent)]" to={`/browser/detail/${record.profileId}`} title={String(value || '')}>
             {value}
           </Link>
-          {record.tags && record.tags.length > 0 && (
-            <div className="flex shrink-0 gap-1 overflow-hidden">
-              {record.tags.slice(0, 2).map(tag => <Badge variant="default" key={tag}>{tag}</Badge>)}
-              {record.tags.length > 2 && <Badge variant="default">+{record.tags.length - 2}</Badge>}
-            </div>
-          )}
+          <span className="mt-0.5 block truncate text-xs text-[var(--color-text-muted)]">{getProfileCoreLabel(record)}</span>
         </div>
       ),
     },
@@ -533,12 +539,6 @@ export function BrowserProfilesPanel({
         const status = getProfileStatus(record)
         return <Badge variant={status.variant} dot>{status.label}</Badge>
       },
-    },
-    {
-      key: 'coreId',
-      title: '核心',
-      width: 170,
-      render: (_, record) => <span className="whitespace-nowrap text-xs">{getProfileCoreLabel(record)}</span>,
     },
     {
       key: 'proxyId',
@@ -553,16 +553,15 @@ export function BrowserProfilesPanel({
     {
       key: 'actions',
       title: '操作',
-      width: 180,
+      width: 120,
       align: 'right',
       render: (_, record) => {
         const isBusy = isProfileBusy(record.profileId)
         const isMoreOpen = openMoreProfileId === record.profileId
 
         return (
-          <div className="flex justify-end gap-1.5 whitespace-nowrap">
+          <div className="flex justify-end gap-1 whitespace-nowrap">
             <Link to={`/browser/edit/${record.profileId}`}><Button size="sm" variant="ghost" aria-label={`配置实例：${record.profileName}`} title="配置" disabled={isBusy}><Settings className="w-3.5 h-3.5" /></Button></Link>
-            <Button size="sm" variant="ghost" onClick={() => onOpenCopy(record)} aria-label={`克隆实例：${record.profileName}`} title="克隆" disabled={isBusy}><Copy className="w-3.5 h-3.5" /></Button>
             <ProfileMoreActions
               label={record.profileName}
               open={isMoreOpen}
@@ -573,9 +572,10 @@ export function BrowserProfilesPanel({
               onOpenKeywords={() => onOpenKeywords(record)}
               onOpenExtensions={() => onOpenExtensions(record)}
               onOpenDataDir={() => onOpenDataDir(record)}
+              onOpenCopy={() => onOpenCopy(record)}
               onExport={() => onExport(record)}
+              onDelete={() => onDelete(record.profileId)}
             />
-            <Button size="sm" variant="ghost" onClick={() => onDelete(record.profileId)} aria-label={`删除实例：${record.profileName}`} title="删除" disabled={isBusy}><Trash2 className="w-3.5 h-3.5 text-[var(--color-error)]" /></Button>
           </div>
         )
       },
@@ -584,7 +584,7 @@ export function BrowserProfilesPanel({
 
   return (
     <Card padding="none" className="browser-instance-panel">
-      <div className="overflow-auto" style={{ maxHeight: 'calc(100vh - 320px)' }}>
+      <div className="overflow-auto" style={{ maxHeight: 'calc(100vh - 250px)' }}>
         {loading ? (
           <div className="flex min-h-64 flex-col items-center justify-center gap-2 py-16 text-sm text-[var(--color-text-muted)]" role="status" aria-live="polite">
             <Loader2 className="h-5 w-5 animate-spin text-[var(--color-accent)]" aria-hidden="true" />
@@ -610,9 +610,9 @@ export function BrowserProfilesPanel({
             rowKey="profileId"
           />
         ) : (
-          <div className="browser-profile-grid flex flex-wrap items-start content-start gap-3 p-3">
+          <div className="browser-profile-grid flex flex-wrap items-start content-start gap-4 p-4">
             {profiles.map((profile) => (
-              <div key={profile.profileId} className="min-w-[360px] max-w-[560px] flex-[1_1_440px]">
+              <div key={profile.profileId} className="min-w-[320px] max-w-[620px] flex-[1_1_420px]">
                 <BrowserProfileCard
                   profile={profile}
                   proxy={proxies.find(item => item.proxyId === profile.proxyId)}

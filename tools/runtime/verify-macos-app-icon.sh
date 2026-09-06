@@ -87,13 +87,13 @@ while pos < len(data):
 
 if width is None or height is None:
     raise SystemExit(f"[ERROR] PNG has no IHDR in {label}: {path}")
-if bit_depth != 8 or color_type not in (4, 6) or interlace != 0:
+if bit_depth != 8 or color_type not in (2, 4, 6) or interlace != 0:
     raise SystemExit(
-        f"[ERROR] {label} must be non-interlaced 8-bit grayscale+alpha or RGBA PNG; "
+        f"[ERROR] {label} must be a non-interlaced 8-bit RGB, grayscale+alpha, or RGBA PNG; "
         f"got bit-depth={bit_depth}, color-type={color_type}, interlace={interlace}: {path}"
     )
 
-channels = 2 if color_type == 4 else 4
+channels = {2: 3, 4: 2, 6: 4}[color_type]
 stride = width * channels
 raw = zlib.decompress(bytes(idat))
 expected = height * (stride + 1)
@@ -141,11 +141,19 @@ if color_type == 6:
     alphas = [pixel[3] for pixel in pixels]
     corners = (pixels[0], pixels[width - 1], pixels[-width], pixels[-1])
     corner_colors = tuple(pixel[:3] for pixel in corners)
-else:
+elif color_type == 4:
     pixels = [tuple(row[index : index + 2]) for row in rows for index in range(0, stride, 2)]
     alphas = [pixel[1] for pixel in pixels]
     corners = (pixels[0], pixels[width - 1], pixels[-width], pixels[-1])
     corner_colors = tuple((pixel[0], pixel[0], pixel[0]) for pixel in corners)
+else:
+    # iconutil commonly emits opaque ICNS slots as truecolor RGB PNGs. RGB has
+    # no alpha channel, so treat every pixel as fully opaque while validating
+    # the black canvas and visible green artwork.
+    pixels = [tuple(row[index : index + 3]) for row in rows for index in range(0, stride, 3)]
+    alphas = [255] * len(pixels)
+    corners = (pixels[0], pixels[width - 1], pixels[-width], pixels[-1])
+    corner_colors = corners
 
 if any(value != 255 for value in alphas):
     minimum = min(alphas)
@@ -162,7 +170,14 @@ if not all(max(color) <= 2 for color in corner_colors):
 
 # The corners catch a full white canvas, while this ratio catches a mostly
 # white/colored canvas with only tiny black corner pixels.
-black_pixels = sum(1 for color in (pixel[:3] if color_type == 6 else (pixel[0],) * 3 for pixel in pixels) if max(color) <= 2)
+black_pixels = sum(
+    1
+    for color in (
+        pixel[:3] if color_type in (2, 6) else (pixel[0],) * 3
+        for pixel in pixels
+    )
+    if max(color) <= 2
+)
 black_ratio = black_pixels / len(pixels)
 if black_ratio < 0.50:
     raise SystemExit(

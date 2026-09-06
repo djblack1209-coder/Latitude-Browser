@@ -1,5 +1,4 @@
-import { useState } from 'react'
-import { ChevronDown, ChevronRight, Filter, X } from 'lucide-react'
+import { Filter, X } from 'lucide-react'
 import { Input, Select } from '../../../shared/components'
 import { TagFilterBar } from './TagFilterBar'
 import type { BrowserCore, BrowserProxy, BrowserGroupWithCount } from '../types'
@@ -38,8 +37,6 @@ interface Props {
 }
 
 export function InstanceFilterBar({ filters, onChange, proxies, cores, allTags, groups }: Props) {
-  const [collapsed, setCollapsed] = useState(false)
-
   const set = <K extends keyof InstanceFilters>(key: K, value: InstanceFilters[K]) =>
     onChange({ ...filters, [key]: value })
 
@@ -49,24 +46,17 @@ export function InstanceFilterBar({ filters, onChange, proxies, cores, allTags, 
 
   return (
     <section className="browser-list-filter border-y border-[var(--color-border-muted)] py-2.5" aria-label="实例筛选">
-      <button
-        type="button"
-        className="flex items-center gap-1.5 text-xs font-medium text-[var(--color-text-secondary)] transition-colors hover:text-[var(--color-text-primary)] focus:outline-none focus-visible:ring-1 focus-visible:ring-[var(--color-accent)]"
-        onClick={() => setCollapsed(prev => !prev)}
-        aria-expanded={!collapsed}
-      >
-        {collapsed ? <ChevronRight className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
-        <Filter className="w-3.5 h-3.5" />
-        <span>筛选</span>
+      <div className="flex items-center gap-1.5 text-xs font-medium text-[var(--color-text-secondary)]">
+        <Filter className="h-3.5 w-3.5" aria-hidden="true" />
+        <span>筛选条件</span>
         {activeCount > 0 && (
           <span className="rounded-sm border border-[var(--color-accent)]/25 bg-[var(--color-accent)]/10 px-1.5 py-0.5 text-[10px] font-semibold tabular-nums text-[var(--color-accent)]">
             {activeCount}
           </span>
         )}
-      </button>
+      </div>
 
-      {!collapsed && (
-        <div className="mt-2.5 space-y-2">
+      <div className="mt-2.5 space-y-2">
           <div className="flex flex-wrap items-center gap-2">
             <Input
               value={searchValue}
@@ -130,7 +120,6 @@ export function InstanceFilterBar({ filters, onChange, proxies, cores, allTags, 
             onChange={tags => set('tags', tags)}
           />
         </div>
-      )}
     </section>
   )
 

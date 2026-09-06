@@ -1,5 +1,5 @@
-﻿import { useState, useRef, useEffect } from 'react'
-import { Bell, User, Settings, Check, Trash2, Info, AlertCircle, CheckCircle } from 'lucide-react'
+import { useState, useRef, useEffect } from 'react'
+import { Bell, User, Check, Trash2, Info, AlertCircle, CheckCircle } from 'lucide-react'
 import { Link, useLocation } from 'react-router-dom'
 import clsx from 'clsx'
 import { useNotificationStore, type Notification } from '../../store/notificationStore'
@@ -118,14 +118,14 @@ function NotificationDropdown({
 
 const pageLabels: Array<{ prefix: string; label: string }> = [
   { prefix: '/browser/auto-config', label: '自动配置' },
-  { prefix: '/browser/list', label: '实例总览' },
+  { prefix: '/browser/list', label: '实例' },
   { prefix: '/browser/proxy-pool', label: '代理池' },
   { prefix: '/browser/cores', label: '浏览器内核' },
   { prefix: '/browser/extensions', label: '插件包' },
   { prefix: '/browser/bookmarks', label: '书签与标签' },
   { prefix: '/browser/automation', label: '自动化脚本' },
   { prefix: '/browser/logs', label: '日志与诊断' },
-  { prefix: '/settings', label: '全局设置' },
+  { prefix: '/settings', label: '设置' },
   { prefix: '/system/docs', label: '文档中心' },
   { prefix: '/profile', label: '工作区资料' },
 ]
@@ -154,14 +154,11 @@ export function Topbar() {
   }, [])
 
   return (
-    <header className="flex h-14 items-center justify-between gap-4 border-b border-[var(--color-border-default)] bg-[var(--color-bg-surface)] px-4">
-      <div className="flex min-w-0 items-center gap-3">
-        <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.2em] text-[var(--color-accent)]">Latitude / Control</span>
-        <span className="hidden h-4 w-px bg-[var(--color-border-default)] sm:block" aria-hidden="true" />
-        <span className="truncate text-sm text-[var(--color-text-secondary)]">{getPageLabel(location.pathname)}</span>
+    <header className="flex h-12 items-center justify-between gap-4 border-b border-[var(--color-border-default)] bg-[var(--color-bg-surface)] px-5">
+      <div className="flex min-w-0 items-center">
+        <span className="truncate text-[15px] font-medium tracking-[-0.01em] text-[var(--color-text-primary)]">{getPageLabel(location.pathname)}</span>
       </div>
 
-      {/* 右侧操作 */}
       <div className="flex items-center gap-1">
         {/* 通知按钮 */}
         <div className="relative" ref={dropdownRef}>
@@ -196,24 +193,17 @@ export function Topbar() {
           )}
         </div>
 
-        <Link
-          to="/settings"
-          className="w-8 h-8 flex items-center justify-center text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)] hover:bg-[var(--color-accent-muted)] rounded-md transition-colors duration-150"
-          title="设置"
-        >
-          <Settings className="w-4 h-4" />
-        </Link>
-
-        <div className="w-px h-5 bg-[var(--color-border-default)] mx-1.5" />
+        <div className="mx-1.5 h-5 w-px bg-[var(--color-border-default)]" aria-hidden="true" />
 
         <Link
           to="/profile"
-          className="flex items-center gap-2 pl-1 pr-2.5 py-1 rounded-md hover:bg-[var(--color-accent-muted)] transition-colors duration-150"
+          className="flex items-center gap-2 rounded-md px-1.5 py-1 transition-colors duration-150 hover:bg-[var(--color-bg-muted)]"
+          title="工作区资料"
         >
-          <div className="w-7 h-7 bg-[var(--color-accent)] rounded-md flex items-center justify-center">
-            <User className="w-3.5 h-3.5 text-[var(--color-text-inverse)]" />
+          <div className="flex h-7 w-7 items-center justify-center rounded-md border border-[var(--color-border-default)] bg-[var(--color-bg-muted)]">
+            <User className="h-3.5 w-3.5 text-[var(--color-text-secondary)]" />
           </div>
-          <span className="text-sm font-medium text-[var(--color-text-secondary)]">Admin</span>
+          <span className="hidden text-sm font-medium text-[var(--color-text-secondary)] sm:inline">Admin</span>
         </Link>
       </div>
     </header>

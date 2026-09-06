@@ -251,11 +251,18 @@ input, select, textarea {
 }
 
 .browser-profile-grid {
-  min-height: 20rem;
+  min-height: 0;
 }
 
 .browser-profile-card:hover {
-  box-shadow: var(--shadow-xs);
+  background: var(--color-bg-subtle);
+  box-shadow: none;
+}
+
+.browser-list-actions > a,
+.browser-list-actions > button,
+.browser-list-actions > div {
+  flex: 0 0 auto;
 }
 
 .browser-list-filter {

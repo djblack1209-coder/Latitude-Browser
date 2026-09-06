@@ -523,7 +523,7 @@ export function BrowserListPage() {
 
 
   return (
-    <div className="overflow-auto p-5 space-y-5 animate-fade-in h-full">
+    <div className="apple-page flex min-h-full flex-col gap-4">
       <BrowserListHeader
         profileCount={profiles.length}
         filteredProfileCount={filteredProfiles.length}

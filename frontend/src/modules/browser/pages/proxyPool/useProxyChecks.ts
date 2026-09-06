@@ -15,7 +15,13 @@ import { toLatencyValue } from './storage'
 import { readIPHealthCache, readLatencyCache, readLatencyEngineCache, writeIPHealthCache, writeLatencyCache, writeLatencyEngineCache } from './storage'
 
 interface UseProxyChecksOptions {
-  proxies: Array<{ proxyId: string }>
+  proxies: Array<{
+    proxyId: string
+    proxyConfig?: string
+    lastLatencyMs?: number
+    lastTestOk?: boolean
+    lastTestedAt?: string
+  }>
 }
 
 export function useProxyChecks({ proxies }: UseProxyChecksOptions) {
@@ -59,6 +65,25 @@ export function useProxyChecks({ proxies }: UseProxyChecksOptions) {
         if (validIds.has(proxyId)) next[proxyId] = latency
         else changed = true
       })
+
+      // The backend persists the latest check result. Prefer it over a stale
+      // browser-local failure so reopening the page reflects the real state.
+      proxies.forEach(proxy => {
+        if (!proxy.lastTestedAt || proxy.proxyConfig === 'direct://') return
+        const latency = Number(proxy.lastLatencyMs)
+        if (proxy.lastTestOk === true && Number.isFinite(latency) && latency >= 0) {
+          if (next[proxy.proxyId] !== latency) {
+            next[proxy.proxyId] = latency
+            changed = true
+          }
+          return
+        }
+        const failureValue = toLatencyValue(false, 0, '最近一次测速失败')
+        if (next[proxy.proxyId] !== failureValue) {
+          next[proxy.proxyId] = failureValue
+          changed = true
+        }
+      })
       return changed ? next : prev
     })
 
@@ -78,6 +103,18 @@ export function useProxyChecks({ proxies }: UseProxyChecksOptions) {
       Object.entries(prev).forEach(([proxyId, error]) => {
         if (validIds.has(proxyId)) next[proxyId] = error
         else changed = true
+      })
+      proxies.forEach(proxy => {
+        if (!proxy.lastTestedAt || proxy.proxyConfig === 'direct://') return
+        if (proxy.lastTestOk === true) {
+          if (next[proxy.proxyId]) {
+            delete next[proxy.proxyId]
+            changed = true
+          }
+        } else if (next[proxy.proxyId] !== '最近一次测速失败') {
+          next[proxy.proxyId] = '最近一次测速失败'
+          changed = true
+        }
       })
       return changed ? next : prev
     })
@@ -109,11 +146,28 @@ export function useProxyChecks({ proxies }: UseProxyChecksOptions) {
       delete next[record.proxyId]
       return next
     })
-    const result = await browserProxyTestSpeed(record.proxyId)
-    const val = toLatencyValue(result.ok, result.latencyMs, result.error)
-    setLatencyMap(prev => ({ ...prev, [record.proxyId]: val }))
-    if (result.error) setLatencyErrorMap(prev => ({ ...prev, [record.proxyId]: result.error || '' }))
-    if (result.engine) setLatencyEngineMap(prev => ({ ...prev, [record.proxyId]: result.engine || '' }))
+    try {
+      const result = await browserProxyTestSpeed(record.proxyId)
+      const val = toLatencyValue(result.ok, result.latencyMs, result.error)
+      setLatencyMap(prev => ({ ...prev, [record.proxyId]: val }))
+      setLatencyErrorMap(prev => {
+        const next = { ...prev }
+        if (result.error) next[record.proxyId] = result.error
+        else delete next[record.proxyId]
+        return next
+      })
+      setLatencyEngineMap(prev => {
+        const next = { ...prev }
+        if (result.engine) next[record.proxyId] = result.engine
+        else delete next[record.proxyId]
+        return next
+      })
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error || '测速失败')
+      setLatencyMap(prev => ({ ...prev, [record.proxyId]: toLatencyValue(false, 0, message) }))
+      setLatencyErrorMap(prev => ({ ...prev, [record.proxyId]: message }))
+      toast.error(`${record.proxyName}：${message}`)
+    }
   }
 
   const handleTestAll = async (items: ProxyDisplayInfo[]) => {
@@ -158,6 +212,7 @@ export function useProxyChecks({ proxies }: UseProxyChecksOptions) {
         const next = { ...prev }
         results.forEach(result => {
           if (result.engine) next[result.proxyId] = result.engine
+          else delete next[result.proxyId]
         })
         return next
       })
@@ -165,9 +220,27 @@ export function useProxyChecks({ proxies }: UseProxyChecksOptions) {
         const next = { ...prev }
         results.forEach(result => {
           if (result.error) next[result.proxyId] = result.error
+          else delete next[result.proxyId]
         })
         return next
       })
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error || '批量测速失败')
+      setLatencyMap(prev => {
+        const next = { ...prev }
+        testable.forEach(proxy => {
+          next[proxy.proxyId] = toLatencyValue(false, 0, message)
+        })
+        return next
+      })
+      setLatencyErrorMap(prev => {
+        const next = { ...prev }
+        testable.forEach(proxy => {
+          next[proxy.proxyId] = message
+        })
+        return next
+      })
+      toast.error(`批量测速失败：${message}`)
     } finally {
       off?.()
       setTestingAll(false)
