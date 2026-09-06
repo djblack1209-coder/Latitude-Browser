@@ -60,7 +60,7 @@ POST ${baseUrl}/api/launch`,
       step: '05',
       title: '接口调用',
       summary: '最后再接外部脚本或调度系统，按需接管 CDP。',
-      path: '外部脚本 -> Launch API -> ant-chrome -> 浏览器实例',
+      path: '外部脚本 -> Latitude Browser Launch API -> 浏览器实例',
       example: `curl -X POST ${baseUrl}/api/runtime/session \\
   -H "Content-Type: application/json" \\
   -d '{
