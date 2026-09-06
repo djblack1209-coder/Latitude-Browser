@@ -6,6 +6,8 @@ import (
 	"strings"
 )
 
+// DefaultAPIKeyHeader is a legacy wire-compatible header kept for existing clients.
+// It is not a user-facing product identifier.
 const DefaultAPIKeyHeader = "X-Ant-Api-Key"
 
 // APIAuthConfig 定义 LaunchServer 对 /api/* 请求的可选认证配置。

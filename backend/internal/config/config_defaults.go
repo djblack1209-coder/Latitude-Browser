@@ -50,8 +50,10 @@ func normalizeConfig(config *Config) {
 		config.Database.SQLite.Path = defaultConfig.Database.SQLite.Path
 	}
 
-	if strings.TrimSpace(config.App.Name) == "" {
-		config.App.Name = defaultConfig.App.Name
+	// The product name is intentionally not user-configurable. This prevents
+	// stale imported configs from changing the native window/app branding.
+	if !strings.EqualFold(strings.TrimSpace(config.App.Name), ProductDisplayName) {
+		config.App.Name = ProductDisplayName
 	}
 	if config.App.Window.Width <= 0 {
 		config.App.Window.Width = defaultConfig.App.Window.Width
@@ -243,7 +245,7 @@ func DefaultConfig() *Config {
 			},
 		},
 		App: AppConfig{
-			Name: "Latitude Browser",
+			Name: ProductDisplayName,
 			Window: WindowConfig{
 				Width:     1750,
 				Height:    1000,

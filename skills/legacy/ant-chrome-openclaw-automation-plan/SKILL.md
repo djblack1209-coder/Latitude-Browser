@@ -1,9 +1,10 @@
 ---
+status: legacy compatibility
 name: ant-chrome-openclaw-automation-plan
 description: Use when implementing, reviewing, auditing, or updating the ant-chrome and OpenClaw integration design, rollout status, or public HTTP API contract. Prefer this skill for low-coupling integration work around runtime/session, runtime/stop, automation/scripts, playwright-cdp execution, and OpenClaw compatibility mapping. Do not use it for day-to-day LaunchServer API invocation; use the sibling ant-chrome-openclaw skill instead.
 ---
 
-# Ant Browser OpenClaw Integration Plan
+# Legacy Ant Browser OpenClaw Integration Plan
 
 Use this skill for engineering work on the integration itself: planning, code changes, API alignment, audits, and rollout decisions.
 

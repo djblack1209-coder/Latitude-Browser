@@ -68,8 +68,8 @@ bash publish/linux/publish-linux-all.sh
 
 - Linux packages do **not** include browser cores (`chrome/` is not bundled).
 - Build on native architecture runner for stability.
-- `.deb` installs app files under `/opt/ant-browser`.
-- `.deb` bundles `xray` and `sing-box` under `/opt/ant-browser/bin`.
+- `.deb` installs Latitude Browser files under the existing compatibility path `/opt/latitude-browser`.
+- `.deb` bundles `xray` and `sing-box` under the same compatibility path `/opt/latitude-browser/bin`.
 - Linux packages keep an empty `chrome/` placeholder with `README.md`, but do **not** bundle browser core binaries.
 - `.deb` registers an application launcher at `/usr/share/applications/latitude-browser.desktop`.
 - `.deb` installs standard Linux desktop icons under `/usr/share/icons/hicolor/*/apps/latitude-browser.png` and `/usr/share/pixmaps/latitude-browser.png`, so menus and launchers are more likely to pick up the app icon correctly.

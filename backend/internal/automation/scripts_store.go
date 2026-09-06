@@ -9,7 +9,8 @@ import (
 )
 
 const (
-	defaultScriptEntryFile          = "index.cjs"
+	defaultScriptEntryFile = "index.cjs"
+	// defaultScriptPackageFormat is a legacy package identifier retained for import compatibility.
 	defaultScriptPackageFormat      = "ant-automation-script"
 	defaultScriptManifestVersion    = 1
 	defaultScriptCreateNameTemplate = "${templateName}-${timestamp}"

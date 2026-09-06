@@ -75,7 +75,7 @@ The repository does not yet have:
 The repository now includes the first macOS writable-state implementation for app bundle roots:
 
 - when the app root is inside `.app/Contents/MacOS` or `.app/Contents/Resources`
-- writable state is redirected to `~/Library/Application Support/ant-browser`
+- writable state is redirected to the `~/Library/Application Support/latitude-browser`
 - `bin/` stays in the app bundle
 - config, chrome, and data move to the user state root
 
@@ -135,16 +135,16 @@ Why:
 
 Recommended structure inside the built app:
 
-- `Latitude Browser.app/Contents/MacOS/ant-chrome`
+- `Latitude Browser.app/Contents/MacOS/latitude-browser` (runtime filename)
 - `Latitude Browser.app/Contents/Resources/bin/xray`
 - `Latitude Browser.app/Contents/Resources/bin/sing-box`
 - optional placeholder `chrome/README.md` if you want to keep behavior aligned with Linux
 
 ### User-Writable State
 
-Recommended macOS state root:
+Recommended macOS state root (existing compatibility path):
 
-- `~/Library/Application Support/ant-browser`
+- `~/Library/Application Support/latitude-browser`
 
 Recommended contents under the state root:
 
@@ -290,7 +290,7 @@ The macOS work should not be considered complete until all items below are verif
 
 - app launches from Finder
 - app launches after copying to `/Applications`
-- first launch creates `~/Library/Application Support/ant-browser`
+- first launch creates the `~/Library/Application Support/latitude-browser`
 - `config.yaml` is seeded correctly
 - database and `data/` are created under the user state root
 
@@ -349,7 +349,7 @@ The safest first milestone is:
 - native build on a real Mac
 - unsigned `.app`
 - zipped artifact for internal testing
-- detached writable state under `~/Library/Application Support/ant-browser`
+- detached writable state under the `~/Library/Application Support/latitude-browser`
 - bundled `xray` and `sing-box`
 
 Do not start with:

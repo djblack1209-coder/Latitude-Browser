@@ -66,12 +66,9 @@ func NewApp(appRoot string, appVersion ...string) *App {
 }
 
 func (a *App) appName() string {
-	if a.config != nil {
-		if name := strings.TrimSpace(a.config.App.Name); name != "" {
-			return name
-		}
-	}
-	return "Latitude Browser"
+	// Keep dashboard metadata and exported manifests aligned with the native
+	// window title even when an older backup or user-state file is loaded.
+	return config.ProductDisplayName
 }
 
 func (a *App) appVersion() string {

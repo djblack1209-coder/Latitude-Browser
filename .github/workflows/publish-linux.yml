@@ -102,7 +102,7 @@ jobs:
           validate_dir="$(mktemp -d)"
           echo "Validating: $tar_file"
           tar -xzf "$tar_file" -C "$validate_dir"
-          test -x "$validate_dir/ant-chrome"
+          test -x "$validate_dir/latitude-browser"
           test -x "$validate_dir/bin/xray"
           test -x "$validate_dir/bin/sing-box"
           test -f "$validate_dir/config.yaml"

@@ -271,7 +271,7 @@ try {
     Write-Host "  Linux 架构: $linuxArch"
     Write-Host ""
 
-    $builderImage = "ant-browser-linux-builder:local"
+    $builderImage = "latitude-browser-linux-builder:local"
     $dockerfilePath = Join-Path $RepoRoot "publish/linux/linux-builder.Dockerfile"
     $resolvedBuilderBaseImage = $BuilderBaseImage
     if (-not $resolvedBuilderBaseImage -or $resolvedBuilderBaseImage.Trim() -eq "") {
@@ -338,10 +338,10 @@ try {
         Write-Host ""
     }
 
-    $npmCacheVolume = "ant-browser-linux-npm-cache"
-    $nodeModulesVolume = "ant-browser-linux-node-modules-$linuxArch"
-    $goModCacheVolume = "ant-browser-linux-go-mod-cache"
-    $goBuildCacheVolume = "ant-browser-linux-go-build-cache"
+    $npmCacheVolume = "latitude-browser-linux-npm-cache"
+    $nodeModulesVolume = "latitude-browser-linux-node-modules-$linuxArch"
+    $goModCacheVolume = "latitude-browser-linux-go-mod-cache"
+    $goBuildCacheVolume = "latitude-browser-linux-go-build-cache"
     $runtimeCpuLimit = Get-EnvOrDefault -Name "ANT_BROWSER_LINUX_DOCKER_CPUS" -DefaultValue "2"
     $runtimeMemoryLimit = Get-EnvOrDefault -Name "ANT_BROWSER_LINUX_DOCKER_MEMORY" -DefaultValue "1408m"
     $runtimeMemorySwapLimit = Get-EnvOrDefault -Name "ANT_BROWSER_LINUX_DOCKER_MEMORY_SWAP" -DefaultValue "1792m"

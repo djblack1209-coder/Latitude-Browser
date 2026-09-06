@@ -208,7 +208,7 @@ if [[ "$SKIP_BUILD" -ne 1 ]]; then
   echo "[3/4] Building macOS app bundle with Wails..."
   (
     cd "$ROOT_DIR"
-    wails build -s -platform "darwin/$ARCH" -o ant-chrome
+    wails build -s -platform "darwin/$ARCH" -o latitude-browser
   )
 else
   echo "[WARN] skipping build step"
@@ -251,6 +251,14 @@ ditto "$APP_STAGE" "$APP_EXPORT"
 rm -f "$OUTPUT_DIR/$ZIP_NAME"
 ditto -c -k --sequesterRsrc --keepParent "$APP_EXPORT" "$OUTPUT_DIR/$ZIP_NAME"
 
+# Keep packaged .app bundles out of Spotlight/LaunchServices. The zip is the
+# distributable artifact; the raw bundle is retained only for local inspection.
+OUTPUT_BUNDLE_DIR="$OUTPUT_DIR/.bundles.noindex"
+mkdir -p "$OUTPUT_BUNDLE_DIR"
+OUTPUT_BUNDLE_PATH="$OUTPUT_BUNDLE_DIR/$(basename "$APP_EXPORT")"
+rm -rf "$OUTPUT_BUNDLE_PATH"
+mv "$APP_EXPORT" "$OUTPUT_BUNDLE_PATH"
+
 # Wails writes the source bundle into build/bin. It is only an assembly input;
 # leaving it there makes Spotlight/LaunchServices discover a second app with the
 # same Bundle ID and can make Dock or automated tests launch the wrong bundle.
@@ -264,11 +272,18 @@ case "$APP_SOURCE" in
 esac
 
 echo "Artifacts generated:"
-echo "  - $APP_EXPORT"
+echo "  - $OUTPUT_BUNDLE_PATH (local bundle, excluded from indexing)"
 echo "  - $OUTPUT_DIR/$ZIP_NAME"
 
 if [[ "$KEEP_STAGING" -ne 1 ]]; then
   rm -rf "$APP_STAGE"
+else
+  STAGING_BUNDLE_DIR="$STAGING_ROOT/.bundles.noindex"
+  mkdir -p "$STAGING_BUNDLE_DIR"
+  STAGING_BUNDLE_PATH="$STAGING_BUNDLE_DIR/$(basename "$APP_STAGE")"
+  rm -rf "$STAGING_BUNDLE_PATH"
+  mv "$APP_STAGE" "$STAGING_BUNDLE_PATH"
+  echo "Kept staging bundle outside Spotlight index: $STAGING_BUNDLE_PATH"
 fi
 
 echo "Done."

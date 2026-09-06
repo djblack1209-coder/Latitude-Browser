@@ -1,14 +1,15 @@
-﻿# Latitude Browser
+# Latitude Browser
 
 
-> Latitude Browser 是基于 Ant Browser 上游代码的本地二次开发工作树。上游仓库当前未附带独立 LICENSE，
-> 在获得作者明确授权或上游补充许可证前，请将本项目视为私有/内部使用，不要直接公开分发修改后的安装包或源码。
+> Latitude Browser 是一个独立维护的桌面浏览器工作台。本工作树包含上游代码，
+> 上游仓库当前未附带独立 LICENSE；在获得作者明确授权或上游补充许可证前，请将本项目视为私有/内部使用，
+> 不要直接公开分发修改后的安装包或源码。法律与来源说明见 `docs/plan/source-migration-and-license.md`。
 > 面向多账号隔离、代理绑定和本地环境管理的桌面浏览器工具（Windows / Linux / macOS unsigned）。
-> 产品入口说明：正式产品名为 `Latitude Browser`。macOS 验收、Dock 配置和自动化测试统一使用 `/Applications/Latitude Browser.app`；`ant-chrome`、`ant-browser` 等仅是现有构建/存储兼容标识，不代表第二个产品入口。
+> 产品入口说明：正式产品名为 `Latitude Browser`。macOS 验收、Dock 配置和自动化测试统一使用 `/Applications/Latitude Browser.app`。历史构建和存储兼容由迁移逻辑处理，不代表第二个产品入口。
 
-[![Release](https://img.shields.io/github/v/release/black-ant/Ant-Browser?sort=semver)](https://github.com/black-ant/Ant-Browser/releases)
-[![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-blue)](https://github.com/black-ant/Ant-Browser/releases)
-[![Issues](https://img.shields.io/github/issues/black-ant/Ant-Browser)](https://github.com/black-ant/Ant-Browser/issues)
+[![Release](https://img.shields.io/github/v/release/djblack1209-coder/Latitude-Browser?sort=semver)](https://github.com/djblack1209-coder/Latitude-Browser/releases)
+[![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-blue)](https://github.com/djblack1209-coder/Latitude-Browser/releases)
+[![Issues](https://img.shields.io/github/issues/djblack1209-coder/Latitude-Browser)](https://github.com/djblack1209-coder/Latitude-Browser/issues)
 
 ## 推荐内核项目
 
@@ -97,7 +98,7 @@ Latitude Browser 适合以下场景：
 ### 1.1.0 · 2026-03-19
 
 - 完善 Linux 支持：补齐 Linux 环境下的开发、打包、安装、启动与运行链路，并持续修复安装版启动与退出稳定性问题
-- 补齐 macOS unsigned 内测构建链路：支持在原生 macOS 主机上打包 `.app` / `.zip`，并将用户状态目录放到 `~/Library/Application Support/ant-browser`
+- 补齐 macOS unsigned 内测构建链路：支持在原生 macOS 主机上打包 `.app` / `.zip`，用户状态目录统一使用 `~/Library/Application Support/latitude-browser`，旧状态会在首次启动时自动迁移
 - 新增 SOCKS 代理测试支持：SOCKS 代理能力已进入测试阶段，后续会继续验证稳定性与兼容性
 - 实验性支持接口触发浏览器：支持通过接口启动浏览器实例，便于后续接入自动化流程
 
@@ -188,10 +189,10 @@ Latitude Browser 适合以下场景：
 
 ### 下载与运行
 
-1. 前往 Releases 页面下载最新版本：<https://github.com/black-ant/Ant-Browser/releases>
+1. 前往 Releases 页面下载最新版本：<https://github.com/djblack1209-coder/Latitude-Browser/releases>
 2. 安装版直接运行 `LatitudeBrowser-Setup-*.exe`
-3. 便携版解压后运行 `ant-chrome.exe`
-4. Linux 包下载后可直接安装 `latitude-browser_<version>_<arch>.deb`，或解压 `tar.gz` 后运行 `ant-chrome`
+3. 便携版解压后运行 `latitude-browser.exe`
+4. Linux 包下载后可直接安装 `latitude-browser_<version>_<arch>.deb`，或解压 `tar.gz` 后运行 `latitude-browser`
 5. macOS unsigned 包解压后运行 `LatitudeBrowser-<version>-macos-<arch>.app`；如被 Gatekeeper 拦截，请对本机测试包执行 `xattr -dr com.apple.quarantine <app路径>` 后再打开
 
 ### 从源码运行
@@ -361,8 +362,8 @@ chrome/
 
 ## 支持与反馈
 
-- Releases：<https://github.com/black-ant/Ant-Browser/releases>
-- Issues：<https://github.com/black-ant/Ant-Browser/issues>
+- Releases：<https://github.com/djblack1209-coder/Latitude-Browser/releases>
+- Issues：<https://github.com/djblack1209-coder/Latitude-Browser/issues>
 - 感谢以下社区的支持：<https://linux.do/>
 
 ## License

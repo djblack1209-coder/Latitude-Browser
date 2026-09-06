@@ -63,12 +63,12 @@ jobs:
           app_path="$(ls -1d publish/output/LatitudeBrowser-*-macos-${{ matrix.arch }}.app | head -n 1)"
           zip_path="$(ls -1 publish/output/LatitudeBrowser-*-macos-${{ matrix.arch }}.zip | head -n 1)"
           echo "Validating: $app_path"
-          test -x "$app_path/Contents/MacOS/ant-chrome"
+          test -x "$app_path/Contents/MacOS/latitude-browser"
           test -x "$app_path/Contents/MacOS/bin/xray"
           test -x "$app_path/Contents/MacOS/bin/sing-box"
           plutil -lint "$app_path/Contents/Info.plist"
           ditto -x -k "$zip_path" /tmp/latitude-browser-macos-validate
-          test -x "/tmp/latitude-browser-macos-validate/$(basename "$app_path")/Contents/MacOS/ant-chrome"
+          test -x "/tmp/latitude-browser-macos-validate/$(basename "$app_path")/Contents/MacOS/latitude-browser"
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4

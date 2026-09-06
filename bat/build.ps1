@@ -106,7 +106,7 @@ try {
     Write-Host "[4/7] Generating Wails bindings..."
     Invoke-NativeCommand -FilePath "cmd" -Arguments @("/c", "call bat\generate-bindings.bat --no-pause")
 
-    $binaryPath = Join-Path $repoRoot "build/bin/ant-chrome.exe"
+    $binaryPath = Join-Path $repoRoot "build/bin/latitude-browser.exe"
 
     Write-Host ""
     Write-Host "[5/7] Building frontend..."
@@ -145,7 +145,7 @@ try {
     Write-Host "  OK build completed"
     Write-Host "========================================"
     Write-Host ""
-    Write-Host "Executable: build\bin\ant-chrome.exe"
+    Write-Host "Executable (Latitude Browser canonical filename): build\bin\latitude-browser.exe"
     exit 0
 }
 catch {

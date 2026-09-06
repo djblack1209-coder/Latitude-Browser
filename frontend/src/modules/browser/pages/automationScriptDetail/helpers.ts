@@ -225,7 +225,7 @@ export function buildOpenClawDualSiteCommand(
   const targetScriptID = scriptID.trim() || DUAL_INSTANCE_RUNTIME_SCRIPT_ID;
 
   return [
-    "使用 ant-chrome-openclaw skill。",
+    "使用 Latitude Browser OpenClaw skill。",
     `请由 OpenClaw 触发执行预置脚本 ${targetScriptID}。`,
     `参数里 browsers 使用 ${primaryCode} 和 ${secondaryCode}，并分别设置 startUrls。`,
     `${primaryCode} 的 startUrls 固定为 ["https://finance.sina.com.cn/"]。`,

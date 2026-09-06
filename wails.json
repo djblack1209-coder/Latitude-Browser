@@ -1,12 +1,11 @@
 {
   "$schema": "https://wails.io/schemas/config.v2.json",
   "name": "Latitude Browser",
-  "outputfilename": "ant-chrome",
+  "outputfilename": "latitude-browser",
   "frontend:install": "npm install && npm run ensure:native",
   "frontend:build": "npm run build:clean",
   "author": {
-    "name": "Latitude Browser",
-    "email": "contact@antblack.de"
+    "name": "Latitude Browser"
   },
   "info": {
     "companyName": "Latitude Browser",

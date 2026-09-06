@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"gopkg.in/yaml.v3"
 )
@@ -23,7 +24,14 @@ func Load(configPath string) (*Config, error) {
 		return nil, fmt.Errorf("解析配置文件失败: %w", err)
 	}
 
+	originalName := strings.TrimSpace(config.App.Name)
 	normalizeConfig(&config)
+	if originalName != config.App.Name {
+		// Persist the one-time branding migration when possible. Loading a
+		// read-only development config must still succeed, so save failures are
+		// intentionally non-fatal.
+		_ = config.Save(configPath)
+	}
 
 	return &config, nil
 }

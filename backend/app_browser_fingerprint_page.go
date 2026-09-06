@@ -796,7 +796,7 @@ function canvasHash() {
     ctx.textBaseline = 'top';
     ctx.font = '16px Arial';
     ctx.fillStyle = '#f60'; ctx.fillRect(4, 4, 150, 36);
-    ctx.fillStyle = '#069'; ctx.fillText('Ant fingerprint check', 9, 12);
+    ctx.fillStyle = '#069'; ctx.fillText('Latitude Browser fingerprint check', 9, 12);
     ctx.strokeStyle = 'rgba(120,60,200,.85)'; ctx.beginPath(); ctx.arc(210, 44, 30, 0, Math.PI * 2); ctx.stroke();
     return hashString(canvas.toDataURL());
   }, '');
@@ -820,7 +820,7 @@ function clientRectsHash() {
   return safe(function () {
     var node = document.createElement('div');
     node.style.cssText = 'position:absolute;left:-9999px;top:-9999px;width:180px;font:13px Arial;line-height:17px;';
-    node.textContent = 'Ant fingerprint client rects check';
+    node.textContent = 'Latitude Browser client rects check';
     document.body.appendChild(node);
     var rects = Array.prototype.map.call(node.getClientRects(), function (r) {
       return [r.x, r.y, r.width, r.height].map(function (v) { return Number(v).toFixed(3); }).join(':');

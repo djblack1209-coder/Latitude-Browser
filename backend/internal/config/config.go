@@ -1,7 +1,12 @@
 package config
 
 const (
-	DefaultLaunchServerPort         = 19876
+	// ProductDisplayName is the only user-facing application name.
+	// Legacy configuration values are migrated to this name at load time.
+	ProductDisplayName      = "Latitude Browser"
+	DefaultLaunchServerPort = 19876
+	// DefaultLaunchServerAPIKeyHeader is kept as a legacy wire-compatible header.
+	// It is not a user-facing product name and must not be renamed without an API migration.
 	DefaultLaunchServerAPIKeyHeader = "X-Ant-Api-Key"
 	DefaultAutomationInstallPolicy  = "on_demand"
 	DefaultAutomationNodeSource     = "auto"

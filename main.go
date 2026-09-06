@@ -146,7 +146,7 @@ func main() {
 		}
 	}
 
-	startupDebugEnabled := envFlagEnabled("ANT_BROWSER_DEBUG_STARTUP")
+	startupDebugEnabled := envFlagEnabled("LATITUDE_BROWSER_DEBUG_STARTUP") || envFlagEnabled("ANT_BROWSER_DEBUG_STARTUP")
 	if startupDebugEnabled {
 		log.Printf("应用根目录: %s (dev=%v)", appRoot, isDevMode)
 	}
@@ -184,11 +184,19 @@ func main() {
 		log.Printf("检测到 Linux 图形环境变量为空：DISPLAY / WAYLAND_DISPLAY 都未设置，GUI 窗口大概率无法创建")
 	}
 
-	// 加载配置
-	cfg, err := backend.LoadConfig(backend.ResolveRuntimePath(appRoot, "config.yaml"))
+	// 加载配置。原有用户状态可能仍保存着旧产品名；无论配置内容如何，
+	// 原生窗口标题都必须使用当前正式产品名，并将迁移后的名称写回状态文件。
+	configPath := backend.ResolveRuntimePath(appRoot, "config.yaml")
+	cfg, err := backend.LoadConfig(configPath)
 	if err != nil {
 		log.Printf("加载配置失败，使用默认配置: %v", err)
 		cfg = backend.DefaultConfig()
+	}
+	if cfg.App.Name != backend.ProductDisplayName {
+		cfg.App.Name = backend.ProductDisplayName
+		if saveErr := cfg.Save(configPath); saveErr != nil {
+			log.Printf("迁移旧应用名称失败（继续使用 Latitude Browser 窗口标题）: %v", saveErr)
+		}
 	}
 
 	// 创建应用实例
@@ -248,7 +256,7 @@ func main() {
 		)
 	}
 	err = wails.Run(&options.App{
-		Title:     cfg.App.Name,
+		Title:     backend.ProductDisplayName,
 		Width:     windowBounds.Width,
 		Height:    windowBounds.Height,
 		MinWidth:  windowBounds.MinWidth,

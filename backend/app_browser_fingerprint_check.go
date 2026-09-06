@@ -192,7 +192,7 @@ func evaluateBrowserFingerprintRuntime(debugPort int) (BrowserFingerprintRuntime
     ctx.fillStyle = '#f60';
     ctx.fillRect(4, 4, 120, 32);
     ctx.fillStyle = '#069';
-    ctx.fillText('ant fingerprint 自测', 8, 10);
+    ctx.fillText('Latitude Browser fingerprint check', 8, 10);
     ctx.strokeStyle = 'rgba(120, 60, 200, .8)';
     ctx.arc(160, 40, 28, 0, Math.PI * 2, true);
     ctx.stroke();
@@ -225,7 +225,7 @@ func evaluateBrowserFingerprintRuntime(debugPort int) (BrowserFingerprintRuntime
   function clientRectsHash() {
     var node = document.createElement('div');
     node.style.cssText = 'position:absolute;left:-9999px;top:-9999px;width:180px;font:13px Arial;line-height:17px;';
-    node.textContent = 'ant fingerprint client rects check';
+    node.textContent = 'Latitude Browser client rects check';
     document.body.appendChild(node);
     var rects = Array.prototype.map.call(node.getClientRects(), function (rect) {
       return [rect.x, rect.y, rect.width, rect.height].map(function (value) { return Number(value).toFixed(3); }).join(':');

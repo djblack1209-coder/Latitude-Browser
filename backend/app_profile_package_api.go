@@ -18,6 +18,7 @@ import (
 	wailsruntime "github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
+// profilePackageFormat is a legacy archive identifier retained for import compatibility.
 const profilePackageFormat = "ant-chrome-profile-package"
 
 type ProfilePackageManifest struct {
@@ -69,7 +70,7 @@ func (a *App) BrowserProfilePackageExport(profileIds []string) (ProfilePackageEx
 		return ProfilePackageExportResult{}, err
 	}
 
-	defaultName := fmt.Sprintf("ant-chrome-profile-package-%s.zip", time.Now().Format("20060102-150405"))
+	defaultName := fmt.Sprintf("latitude-browser-profile-package-%s.zip", time.Now().Format("20060102-150405"))
 	savePath, err := wailsruntime.SaveFileDialog(a.ctx, wailsruntime.SaveDialogOptions{
 		Title:           "导出实例",
 		DefaultFilename: defaultName,

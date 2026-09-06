@@ -53,7 +53,7 @@ export const DOC_GROUPS: LaunchDocGroup[] = [
       {
         id: 'tutorial-skill',
         label: 'SKILL 使用',
-        summary: 'OpenClaw 接入 ant-chrome-openclaw 的安装、提问模板和稳定使用规则。',
+        summary: 'OpenClaw 接入 Latitude Browser 的安装、提问模板和稳定使用规则。',
         content: DOC_SKILL_USAGE,
       },
       {

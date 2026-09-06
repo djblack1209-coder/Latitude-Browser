@@ -19,6 +19,25 @@ interface NotificationState {
 }
 
 const MAX_NOTIFICATIONS = 100
+const NOTIFICATION_STORAGE_KEY = 'latitude-browser-notifications'
+// Legacy storage key retained only for a one-time migration of existing local notifications.
+const LEGACY_NOTIFICATION_STORAGE_KEY = 'ant-browser-notifications'
+
+function migrateLegacyNotificationStorage() {
+    if (typeof window === 'undefined') return
+    try {
+        const storage = window.localStorage
+        if (!storage || storage.getItem(NOTIFICATION_STORAGE_KEY)) return
+        const legacy = storage.getItem(LEGACY_NOTIFICATION_STORAGE_KEY)
+        if (!legacy) return
+        storage.setItem(NOTIFICATION_STORAGE_KEY, legacy)
+        storage.removeItem(LEGACY_NOTIFICATION_STORAGE_KEY)
+    } catch {
+        // Storage access can be unavailable in privacy-restricted contexts.
+    }
+}
+
+migrateLegacyNotificationStorage()
 
 function formatNotificationTime() {
     const now = new Date()
@@ -51,6 +70,6 @@ export const useNotificationStore = create<NotificationState>()(persist((set) =>
 
     clearNotifications: () => set({ notifications: [] }),
 }), {
-    name: 'ant-browser-notifications',
+    name: NOTIFICATION_STORAGE_KEY,
     partialize: (state) => ({ notifications: state.notifications }),
 }))

@@ -73,7 +73,7 @@ FAQ：
 
 ### `build.bat`
 
-构建 `build\bin\ant-chrome.exe`。
+构建 Latitude Browser；输出文件为 `build\bin\latitude-browser.exe`。
 
 ```bat
 bat\build.bat
@@ -131,7 +131,7 @@ Windows 分支使用的项目路径：
 
 ```text
 输入：
-- build\bin\ant-chrome.exe
+- Latitude Browser 构建产物（正式文件名：`build\bin\latitude-browser.exe`）
 - publish\config.init.yaml
 - bin\xray.exe
 - bin\sing-box.exe
@@ -152,8 +152,8 @@ Windows 分支使用的项目路径：
 Linux 分支会通过 Docker Desktop 调用：
 
 ```text
-docker build -f publish/linux/linux-builder.Dockerfile -t ant-browser-linux-builder:local publish/linux
-docker run --rm -v <repo>:/workspace -w /workspace ant-browser-linux-builder:local ^
+docker build -f publish/linux/linux-builder.Dockerfile -t latitude-browser-linux-builder:local publish/linux
+docker run --rm -v <repo>:/workspace -w /workspace latitude-browser-linux-builder:local ^
   bash -c "bash publish/linux/publish-linux.sh --arch <Docker当前架构>"
 ```
 

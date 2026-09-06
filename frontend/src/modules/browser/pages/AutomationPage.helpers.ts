@@ -247,7 +247,7 @@ function buildAutomationSkillPrompt(
   payload: Record<string, unknown>,
 ) {
   const lines = [
-    "使用 ant-chrome-openclaw skill。",
+    "使用 Latitude Browser OpenClaw skill。",
     `执行预置脚本 ${script.id}（${script.name}）。`,
   ];
 

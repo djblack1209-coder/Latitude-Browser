@@ -12,6 +12,9 @@ import (
 type Config = appconfig.Config
 type TrayCallbacks = apptray.Callbacks
 
+// ProductDisplayName is the canonical user-facing application name.
+const ProductDisplayName = appconfig.ProductDisplayName
+
 func LoadConfig(path string) (*Config, error) {
 	cfg, err := appconfig.Load(path)
 	repairedConfig := false

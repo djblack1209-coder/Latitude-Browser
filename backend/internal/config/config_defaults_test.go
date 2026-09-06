@@ -46,3 +46,25 @@ func assertStringSliceContains(t *testing.T, values []string, expected string) {
 	}
 	t.Fatalf("values %#v missing %q", values, expected)
 }
+
+func TestNormalizeConfigMigratesLegacyProductName(t *testing.T) {
+	config := &Config{}
+	config.App.Name = "Ant Browser"
+
+	normalizeConfig(config)
+
+	if got, want := config.App.Name, ProductDisplayName; got != want {
+		t.Fatalf("product name = %q, want %q", got, want)
+	}
+}
+
+func TestNormalizeConfigKeepsProductNameCanonical(t *testing.T) {
+	config := &Config{}
+	config.App.Name = "Custom Browser"
+
+	normalizeConfig(config)
+
+	if got, want := config.App.Name, ProductDisplayName; got != want {
+		t.Fatalf("product name = %q, want %q", got, want)
+	}
+}

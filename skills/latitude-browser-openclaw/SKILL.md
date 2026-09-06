@@ -1,24 +1,24 @@
 ---
-name: ant-chrome-openclaw
-description: Manually invoke when the user wants OpenClaw to work inside a local Ant Browser / ant-chrome instance through LaunchServer and remote CDP, including launching by launchCode, checking or switching the active runtime target, stopping an instance, or running a saved Ant Browser automation script.
-when_to_use: Use this skill whenever the task mentions Ant Browser, ant-chrome, LaunchServer, launchCode, profileId/profileName selectors, runtime active/status/stop, attaching OpenClaw to an already running browser via remote CDP, or executing a saved Ant Browser automation script such as news-query-txt. This workflow can launch, stop, or mutate browser state, so prefer explicit invocation instead of silent automatic use.
-compatibility: Designed for OpenClaw with same-host Ant Browser LaunchServer access. Requires loopback access to the LaunchServer base URL plus either curl or PowerShell for host-side HTTP calls.
+name: latitude-browser-openclaw
+description: Manually invoke when the user wants OpenClaw to work inside a local Latitude Browser instance through LaunchServer and remote CDP, including launching by launchCode, checking or switching the active runtime target, stopping an instance, or running a saved Latitude Browser automation script.
+when_to_use: Use this skill whenever the task mentions Latitude Browser, LaunchServer, launchCode, profileId/profileName selectors, runtime active/status/stop, attaching OpenClaw to an already running browser via remote CDP, or executing a saved Latitude Browser automation script such as news-query-txt. This workflow can launch, stop, or mutate browser state, so prefer explicit invocation instead of silent automatic use.
+compatibility: Designed for OpenClaw with same-host Latitude Browser LaunchServer access. Requires loopback access to the LaunchServer base URL plus either curl or PowerShell for host-side HTTP calls.
 disable-model-invocation: true
 argument-hint: "[goal-or-script]"
-metadata: {"openclaw":{"skillKey":"ant-chrome-openclaw","primaryEnv":"ANT_CHROME_API_KEY","requires":{"anyBins":["curl","pwsh","powershell"]}}}
+metadata: {"openclaw":{"skillKey":"latitude-browser-openclaw","primaryEnv":"LATITUDE_BROWSER_API_KEY","requires":{"anyBins":["curl","pwsh","powershell"]}}}
 ---
 
-# Ant Browser via OpenClaw
+# Latitude Browser via OpenClaw
 
-Invoke this skill explicitly when the user wants OpenClaw to control browser work that should run inside Ant Browser (`ant-chrome`) instead of a browser launched directly by OpenClaw.
+Invoke this skill explicitly when the user wants OpenClaw to control browser work that should run inside Latitude Browser instead of a browser launched directly by OpenClaw.
 
 Do not use this skill for generic browsing tasks that should stay inside OpenClaw's own browser runtime.
 
 This skill assumes a same-host setup:
 
-- OpenClaw Gateway and Ant Browser run on the same machine.
-- Ant Browser LaunchServer is reachable on loopback.
-- OpenClaw Browser has a preconfigured remote CDP profile pointing at the Ant Browser LaunchServer URL.
+- OpenClaw Gateway and Latitude Browser run on the same machine.
+- Latitude Browser LaunchServer is reachable on loopback.
+- OpenClaw Browser has a preconfigured remote CDP profile pointing at the Latitude Browser LaunchServer URL.
 
 Read `references/setup.md` in this skill directory when the user is doing first-time setup, the browser profile is missing, or the launch endpoint cannot be reached.
 
@@ -26,14 +26,14 @@ Read `references/http.md` in this skill directory when you need exact request pa
 
 ## Defaults
 
-- Base URL: `ANT_CHROME_BASE_URL`, default `http://127.0.0.1:19876`
-- API header: `ANT_CHROME_API_HEADER`, default `X-Ant-Api-Key`
-- API key: `ANT_CHROME_API_KEY`, optional
-- Browser profile name: assume `ant-chrome` unless the user tells you a different OpenClaw browser profile name
+- Base URL: `LATITUDE_BROWSER_BASE_URL`, default `http://127.0.0.1:19876` (legacy fallback: `ANT_CHROME_BASE_URL`)
+- API header: `LATITUDE_BROWSER_API_HEADER`, default `X-Ant-Api-Key` (legacy fallback: `ANT_CHROME_API_HEADER`)
+- API key: `LATITUDE_BROWSER_API_KEY`, optional (legacy fallback: `ANT_CHROME_API_KEY`)
+- Browser profile name: assume `latitude-browser` unless the user tells you a different OpenClaw browser profile name
 
 ## Workflow
 
-1. On Windows, prefer `scripts/invoke_ant_chrome_api.ps1` through `pwsh` or `powershell` for LaunchServer calls. On Unix-like hosts, use the `curl` patterns in `references/http.md`.
+1. On Windows, prefer `scripts/invoke_latitude_browser_api.ps1` through `pwsh` or `powershell` for LaunchServer calls. On Unix-like hosts, use the `curl` patterns in `references/http.md`.
 2. Before any launch, stop, profile mutation, or automation-script run, verify LaunchServer with `GET /api/health` from the host using `exec`.
 3. Choose the narrowest safe action:
    - Check current unified CDP target: `GET /api/runtime/active`
@@ -58,9 +58,9 @@ Read `references/http.md` in this skill directory when you need exact request pa
 
 ## Operating Rules
 
-- Treat Ant Browser as the source of truth for profile state, proxies, tags, launch codes, and Chrome cores.
-- Do not switch to another Ant Browser target while the current remote CDP session is still being used unless the user explicitly asks to switch. LaunchServer exposes one active CDP target at a time. Query `GET /api/runtime/active` before switching if the current target matters.
-- Do not claim that OpenClaw `browser stop` stops the Ant Browser process. For remote CDP profiles it only detaches the OpenClaw control session.
+- Treat Latitude Browser as the source of truth for profile state, proxies, tags, launch codes, and Chrome cores.
+- Do not switch to another Latitude Browser target while the current remote CDP session is still being used unless the user explicitly asks to switch. LaunchServer exposes one active CDP target at a time. Query `GET /api/runtime/active` before switching if the current target matters.
+- Do not claim that OpenClaw `browser stop` stops the Latitude Browser process. For remote CDP profiles it only detaches the OpenClaw control session.
 - Do not invent HTTP routes that do not exist. The current stable surface is `health`, `profiles`, `profile status`, `profile stop`, `runtime active`, `runtime status`, `runtime stop`, `launch`, `launch logs`, and the automation script APIs under `/api/automation/scripts`.
 - If selector resolution is ambiguous, stop and ask the user to narrow with `launchCode`, `profileId`, or a stronger selector instead of picking a target silently.
 - If setup is incomplete, explain the missing prerequisite and point to `references/setup.md`.

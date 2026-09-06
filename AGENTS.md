@@ -42,6 +42,7 @@ Core expectations:
 - `build/bin/*.app` 与 `publish/output/*.app` 仅是构建产物，不得作为测试入口、Dock 目标或长期安装副本；打包验证完成后应移出系统索引位置或删除。
 - 每次安装/打包后都必须清理旧路径的 LaunchServices 注册，并验证系统搜索结果中只剩一个 `com.latitude.browser.desktop` 应用。
 - 测试脚本不得通过模糊名称（例如 `Ant Browser`、`Latitude Browser`）选择应用，必须直接启动 `/Applications/Latitude Browser.app`。
+- 所有产品界面、原生窗口标题、菜单、通知、安装器、桌面启动器、发布说明、示例文案和网络 User-Agent 必须使用 `Latitude Browser`；不得新增或恢复 `Ant Browser`、`Ant Chrome`、`AntBrowser` 等旧品牌可见文案。旧名称仅允许出现在兼容迁移逻辑、旧数据键、上游许可证/归属说明和 Go 模块路径中，并且必须标注为 legacy/compatibility。
 
 These shared skill instructions supplement project-specific rules in this `AGENTS.md`; keep more specific project rules authoritative for this repository.
 

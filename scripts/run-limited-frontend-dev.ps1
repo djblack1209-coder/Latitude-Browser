@@ -79,7 +79,7 @@ namespace AntChrome {
 "@
 }
 
-$jobName = "ant-chrome-node-$PID"
+$jobName = "latitude-browser-node-$PID"
 $jobHandle = [AntChrome.JobObjectNative]::CreateJobObject([IntPtr]::Zero, $jobName)
 if ($jobHandle -eq [IntPtr]::Zero) {
     throw "CreateJobObject failed: $([Runtime.InteropServices.Marshal]::GetLastWin32Error())"

@@ -123,7 +123,7 @@ export const DOC_SKILL_USAGE = `# SKILL 使用说明
 
 1. Latitude Browser 和 OpenClaw 在同一台机器上
 2. Latitude Browser 的 LaunchServer 可访问，默认是 \`http://127.0.0.1:19876\`
-3. OpenClaw 已安装 \`ant-chrome-openclaw\` skill，并且已有指向 Latitude Browser 的远程 CDP 浏览器配置
+3. OpenClaw 已安装 Latitude Browser OpenClaw skill，并且已有指向 Latitude Browser 的远程 CDP 浏览器配置
 
 ## 安装 Skill
 
@@ -134,13 +134,13 @@ export const DOC_SKILL_USAGE = `# SKILL 使用说明
 直接安装：
 
 \`\`\`powershell
-pwsh -File skills/ant-chrome-openclaw/scripts/install_ant_chrome_openclaw.ps1 -SetDefaultProfile
+pwsh -File skills/latitude-browser-openclaw/scripts/install_latitude_browser_openclaw.ps1 -SetDefaultProfile
 \`\`\`
 
 如果没探测到 OpenClaw 路径，再用：
 
 \`\`\`powershell
-pwsh -File skills/ant-chrome-openclaw/scripts/install_ant_chrome_openclaw.ps1 -TargetSkillsDir "C:\\path\\to\\openclaw\\skills" -ConfigFile "C:\\path\\to\\openclaw\\openclaw.json" -SetDefaultProfile
+pwsh -File skills/latitude-browser-openclaw/scripts/install_latitude_browser_openclaw.ps1 -TargetSkillsDir "C:\\path\\to\\openclaw\\skills" -ConfigFile "C:\\path\\to\\openclaw\\openclaw.json" -SetDefaultProfile
 \`\`\`
 
 ### Linux
@@ -148,14 +148,14 @@ pwsh -File skills/ant-chrome-openclaw/scripts/install_ant_chrome_openclaw.ps1 -T
 直接安装：
 
 \`\`\`bash
-bash skills/ant-chrome-openclaw/scripts/install_ant_chrome_openclaw.sh \
+bash skills/latitude-browser-openclaw/scripts/install_latitude_browser_openclaw.sh \
   --set-default-profile
 \`\`\`
 
 如果没探测到 OpenClaw 路径，再用：
 
 \`\`\`bash
-bash skills/ant-chrome-openclaw/scripts/install_ant_chrome_openclaw.sh \\
+bash skills/latitude-browser-openclaw/scripts/install_latitude_browser_openclaw.sh \\
   --target-skills-dir /path/to/openclaw/skills \\
   --config-file /path/to/openclaw/openclaw.json \\
   --set-default-profile
@@ -168,7 +168,7 @@ bash skills/ant-chrome-openclaw/scripts/install_ant_chrome_openclaw.sh \\
 每次提问开头都明确写：
 
 \`\`\`text
-使用 ant-chrome-openclaw skill。
+使用 Latitude Browser OpenClaw skill。
 \`\`\`
 
 然后直接写你的目标，不要只说“帮我打开浏览器”。
@@ -178,7 +178,7 @@ bash skills/ant-chrome-openclaw/scripts/install_ant_chrome_openclaw.sh \\
 ### 启动并接管
 
 \`\`\`text
-使用 ant-chrome-openclaw skill。
+使用 Latitude Browser OpenClaw skill。
 先检查 LaunchServer。
 如果实例 BUYER_001 没有运行，就启动它。
 确认 debugReady=true 后接管浏览器，并打开 https://example.com
@@ -187,7 +187,7 @@ bash skills/ant-chrome-openclaw/scripts/install_ant_chrome_openclaw.sh \\
 ### 只接管当前活动实例
 
 \`\`\`text
-使用 ant-chrome-openclaw skill。
+使用 Latitude Browser OpenClaw skill。
 先检查当前 active 实例。
 如果当前活动实例已经是 BUYER_001，就直接接管，不要切换到别的实例。
 \`\`\`
@@ -195,7 +195,7 @@ bash skills/ant-chrome-openclaw/scripts/install_ant_chrome_openclaw.sh \\
 ### 按条件匹配实例
 
 \`\`\`text
-使用 ant-chrome-openclaw skill。
+使用 Latitude Browser OpenClaw skill。
 按 keyword=buyer-001 查实例状态。
 如果唯一命中，就接管。
 如果多命中，不要自动切换，先告诉我。
@@ -204,7 +204,7 @@ bash skills/ant-chrome-openclaw/scripts/install_ant_chrome_openclaw.sh \\
 ### 停止实例
 
 \`\`\`text
-使用 ant-chrome-openclaw skill。
+使用 Latitude Browser OpenClaw skill。
 停止 launchCode=BUYER_001 对应的实例。
 \`\`\`
 

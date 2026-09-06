@@ -10,7 +10,11 @@ import (
 	"sync"
 )
 
-const appStateDirName = "ant-browser"
+const (
+	// appStateDirName is the canonical per-user state directory for Latitude Browser.
+	appStateDirName       = "latitude-browser"
+	legacyAppStateDirName = "ant-browser"
+)
 
 type roots struct {
 	installRoot string
@@ -68,6 +72,13 @@ func ensureWritableLayoutForOS(appRoot, goos string) error {
 	root := detectForOS(appRoot, goos)
 	if !root.detached {
 		return nil
+	}
+
+	// Migrate the legacy state directory before creating the new one so existing
+	// profiles, proxies, and settings are preserved without leaving a second
+	// active product path behind.
+	if err := migrateLegacyStateRootForOS(root.stateRoot, legacyUserStateRootForOS(goos, root.stateRoot)); err != nil {
+		return err
 	}
 
 	if err := os.MkdirAll(root.stateRoot, 0755); err != nil {
@@ -159,23 +170,57 @@ func normalizeRoot(appRoot string) string {
 }
 
 func userStateRootForOS(goos, fallback string) string {
+	return userStateRootNamedForOS(goos, fallback, appStateDirName)
+}
+
+func legacyUserStateRootForOS(goos, fallback string) string {
+	return userStateRootNamedForOS(goos, fallback, legacyAppStateDirName)
+}
+
+func userStateRootNamedForOS(goos, fallback, dirName string) string {
 	switch normalizeGOOS(goos) {
 	case "linux":
 		if base := strings.TrimSpace(os.Getenv("XDG_DATA_HOME")); base != "" {
-			return filepath.Join(base, appStateDirName)
+			return filepath.Join(base, dirName)
 		}
 		if home := configuredHomeDir(); home != "" {
-			return filepath.Join(home, ".local", "share", appStateDirName)
+			return filepath.Join(home, ".local", "share", dirName)
 		}
 	case "darwin":
 		if home := configuredHomeDir(); home != "" {
-			return filepath.Join(home, "Library", "Application Support", appStateDirName)
+			return filepath.Join(home, "Library", "Application Support", dirName)
 		}
 	}
 	if tmp := strings.TrimSpace(os.TempDir()); tmp != "" {
-		return filepath.Join(tmp, appStateDirName)
+		return filepath.Join(tmp, dirName)
 	}
 	return fallback
+}
+
+func migrateLegacyStateRootForOS(newRoot, legacyRoot string) error {
+	newRoot = filepath.Clean(strings.TrimSpace(newRoot))
+	legacyRoot = filepath.Clean(strings.TrimSpace(legacyRoot))
+	if newRoot == "" || legacyRoot == "" || newRoot == legacyRoot {
+		return nil
+	}
+	if _, err := os.Stat(newRoot); err == nil {
+		return nil
+	} else if !os.IsNotExist(err) {
+		return err
+	}
+	if _, err := os.Stat(legacyRoot); err != nil {
+		if os.IsNotExist(err) {
+			return nil
+		}
+		return err
+	}
+	if err := os.MkdirAll(filepath.Dir(newRoot), 0755); err != nil {
+		return err
+	}
+	if err := os.Rename(legacyRoot, newRoot); err != nil {
+		return err
+	}
+	return nil
 }
 
 func configuredHomeDir() string {
@@ -195,7 +240,7 @@ func isMacAppBundleRoot(dir string) bool {
 }
 
 func dirWritable(dir string) bool {
-	file, err := os.CreateTemp(dir, ".ant-browser-write-test-*")
+	file, err := os.CreateTemp(dir, ".latitude-browser-write-test-*")
 	if err != nil {
 		return false
 	}

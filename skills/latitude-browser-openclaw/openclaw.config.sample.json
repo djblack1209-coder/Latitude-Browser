@@ -1,0 +1,23 @@
+{
+  "browser": {
+    "enabled": true,
+    "defaultProfile": "latitude-browser",
+    "profiles": {
+      "latitude-browser": {
+        "cdpUrl": "http://127.0.0.1:19876",
+        "color": "#0F766E"
+      }
+    }
+  },
+  "skills": {
+    "entries": {
+      "latitude-browser-openclaw": {
+        "enabled": true,
+        "env": {
+          "LATITUDE_BROWSER_BASE_URL": "http://127.0.0.1:19876",
+          "LATITUDE_BROWSER_API_HEADER": "X-Ant-Api-Key"
+        }
+      }
+    }
+  }
+}
