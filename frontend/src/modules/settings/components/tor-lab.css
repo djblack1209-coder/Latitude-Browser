@@ -1,0 +1,15 @@
+/* Restrained concentric geometry inspired by dex-ui's radar; no fictitious hops. */
+.tor-boundary { display: flex; align-items: center; justify-content: space-between; gap: 32px; padding: 8px 0 24px; border-bottom: 1px solid var(--color-border-muted); }
+.tor-boundary-copy { max-width: 68ch; }
+.tor-boundary h2 { font-size: 19px; line-height: 1.6; font-weight: 500; margin-top: 13px; color: var(--color-text-primary); }
+.tor-boundary-copy > p:not(:first-child) { margin-top: 10px; font-size: 12px; line-height: 1.9; color: var(--color-text-secondary); }
+.tor-boundary-copy > .tor-boundary-emphasis { font-size: 11px; color: var(--color-text-muted); }
+.tor-layer-map { position: relative; width: 190px; height: 190px; flex: 0 0 auto; display: grid; place-items: center; }
+.tor-layer-orbit { position: absolute; border: 1px solid var(--color-border-strong); border-radius: 50%; }
+.tor-layer-orbit-outer { inset: 10px; border-style: dashed; }
+.tor-layer-orbit-inner { inset: 39px; border-color: var(--color-accent); opacity: .65; }
+.tor-layer-node { width: 50px; height: 50px; display: grid; place-items: center; color: var(--color-accent); border: 1px solid var(--color-border-default); border-radius: 10px; background: var(--color-bg-surface); }
+.tor-layer-tag { position: absolute; background: var(--color-bg-base); padding: 3px 7px; font: 9px var(--font-mono); letter-spacing: .08em; color: var(--color-text-muted); }
+.tor-layer-tag-top { top: 5px; }
+.tor-layer-tag-bottom { bottom: 3px; }
+@media (max-width: 850px) { .tor-layer-map { display: none; } .tor-boundary { gap: 16px; } }

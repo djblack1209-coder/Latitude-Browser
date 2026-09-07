@@ -71,6 +71,7 @@ type ProxyCheckTarget struct {
 	Type           string `yaml:"type" json:"type"`
 	URL            string `yaml:"url" json:"url"`
 	Parser         string `yaml:"parser,omitempty" json:"parser,omitempty"`
+	Method         string `yaml:"method,omitempty" json:"method,omitempty"`
 	TimeoutMs      int    `yaml:"timeout_ms,omitempty" json:"timeoutMs,omitempty"`
 	ExpectedStatus []int  `yaml:"expected_status,omitempty" json:"expectedStatus,omitempty"`
 }
@@ -124,6 +125,7 @@ type BrowserConfig struct {
 	ClashBinaryPath        string                 `yaml:"clash_binary_path,omitempty"`
 	XrayBinaryPath         string                 `yaml:"xray_binary_path,omitempty"`
 	SingBoxBinaryPath      string                 `yaml:"singbox_binary_path,omitempty"`
+	TorBinaryPath          string                 `yaml:"tor_binary_path,omitempty"`
 	CoreRoot               string                 `yaml:"core_root,omitempty"`
 	DefaultCoreId          string                 `yaml:"default_core_id,omitempty"`
 	DefaultConnectorType   string                 `yaml:"default_connector_type,omitempty"`
@@ -154,6 +156,11 @@ type BrowserProxy struct {
 	LastLatencyMs          int64  `yaml:"-" json:"lastLatencyMs"`
 	LastTestOk             bool   `yaml:"-" json:"lastTestOk"`
 	LastTestedAt           string `yaml:"-" json:"lastTestedAt"`
+	LastTestEngine         string `yaml:"-" json:"lastTestEngine,omitempty"`
+	LastTestStage          string `yaml:"-" json:"lastTestStage,omitempty"`
+	LastTestCode           string `yaml:"-" json:"lastTestCode,omitempty"`
+	LastTestTargetURL      string `yaml:"-" json:"lastTestTargetUrl,omitempty"`
+	LastTestError          string `yaml:"-" json:"lastTestError,omitempty"`
 	LastIPHealthJSON       string `yaml:"-" json:"lastIPHealthJson,omitempty"`
 }
 
@@ -173,6 +180,7 @@ type BrowserProfileConfig struct {
 	CoreId             string   `yaml:"core_id" json:"coreId"`
 	RestoreLastSession string   `yaml:"restore_last_session,omitempty" json:"restoreLastSession,omitempty"`
 	FingerprintArgs    []string `yaml:"fingerprint_args" json:"fingerprintArgs"`
+	NetworkMode        string   `yaml:"network_mode,omitempty" json:"networkMode"`
 	ProxyId            string   `yaml:"proxy_id" json:"proxyId"`
 	ProxyConfig        string   `yaml:"proxy_config" json:"proxyConfig"`
 	ProxyBindSourceID  string   `yaml:"proxy_bind_source_id,omitempty" json:"proxyBindSourceId,omitempty"`

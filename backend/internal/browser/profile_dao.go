@@ -34,7 +34,7 @@ func NewSQLiteProfileDAO(db *sql.DB) *SQLiteProfileDAO {
 func (d *SQLiteProfileDAO) List() ([]*Profile, error) {
 	rows, err := d.db.Query(`
 		SELECT profile_id, profile_name, user_data_dir, core_id,
-		       fingerprint_args, proxy_id, proxy_config,
+		       fingerprint_args, proxy_id, proxy_config, COALESCE(network_mode, 'proxy'),
 		       COALESCE(proxy_bind_source_id, ''), COALESCE(proxy_bind_source_url, ''),
 		       COALESCE(proxy_bind_name, ''), COALESCE(proxy_bind_updated_at, ''),
 		       COALESCE(memory_limit_mb, 0),
@@ -62,7 +62,7 @@ func (d *SQLiteProfileDAO) List() ([]*Profile, error) {
 func (d *SQLiteProfileDAO) ListDeleted() ([]*Profile, error) {
 	rows, err := d.db.Query(`
 		SELECT profile_id, profile_name, user_data_dir, core_id,
-		       fingerprint_args, proxy_id, proxy_config,
+		       fingerprint_args, proxy_id, proxy_config, COALESCE(network_mode, 'proxy'),
 		       COALESCE(proxy_bind_source_id, ''), COALESCE(proxy_bind_source_url, ''),
 		       COALESCE(proxy_bind_name, ''), COALESCE(proxy_bind_updated_at, ''),
 		       COALESCE(memory_limit_mb, 0),
@@ -90,7 +90,7 @@ func (d *SQLiteProfileDAO) ListDeleted() ([]*Profile, error) {
 func (d *SQLiteProfileDAO) GetById(profileId string) (*Profile, error) {
 	row := d.db.QueryRow(`
 		SELECT profile_id, profile_name, user_data_dir, core_id,
-		       fingerprint_args, proxy_id, proxy_config,
+		       fingerprint_args, proxy_id, proxy_config, COALESCE(network_mode, 'proxy'),
 		       COALESCE(proxy_bind_source_id, ''), COALESCE(proxy_bind_source_url, ''),
 		       COALESCE(proxy_bind_name, ''), COALESCE(proxy_bind_updated_at, ''),
 		       COALESCE(memory_limit_mb, 0),
@@ -107,6 +107,7 @@ func (d *SQLiteProfileDAO) GetById(profileId string) (*Profile, error) {
 
 // Upsert 新增或更新实例配置
 func (d *SQLiteProfileDAO) Upsert(profile *Profile) error {
+	NormalizeProfileNetworkState(profile)
 	fingerprintArgs, _ := json.Marshal(profile.FingerprintArgs)
 	launchArgs, _ := json.Marshal(profile.LaunchArgs)
 	tags, _ := json.Marshal(profile.Tags)
@@ -123,9 +124,9 @@ func (d *SQLiteProfileDAO) Upsert(profile *Profile) error {
 	_, err := d.db.Exec(`
 		INSERT INTO browser_profiles
 		  (profile_id, profile_name, user_data_dir, core_id, fingerprint_args,
-		   proxy_id, proxy_config, proxy_bind_source_id, proxy_bind_source_url, proxy_bind_name, proxy_bind_updated_at,
+		   proxy_id, proxy_config, network_mode, proxy_bind_source_id, proxy_bind_source_url, proxy_bind_name, proxy_bind_updated_at,
 		   memory_limit_mb, launch_args, tags, keywords, group_id, created_at, updated_at, restore_last_session, deleted_at)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 		ON CONFLICT(profile_id) DO UPDATE SET
 		  profile_name     = excluded.profile_name,
 		  user_data_dir    = excluded.user_data_dir,
@@ -133,6 +134,7 @@ func (d *SQLiteProfileDAO) Upsert(profile *Profile) error {
 		  fingerprint_args = excluded.fingerprint_args,
 		  proxy_id         = excluded.proxy_id,
 		  proxy_config     = excluded.proxy_config,
+		  network_mode     = excluded.network_mode,
 		  proxy_bind_source_id = excluded.proxy_bind_source_id,
 		  proxy_bind_source_url = excluded.proxy_bind_source_url,
 		  proxy_bind_name = excluded.proxy_bind_name,
@@ -146,7 +148,7 @@ func (d *SQLiteProfileDAO) Upsert(profile *Profile) error {
 		  deleted_at       = excluded.deleted_at,
 		  updated_at       = excluded.updated_at`,
 		profile.ProfileId, profile.ProfileName, profile.UserDataDir, profile.CoreId,
-		string(fingerprintArgs), profile.ProxyId, profile.ProxyConfig,
+		string(fingerprintArgs), profile.ProxyId, profile.ProxyConfig, NormalizeNetworkMode(profile.NetworkMode),
 		profile.ProxyBindSourceID, profile.ProxyBindSourceURL, profile.ProxyBindName, profile.ProxyBindUpdatedAt,
 		normalizeMemoryLimitMB(profile.MemoryLimitMB), string(launchArgs), string(tags), string(keywords), profile.GroupId,
 		profile.CreatedAt, profile.UpdatedAt, NormalizeRestoreLastSessionMode(profile.RestoreLastSession), profile.DeletedAt,
@@ -186,7 +188,7 @@ func (d *SQLiteProfileDAO) Restore(profileId string) error {
 func (d *SQLiteProfileDAO) ListExpiredDeleted(expiredBefore string) ([]*Profile, error) {
 	rows, err := d.db.Query(`
 		SELECT profile_id, profile_name, user_data_dir, core_id,
-		       fingerprint_args, proxy_id, proxy_config,
+		       fingerprint_args, proxy_id, proxy_config, COALESCE(network_mode, 'proxy'),
 		       COALESCE(proxy_bind_source_id, ''), COALESCE(proxy_bind_source_url, ''),
 		       COALESCE(proxy_bind_name, ''), COALESCE(proxy_bind_updated_at, ''),
 		       COALESCE(memory_limit_mb, 0),
@@ -245,7 +247,7 @@ func (d *SQLiteProfileDAO) ListByGroup(groupId string, includeChildren bool, chi
 		}
 		rows, err = d.db.Query(fmt.Sprintf(`
 			SELECT profile_id, profile_name, user_data_dir, core_id,
-			       fingerprint_args, proxy_id, proxy_config,
+			       fingerprint_args, proxy_id, proxy_config, COALESCE(network_mode, 'proxy'),
 			       COALESCE(proxy_bind_source_id, ''), COALESCE(proxy_bind_source_url, ''),
 			       COALESCE(proxy_bind_name, ''), COALESCE(proxy_bind_updated_at, ''),
 			       COALESCE(memory_limit_mb, 0),
@@ -257,7 +259,7 @@ func (d *SQLiteProfileDAO) ListByGroup(groupId string, includeChildren bool, chi
 		// 仅查询指定分组
 		rows, err = d.db.Query(`
 			SELECT profile_id, profile_name, user_data_dir, core_id,
-			       fingerprint_args, proxy_id, proxy_config,
+			       fingerprint_args, proxy_id, proxy_config, COALESCE(network_mode, 'proxy'),
 			       COALESCE(proxy_bind_source_id, ''), COALESCE(proxy_bind_source_url, ''),
 			       COALESCE(proxy_bind_name, ''), COALESCE(proxy_bind_updated_at, ''),
 			       COALESCE(memory_limit_mb, 0),
@@ -317,7 +319,7 @@ func scanProfile(s scanner) (*Profile, error) {
 	)
 	err := s.Scan(
 		&p.ProfileId, &p.ProfileName, &p.UserDataDir, &p.CoreId,
-		&fingerprintArgsJSON, &p.ProxyId, &p.ProxyConfig,
+		&fingerprintArgsJSON, &p.ProxyId, &p.ProxyConfig, &p.NetworkMode,
 		&p.ProxyBindSourceID, &p.ProxyBindSourceURL, &p.ProxyBindName, &p.ProxyBindUpdatedAt,
 		&p.MemoryLimitMB, &launchArgsJSON, &tagsJSON, &keywordsJSON, &p.GroupId,
 		&p.CreatedAt, &p.UpdatedAt, &p.RestoreLastSession, &p.DeletedAt,
@@ -342,6 +344,7 @@ func scanProfile(s scanner) (*Profile, error) {
 		p.Keywords = []string{}
 	}
 	p.RestoreLastSession = NormalizeRestoreLastSessionMode(p.RestoreLastSession)
+	p.NetworkMode = NormalizeNetworkMode(p.NetworkMode)
 	p.MemoryLimitMB = normalizeMemoryLimitMB(p.MemoryLimitMB)
 	return &p, nil
 }

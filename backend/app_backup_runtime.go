@@ -3,32 +3,44 @@ package backend
 import (
 	"ant-chrome/backend/internal/browser"
 	"ant-chrome/backend/internal/config"
+	"errors"
+	"fmt"
 	"os/exec"
 )
 
-func (a *App) backupStopRuntimeForMaintenance() {
-	if a.browserMgr != nil {
-		a.browserMgr.Mutex.Lock()
-		for _, cmd := range a.browserMgr.BrowserProcesses {
-			if cmd != nil && cmd.Process != nil {
-				_ = a.stopProcessCmd(cmd)
-			}
-		}
-		a.browserMgr.BrowserProcesses = make(map[string]*exec.Cmd)
-		a.browserMgr.Mutex.Unlock()
+func (a *App) backupStopRuntimeForMaintenance() error {
+	var stopErrs []error
+	browsersStopped := a.stopTrackedBrowserProcesses()
+	if !browsersStopped {
+		stopErrs = append(stopErrs, fmt.Errorf("未能确认全部浏览器进程已停止"))
 	}
 
 	if a.xrayMgr != nil {
 		a.xrayMgr.StopAll()
 	}
-	a.clearProfileProxyBridges()
+	var torErr error
+	if a.torMgr != nil {
+		torErr = a.torMgr.StopAllWithError()
+		if torErr != nil {
+			stopErrs = append(stopErrs, fmt.Errorf("停止 Tor 运行时失败: %w", torErr))
+		}
+	}
+	// Preserve ownership metadata whenever maintenance cannot prove that every
+	// browser and Tor runtime is gone. The caller aborts before mutating data.
+	if browsersStopped && torErr == nil {
+		a.clearProfileProxyBridges()
+	}
 	if a.singboxMgr != nil {
 		a.singboxMgr.StopAll()
+	}
+	if a.clashMgr != nil {
+		a.clashMgr.StopAll()
 	}
 	if a.speedScheduler != nil {
 		a.speedScheduler.Stop()
 		a.speedScheduler = nil
 	}
+	return errors.Join(stopErrs...)
 }
 
 func (a *App) backupReloadAfterMutation() error {
@@ -53,7 +65,6 @@ func (a *App) backupReloadAfterMutation() error {
 	if a.singboxMgr != nil {
 		a.singboxMgr.Config = a.config
 	}
-
 	a.migrateToSQLite()
 	if a.browserMgr != nil {
 		a.browserMgr.InitData()

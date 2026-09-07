@@ -68,3 +68,21 @@ func TestNormalizeConfigKeepsProductNameCanonical(t *testing.T) {
 		t.Fatalf("product name = %q, want %q", got, want)
 	}
 }
+
+func TestNormalizeBrowserConnectorTypePreservesExclusiveStackChoice(t *testing.T) {
+	cases := []struct {
+		input string
+		want  string
+	}{
+		{input: "", want: BrowserConnectorXray},
+		{input: "xray", want: BrowserConnectorXray},
+		{input: "sing-box", want: BrowserConnectorXray},
+		{input: "mihomo", want: BrowserConnectorMihomo},
+		{input: "clash-meta", want: BrowserConnectorMihomo},
+	}
+	for _, tc := range cases {
+		if got := NormalizeBrowserConnectorType(tc.input); got != tc.want {
+			t.Fatalf("NormalizeBrowserConnectorType(%q) = %q, want %q", tc.input, got, tc.want)
+		}
+	}
+}

@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { ChevronDown, ChevronUp, FolderOpen, HelpCircle, Layers, ShieldCheck } from 'lucide-react'
+import { ChevronDown, ChevronUp, FolderOpen, HelpCircle, Layers, Network, RadioTower, ShieldCheck } from 'lucide-react'
 import { Button, Card, ConfirmModal, FormItem, Input, Modal, Select, Textarea, toast } from '../../../shared/components'
+import { WorkspaceHeader } from '../../../shared/components/SignalPrimitives'
 import type { BrowserCore, BrowserFingerprintCapabilityReport, BrowserFingerprintCapabilityRow, BrowserFingerprintCheckResult, BrowserProfileInput, BrowserProxy, BrowserGroup, ProxyLocationResolveResult } from '../types'
 import { browserProxyResolveLocation, checkBrowserProfileFingerprint, createBrowserProfile, fetchAllTags, fetchBrowserCores, fetchBrowserProfileFingerprintMatrix, fetchBrowserProfiles, fetchBrowserProxies, fetchBrowserSettings, fetchGroups, openBrowserFingerprintCheck, openUserDataDir, updateBrowserProfile, validateProxyConfig } from '../api'
 import { FingerprintPanel } from '../components/FingerprintPanel'
@@ -9,6 +10,7 @@ import { applyLocaleToFingerprintArgs, validateFingerprintArgs, withAdaptiveDefa
 import { TagInput } from '../components/TagInput'
 import { GroupSelector } from '../components/GroupSelector'
 import { ProxyPickerModal } from '../components/ProxyPickerModal'
+import { TorModeNotice } from './TorModeNotice'
 
 const fallbackLowLaunchArgs = ['--disable-sync', '--no-first-run']
 const directProxyID = '__direct__'
@@ -18,7 +20,8 @@ const RESTORE_LAST_SESSION_OPTIONS = [
   { value: 'disabled', label: '关闭：不恢复历史标签' },
 ]
 type ProxySourceMode = 'pool' | 'local'
-type BrowserProfileEditForm = BrowserProfileInput & { lastLaunchArgs?: string[] }
+type BrowserNetworkMode = NonNullable<BrowserProfileInput['networkMode']>
+type BrowserProfileEditForm = BrowserProfileInput & { networkMode: BrowserNetworkMode; lastLaunchArgs?: string[] }
 
 function normalizeLaunchArgs(args: string[]): string[] {
   return (args || []).map(item => item.trim()).filter(Boolean)
@@ -244,6 +247,7 @@ export function BrowserEditPage() {
     coreId: '',
     restoreLastSession: '',
     fingerprintArgs: [],
+    networkMode: 'proxy',
     proxyId: directProxyID,
     proxyConfig: '',
     memoryLimitMb: 0,
@@ -261,6 +265,8 @@ export function BrowserEditPage() {
   const [saving, setSaving] = useState(false)
   const [proxyPickerOpen, setProxyPickerOpen] = useState(false)
   const [proxyMode, setProxyMode] = useState<ProxySourceMode>('pool')
+  const [profileRunning, setProfileRunning] = useState(false)
+  const [torSwitchConfirmOpen, setTorSwitchConfirmOpen] = useState(false)
   const [isDirty, setIsDirty] = useState(false)
   const [leaveConfirm, setLeaveConfirm] = useState(false)
   const [saveError, setSaveError] = useState('')
@@ -292,9 +298,11 @@ export function BrowserEditPage() {
 
       if (isCreate) {
         const resolved = resolvePoolProxySelection('', '', proxyList)
+        setProfileRunning(false)
         setProxyMode('pool')
         setFormData((prev) => ({
           ...prev,
+          networkMode: 'proxy',
           proxyId: resolved.proxyId || directProxyID,
           proxyConfig: '',
           restoreLastSession: '',
@@ -310,7 +318,11 @@ export function BrowserEditPage() {
       const normalizedCoreId = !current.coreId || current.coreId.toLowerCase() === 'default'
         ? ''
         : current.coreId
-      const resolvedProxy = resolvePoolProxySelection(current.proxyId || '', current.proxyConfig || '', proxyList)
+      const currentNetworkMode: BrowserNetworkMode = current.networkMode === 'tor' ? 'tor' : 'proxy'
+      const resolvedProxy = currentNetworkMode === 'tor'
+        ? { mode: 'pool' as const, proxyId: '', proxyConfig: '' }
+        : resolvePoolProxySelection(current.proxyId || '', current.proxyConfig || '', proxyList)
+      setProfileRunning(Boolean(current.running))
       setProxyMode(resolvedProxy.mode)
       setFormData({
         profileName: current.profileName,
@@ -318,6 +330,7 @@ export function BrowserEditPage() {
         coreId: normalizedCoreId,
         restoreLastSession: current.restoreLastSession || '',
         fingerprintArgs: current.fingerprintArgs,
+        networkMode: currentNetworkMode,
         proxyId: resolvedProxy.proxyId,
         proxyConfig: resolvedProxy.proxyConfig,
         memoryLimitMb: current.memoryLimitMb || 0,
@@ -358,7 +371,43 @@ export function BrowserEditPage() {
     })
   }
 
+  const isTorMode = formData.networkMode === 'tor'
+  const hasConfiguredProxy = Boolean(formData.proxyId.trim() || formData.proxyConfig.trim())
+
+  const applyNetworkMode = (mode: BrowserNetworkMode) => {
+    setIsDirty(true)
+    setLocationResult(null)
+    setProxyPickerOpen(false)
+    setProxyMode('pool')
+    setFormData((prev) => {
+      if (mode === 'tor') {
+        return { ...prev, networkMode: 'tor', proxyId: '', proxyConfig: '' }
+      }
+      const directProxy = proxies.find((proxy) => proxy.proxyId === directProxyID)
+      return {
+        ...prev,
+        networkMode: 'proxy',
+        proxyId: prev.proxyId.trim() || directProxy?.proxyId || directProxyID,
+        proxyConfig: '',
+      }
+    })
+  }
+
+  const handleNetworkModeChange = (mode: BrowserNetworkMode) => {
+    if (mode === formData.networkMode) return
+    if (profileRunning) {
+      toast.warning('实例运行中不能切换网络模式，请先停止实例')
+      return
+    }
+    if (mode === 'tor' && hasConfiguredProxy) {
+      setTorSwitchConfirmOpen(true)
+      return
+    }
+    applyNetworkMode(mode)
+  }
+
   const handleProxyModeChange = (mode: ProxySourceMode) => {
+    if (isTorMode) return
     setIsDirty(true)
     setProxyMode(mode)
     if (mode === 'pool') {
@@ -376,9 +425,9 @@ export function BrowserEditPage() {
   }
 
   const handleSave = async () => {
-    const resolvedProxyId = proxyMode === 'pool' ? (formData.proxyId || '').trim() : ''
-    const resolvedProxyConfig = proxyMode === 'local' ? (formData.proxyConfig || '').trim() : ''
-    if (proxyMode === 'local' && !resolvedProxyConfig) {
+    const resolvedProxyId = isTorMode ? '' : proxyMode === 'pool' ? (formData.proxyId || '').trim() : ''
+    const resolvedProxyConfig = isTorMode ? '' : proxyMode === 'local' ? (formData.proxyConfig || '').trim() : ''
+    if (!isTorMode && proxyMode === 'local' && !resolvedProxyConfig) {
       setSaveError('请输入本地代理地址')
       return
     }
@@ -389,6 +438,7 @@ export function BrowserEditPage() {
       coreId: formData.coreId,
       restoreLastSession: formData.restoreLastSession || '',
       fingerprintArgs: formData.fingerprintArgs,
+      networkMode: formData.networkMode,
       tags: formData.tags,
       keywords: formData.keywords,
       groupId: formData.groupId,
@@ -402,17 +452,19 @@ export function BrowserEditPage() {
       setSaveError(fingerprintValidation.issues.filter(issue => issue.level === 'error').map(issue => issue.message).join('\n'))
       return
     }
-    if (proxyMode === 'pool' && !resolvedProxyId) {
+    if (!isTorMode && proxyMode === 'pool' && !resolvedProxyId) {
       payload.proxyId = directProxyID
       payload.proxyConfig = ''
     }
 
     setSaving(true)
     try {
-      const validation = await validateProxyConfig(payload.proxyConfig, payload.proxyId)
-      if (!validation.supported) {
-        setSaveError(validation.errorMsg || '代理配置无效')
-        return
+      if (!isTorMode) {
+        const validation = await validateProxyConfig(payload.proxyConfig, payload.proxyId)
+        if (!validation.supported) {
+          setSaveError(validation.errorMsg || '代理配置无效')
+          return
+        }
       }
       if (isCreate) {
         await createBrowserProfile(payload)
@@ -435,7 +487,7 @@ export function BrowserEditPage() {
   }
 
   const handleApplyProxyLocation = async () => {
-    if (proxyMode !== 'pool' || !formData.proxyId || formData.proxyId === directProxyID) {
+    if (isTorMode || proxyMode !== 'pool' || !formData.proxyId || formData.proxyId === directProxyID) {
       toast.error('请选择代理池中的非直连节点')
       return
     }
@@ -538,15 +590,17 @@ export function BrowserEditPage() {
 
   return (
     <div className="space-y-5 animate-fade-in">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-semibold text-[var(--color-text-primary)]">{isCreate ? '新建配置' : '编辑配置'}</h1>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="secondary" size="sm" onClick={handleBack}>返回列表</Button>
-          <Button size="sm" onClick={handleSave} loading={saving}>保存配置</Button>
-        </div>
-      </div>
+      <WorkspaceHeader
+        eyebrow={isCreate ? 'INSTANCE / SETUP' : 'INSTANCE / EDIT'}
+        title={isCreate ? '新建实例' : '编辑实例'}
+        description="基础、网络与指纹参数。"
+        actions={(
+          <>
+            <Button variant="secondary" size="sm" onClick={handleBack}>返回列表</Button>
+            <Button size="sm" onClick={handleSave} loading={saving}>保存配置</Button>
+          </>
+        )}
+      />
 
       <Card title="基础配置">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -617,12 +671,62 @@ export function BrowserEditPage() {
         </div>
       </Card>
 
-      <Card title="代理与定位">
-        <div className="grid grid-cols-1 lg:grid-cols-[220px_minmax(0,1fr)] gap-4 items-start">
+      <Card title="网络模式" subtitle={profileRunning ? '实例运行中，停止后可切换' : '保存不会自动切换网络模式'}>
+        <div className="grid gap-3 md:grid-cols-2" role="radiogroup" aria-label="实例网络模式">
+          <button
+            type="button"
+            role="radio"
+            aria-checked={!isTorMode}
+            disabled={profileRunning}
+            onClick={() => handleNetworkModeChange('proxy')}
+            className={`flex min-h-[92px] items-start gap-3 rounded-sm border p-4 text-left transition-[border-color,background-color,color,transform] duration-150 active:translate-y-px disabled:cursor-not-allowed disabled:opacity-60 ${
+              !isTorMode
+                ? 'border-[var(--color-accent)] bg-[var(--color-accent-muted)]/30'
+                : 'border-[var(--color-border-default)] hover:border-[var(--color-border-strong)]'
+            }`}
+          >
+            <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-sm border ${!isTorMode ? 'border-[var(--color-accent)] text-[var(--color-accent)]' : 'border-[var(--color-border-default)] text-[var(--color-text-muted)]'}`}>
+              <Network className="h-4 w-4" aria-hidden="true" />
+            </span>
+            <span>
+              <span className="block text-sm font-semibold text-[var(--color-text-primary)]">常规网络</span>
+              <span className="mt-1 block text-xs leading-5 text-[var(--color-text-muted)]">继续使用代理池、本地代理或旧版直连项，由当前 Xray 组合栈或 Mihomo 栈处理。</span>
+            </span>
+          </button>
+          <button
+            type="button"
+            role="radio"
+            aria-checked={isTorMode}
+            disabled={profileRunning}
+            onClick={() => handleNetworkModeChange('tor')}
+            className={`flex min-h-[92px] items-start gap-3 rounded-sm border p-4 text-left transition-[border-color,background-color,color,transform] duration-150 active:translate-y-px disabled:cursor-not-allowed disabled:opacity-60 ${
+              isTorMode
+                ? 'border-[var(--color-warning)] bg-[var(--color-warning)]/5'
+                : 'border-[var(--color-border-default)] hover:border-[var(--color-border-strong)]'
+            }`}
+          >
+            <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-sm border ${isTorMode ? 'border-[var(--color-warning)] text-[var(--color-warning)]' : 'border-[var(--color-border-default)] text-[var(--color-text-muted)]'}`}>
+              <RadioTower className="h-4 w-4" aria-hidden="true" />
+            </span>
+            <span>
+              <span className="flex flex-wrap items-center gap-2 text-sm font-semibold text-[var(--color-text-primary)]">
+                Tor TCP 路由
+                <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-[var(--color-warning)]">实验性</span>
+              </span>
+              <span className="mt-1 block text-xs leading-5 text-[var(--color-text-muted)]">使用独立受管 Tor 运行时，不与常规代理、代理链或直连项混用。</span>
+            </span>
+          </button>
+        </div>
+        {isTorMode && <TorModeNotice className="mt-4" />}
+      </Card>
+
+      <Card title="代理与定位" subtitle={isTorMode ? 'Tor 模式锁定常规代理' : '配置出口与定位'}>
+        <div className={`grid grid-cols-1 gap-4 lg:grid-cols-[220px_minmax(0,1fr)] lg:items-start ${isTorMode ? 'opacity-55' : ''}`}>
           <FormItem label="代理来源">
             <Select
               value={proxyMode}
               onChange={e => handleProxyModeChange(e.target.value as ProxySourceMode)}
+              disabled={isTorMode}
               options={[
                 { value: 'pool', label: '代理池' },
                 { value: 'local', label: '本地代理' },
@@ -635,6 +739,7 @@ export function BrowserEditPage() {
                 <Select
                   value={formData.proxyId}
                   onChange={e => { handleChange('proxyId', e.target.value); setLocationResult(null) }}
+                  disabled={isTorMode}
                   options={
                     proxies.length > 0
                       ? proxies.map(p => ({ value: p.proxyId, label: p.proxyName || p.proxyId }))
@@ -642,7 +747,7 @@ export function BrowserEditPage() {
                   }
                   className="flex-1 min-w-0"
                 />
-                <Button variant="secondary" size="sm" className="shrink-0" onClick={() => setProxyPickerOpen(true)} title="按分组选择代理">
+                <Button variant="secondary" size="sm" className="shrink-0" onClick={() => setProxyPickerOpen(true)} title="按分组选择代理" disabled={isTorMode}>
                   <Layers className="w-4 h-4" />
                 </Button>
                 <Button
@@ -651,7 +756,7 @@ export function BrowserEditPage() {
                   className="shrink-0"
                   onClick={handleApplyProxyLocation}
                   loading={locationResolving}
-                  disabled={!formData.proxyId || formData.proxyId === directProxyID}
+                  disabled={isTorMode || !formData.proxyId || formData.proxyId === directProxyID}
                 >
                   按代理匹配定位
                 </Button>
@@ -670,19 +775,22 @@ export function BrowserEditPage() {
                 value={formData.proxyConfig}
                 onChange={e => handleChange('proxyConfig', e.target.value)}
                 placeholder="http://127.0.0.1:7890"
+                disabled={isTorMode}
               />
             </FormItem>
           )}
         </div>
-        <p className="text-xs text-[var(--color-text-muted)] mt-2">
-          {proxyMode === 'pool'
-            ? `当前使用代理池节点${selectedPoolProxy?.proxyName ? `：${selectedPoolProxy.proxyName}` : '。'}`
-            : '本地代理不会进入代理池，只对当前实例保存生效。'}
+        <p className="mt-2 text-xs text-[var(--color-text-muted)]">
+          {isTorMode
+            ? 'Tor 模式不会读取或保存这里的代理项，切回常规网络后需要重新确认出口。'
+            : proxyMode === 'pool'
+              ? `当前使用代理池节点${selectedPoolProxy?.proxyName ? `：${selectedPoolProxy.proxyName}` : '。'}`
+              : '本地代理不会进入代理池，只对当前实例保存生效。'}
         </p>
       </Card>
 
       <ProxyPickerModal
-        open={proxyPickerOpen}
+        open={proxyPickerOpen && !isTorMode}
         currentProxyId={formData.proxyId}
         onSelect={proxy => { handleChange('proxyId', proxy.proxyId); setLocationResult(null) }}
         onProxyListUpdated={handleProxyListUpdated}
@@ -763,7 +871,12 @@ export function BrowserEditPage() {
           {launchArgsOpen ? <ChevronUp className="w-4 h-4 text-[var(--color-text-muted)]" /> : <ChevronDown className="w-4 h-4 text-[var(--color-text-muted)]" />}
         </button>
         {launchArgsOpen && (
-          <div className="space-y-3 px-5 pb-5 border-t border-[var(--color-border-muted)] pt-4">
+          <div className="space-y-3 border-t border-[var(--color-border-muted)] px-5 pb-5 pt-4">
+            {isTorMode && (
+              <p className="rounded-sm border border-[var(--color-warning)]/40 bg-[var(--color-warning)]/5 px-3 py-2 text-xs leading-5 text-[var(--color-text-secondary)]">
+                Tor 模式下，代理、DNS、QUIC、WebRTC 与扩展开关等托管参数会由后端移除或覆盖；其余启动参数仍会按正常流程提交。
+              </p>
+            )}
             <Textarea
               value={launchArgsText}
               onChange={e => { setLaunchArgsText(e.target.value); setIsDirty(true) }}
@@ -816,6 +929,22 @@ export function BrowserEditPage() {
           ))}
         </div>
       </Modal>
+
+      <ConfirmModal
+        open={torSwitchConfirmOpen}
+        onClose={() => setTorSwitchConfirmOpen(false)}
+        onConfirm={() => applyNetworkMode('tor')}
+        title="切换到 Tor TCP 路由？"
+        content={(
+          <div className="space-y-2 text-sm leading-6">
+            <p>当前代理池、本地代理或直连项将被清空，保存后无法自动恢复。</p>
+            <p className="text-[var(--color-text-muted)]">Tor 是独立的实验性传输，不会与现有代理链混用。</p>
+          </div>
+        )}
+        confirmText="清空并切换"
+        cancelText="保留当前网络"
+        danger
+      />
 
       <ConfirmModal
         open={leaveConfirm}

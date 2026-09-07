@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Plus, Tag, Trash2, X } from 'lucide-react'
-import { Badge, Button, Card, toast } from '../../../shared/components'
+import { Badge, Button, toast } from '../../../shared/components'
+import { SignalEmptyState, TelemetryStrip, TerminalPanel, WorkspaceHeader } from '../../../shared/components/SignalPrimitives'
 import type { BrowserProfile } from '../types'
 import { batchRemoveProfileTags, batchSetProfileTags, fetchBrowserProfiles, renameBrowserTag } from '../api'
-
-// ─── 左侧标签面板 ────────────────────────────────────────────────────────────
+import { AssetScopeTabs } from './AssetScopeTabs'
 
 interface TagPanelProps {
   tags: string[]
@@ -20,23 +20,25 @@ function TagPanel({ tags, selected, profilesByTag, totalCount, onSelect, onCreat
   const [creating, setCreating] = useState(false)
   const [newTag, setNewTag] = useState('')
   const inputRef = useRef<HTMLInputElement>(null)
-
   const [editingTag, setEditingTag] = useState<string | null>(null)
   const [editValue, setEditValue] = useState('')
 
   const commit = () => {
-    const t = newTag.trim()
-    if (t && !tags.includes(t)) {
-      onCreateTag(t)
-      onSelect(t)
+    const tag = newTag.trim()
+    if (tag && !tags.includes(tag)) {
+      onCreateTag(tag)
+      onSelect(tag)
     }
     setNewTag('')
     setCreating(false)
   }
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') commit()
-    if (e.key === 'Escape') { setNewTag(''); setCreating(false) }
+  const handleKeyDown = (event: React.KeyboardEvent) => {
+    if (event.key === 'Enter') commit()
+    if (event.key === 'Escape') {
+      setNewTag('')
+      setCreating(false)
+    }
   }
 
   const startEdit = (tag: string) => {
@@ -45,96 +47,111 @@ function TagPanel({ tags, selected, profilesByTag, totalCount, onSelect, onCreat
   }
 
   const commitEdit = () => {
-    const newVal = editValue.trim()
-    if (newVal && editingTag && newVal !== editingTag) {
-      onRenameTag(editingTag, newVal)
+    const newValue = editValue.trim()
+    if (newValue && editingTag && newValue !== editingTag) {
+      onRenameTag(editingTag, newValue)
     }
     setEditingTag(null)
   }
 
   return (
-    <div className="w-52 shrink-0 border-r border-[var(--color-border)] flex flex-col bg-[var(--color-bg-surface)]">
-      <div className="px-4 py-3 border-b border-[var(--color-border)] flex items-center justify-between">
-        <span className="text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wider">标签列表</span>
+    <aside className="flex w-56 shrink-0 flex-col border-r border-[var(--color-border)] bg-[var(--color-bg-surface)]" aria-label="实例标签列表">
+      <div className="flex items-center justify-between border-b border-[var(--color-border)] px-3 py-2.5">
+        <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">TAG INDEX</span>
         <button
-          onClick={() => { setCreating(true); setTimeout(() => inputRef.current?.focus(), 50) }}
+          type="button"
+          onClick={() => {
+            setCreating(true)
+            setTimeout(() => inputRef.current?.focus(), 50)
+          }}
           title="新建标签"
-          className="p-0.5 rounded text-[var(--color-text-muted)] hover:text-[var(--color-primary)] hover:bg-[var(--color-primary)]/10 transition-colors"
+          aria-label="新建标签"
+          className="rounded-sm p-1 text-[var(--color-text-muted)] transition-colors hover:bg-[var(--color-accent-muted)] hover:text-[var(--color-accent)] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--color-accent)]"
         >
-          <Plus className="w-3.5 h-3.5" />
+          <Plus className="h-3.5 w-3.5" aria-hidden="true" />
         </button>
       </div>
+
       <div className="flex-1 overflow-y-auto py-2">
         <button
+          type="button"
           onClick={() => onSelect(null)}
-          className={`w-full text-left px-4 py-2 text-sm flex items-center justify-between transition-colors ${selected === null
-              ? 'bg-[var(--color-primary)]/10 text-[var(--color-primary)] font-medium'
-              : 'text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)]'
+          aria-pressed={selected === null}
+          className={`flex w-full items-center justify-between border-l px-3 py-2 text-left text-sm transition-colors ${selected === null
+            ? 'border-[var(--color-accent)] bg-[var(--color-accent-muted)] text-[var(--color-text-primary)]'
+            : 'border-transparent text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)]'
             }`}
         >
           <span>全部实例</span>
-          <span className="text-xs opacity-60">{totalCount}</span>
+          <span className="font-mono text-xs text-[var(--color-text-muted)]">{totalCount}</span>
         </button>
-        {tags.map(tag => (
-          <div
-            key={tag}
-            onContextMenu={e => { e.preventDefault(); startEdit(tag) }}
-            onClick={() => onSelect(tag)}
-            className={`w-full text-left px-4 py-2 text-sm flex items-center justify-between gap-2 transition-colors cursor-pointer group ${selected === tag
-                ? 'bg-[var(--color-primary)]/10 text-[var(--color-primary)] font-medium'
-                : 'text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)]'
-              }`}
-            title="右键可以重命名"
-          >
-            {editingTag === tag ? (
-              <input
-                autoFocus
-                value={editValue}
-                onChange={e => setEditValue(e.target.value)}
-                onBlur={commitEdit}
-                onKeyDown={e => {
-                  if (e.key === 'Enter') commitEdit()
-                  if (e.key === 'Escape') setEditingTag(null)
-                }}
-                onClick={e => e.stopPropagation()}
-                className="flex-1 min-w-0 px-1.5 py-0.5 text-xs rounded border border-[var(--color-primary)] bg-[var(--color-bg-input)] text-[var(--color-text-primary)] focus:outline-none"
-              />
-            ) : (
-              <span className="flex items-center gap-1.5 truncate">
-                <Tag className="w-3.5 h-3.5 shrink-0 opacity-60" />
-                <span className="truncate">{tag}</span>
-              </span>
-            )}
 
-            {editingTag !== tag && (
-              <span className="text-xs opacity-60 shrink-0">{profilesByTag[tag] ?? 0}</span>
+        {tags.map((tag) => (
+          <div key={tag} className="min-w-0">
+            {editingTag === tag ? (
+              <div className="px-3 py-1.5">
+                <label htmlFor={`rename-tag-${tag}`} className="sr-only">重命名标签 {tag}</label>
+                <input
+                  id={`rename-tag-${tag}`}
+                  autoFocus
+                  value={editValue}
+                  onChange={(event) => setEditValue(event.target.value)}
+                  onBlur={commitEdit}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter') commitEdit()
+                    if (event.key === 'Escape') setEditingTag(null)
+                  }}
+                  className="w-full min-w-0 rounded-sm border border-[var(--color-accent)] bg-[var(--color-bg-input)] px-2 py-1 text-xs text-[var(--color-text-primary)] focus:outline-none"
+                />
+              </div>
+            ) : (
+              <button
+                type="button"
+                onContextMenu={(event) => {
+                  event.preventDefault()
+                  startEdit(tag)
+                }}
+                onClick={() => onSelect(tag)}
+                aria-pressed={selected === tag}
+                className={`group flex w-full items-center justify-between gap-2 border-l px-3 py-2 text-left text-sm transition-colors ${selected === tag
+                  ? 'border-[var(--color-accent)] bg-[var(--color-accent-muted)] text-[var(--color-text-primary)]'
+                  : 'border-transparent text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)]'
+                  }`}
+                title="选择标签，右键重命名"
+              >
+                <span className="flex min-w-0 items-center gap-1.5">
+                  <Tag className="h-3.5 w-3.5 shrink-0 text-[var(--color-text-muted)]" aria-hidden="true" />
+                  <span className="truncate">{tag}</span>
+                </span>
+                <span className="shrink-0 font-mono text-xs text-[var(--color-text-muted)]">{profilesByTag[tag] ?? 0}</span>
+              </button>
             )}
           </div>
         ))}
-        {tags.length === 0 && !creating && (
-          <p className="px-4 py-3 text-xs text-[var(--color-text-muted)]">暂无标签，点击 + 创建</p>
-        )}
 
-        {/* 内联新建输入框 */}
-        {creating && (
-          <div className="px-3 py-2 flex items-center gap-1">
+        {tags.length === 0 && !creating ? (
+          <p className="px-3 py-3 text-xs leading-5 text-[var(--color-text-muted)]">暂无标签。使用上方 + 创建标签。</p>
+        ) : null}
+
+        {creating ? (
+          <div className="px-3 py-2">
+            <label htmlFor="new-profile-tag" className="sr-only">新标签名称</label>
             <input
+              id="new-profile-tag"
               ref={inputRef}
               value={newTag}
-              onChange={e => setNewTag(e.target.value)}
+              onChange={(event) => setNewTag(event.target.value)}
               onKeyDown={handleKeyDown}
               onBlur={commit}
               placeholder="标签名称"
-              className="flex-1 min-w-0 px-2 py-1 text-xs rounded border border-[var(--color-primary)] bg-[var(--color-bg-input)] text-[var(--color-text-primary)] placeholder-[var(--color-text-muted)] focus:outline-none"
+              className="w-full min-w-0 rounded-sm border border-[var(--color-accent)] bg-[var(--color-bg-input)] px-2 py-1.5 text-xs text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] focus:outline-none"
             />
           </div>
-        )}
+        ) : null}
       </div>
-    </div>
+    </aside>
   )
 }
-
-// ─── 批量操作工具栏 ───────────────────────────────────────────────────────────
 
 interface ActionBarProps {
   selectedCount: number
@@ -151,54 +168,72 @@ function ActionBar({ selectedCount, allTags, onAddTags, onRemoveTags, onClear }:
   if (selectedCount === 0) return null
 
   const handleAdd = () => {
-    const tags = addInput.split(/[,，\s]+/).map(t => t.trim()).filter(Boolean)
+    const tags = addInput.split(/[,，\s]+/).map((tag) => tag.trim()).filter(Boolean)
     if (!tags.length) return
     onAddTags(tags)
     setAddInput('')
   }
 
   return (
-    <div className="flex items-center gap-3 px-4 py-2.5 bg-[var(--color-primary)]/5 border border-[var(--color-primary)]/20 rounded-lg text-sm">
-      <span className="text-[var(--color-primary)] font-medium shrink-0">已选 {selectedCount} 个</span>
-      <div className="flex items-center gap-1.5 flex-1 flex-wrap">
-        {/* 添加标签 */}
+    <div className="flex flex-wrap items-center gap-2 border-b border-[var(--color-border-default)] bg-[var(--color-accent-muted)] px-3 py-2 text-sm">
+      <span className="shrink-0 font-mono text-xs text-[var(--color-accent)]">SELECTED {selectedCount}</span>
+      <div className="flex flex-1 flex-wrap items-center gap-2">
         <div className="flex items-center gap-1">
+          <label htmlFor="batch-add-tags" className="sr-only">批量添加标签</label>
           <input
+            id="batch-add-tags"
             value={addInput}
-            onChange={e => setAddInput(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && handleAdd()}
-            placeholder="输入标签，逗号分隔"
-            className="px-2 py-1 text-xs rounded border border-[var(--color-border)] bg-[var(--color-bg-input)] text-[var(--color-text-primary)] placeholder-[var(--color-text-muted)] focus:outline-none focus:border-[var(--color-primary)] w-40"
+            onChange={(event) => setAddInput(event.target.value)}
+            onKeyDown={(event) => event.key === 'Enter' && handleAdd()}
+            placeholder="标签，逗号分隔"
+            className="w-40 rounded-sm border border-[var(--color-border)] bg-[var(--color-bg-input)] px-2 py-1 text-xs text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] focus:border-[var(--color-accent)] focus:outline-none"
           />
-          <Button size="sm" onClick={handleAdd} disabled={!addInput.trim()}>
-            <Plus className="w-3.5 h-3.5" />添加标签
+          <Button size="sm" onClick={handleAdd} disabled={!addInput.trim()} title="为所选实例添加标签">
+            <Plus className="h-3.5 w-3.5" aria-hidden="true" />添加
           </Button>
         </div>
-        {/* 移除标签 */}
-        {allTags.length > 0 && (
+
+        {allTags.length > 0 ? (
           <div className="flex items-center gap-1">
+            <label htmlFor="batch-remove-tag" className="sr-only">选择要批量移除的标签</label>
             <select
+              id="batch-remove-tag"
               value={removeTag}
-              onChange={e => setRemoveTag(e.target.value)}
-              className="px-2 py-1 text-xs rounded border border-[var(--color-border)] bg-[var(--color-bg-input)] text-[var(--color-text-primary)] focus:outline-none focus:border-[var(--color-primary)]"
+              onChange={(event) => setRemoveTag(event.target.value)}
+              className="rounded-sm border border-[var(--color-border)] bg-[var(--color-bg-input)] px-2 py-1 text-xs text-[var(--color-text-primary)] focus:border-[var(--color-accent)] focus:outline-none"
             >
-              <option value="">选择要移除的标签</option>
-              {allTags.map(t => <option key={t} value={t}>{t}</option>)}
+              <option value="">移除标签...</option>
+              {allTags.map((tag) => <option key={tag} value={tag}>{tag}</option>)}
             </select>
-            <Button size="sm" variant="secondary" onClick={() => { if (removeTag) { onRemoveTags([removeTag]); setRemoveTag('') } }} disabled={!removeTag}>
-              <Trash2 className="w-3.5 h-3.5" />移除
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={() => {
+                if (removeTag) {
+                  onRemoveTags([removeTag])
+                  setRemoveTag('')
+                }
+              }}
+              disabled={!removeTag}
+              title="从所选实例移除标签"
+            >
+              <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />移除
             </Button>
           </div>
-        )}
+        ) : null}
       </div>
-      <button onClick={onClear} className="shrink-0 text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]">
-        <X className="w-4 h-4" />
+      <button
+        type="button"
+        onClick={onClear}
+        aria-label="清除所选实例"
+        title="清除选择"
+        className="shrink-0 rounded-sm p-1 text-[var(--color-text-muted)] hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)]"
+      >
+        <X className="h-4 w-4" aria-hidden="true" />
       </button>
     </div>
   )
 }
-
-// ─── 主页面 ───────────────────────────────────────────────────────────────────
 
 export function TagManagementPage() {
   const [profiles, setProfiles] = useState<BrowserProfile[]>([])
@@ -206,20 +241,18 @@ export function TagManagementPage() {
   const [selectedTag, setSelectedTag] = useState<string | null>(null)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [saving, setSaving] = useState(false)
-  // 用户新建但尚未分配给任何实例的标签（纯前端暂存）
   const [pendingTags, setPendingTags] = useState<string[]>([])
 
-  // 合并：实例已有标签 + 用户新建的待分配标签
   const allTagsWithPending = useMemo(() => {
-    const set = new Set<string>()
-    profiles.forEach(p => p.tags?.forEach(t => set.add(t)))
-    pendingTags.forEach(t => set.add(t))
-    return Array.from(set).sort()
+    const tags = new Set<string>()
+    profiles.forEach((profile) => profile.tags?.forEach((tag) => tags.add(tag)))
+    pendingTags.forEach((tag) => tags.add(tag))
+    return Array.from(tags).sort()
   }, [profiles, pendingTags])
 
   const handleCreateTag = (tag: string) => {
     if (!allTagsWithPending.includes(tag)) {
-      setPendingTags(prev => [...prev, tag])
+      setPendingTags((previous) => [...previous, tag])
     }
   }
 
@@ -228,43 +261,42 @@ export function TagManagementPage() {
     try {
       const data = await fetchBrowserProfiles()
       setProfiles(data)
-      // 清理已被实例使用的 pendingTags
       const usedTags = new Set<string>()
-      data.forEach(p => p.tags?.forEach(t => usedTags.add(t)))
-      setPendingTags(prev => prev.filter(t => !usedTags.has(t)))
-    } finally { setLoading(false) }
+      data.forEach((profile) => profile.tags?.forEach((tag) => usedTags.add(tag)))
+      setPendingTags((previous) => previous.filter((tag) => !usedTags.has(tag)))
+    } finally {
+      setLoading(false)
+    }
   }
 
-  useEffect(() => { load() }, [])
-
-  // 重置勾选当切换标签时
+  useEffect(() => { void load() }, [])
   useEffect(() => { setSelectedIds(new Set()) }, [selectedTag])
 
   const allTags = allTagsWithPending
-
   const profilesByTag = useMemo(() => {
     const map: Record<string, number> = {}
-    profiles.forEach(p => p.tags?.forEach(t => { map[t] = (map[t] || 0) + 1 }))
+    profiles.forEach((profile) => profile.tags?.forEach((tag) => { map[tag] = (map[tag] || 0) + 1 }))
     return map
   }, [profiles])
 
   const displayProfiles = useMemo(() => {
     if (selectedTag === null) return profiles
-    return profiles.filter(p => p.tags?.includes(selectedTag))
+    return profiles.filter((profile) => profile.tags?.includes(selectedTag))
   }, [profiles, selectedTag])
 
-  // 勾选逻辑
-  const isAllSelected = displayProfiles.length > 0 && displayProfiles.every(p => selectedIds.has(p.profileId))
-  const isIndeterminate = !isAllSelected && displayProfiles.some(p => selectedIds.has(p.profileId))
+  const isAllSelected = displayProfiles.length > 0 && displayProfiles.every((profile) => selectedIds.has(profile.profileId))
+  const isIndeterminate = !isAllSelected && displayProfiles.some((profile) => selectedIds.has(profile.profileId))
   const toggleAll = () => {
     if (isAllSelected) setSelectedIds(new Set())
-    else setSelectedIds(new Set(displayProfiles.map(p => p.profileId)))
+    else setSelectedIds(new Set(displayProfiles.map((profile) => profile.profileId)))
   }
-  const toggleOne = (id: string) => setSelectedIds(prev => {
-    const next = new Set(prev); next.has(id) ? next.delete(id) : next.add(id); return next
+  const toggleOne = (id: string) => setSelectedIds((previous) => {
+    const next = new Set(previous)
+    if (next.has(id)) next.delete(id)
+    else next.add(id)
+    return next
   })
 
-  // 批量添加标签
   const handleAddTags = async (tags: string[]) => {
     const ids = Array.from(selectedIds)
     setSaving(true)
@@ -272,12 +304,13 @@ export function TagManagementPage() {
       await batchSetProfileTags(ids, tags, false)
       toast.success(`已为 ${ids.length} 个实例添加标签`)
       await load()
-    } catch (e: any) {
-      toast.error(e?.message || '操作失败')
-    } finally { setSaving(false) }
+    } catch (error: any) {
+      toast.error(error?.message || '操作失败')
+    } finally {
+      setSaving(false)
+    }
   }
 
-  // 批量移除标签
   const handleRemoveTags = async (tags: string[]) => {
     const ids = Array.from(selectedIds)
     setSaving(true)
@@ -285,12 +318,13 @@ export function TagManagementPage() {
       await batchRemoveProfileTags(ids, tags)
       toast.success(`已从 ${ids.length} 个实例移除标签`)
       await load()
-    } catch (e: any) {
-      toast.error(e?.message || '操作失败')
-    } finally { setSaving(false) }
+    } catch (error: any) {
+      toast.error(error?.message || '操作失败')
+    } finally {
+      setSaving(false)
+    }
   }
 
-  // 重命名标签
   const handleRenameTag = async (oldName: string, newName: string) => {
     if (oldName === newName || !newName.trim()) return
     if (allTags.includes(newName.trim())) {
@@ -302,108 +336,152 @@ export function TagManagementPage() {
       await renameBrowserTag(oldName, newName.trim())
       toast.success('标签重命名成功')
       if (pendingTags.includes(oldName)) {
-        setPendingTags(prev => prev.map(t => t === oldName ? newName.trim() : t))
+        setPendingTags((previous) => previous.map((tag) => tag === oldName ? newName.trim() : tag))
       }
       if (selectedTag === oldName) {
         setSelectedTag(newName.trim())
       }
       await load()
-    } catch (e: any) {
-      toast.error(e?.message || '重命名失败')
+    } catch (error: any) {
+      toast.error(error?.message || '重命名失败')
     } finally {
       setSaving(false)
     }
   }
 
+  const runningCount = profiles.filter((profile) => profile.running).length
+
   return (
-    <div className="flex h-full animate-fade-in">
-      {/* 左侧标签面板 */}
-      <TagPanel
-        tags={allTags}
-        selected={selectedTag}
-        profilesByTag={profilesByTag}
-        totalCount={profiles.length}
-        onSelect={setSelectedTag}
-        onCreateTag={handleCreateTag}
-        onRenameTag={handleRenameTag}
+    <div className="apple-page flex h-full min-h-0 flex-col gap-4 animate-fade-in">
+      <WorkspaceHeader
+        eyebrow="FINGERPRINT / TAGS"
+        title="实例标签"
+        description="筛选实例并批量添加或移除标签。"
       />
 
-      {/* 右侧内容区 */}
-      <div className="flex-1 flex flex-col overflow-hidden pl-5 gap-4">
-        {/* 批量操作栏 */}
-        <ActionBar
-          selectedCount={selectedIds.size}
-          allTags={allTags}
-          onAddTags={handleAddTags}
-          onRemoveTags={handleRemoveTags}
-          onClear={() => setSelectedIds(new Set())}
-        />
+      <AssetScopeTabs />
 
-        {/* 实例表格 */}
-        <Card padding="none" className="flex-1 overflow-hidden">
-          <div className="overflow-auto h-full">
-            <table className="min-w-full">
-              <thead className="sticky top-0 z-10">
-                <tr>
-                  <th className="px-4 py-3 bg-[var(--color-bg-muted)] w-10">
-                    <input
-                      type="checkbox"
-                      className="w-4 h-4 rounded cursor-pointer accent-[var(--color-accent)]"
-                      checked={isAllSelected}
-                      ref={el => { if (el) el.indeterminate = isIndeterminate }}
-                      onChange={toggleAll}
-                    />
-                  </th>
-                  <th className="px-4 py-3 text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wider bg-[var(--color-bg-muted)] text-left">实例名称</th>
-                  <th className="px-4 py-3 text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wider bg-[var(--color-bg-muted)] text-left">当前标签</th>
-                  <th className="px-4 py-3 text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wider bg-[var(--color-bg-muted)] text-left">状态</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[var(--color-border-muted)] bg-[var(--color-bg-surface)]">
-                {loading ? (
-                  <tr><td colSpan={4} className="px-4 py-16 text-center text-sm text-[var(--color-text-muted)]">加载中...</td></tr>
-                ) : displayProfiles.length === 0 ? (
-                  <tr><td colSpan={4} className="px-4 py-16 text-center text-sm text-[var(--color-text-muted)]">暂无实例</td></tr>
-                ) : displayProfiles.map(p => (
-                  <tr
-                    key={p.profileId}
-                    className={`transition-colors cursor-pointer ${selectedIds.has(p.profileId) ? 'bg-[var(--color-primary)]/5' : 'hover:bg-[var(--color-bg-muted)]/50'}`}
-                    onClick={() => toggleOne(p.profileId)}
-                  >
-                    <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
-                      <input
-                        type="checkbox"
-                        className="w-4 h-4 rounded cursor-pointer accent-[var(--color-accent)]"
-                        checked={selectedIds.has(p.profileId)}
-                        onChange={() => toggleOne(p.profileId)}
-                      />
-                    </td>
-                    <td className="px-4 py-3 text-sm font-medium text-[var(--color-text-primary)]">{p.profileName}</td>
-                    <td className="px-4 py-3">
-                      <div className="flex flex-wrap gap-1">
-                        {p.tags?.length ? p.tags.map(t => (
-                          <Badge key={t} variant={t === selectedTag ? 'info' : 'default'}>{t}</Badge>
-                        )) : <span className="text-xs text-[var(--color-text-muted)]">无标签</span>}
-                      </div>
-                    </td>
-                    <td className="px-4 py-3">
-                      <Badge variant={p.running ? 'success' : 'warning'} dot>{p.running ? '运行中' : '已停止'}</Badge>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </Card>
+      <TelemetryStrip items={[
+        { label: '标签', value: allTags.length, detail: `${pendingTags.length} 个待首次分配`, tone: pendingTags.length ? 'warning' : 'neutral' },
+        { label: '实例', value: profiles.length, detail: `${runningCount} 个运行中`, tone: runningCount ? 'success' : 'neutral' },
+        { label: '当前视图', value: displayProfiles.length, detail: selectedTag ? `标签: ${selectedTag}` : '全部实例', tone: selectedTag ? 'accent' : 'neutral' },
+        { label: '已选择', value: selectedIds.size, detail: '可批量更新标签', tone: selectedIds.size ? 'accent' : 'neutral' },
+      ]} />
 
-        {saving && (
-          <div className="fixed inset-0 bg-black/20 z-50 flex items-center justify-center">
-            <div className="bg-[var(--color-bg-elevated)] rounded-lg px-6 py-4 text-sm text-[var(--color-text-primary)] shadow-xl">
-              保存中...
-            </div>
+      <TerminalPanel
+        title="INSTANCE TAG MAP"
+        meta={<span className="font-mono text-[10px] uppercase tracking-[0.14em]">{selectedTag ?? 'ALL PROFILES'}</span>}
+        className="flex min-h-0 flex-1 flex-col overflow-hidden"
+      >
+        <div className="flex min-h-0 flex-1 overflow-hidden">
+          <TagPanel
+            tags={allTags}
+            selected={selectedTag}
+            profilesByTag={profilesByTag}
+            totalCount={profiles.length}
+            onSelect={setSelectedTag}
+            onCreateTag={handleCreateTag}
+            onRenameTag={handleRenameTag}
+          />
+
+          <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+            <ActionBar
+              selectedCount={selectedIds.size}
+              allTags={allTags}
+              onAddTags={handleAddTags}
+              onRemoveTags={handleRemoveTags}
+              onClear={() => setSelectedIds(new Set())}
+            />
+
+            {loading ? (
+              <div className="flex flex-1 items-center justify-center font-mono text-xs uppercase tracking-[0.14em] text-[var(--color-text-muted)]" role="status" aria-live="polite">
+                Loading profile registry...
+              </div>
+            ) : displayProfiles.length === 0 ? (
+              <div className="flex flex-1 items-center justify-center p-6">
+                <SignalEmptyState
+                  symbol="fingerprint"
+                  title={selectedTag ? '此标签还没有关联实例' : '暂无浏览器实例'}
+                  description={selectedTag ? '先在全部实例中分配此标签。' : '创建实例后即可维护标签。'}
+                />
+              </div>
+            ) : (
+              <div className="h-full overflow-auto">
+                <table className="min-w-full">
+                  <thead className="sticky top-0 z-10">
+                    <tr>
+                      <th className="w-10 bg-[var(--color-bg-muted)] px-4 py-2.5">
+                        <input
+                          type="checkbox"
+                          className="h-4 w-4 cursor-pointer accent-[var(--color-accent)]"
+                          checked={isAllSelected}
+                          ref={(element) => { if (element) element.indeterminate = isIndeterminate }}
+                          onChange={toggleAll}
+                          aria-label="选择当前视图中的全部实例"
+                        />
+                      </th>
+                      <th className="bg-[var(--color-bg-muted)] px-4 py-2.5 text-left font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--color-text-muted)]">实例名称</th>
+                      <th className="bg-[var(--color-bg-muted)] px-4 py-2.5 text-left font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--color-text-muted)]">当前标签</th>
+                      <th className="bg-[var(--color-bg-muted)] px-4 py-2.5 text-left font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--color-text-muted)]">状态</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[var(--color-border-muted)] bg-[var(--color-bg-surface)]">
+                    {displayProfiles.map((profile) => {
+                      const isSelected = selectedIds.has(profile.profileId)
+                      return (
+                        <tr
+                          key={profile.profileId}
+                          tabIndex={0}
+                          role="checkbox"
+                          aria-checked={isSelected}
+                          aria-label={`选择实例 ${profile.profileName}`}
+                          className={`cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-[var(--color-accent)] ${isSelected ? 'bg-[var(--color-accent-muted)]' : 'hover:bg-[var(--color-bg-muted)]/50'}`}
+                          onClick={() => toggleOne(profile.profileId)}
+                          onKeyDown={(event) => {
+                            if (event.key === 'Enter' || event.key === ' ') {
+                              event.preventDefault()
+                              toggleOne(profile.profileId)
+                            }
+                          }}
+                        >
+                          <td className="px-4 py-3" onClick={(event) => event.stopPropagation()}>
+                            <input
+                              type="checkbox"
+                              className="h-4 w-4 cursor-pointer accent-[var(--color-accent)]"
+                              checked={isSelected}
+                              onChange={() => toggleOne(profile.profileId)}
+                              aria-label={`选择 ${profile.profileName}`}
+                            />
+                          </td>
+                          <td className="px-4 py-3 text-sm font-medium text-[var(--color-text-primary)]">{profile.profileName}</td>
+                          <td className="px-4 py-3">
+                            <div className="flex flex-wrap gap-1">
+                              {profile.tags?.length
+                                ? profile.tags.map((tag) => <Badge key={tag} variant={tag === selectedTag ? 'info' : 'default'}>{tag}</Badge>)
+                                : <span className="text-xs text-[var(--color-text-muted)]">无标签</span>}
+                            </div>
+                          </td>
+                          <td className="px-4 py-3">
+                            <Badge variant={profile.running ? 'success' : 'warning'} dot>{profile.running ? '运行中' : '已停止'}</Badge>
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
-        )}
-      </div>
+        </div>
+      </TerminalPanel>
+
+      {saving ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20" role="status" aria-live="assertive" aria-label="正在保存标签变更">
+          <div className="rounded-sm border border-[var(--color-border-default)] bg-[var(--color-bg-elevated)] px-5 py-3 font-mono text-xs uppercase tracking-[0.14em] text-[var(--color-text-primary)] shadow-lg">
+            Writing tag changes...
+          </div>
+        </div>
+      ) : null}
     </div>
   )
 }

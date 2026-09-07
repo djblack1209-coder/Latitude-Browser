@@ -131,6 +131,7 @@ func (a *App) migrateToSQLite() {
 					UserDataDir:        pc.UserDataDir,
 					CoreId:             coreId,
 					FingerprintArgs:    pc.FingerprintArgs,
+					NetworkMode:        browser.NormalizeNetworkMode(pc.NetworkMode),
 					ProxyId:            pc.ProxyId,
 					ProxyConfig:        pc.ProxyConfig,
 					ProxyBindSourceID:  pc.ProxyBindSourceID,
@@ -143,6 +144,7 @@ func (a *App) migrateToSQLite() {
 					CreatedAt:          pc.CreatedAt,
 					UpdatedAt:          pc.UpdatedAt,
 				}
+				browser.NormalizeProfileNetworkState(p)
 				if err := a.browserMgr.ProfileDAO.Upsert(p); err != nil {
 					log.Error("实例迁移失败", logger.F("profile_id", pc.ProfileId), logger.F("error", err))
 				}
@@ -156,6 +158,7 @@ func (a *App) migrateToSQLite() {
 				UserDataDir:     "default",
 				CoreId:          "",
 				FingerprintArgs: a.config.Browser.DefaultFingerprintArgs,
+				NetworkMode:     browser.NetworkModeProxy,
 				LaunchArgs:      a.config.Browser.DefaultLaunchArgs,
 				Tags:            []string{"默认"},
 				ProxyId:         "__direct__",

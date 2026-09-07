@@ -1,5 +1,7 @@
 package backend
 
+import "fmt"
+
 func (a *App) BrowserInstanceStart(profileId string) (*BrowserProfile, error) {
 	return a.browserInstanceStartInternal(profileId, nil, nil, false, false, false, "", "")
 }
@@ -20,6 +22,17 @@ func (a *App) BrowserInstanceStartWithParams(profileId string, extraLaunchArgs [
 }
 
 func (a *App) browserInstanceStartInternal(profileId string, extraLaunchArgs []string, startURLs []string, skipDefaultStartURLs bool, preferVisibleWindow bool, forceDirectProxy bool, proxyId string, proxyConfig string) (*BrowserProfile, error) {
+	// A Tor death callback must either stop the browser belonging to its exact
+	// runtime generation or observe a completed replacement start. Taking this
+	// gate before the browser-manager lock gives starts and death handling one
+	// stable lock order: Tor lifecycle, then browser manager.
+	a.torLifecycleMu.Lock()
+	if a.isQuitRequested() {
+		a.torLifecycleMu.Unlock()
+		return nil, fmt.Errorf("实例启动失败：应用正在退出，已拒绝创建新的浏览器或 Tor 运行时")
+	}
+	defer a.torLifecycleMu.Unlock()
+
 	input := newBrowserStartInput(profileId, extraLaunchArgs, startURLs, skipDefaultStartURLs, preferVisibleWindow, forceDirectProxy, proxyId, proxyConfig)
 	a.browserMgr.Mutex.Lock()
 	defer a.browserMgr.Mutex.Unlock()

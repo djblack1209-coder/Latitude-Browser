@@ -19,10 +19,30 @@ func (m *Manager) Update(profileId string, input ProfileInput) (*Profile, error)
 		log.Error("浏览器配置不存在", logger.F("profile_id", profileId))
 		return nil, fmt.Errorf("profile not found")
 	}
-	resolvedProxy, err := m.resolveProfileProxyInput(input.ProxyId, input.ProxyConfig)
-	if err != nil {
-		log.Error("代理绑定失败", logger.F("profile_id", profileId), logger.F("proxy_id", strings.TrimSpace(input.ProxyId)), logger.F("error", err.Error()))
+	// Update inputs are partial at the HTTP/Wails boundary. An omitted network
+	// mode must preserve the existing transport instead of being interpreted as
+	// the create-time default (proxy).
+	networkMode := NormalizeNetworkMode(profile.NetworkMode)
+	var err error
+	if strings.TrimSpace(input.NetworkMode) != "" {
+		networkMode, err = ValidateNetworkMode(input.NetworkMode)
+		if err != nil {
+			return nil, err
+		}
+	}
+	if err := validateTorProxyExclusivity(networkMode, input.ProxyId, input.ProxyConfig); err != nil {
 		return nil, err
+	}
+	if profile.Running && NormalizeNetworkMode(profile.NetworkMode) != networkMode {
+		return nil, fmt.Errorf("实例运行中，不能切换网络模式；请先停止实例")
+	}
+	resolvedProxy := resolvedProfileProxyInput{}
+	if networkMode != NetworkModeTor {
+		resolvedProxy, err = m.resolveProfileProxyInput(input.ProxyId, input.ProxyConfig)
+		if err != nil {
+			log.Error("代理绑定失败", logger.F("profile_id", profileId), logger.F("proxy_id", strings.TrimSpace(input.ProxyId)), logger.F("error", err.Error()))
+			return nil, err
+		}
 	}
 
 	profile.ProfileName = input.ProfileName
@@ -30,7 +50,12 @@ func (m *Manager) Update(profileId string, input ProfileInput) (*Profile, error)
 	profile.CoreId = normalizeProfileCoreID(input.CoreId)
 	profile.RestoreLastSession = NormalizeRestoreLastSessionMode(input.RestoreLastSession)
 	profile.FingerprintArgs = input.FingerprintArgs
-	if resolvedProxy.HasSelectedProxy {
+	profile.NetworkMode = networkMode
+	if networkMode == NetworkModeTor {
+		profile.ProxyId = ""
+		profile.ProxyConfig = ""
+		NormalizeProfileNetworkState(profile)
+	} else if resolvedProxy.HasSelectedProxy {
 		_ = BindProfileToProxy(profile, resolvedProxy.SelectedProxy, true)
 	} else if resolvedProxy.FallbackToDirect {
 		_ = m.bindProfileToDirectProxy(profile)

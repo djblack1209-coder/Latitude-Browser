@@ -218,6 +218,24 @@ var migrations = []migration{
 			`ALTER TABLE browser_profiles ADD COLUMN memory_limit_mb INTEGER NOT NULL DEFAULT 0`,
 		},
 	},
+	{
+		version: 15,
+		desc:    "实例表添加显式网络模式",
+		stmts: []string{
+			`ALTER TABLE browser_profiles ADD COLUMN network_mode TEXT NOT NULL DEFAULT 'proxy'`,
+		},
+	},
+	{
+		version: 16,
+		desc:    "代理表添加测速诊断字段",
+		stmts: []string{
+			`ALTER TABLE browser_proxies ADD COLUMN last_test_engine TEXT NOT NULL DEFAULT ''`,
+			`ALTER TABLE browser_proxies ADD COLUMN last_test_stage TEXT NOT NULL DEFAULT ''`,
+			`ALTER TABLE browser_proxies ADD COLUMN last_test_code TEXT NOT NULL DEFAULT ''`,
+			`ALTER TABLE browser_proxies ADD COLUMN last_test_target_url TEXT NOT NULL DEFAULT ''`,
+			`ALTER TABLE browser_proxies ADD COLUMN last_test_error TEXT NOT NULL DEFAULT ''`,
+		},
+	},
 	// ── 新版本在此追加，格式：
 	// {
 	//     version: 4,

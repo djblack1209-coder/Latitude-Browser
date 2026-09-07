@@ -1,6 +1,7 @@
 import { Button, FormItem, Input, Modal, Select, Table, Textarea } from '../../../../shared/components'
 import type { TableColumn } from '../../../../shared/components/Table'
 import type { ProxyIPHealthResult } from '../../types'
+import { diagnosticStageLabel, normalizeProxyDiagnostic } from './diagnostics'
 
 import {
   type ChainImportForm,
@@ -368,7 +369,7 @@ export function ProxyPoolIPHealthDetailModal({
     <Modal
       open={open}
       onClose={onClose}
-      title="IP健康原始返回"
+      title="IP 健康原始返回"
       width="760px"
       footer={
         <Button variant="secondary" onClick={onClose}>
@@ -382,8 +383,24 @@ export function ProxyPoolIPHealthDetailModal({
             <div className="text-xs text-[var(--color-text-muted)]">
               代理ID：{detail.proxyId} | 来源：{detail.source} | 时间：{detail.updatedAt}
             </div>
-            {!detail.ok && <div className="text-sm text-red-500">{detail.error || '检测失败'}</div>}
-            <pre className="max-h-[420px] overflow-auto text-xs leading-5 rounded-lg bg-[var(--color-bg-secondary)] border border-[var(--color-border)] p-3">
+            {(() => {
+              const diagnostic = normalizeProxyDiagnostic(detail as unknown as Record<string, unknown>, {
+                proxyId: detail.proxyId,
+                checkedAt: detail.updatedAt,
+                engine: detail.engine,
+                source: detail.source,
+              })
+              return (
+                <div className="grid grid-cols-2 gap-x-4 gap-y-2 rounded-lg border border-[var(--color-border-default)] bg-[var(--color-bg-subtle)] px-3 py-2 text-xs sm:grid-cols-4">
+                  <div><span className="text-[var(--color-text-muted)]">阶段</span><div className="mt-0.5 text-[var(--color-text-primary)]">{diagnosticStageLabel(diagnostic.stage)}</div></div>
+                  <div><span className="text-[var(--color-text-muted)]">错误码</span><div className="mt-0.5 font-mono text-[var(--color-text-primary)]">{diagnostic.code || '-'}</div></div>
+                  <div><span className="text-[var(--color-text-muted)]">内核</span><div className="mt-0.5 text-[var(--color-text-primary)]">{diagnostic.engine || '-'}</div></div>
+                  <div><span className="text-[var(--color-text-muted)]">目标</span><div className="mt-0.5 truncate text-[var(--color-text-primary)]" title={diagnostic.targetUrl || undefined}>{diagnostic.targetUrl || '-'}</div></div>
+                </div>
+              )
+            })()}
+            {!detail.ok && <div className="text-sm text-[var(--color-error)]">{detail.error || '检测失败'}</div>}
+            <pre className="max-h-[420px] overflow-auto rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-secondary)] p-3 text-xs leading-5">
               {JSON.stringify(detail.rawData || {}, null, 2)}
             </pre>
           </>

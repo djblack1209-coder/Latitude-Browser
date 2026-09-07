@@ -33,16 +33,61 @@ type ProxyCoreDownloadProgress struct {
 	Message  string `json:"message"`
 }
 
+// ProxyCoreState is the machine-readable readiness state for a connector core.
+//
+// The old Installed/Configured/Active booleans are kept for backwards
+// compatibility with older Wails clients. New callers should prefer State:
+//
+//	ready     - required by the current connector and executable
+//	installed - executable is available and configured, but not required now
+//	downloaded - app-managed binary was found, but it is not configured/active
+//	missing   - required or requested binary was not found
+//	unavailable - the desktop bridge/configuration is not ready to answer
+//
+// State deliberately describes local readiness only. It is not a claim that a
+// remote proxy can reach the internet.
+type ProxyCoreState string
+
+const (
+	ProxyCoreStateReady       ProxyCoreState = "ready"
+	ProxyCoreStateInstalled   ProxyCoreState = "installed"
+	ProxyCoreStateDownloaded  ProxyCoreState = "downloaded"
+	ProxyCoreStateMissing     ProxyCoreState = "missing"
+	ProxyCoreStateUnavailable ProxyCoreState = "unavailable"
+)
+
 type ProxyCoreStatusResult struct {
-	Core       string `json:"core"`
-	GOOS       string `json:"goos"`
-	GOARCH     string `json:"goarch"`
-	Installed  bool   `json:"installed"`
-	Configured bool   `json:"configured"`
-	Active     bool   `json:"active"`
-	BinaryPath string `json:"binaryPath"`
-	Source     string `json:"source"`
-	Message    string `json:"message"`
+	Core       string         `json:"core"`
+	GOOS       string         `json:"goos"`
+	GOARCH     string         `json:"goarch"`
+	Installed  bool           `json:"installed"`
+	Configured bool           `json:"configured"`
+	Active     bool           `json:"active"`
+	State      ProxyCoreState `json:"state"`
+	BinaryPath string         `json:"binaryPath"`
+	Source     string         `json:"source"`
+	Message    string         `json:"message"`
+}
+
+// ProxyConnectorPreflightRequest selects the connector stack to inspect. An
+// empty ConnectorType uses the persisted browser policy; empty platform fields
+// use the current native target.
+type ProxyConnectorPreflightRequest struct {
+	ConnectorType string `json:"connectorType"`
+	GOOS          string `json:"goos"`
+	GOARCH        string `json:"goarch"`
+}
+
+type ProxyConnectorPreflightResult struct {
+	ConnectorType string                  `json:"connectorType"`
+	GOOS          string                  `json:"goos"`
+	GOARCH        string                  `json:"goarch"`
+	Ready         bool                    `json:"ready"`
+	State         ProxyCoreState          `json:"state"`
+	RequiredCores []string                `json:"requiredCores"`
+	MissingCores  []string                `json:"missingCores"`
+	Cores         []ProxyCoreStatusResult `json:"cores"`
+	Message       string                  `json:"message"`
 }
 
 type ProxyCoreDownloadInfoResult struct {

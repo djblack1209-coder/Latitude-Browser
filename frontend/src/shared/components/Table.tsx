@@ -100,7 +100,7 @@ export function Table<T extends Record<string, any>>({
 
   return (
     <div
-      className={clsx('overflow-auto', className)}
+      className={clsx('signal-table overflow-auto', className)}
       style={{ maxHeight }}
     >
       <table className="min-w-full">
@@ -110,7 +110,7 @@ export function Table<T extends Record<string, any>>({
               <th
                 key={col.key}
                 className={clsx(
-                  'px-4 py-3 text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wider bg-[var(--color-bg-muted)]',
+                  'px-4 py-3 text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-[0.1em] bg-[var(--color-bg-muted)]',
                   col.align === 'center' && 'text-center',
                   col.align === 'right' && 'text-right',
                   !col.align && 'text-left',
@@ -146,7 +146,7 @@ export function Table<T extends Record<string, any>>({
               <tr
                 key={getRowKey(record, index)}
                 className={clsx(
-                  'hover:bg-[var(--color-bg-muted)]/50 transition-colors duration-150',
+                  'hover:bg-[var(--color-bg-muted)]/70 transition-colors duration-150',
                   onRowClick && 'cursor-pointer'
                 )}
                 onClick={() => onRowClick?.(record)}

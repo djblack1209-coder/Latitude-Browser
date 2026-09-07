@@ -1,4 +1,4 @@
-﻿# OS
+# OS
 .DS_Store
 Thumbs.db
 
@@ -24,6 +24,7 @@ pnpm-debug.log*
 .ant-license.json
 
 # Build outputs
+/.bundles.noindex/
 /bin/
 build/bin/*
 !build/bin/README.md
@@ -92,6 +93,9 @@ __pycache__/
 .tmp/runtime-cache/
 
 # Test outputs / coverage
+output/playwright/
+output/native-tor/
+.playwright-cli/
 coverage/
 *.out
 tmp-debug-port*/

@@ -9,11 +9,62 @@ import (
 
 var defaultBrowserStartURLs = []string{}
 
+func defaultProxyCheckTargets() []ProxyCheckTarget {
+	return []ProxyCheckTarget{
+		{
+			ID:             "google-204",
+			Name:           "Google 204",
+			Type:           "speed",
+			URL:            "http://www.gstatic.com/generate_204",
+			Method:         "GET",
+			TimeoutMs:      8000,
+			ExpectedStatus: []int{204},
+		},
+		{
+			ID:             "cloudflare-204",
+			Name:           "Cloudflare 204",
+			Type:           "speed",
+			URL:            "https://cp.cloudflare.com/generate_204",
+			Method:         "GET",
+			TimeoutMs:      8000,
+			ExpectedStatus: []int{204},
+		},
+		{
+			ID:             "microsoft-connect-test",
+			Name:           "Microsoft Connect Test",
+			Type:           "speed",
+			URL:            "http://www.msftconnecttest.com/connecttest.txt",
+			Method:         "GET",
+			TimeoutMs:      8000,
+			ExpectedStatus: []int{200},
+		},
+		{
+			ID:             "cloudflare-trace",
+			Name:           "Cloudflare Trace",
+			Type:           "speed",
+			URL:            "https://www.cloudflare.com/cdn-cgi/trace",
+			Method:         "GET",
+			TimeoutMs:      8000,
+			ExpectedStatus: []int{200},
+		},
+		{
+			ID:             "ip-health",
+			Name:           "IP Health",
+			Type:           "ip_health",
+			URL:            "https://api.ipify.org?format=json",
+			Method:         "GET",
+			TimeoutMs:      10000,
+			Parser:         "ipify",
+			ExpectedStatus: []int{200},
+		},
+	}
+}
+
 const (
-	// BrowserConnectorXray 是历史 default_connector_type 的默认值。
-	// 新代理运行入口不再依赖全局连接栈，而是按单个代理自动解析 xray/sing-box/mihomo。
+	// BrowserConnectorXray 表示 Xray + sing-box 组合连接栈：Xray 处理
+	// vmess/vless/trojan/shadowsocks/链式代理，sing-box 处理 hysteria2/tuic/anytls。
 	BrowserConnectorXray = "xray"
-	// BrowserConnectorMihomo 仅保留用于兼容旧配置、旧 API 和历史数据。
+	// BrowserConnectorMihomo 表示独立 Mihomo 连接栈，不得自动调用 Xray 或 sing-box 替代。
 	BrowserConnectorMihomo = "mihomo"
 )
 
@@ -22,8 +73,8 @@ const (
 	BrowserConnectorMihomoStack = BrowserConnectorMihomo
 )
 
-// NormalizeBrowserConnectorType 只用于兼容历史 default_connector_type 输入。
-// 新代理执行入口应使用 proxy.ResolveProxyKernel 按单个代理选择内核。
+// NormalizeBrowserConnectorType 规范化全局连接栈选择。sing-box 的历史输入归入
+// xray 组合栈；代理执行入口必须在所选栈内解析内核，不得跨栈自动回退。
 func NormalizeBrowserConnectorType(value string) string {
 	switch strings.ToLower(strings.TrimSpace(value)) {
 	case BrowserConnectorMihomo, "clash", "clash-meta":
@@ -272,7 +323,7 @@ func DefaultConfig() *Config {
 			BridgeStartTimeoutMs: 15000,
 			SpeedTargetID:        "",
 			IPHealthTargetID:     "",
-			Targets:              []ProxyCheckTarget{},
+			Targets:              defaultProxyCheckTargets(),
 		},
 		Logging: LoggingConfig{
 			Level:           "info",

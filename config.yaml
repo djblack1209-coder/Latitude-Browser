@@ -55,7 +55,48 @@ proxy_check:
     bridge_start_timeout_ms: 15000
     speed_target_id: ""
     ip_health_target_id: ""
-    targets: []
+    targets:
+        - id: google-204
+          name: Google 204
+          type: speed
+          url: http://www.gstatic.com/generate_204
+          method: GET
+          timeout_ms: 8000
+          expected_status:
+            - 204
+        - id: cloudflare-204
+          name: Cloudflare 204
+          type: speed
+          url: https://cp.cloudflare.com/generate_204
+          method: GET
+          timeout_ms: 8000
+          expected_status:
+            - 204
+        - id: microsoft-connect-test
+          name: Microsoft Connect Test
+          type: speed
+          url: http://www.msftconnecttest.com/connecttest.txt
+          method: GET
+          timeout_ms: 8000
+          expected_status:
+            - 200
+        - id: cloudflare-trace
+          name: Cloudflare Trace
+          type: speed
+          url: https://www.cloudflare.com/cdn-cgi/trace
+          method: GET
+          timeout_ms: 8000
+          expected_status:
+            - 200
+        - id: ip-health
+          name: IP Health
+          type: ip_health
+          url: https://api.ipify.org?format=json
+          method: GET
+          timeout_ms: 10000
+          parser: ipify
+          expected_status:
+            - 200
 launch_server:
     port: 19876
     auth:

@@ -1,6 +1,7 @@
-﻿import { useEffect, useState, useCallback } from 'react'
-import { FolderOpen } from 'lucide-react'
-import { Badge, Button, Card, ConfirmModal, Table, toast } from '../../../shared/components'
+import { useEffect, useState, useCallback } from 'react'
+import { Download, FolderOpen, PackagePlus, Plus, Radar } from 'lucide-react'
+import { Badge, Button, ConfirmModal, Table, toast } from '../../../shared/components'
+import { TelemetryStrip, TerminalPanel, WorkspaceHeader } from '../../../shared/components/SignalPrimitives'
 import type { TableColumn } from '../../../shared/components/Table'
 import type { BrowserCore, BrowserCoreInput, BrowserCoreValidateResult, BrowserSettings, BrowserCoreExtended, BrowserProxy } from '../types'
 import { fetchBrowserCores, saveBrowserCore, deleteBrowserCore, setDefaultBrowserCore, validateBrowserCorePath, openCorePath, fetchBrowserSettings, saveBrowserSettings, fetchCoreExtendedInfo, scanBrowserCores, importLocalBrowserCore, BrowserCoreDownload, fetchBrowserProxies, redownloadBrowserCore } from '../api'
@@ -210,7 +211,7 @@ export function CoreManagementPage() {
       width: '220px',
       render: (_, record) => (
         <div className="flex gap-2">
-          <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); handleOpenPath(record.corePath) }} title="打开目录">
+          <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); handleOpenPath(record.corePath) }} title="打开目录" aria-label={`打开 ${record.coreName} 的内核目录`}>
             <FolderOpen className="w-4 h-4" />
           </Button>
           <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); handleEdit(record) }}>
@@ -480,32 +481,75 @@ export function CoreManagementPage() {
   }
 
 
+  const validCoreCount = displayList.filter((item) => item.pathValid).length
+  const linkedInstanceCount = displayList.reduce((total, item) => total + item.instanceCount, 0)
+  const defaultCore = displayList.find((item) => item.isDefault)
+
   return (
-    <div className="space-y-5 animate-fade-in">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-semibold text-[var(--color-text-primary)]">内核管理</h1>
-          <p className="text-sm text-[var(--color-text-muted)] mt-1">管理 Chrome 内核版本和全局设置</p>
-        </div>
-        <div className="flex gap-2">
-          <Button size="sm" variant="secondary" onClick={handleOpenDownload}>下载内核</Button>
-          <Button size="sm" variant="secondary" onClick={handleImportLocal} loading={importing}>导入本地</Button>
-          <Button size="sm" variant="secondary" onClick={handleScan} loading={scanning}>扫描内核</Button>
-          <Button size="sm" onClick={handleAdd}>新增内核</Button>
-        </div>
-      </div>
+    <div className="apple-page space-y-4">
+      <WorkspaceHeader
+        eyebrow="FINGERPRINT / CORES"
+        title="浏览器内核"
+        description="管理浏览器内核、默认基线与数据目录。"
+        actions={(
+          <>
+            <Button size="sm" variant="secondary" onClick={handleOpenDownload}>
+              <Download className="h-4 w-4" aria-hidden="true" />
+              下载内核
+            </Button>
+            <Button size="sm" variant="secondary" onClick={handleImportLocal} loading={importing}>
+              <PackagePlus className="h-4 w-4" aria-hidden="true" />
+              导入本地
+            </Button>
+            <Button size="sm" variant="secondary" onClick={handleScan} loading={scanning}>
+              <Radar className="h-4 w-4" aria-hidden="true" />
+              扫描目录
+            </Button>
+            <Button size="sm" onClick={handleAdd}>
+              <Plus className="h-4 w-4" aria-hidden="true" />
+              新增内核
+            </Button>
+          </>
+        )}
+      />
+
+      <TelemetryStrip
+        items={[
+          { label: '已注册', value: displayList.length, detail: 'Chrome Runtime' },
+          {
+            label: '路径可用',
+            value: `${validCoreCount}/${displayList.length}`,
+            detail: loading ? '正在校验' : '启动前置检查',
+            tone: loading || displayList.length === 0 ? 'neutral' : validCoreCount === displayList.length ? 'success' : 'warning',
+          },
+          { label: '关联实例', value: linkedInstanceCount, detail: '使用当前内核' },
+          {
+            label: '默认内核',
+            value: defaultCore?.coreName || '未设置',
+            detail: defaultCore?.chromeVersion || '等待指定',
+            tone: defaultCore ? 'accent' : 'warning',
+          },
+        ]}
+      />
 
       {importProgress && (
-        <div className="flex items-center justify-between rounded-lg border border-[var(--color-border-default)] bg-[var(--color-bg-secondary)] px-3 py-2 text-sm">
-          <span className="text-[var(--color-text-secondary)]">{importProgress.message}</span>
-          <span className="text-[var(--color-text-muted)]">{Math.max(0, Math.min(100, importProgress.progress))}%</span>
-        </div>
+        <TerminalPanel
+          title="LOCAL IMPORT"
+          meta={<span className="font-mono tabular-nums">{Math.max(0, Math.min(100, importProgress.progress))}%</span>}
+        >
+          <div className="flex items-center gap-3 px-4 py-3 text-sm text-[var(--color-text-secondary)]" role="status" aria-live="polite">
+            <span className="h-2 w-2 rounded-full bg-[var(--color-accent)]" aria-hidden="true" />
+            {importProgress.message}
+          </div>
+        </TerminalPanel>
       )}
 
       <CoreSettingsCard settings={settings} onEdit={handleEditSettings} />
 
-      {/* 内核列表卡片 */}
-      <Card title="内核列表" subtitle="已配置的 Chrome 内核">
+      <TerminalPanel
+        title="RUNTIME REGISTRY"
+        meta={<span className="font-mono tabular-nums">{validCoreCount} READY / {displayList.length} TOTAL</span>}
+      >
         <Table
           columns={columns}
           data={displayList}
@@ -513,8 +557,7 @@ export function CoreManagementPage() {
           loading={loading}
           emptyText="暂无内核，请添加内核"
         />
-      </Card>
-
+      </TerminalPanel>
       <CoreSettingsModal
         open={settingsModalOpen}
         form={settingsForm}

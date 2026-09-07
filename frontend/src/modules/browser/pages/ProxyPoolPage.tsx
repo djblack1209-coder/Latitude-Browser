@@ -37,6 +37,7 @@ import { useProxyGlobalRefreshConfig } from './proxyPool/useProxyGlobalRefreshCo
 import { useProxyDeleteFlow } from './proxyPool/useProxyDeleteFlow'
 import { useProxyCoreDownload } from './proxyPool/useProxyCoreDownload'
 import { useProxyPoolFilter } from './proxyPool/useProxyPoolFilter'
+import './network-pages.css'
 
 export function ProxyPoolPage() {
   const [proxies, setProxies] = useState<BrowserProxy[]>([])
@@ -54,7 +55,10 @@ export function ProxyPoolPage() {
     coreDownloadProxy,
     setCoreDownloadProxy,
     coreDownloadProgress,
-    currentCoreStatus,
+    currentConnectorType,
+    currentConnectorStatuses,
+    currentConnectorPreflight,
+    currentConnectorStatusLoading,
     downloadCoreStatus,
     downloadCoreStatusLoading,
     loadBrowserSettings,
@@ -147,6 +151,7 @@ export function ProxyPoolPage() {
     latencyMap,
     latencyEngineMap,
     latencyErrorMap,
+    latencyDiagnosticMap,
     testingAll,
     ipHealthMap,
     checkingIPHealthIds,
@@ -159,10 +164,11 @@ export function ProxyPoolPage() {
     setIPHealthMap,
     handleTestOne,
     handleTestAll,
+    handleClearDiagnostic,
     handleCheckOneIPHealth,
     handleCheckAllIPHealth,
     openIPHealthDetail,
-  } = useProxyChecks({ proxies })
+  } = useProxyChecks({ proxies, connectorType: currentConnectorType })
 
   const loadProxies = useCallback(async () => {
     setLoading(true)
@@ -225,6 +231,21 @@ export function ProxyPoolPage() {
     latencyMap,
     ipHealthMap,
   })
+
+  const nodeIds = new Set(
+    displayList.filter(proxy => proxy.proxyConfig !== 'direct://').map(proxy => proxy.proxyId),
+  )
+  const visibleNodeCount = filteredList.filter(proxy => proxy.proxyConfig !== 'direct://').length
+  const measuredValues = Array.from(nodeIds)
+    .map(proxyId => latencyMap[proxyId])
+    .filter((value): value is number => typeof value === 'number' && value !== -1)
+  const measuredPassedCount = measuredValues.filter(value => value >= 0).length
+  const measuredFailedCount = measuredValues.filter(value => value < 0).length
+  const ipResults = Array.from(nodeIds)
+    .map(proxyId => ipHealthMap[proxyId])
+    .filter((value): value is ProxyIPHealthResult => Boolean(value))
+  const ipPassedCount = ipResults.filter(result => result.ok).length
+  const ipFailedCount = ipResults.filter(result => !result.ok).length
 
   const {
     selectedIds,
@@ -340,11 +361,22 @@ export function ProxyPoolPage() {
     handleDeleteConfirm,
   } = useProxyDeleteFlow({ proxies, saveProxies, removeSelectedId })
   return (
-    <div className="space-y-5 animate-fade-in">
+    <div className="network-page network-proxy-page space-y-4">
       <ProxyPoolHeader
         checkingAllIPHealth={checkingAllIPHealth}
-        currentConnectorStatus={currentCoreStatus?.message || '未知'}
+        configuredCount={displayList.length}
+        currentConnectorStatuses={currentConnectorStatuses}
+        currentConnectorPreflight={currentConnectorPreflight}
+        currentConnectorStatusLoading={currentConnectorStatusLoading}
+        currentConnectorType={currentConnectorType}
         hasURLImportSources={hasURLImportSources}
+        ipCheckedCount={ipResults.length}
+        ipFailedCount={ipFailedCount}
+        ipPassedCount={ipPassedCount}
+        measuredCount={measuredValues.length}
+        measuredFailedCount={measuredFailedCount}
+        measuredPassedCount={measuredPassedCount}
+        nodeCount={nodeIds.size}
         onCheckAllIPHealth={() => void handleCheckAllIPHealth(filteredList)}
         onOpenSettings={() => void openCheckSettings()}
         onOpenUsageGuide={() => setUsageGuideOpen(true)}
@@ -354,7 +386,8 @@ export function ProxyPoolPage() {
         onTestAll={() => void handleTestAll(filteredList)}
         refreshingAllSources={refreshingAllSources}
         testingAll={testingAll}
-        totalCount={filteredList.length}
+        visibleCount={filteredList.length}
+        visibleNodeCount={visibleNodeCount}
       />
 
       <ProxyPoolTableCard
@@ -373,8 +406,10 @@ export function ProxyPoolPage() {
         latencyMap={latencyMap}
         latencyEngineMap={latencyEngineMap}
         latencyErrorMap={latencyErrorMap}
+        latencyDiagnosticMap={latencyDiagnosticMap}
         loading={loading}
         onCheckOneIPHealth={(record) => void handleCheckOneIPHealth(record)}
+        onClearDiagnostic={(proxyId) => { void handleClearDiagnostic(proxyId) }}
         onClearFilters={() => {
           setFilterProtocol('all')
           setFilterKeyword('')

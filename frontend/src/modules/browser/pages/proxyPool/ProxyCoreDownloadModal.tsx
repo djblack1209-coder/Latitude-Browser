@@ -102,16 +102,16 @@ export function ProxyCoreDownloadModal({
             onChange={e => onCoreChange(e.target.value)}
             disabled={downloading}
             options={[
-              { value: 'xray', label: 'Xray（默认）' },
-              { value: 'mihomo', label: 'Mihomo' },
-              { value: 'sing-box', label: 'sing-box' },
+              { value: 'xray', label: 'Xray（组合栈主组件）' },
+              { value: 'sing-box', label: 'sing-box（组合栈协议组件）' },
+              { value: 'mihomo', label: 'Mihomo（独立连接栈）' },
             ]}
           />
         </FormItem>
 
         <div className="rounded-lg border border-[var(--color-border-default)] bg-[var(--color-bg-secondary)] px-3 py-2 text-sm">
           <div className="flex items-center justify-between gap-3">
-            <span className="text-[var(--color-text-muted)]">内核状态</span>
+            <span className="text-[var(--color-text-muted)]">所选组件状态</span>
             <span className={status?.installed ? 'text-green-600' : 'text-red-500'}>
               {statusLoading ? '检测中...' : status?.message || '未知'}
             </span>
@@ -169,7 +169,7 @@ export function ProxyCoreDownloadModal({
             </div>
             <div className="h-2 overflow-hidden rounded-full border border-[var(--color-border-muted)] bg-[var(--color-bg-surface)]">
               <div
-                className={progress.phase === 'error' ? 'h-2 bg-red-500 transition-all' : 'h-2 bg-[var(--color-accent)] transition-all'}
+                className={progress.phase === 'error' ? 'h-2 bg-red-500' : 'h-2 bg-[var(--color-accent)]'}
                 style={{ width: `${Math.max(0, Math.min(100, progress.progress))}%` }}
               />
             </div>

@@ -46,6 +46,7 @@ browser:
   cores: []
   proxies: []
   profiles: []
+  default_connector_type: xray
 launch_server:
   port: 19876
 automation:

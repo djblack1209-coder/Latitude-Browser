@@ -1,0 +1,261 @@
+/* Latitude / Signal. Tailwind remains the layout system; these shared component
+   classes extend the existing token stylesheet, with no second styling runtime. */
+.signal-page-header { min-width: 0; padding: 4px 0 16px; border-bottom: 1px solid var(--color-border-muted); }
+.signal-page-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; }
+.signal-eyebrow { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; color: var(--color-text-muted); font: 10px/1.5 var(--font-mono); letter-spacing: .14em; text-transform: uppercase; }
+.signal-eyebrow > span { color: var(--color-accent); font-size: 14px; }
+.signal-page-header h1 { color: var(--color-text-primary); font-size: 22px; line-height: 1.25; font-weight: 600; letter-spacing: -.01em; }
+.signal-page-description { margin-top: 6px; color: var(--color-text-secondary); font-size: 11px; line-height: 1.65; max-width: 60ch; }
+.signal-page-actions { display: flex; flex-shrink: 0; align-items: center; flex-wrap: wrap; gap: 6px; }
+.signal-telemetry { display: flex; flex-wrap: wrap; min-width: 0; border-bottom: 1px solid var(--color-border-muted); padding: 4px 0 16px; gap: 16px 0; }
+.signal-telemetry-item { min-width: 110px; flex: 1 1 130px; padding: 0 24px; border-left: 1px solid var(--color-border-muted); }
+.signal-telemetry-item:first-child { padding-left: 0; border-left: 0; }
+.signal-telemetry dt { color: var(--color-text-muted); font-size: 11px; line-height: 1.6; }
+.signal-telemetry dd { margin-top: 5px; color: var(--color-text-primary); font-family: var(--font-mono); font-size: 23px; font-weight: 500; line-height: 1.25; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.signal-telemetry-item p { margin-top: 5px; color: var(--color-text-secondary); font-size: 10px; line-height: 1.6; }
+.signal-telemetry-item[data-tone='accent'] dd, .signal-telemetry-item[data-tone='success'] dd { color: var(--color-success); }
+.signal-telemetry-item[data-tone='warning'] dd { color: var(--color-warning); }
+.signal-telemetry-item[data-tone='danger'] dd { color: var(--color-error); }
+.signal-terminal { min-width: 0; overflow: hidden; border: 1px solid var(--color-border-default); border-radius: var(--radius-md); background: var(--color-bg-subtle); }
+.signal-terminal-heading { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; min-height: 40px; padding: 10px 16px; border-bottom: 1px solid var(--color-border-default); background: var(--color-bg-surface); color: var(--color-text-secondary); }
+.signal-terminal-heading svg { color: var(--color-accent); }
+.signal-terminal-heading h2 { font: 11px/1.5 var(--font-mono); font-weight: 500; }
+.signal-terminal-meta { color: var(--color-text-muted); font-size: 10px; font-family: var(--font-mono); }
+.signal-empty-state { min-height: 190px; display: flex; align-items: center; justify-content: center; gap: 24px; padding: 36px 24px; }
+.signal-empty-glyph { display: flex; flex-shrink: 0; gap: 8px; align-items: center; color: var(--color-accent); }
+.signal-empty-glyph span { color: var(--color-border-strong); font: 42px/1 var(--font-mono); font-weight: 300; }
+.signal-empty-state h3 { font-size: 14px; font-weight: 500; color: var(--color-text-primary); }
+.signal-empty-state p { margin-top: 6px; max-width: 54ch; font-size: 12px; line-height: 1.8; color: var(--color-text-muted); }
+.ascii-meter { display: flex; align-items: center; gap: 5px; color: var(--color-accent); font: 11px/1 var(--font-mono); }
+.ascii-meter-segments { flex: 1; min-width: 0; display: flex; gap: 2px; }
+.ascii-meter-segments > span { flex: 1; height: 8px; min-width: 1px; background: var(--color-border-default); }
+.ascii-meter-segments > span[data-active] { background: currentColor; }
+.ascii-meter-bracket { color: var(--color-text-muted); }
+.ascii-meter-value { min-width: 4ch; text-align: right; color: var(--color-text-secondary); font-variant-numeric: tabular-nums; }
+.signal-skip-link { position: fixed; top: -100px; left: 12px; z-index: 1000; padding: 10px 16px; border-radius: 6px; background: var(--color-accent); color: var(--color-text-inverse); }
+.signal-skip-link:focus { top: 12px; }
+.signal-preview-notice { flex-shrink: 0; padding: 6px 20px; border-bottom: 1px solid var(--color-border-muted); color: var(--color-text-muted); font-size: 10px; line-height: 1.6; }
+.signal-preview-notice span { margin-right: 8px; color: var(--color-warning); font: 10px/1.5 var(--font-mono); }
+.signal-page-content { width: 100%; max-width: 1600px; margin-inline: auto; min-width: 0; }
+.signal-nav-code { font-family: var(--font-mono); font-size: 9px; color: var(--color-text-muted); opacity: .6; }
+.signal-sidebar-footer { display: flex; align-items: center; gap: 7px; padding: 9px 12px 3px; font-family: var(--font-mono); font-size: 9px; letter-spacing: .06em; color: var(--color-text-muted); }
+.signal-sidebar-footer > span { width: 4px; height: 4px; border: 1px solid var(--color-text-muted); border-radius: 50%; }
+@media (max-width: 1000px) { .signal-page-heading { align-items: flex-start; flex-direction: column; gap: 16px; } .signal-page-actions { max-width: 100%; } }
+@media (max-width: 640px) {
+  .signal-page-header h1 { font-size: 19px; }
+  .signal-page-header { padding-bottom: 14px; }
+  .signal-page-description { font-size: 11px; }
+  .signal-telemetry-item { flex-basis: 45%; min-width: 90px; padding-inline: 14px; }
+  .signal-telemetry-item:nth-child(odd) { padding-left: 0; border-left: 0; }
+  .signal-telemetry dd { font-size: 19px; }
+  .signal-empty-state { flex-direction: column; align-items: flex-start; gap: 16px; padding: 28px 20px; }
+}
+
+/* COBE globe: a contextual illustration, never a fabricated network graph. */
+.signal-globe {
+  position: relative;
+  width: clamp(144px, 18vw, 208px);
+  max-width: 100%;
+  flex: 0 1 auto;
+  margin: 0;
+  color: var(--color-accent);
+}
+
+.signal-globe-viewport {
+  position: relative;
+  display: grid;
+  width: 100%;
+  aspect-ratio: 1;
+  place-items: center;
+  isolation: isolate;
+  overflow: visible;
+}
+
+/* The halo is intentionally quiet: it gives the globe a focal point without
+   turning the compact proxy header into a decorative card. */
+.signal-globe-viewport::before {
+  position: absolute;
+  inset: 9%;
+  z-index: 0;
+  border-radius: 50%;
+  background: radial-gradient(circle, color-mix(in srgb, var(--color-accent) 12%, transparent) 0%, transparent 68%);
+  content: '';
+  opacity: .9;
+  pointer-events: none;
+  transition: opacity 180ms ease;
+}
+
+.signal-globe-viewport::after {
+  position: absolute;
+  inset: 11%;
+  z-index: 0;
+  border: 1px solid color-mix(in srgb, var(--color-accent) 17%, transparent);
+  border-radius: 50%;
+  box-shadow: inset 0 0 22px color-mix(in srgb, var(--color-accent) 10%, transparent);
+  content: '';
+  opacity: .8;
+  pointer-events: none;
+  transform: rotateX(63deg) rotateZ(-20deg);
+  transition: opacity 180ms ease;
+}
+
+.signal-globe-canvas {
+  position: relative;
+  z-index: 1;
+  display: block;
+  width: 100%;
+  height: 100%;
+  contain: layout paint;
+  filter: drop-shadow(0 0 12px color-mix(in srgb, var(--color-accent) 17%, transparent));
+  opacity: .98;
+  transition: filter 180ms ease, opacity 180ms ease;
+}
+
+.signal-globe-fallback {
+  position: absolute;
+  inset: 8%;
+  z-index: 1;
+  width: 84%;
+  height: 84%;
+  stroke: var(--color-accent);
+  stroke-width: .65;
+  opacity: .55;
+}
+
+.signal-globe-orbit {
+  position: absolute;
+  z-index: 2;
+  display: block;
+  border: 1px solid color-mix(in srgb, var(--color-accent) 27%, transparent);
+  border-radius: 50%;
+  pointer-events: none;
+  transform-origin: 50% 50%;
+  transition: opacity 180ms ease;
+}
+
+.signal-globe-orbit-primary {
+  inset: 8% 5%;
+  transform: rotate(-24deg);
+}
+
+.signal-globe-orbit-secondary {
+  inset: 5% 8%;
+  border-style: dashed;
+  opacity: .45;
+  transform: rotate(67deg);
+}
+
+.signal-globe-scanline {
+  position: absolute;
+  inset: 15%;
+  z-index: 2;
+  border: 1px solid color-mix(in srgb, var(--color-accent) 13%, transparent);
+  border-radius: 50%;
+  opacity: .4;
+  pointer-events: none;
+  transform: rotateX(67deg);
+}
+
+.signal-globe-scanline::after {
+  position: absolute;
+  top: 50%;
+  right: -7%;
+  left: -7%;
+  height: 1px;
+  background: color-mix(in srgb, var(--color-accent) 35%, transparent);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--color-accent) 22%, transparent);
+  content: '';
+}
+
+.signal-globe[data-motion='rotating'] .signal-globe-orbit-primary {
+  animation: signal-globe-orbit-primary 15s linear infinite;
+}
+
+.signal-globe[data-motion='rotating'] .signal-globe-orbit-secondary {
+  animation: signal-globe-orbit-secondary 22s linear infinite reverse;
+}
+
+.signal-globe[data-motion='rotating'] .signal-globe-scanline {
+  animation: signal-globe-scanline 10s ease-in-out infinite;
+}
+
+.signal-globe[data-active='false'] .signal-globe-viewport::before,
+.signal-globe[data-active='false'] .signal-globe-viewport::after,
+.signal-globe[data-active='false'] .signal-globe-orbit,
+.signal-globe[data-active='false'] .signal-globe-scanline {
+  opacity: .34;
+}
+
+.signal-globe[data-paused='true'] .signal-globe-orbit,
+.signal-globe[data-paused='true'] .signal-globe-scanline {
+  animation-play-state: paused;
+}
+
+.signal-globe-crosshair {
+  position: absolute;
+  z-index: 3;
+  font: 12px var(--font-mono);
+  color: var(--color-border-strong);
+}
+
+.signal-globe-crosshair-start { top: 14%; left: 2%; }
+.signal-globe-crosshair-end { right: 2%; bottom: 14%; }
+
+.signal-globe figcaption {
+  display: flex;
+  min-height: 26px;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  color: var(--color-text-muted);
+  font-size: 10px;
+  line-height: 1.5;
+  text-align: center;
+}
+
+.signal-globe figcaption button {
+  display: inline-flex;
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+}
+
+.signal-globe figcaption button:hover {
+  color: var(--color-accent);
+  background: var(--color-accent-muted);
+}
+
+.signal-globe figcaption button:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+@keyframes signal-globe-orbit-primary {
+  from { transform: rotate(-24deg); }
+  to { transform: rotate(336deg); }
+}
+
+@keyframes signal-globe-orbit-secondary {
+  from { transform: rotate(67deg); }
+  to { transform: rotate(-293deg); }
+}
+
+@keyframes signal-globe-scanline {
+  0%, 100% { opacity: .24; transform: rotateX(67deg) scaleX(.9); }
+  50% { opacity: .5; transform: rotateX(67deg) scaleX(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .signal-globe-orbit,
+  .signal-globe-scanline {
+    animation: none !important;
+    transition: none;
+  }
+}
+
+.signal-nav-section { display: flex; gap: 8px; align-items: center; padding: 4px 12px 3px; font-size: 10px; line-height: 1.5; color: var(--color-text-muted); }
+.signal-nav-section span { font: 9px var(--font-mono); opacity: .65; }
+.signal-nav-active::before { content: ''; position: absolute; left: 0; top: 10px; bottom: 10px; width: 2px; background: var(--color-accent); border-radius: 2px; }

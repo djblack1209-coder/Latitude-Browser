@@ -27,11 +27,16 @@ function NotificationDropdown({
   }
 
   return (
-    <div className="absolute right-0 top-full z-50 mt-2 w-80 overflow-hidden rounded-lg border border-[var(--color-border-default)] bg-[var(--color-bg-surface)] shadow-[var(--shadow-lg)] animate-fade-in">
+    <div
+      id="notifications-dropdown"
+      role="dialog"
+      aria-labelledby="notifications-heading"
+      className="absolute right-0 top-full z-50 mt-2 w-80 max-w-[calc(100vw-5rem)] overflow-hidden rounded-lg border border-[var(--color-border-default)] bg-[var(--color-bg-surface)] shadow-[var(--shadow-lg)] animate-fade-in"
+    >
       {/* Header */}
       <div className="px-4 py-3 border-b border-[var(--color-border-muted)] flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <span className="text-sm font-semibold text-[var(--color-text-primary)]">异常与通知</span>
+          <span id="notifications-heading" className="text-sm font-semibold text-[var(--color-text-primary)]">异常与通知</span>
           {unreadCount > 0 && (
             <span className="px-1.5 py-0.5 text-xs font-medium bg-[var(--color-accent)] text-white rounded-full">
               {unreadCount}
@@ -67,11 +72,12 @@ function NotificationDropdown({
           </div>
         ) : (
           notifications.map((notification) => (
-            <div
+            <button
+              type="button"
               key={notification.id}
               onClick={() => onMarkAsRead(notification.id)}
               className={clsx(
-                'px-4 py-3 border-b border-[var(--color-border-muted)] last:border-0 cursor-pointer transition-colors hover:bg-[var(--color-bg-muted)]',
+                'w-full text-left px-4 py-3 border-b border-[var(--color-border-muted)] last:border-0 cursor-pointer transition-colors hover:bg-[var(--color-bg-muted)]',
                 !notification.read && 'bg-[var(--color-accent)]/5'
               )}
             >
@@ -99,7 +105,7 @@ function NotificationDropdown({
                   </p>
                 </div>
               </div>
-            </div>
+            </button>
           ))
         )}
       </div>
@@ -107,9 +113,9 @@ function NotificationDropdown({
       {/* Footer */}
       {notifications.length > 0 && (
         <div className="px-4 py-2 border-t border-[var(--color-border-muted)] bg-[var(--color-bg-muted)]/50">
-          <button className="w-full text-xs text-center text-[var(--color-accent)] hover:underline">
-            查看全部通知
-          </button>
+          <Link to="/browser/logs" className="block w-full text-xs text-center text-[var(--color-accent)] hover:underline">
+            打开日志与诊断
+          </Link>
         </div>
       )}
     </div>
@@ -130,7 +136,23 @@ const pageLabels: Array<{ prefix: string; label: string }> = [
   { prefix: '/profile', label: '工作区资料' },
 ]
 
-function getPageLabel(pathname: string) {
+function getPageLabel(pathname: string, search: string) {
+  const query = new URLSearchParams(search)
+  if (pathname === '/browser/list') {
+    if (query.get('view') === 'templates') return '指纹模板'
+    if (query.get('status') === 'attention') return '待处理与冲突'
+    if (query.get('sort') === 'recent') return '最近活动'
+  }
+  if (pathname === '/browser/logs') {
+    if (query.get('view') === 'network') return '网络诊断'
+    if (query.get('view') === 'runs') return '运行记录'
+  }
+  if (pathname === '/settings') {
+    if (query.get('section') === 'connectors') return '连接栈'
+    if (query.get('section') === 'tor') return 'Tor 实验室'
+    if (query.get('section') === 'runtime') return '自动化运行时'
+    if (query.get('section') === 'storage') return '备份与数据'
+  }
   return pageLabels.find(({ prefix }) => pathname.startsWith(prefix))?.label ?? '工作台'
 }
 
@@ -138,31 +160,50 @@ export function Topbar() {
   const [showNotifications, setShowNotifications] = useState(false)
   const { notifications, markAsRead, markAllAsRead, clearNotifications } = useNotificationStore()
   const dropdownRef = useRef<HTMLDivElement>(null)
+  const notificationTriggerRef = useRef<HTMLButtonElement>(null)
   const location = useLocation()
 
   const unreadCount = notifications.filter(n => !n.read).length
 
-  // 点击外部关闭
+  // 点击外部关闭；只在面板打开时注册，避免 Escape 处理器捕获过期状态。
   useEffect(() => {
+    if (!showNotifications) return
+
     function handleClickOutside(event: MouseEvent) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setShowNotifications(false)
       }
     }
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault()
+        setShowNotifications(false)
+        notificationTriggerRef.current?.focus()
+      }
+    }
     document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [])
+    document.addEventListener('keydown', onKey)
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+      document.removeEventListener('keydown', onKey)
+    }
+  }, [showNotifications])
+
+  useEffect(() => { setShowNotifications(false) }, [location.pathname, location.search])
 
   return (
-    <header className="flex h-12 items-center justify-between gap-4 border-b border-[var(--color-border-default)] bg-[var(--color-bg-surface)] px-5">
-      <div className="flex min-w-0 items-center">
-        <span className="truncate text-[15px] font-medium tracking-[-0.01em] text-[var(--color-text-primary)]">{getPageLabel(location.pathname)}</span>
+    <header className="signal-topbar flex h-[52px] shrink-0 items-center justify-between gap-4 border-b border-[var(--color-border-default)] px-4 sm:px-6 lg:px-8">
+      <div className="flex min-w-0 items-center gap-3">
+        <span className="hidden font-mono text-[10px] tracking-wider text-[var(--color-text-muted)] sm:inline" aria-hidden="true">WORKSPACE /</span>
+        <span className="truncate text-[12px] font-medium text-[var(--color-text-primary)]">{getPageLabel(location.pathname, location.search)}</span>
       </div>
 
       <div className="flex items-center gap-1">
         {/* 通知按钮 */}
         <div className="relative" ref={dropdownRef}>
           <button
+            type="button"
+            ref={notificationTriggerRef}
             onClick={() => setShowNotifications(!showNotifications)}
             className={clsx(
               'relative w-8 h-8 flex items-center justify-center rounded-md transition-colors duration-150',
@@ -171,6 +212,10 @@ export function Topbar() {
                 : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)] hover:bg-[var(--color-accent-muted)]'
             )}
             title="通知"
+            aria-label={unreadCount ? `通知，${unreadCount} 条未读` : '通知'}
+            aria-expanded={showNotifications}
+            aria-controls="notifications-dropdown"
+            aria-haspopup="dialog"
           >
             <Bell className="w-4 h-4" />
             {unreadCount > 0 && (
@@ -203,7 +248,7 @@ export function Topbar() {
           <div className="flex h-7 w-7 items-center justify-center rounded-md border border-[var(--color-border-default)] bg-[var(--color-bg-muted)]">
             <User className="h-3.5 w-3.5 text-[var(--color-text-secondary)]" />
           </div>
-          <span className="hidden text-sm font-medium text-[var(--color-text-secondary)] sm:inline">Admin</span>
+          <span className="hidden text-sm font-medium text-[var(--color-text-secondary)] sm:inline">本地工作区</span>
         </Link>
       </div>
     </header>

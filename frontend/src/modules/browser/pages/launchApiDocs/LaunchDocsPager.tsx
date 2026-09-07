@@ -26,6 +26,8 @@ export function LaunchDocsPager({
             variant="ghost"
             size="sm"
             onClick={() => onSelect(previous.id)}
+            aria-label={`上一篇：${previous.label}`}
+            title={`上一篇：${previous.label}`}
             className="min-w-0 justify-start px-2 text-[var(--color-text-secondary)]"
           >
             <ArrowLeft className="h-4 w-4 shrink-0" />
@@ -38,6 +40,8 @@ export function LaunchDocsPager({
             variant="ghost"
             size="sm"
             onClick={() => onSelect(next.id)}
+            aria-label={`下一篇：${next.label}`}
+            title={`下一篇：${next.label}`}
             className={clsx(
               'min-w-0 justify-end px-2 text-[var(--color-text-secondary)]',
               previous && 'ml-auto',

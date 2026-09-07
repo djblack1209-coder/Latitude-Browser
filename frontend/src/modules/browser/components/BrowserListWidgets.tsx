@@ -34,9 +34,9 @@ export function BatchToolbar({
   if (selectedCount === 0) return null
 
   return (
-    <div className="browser-batch-toolbar flex items-center gap-3 rounded-sm border border-[var(--color-accent)]/20 bg-[var(--color-accent)]/10 px-3 py-2">
+    <div className="browser-batch-toolbar flex flex-wrap items-center gap-2 rounded-sm border border-[var(--color-accent)]/20 bg-[var(--color-accent)]/10 px-3 py-2">
       <span className="text-sm font-medium text-[var(--color-accent)]">已选 {selectedCount} / {totalCount}</span>
-      <div className="flex gap-1.5 ml-auto">
+      <div className="ml-auto flex w-full flex-wrap items-center justify-end gap-1.5 sm:w-auto">
         <Button size="sm" variant="ghost" onClick={onSelectAll}>全选</Button>
         <Button size="sm" variant="ghost" onClick={onDeselectAll}>取消</Button>
         <Button size="sm" onClick={onBatchStart} loading={batchLoading} title="批量启动">
@@ -93,12 +93,12 @@ export function LaunchCodeCell({ profileId, code, onRefresh }: LaunchCodeCellPro
   }
 
   const handleCustomCode = async () => {
-    const next = prompt('请输入自定义 Code（4-32位，仅支持字母/数字/_/-）', code || '')
+    const next = prompt('请输入自定义快捷码（4-32 位，仅支持字母、数字、下划线或连字符）', code || '')
     if (next == null) return
 
     const value = next.trim()
     if (!value) {
-      toast.error('Code 不能为空')
+      toast.error('快捷码不能为空')
       return
     }
 
@@ -106,9 +106,9 @@ export function LaunchCodeCell({ profileId, code, onRefresh }: LaunchCodeCellPro
     try {
       const applied = await setBrowserProfileCode(profileId, value)
       onRefresh()
-      toast.success(`Code 已更新为 ${applied}`)
+      toast.success(`快捷码已更新为 ${applied}`)
     } catch (error: any) {
-      toast.error(error?.message || '设置自定义 Code 失败')
+      toast.error(error?.message || '设置自定义快捷码失败')
     } finally {
       setLoading(false)
     }

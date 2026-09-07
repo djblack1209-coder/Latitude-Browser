@@ -2,8 +2,10 @@ import { useEffect, useMemo, useState } from 'react'
 import { ChevronDown, Search, Trash2, X } from 'lucide-react'
 
 import { Button, Input, Switch, Table } from '../../../../shared/components'
+import { SignalEmptyState } from '../../../../shared/components/SignalPrimitives'
 import type { SortOrder, TableColumn } from '../../../../shared/components/Table'
-import type { ProxyIPHealthResult } from '../../types'
+import type { ProxyCheckDiagnostic, ProxyIPHealthResult, ProxyDiagnosticStage } from '../../types'
+import { diagnosticStageLabel, diagnosticTone, normalizeProxyDiagnostic } from './diagnostics'
 
 import { BUILTIN_PROXY_IDS, sourceHostLabel, type ProxyDisplayInfo } from './helpers'
 
@@ -22,6 +24,7 @@ interface ProxyPoolTableCardProps {
   ipHealthMap: Record<string, ProxyIPHealthResult>
   loading: boolean
   onCheckOneIPHealth: (record: ProxyDisplayInfo) => void
+  onClearDiagnostic: (proxyId: string) => void
   onClearFilters: () => void
   onDelete: (proxyId: string) => void
   onEdit: (record: ProxyDisplayInfo) => void
@@ -48,6 +51,7 @@ interface ProxyPoolTableCardProps {
   latencyMap: Record<string, number>
   latencyEngineMap: Record<string, string>
   latencyErrorMap: Record<string, string>
+  latencyDiagnosticMap: Record<string, ProxyCheckDiagnostic>
 }
 
 export function ProxyPoolTableCard({
@@ -65,6 +69,7 @@ export function ProxyPoolTableCard({
   ipHealthMap,
   loading,
   onCheckOneIPHealth,
+  onClearDiagnostic,
   onClearFilters,
   onDelete,
   onEdit,
@@ -91,6 +96,7 @@ export function ProxyPoolTableCard({
   latencyMap,
   latencyEngineMap,
   latencyErrorMap,
+  latencyDiagnosticMap,
 }: ProxyPoolTableCardProps) {
   const hasActiveFilters = filterProtocol !== 'all' || !!filterKeyword || filterGroup !== 'all' || filterAvailableOnly
   const [openMoreProxyId, setOpenMoreProxyId] = useState<string | null>(null)
@@ -147,6 +153,37 @@ export function ProxyPoolTableCard({
       : <span className="text-[var(--color-text-muted)] text-xs">-</span>
   }
 
+  const renderDiagnostic = (record: ProxyDisplayInfo) => {
+    if (record.proxyConfig === 'direct://') {
+      return <span className="text-[var(--color-text-muted)] text-xs">不适用</span>
+    }
+    const value = latencyMap[record.proxyId]
+    const diagnostic = latencyDiagnosticMap[record.proxyId]
+    const inferredStage: ProxyDiagnosticStage = diagnostic?.stage
+      || (value === undefined ? 'not_tested' : value === -1 ? 'testing' : value >= 0 ? 'success' : value === -2 ? 'timeout' : value === -3 ? 'unsupported' : 'failed')
+    const tone = diagnosticTone(inferredStage)
+    const toneClass = tone === 'success'
+      ? 'border-[var(--color-success-border)] bg-[var(--color-success-muted)] text-[var(--color-success)]'
+      : tone === 'warning'
+        ? 'border-[var(--color-warning-border)] bg-[var(--color-warning-muted)] text-[var(--color-warning)]'
+        : tone === 'danger'
+          ? 'border-[var(--color-error-border)] bg-[var(--color-error-muted)] text-[var(--color-error)]'
+          : 'border-[var(--color-border-default)] bg-[var(--color-bg-subtle)] text-[var(--color-text-muted)]'
+    const code = diagnostic?.code || (inferredStage === 'success' ? 'OK' : '')
+    const message = diagnostic?.message || latencyErrorMap[record.proxyId] || (inferredStage === 'not_tested' ? '等待执行测速' : '')
+    return (
+      <div className="min-w-0 max-w-[190px]" title={[code, diagnostic?.error || message].filter(Boolean).join(' · ')}>
+        <div className="flex min-w-0 items-center gap-1.5">
+          <span className={`inline-flex shrink-0 items-center rounded-sm border px-1.5 py-0.5 text-[10px] font-medium ${toneClass}`}>
+            {diagnosticStageLabel(inferredStage)}
+          </span>
+          {code && <code className="truncate font-mono text-[10px] uppercase tracking-[0.08em] text-[var(--color-text-muted)]">{code}</code>}
+        </div>
+        {message && <div className="mt-1 truncate text-[11px] text-[var(--color-text-muted)]">{message}</div>}
+      </div>
+    )
+  }
+
   const renderIPHealth = (record: ProxyDisplayInfo) => {
     if (record.proxyConfig === 'direct://') {
       return <span className="text-[var(--color-text-muted)] text-xs">不适用</span>
@@ -158,10 +195,27 @@ export function ProxyPoolTableCard({
     const result = ipHealthMap[record.proxyId]
     if (!result) return <span className="text-[var(--color-text-muted)] text-xs">-</span>
     if (!result.ok) {
+      const diagnostic = normalizeProxyDiagnostic(result as unknown as Record<string, unknown>, {
+        proxyId: record.proxyId,
+        checkedAt: result.updatedAt,
+        engine: result.engine,
+        source: result.source,
+      })
+      const tone = diagnosticTone(diagnostic.stage)
+      const toneClass = tone === 'warning'
+        ? 'border-[var(--color-warning-border)] bg-[var(--color-warning-muted)] text-[var(--color-warning)]'
+        : 'border-[var(--color-error-border)] bg-[var(--color-error-muted)] text-[var(--color-error)]'
+      const message = diagnostic.error || diagnostic.message || result.error || '检测失败'
       return (
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-[var(--color-error)] truncate max-w-[120px]" title={result.error || '检测失败'}>失败</span>
-          <Button size="sm" variant="ghost" onClick={(event) => { event.stopPropagation(); onOpenIPHealthDetail(record.proxyId) }}>原始</Button>
+        <div className="min-w-0 max-w-[250px]" title={[diagnostic.code, diagnostic.engine, diagnostic.targetUrl, message].filter(Boolean).join(' · ')}>
+          <div className="flex min-w-0 items-center gap-1.5">
+            <span className={`inline-flex shrink-0 items-center rounded-sm border px-1.5 py-0.5 text-[10px] font-medium ${toneClass}`}>
+              {diagnosticStageLabel(diagnostic.stage)}
+            </span>
+            {diagnostic.code && <code className="truncate font-mono text-[10px] uppercase tracking-[0.08em] text-[var(--color-text-muted)]">{diagnostic.code}</code>}
+            <Button size="sm" variant="ghost" onClick={(event) => { event.stopPropagation(); onOpenIPHealthDetail(record.proxyId) }}>原始</Button>
+          </div>
+          <div className="mt-1 truncate text-[11px] text-[var(--color-text-muted)]">{message}</div>
         </div>
       )
     }
@@ -188,6 +242,7 @@ export function ProxyPoolTableCard({
       render: (_, record) => (
         <input
           type="checkbox"
+          aria-label={`选择代理 ${record.proxyName}`}
           checked={selectedIds.has(record.proxyId)}
           disabled={BUILTIN_PROXY_IDS.has(record.proxyId)}
           onChange={() => onToggleOne(record.proxyId)}
@@ -238,10 +293,16 @@ export function ProxyPoolTableCard({
       render: (_, record) => renderLatencyEngine(record),
     },
     {
+      key: 'diagnostic',
+      title: '诊断',
+      width: '210px',
+      render: (_, record) => renderDiagnostic(record),
+    },
+    {
       key: 'ipHealth',
       title: (
         <div className="leading-tight">
-          <div>IP健康</div>
+          <div>IP 健康</div>
           <div className="mt-0.5 text-[10px] font-normal text-[var(--color-text-muted)]">
             仅供参考
           </div>
@@ -317,6 +378,16 @@ export function ProxyPoolTableCard({
                       刷新订阅
                     </Button>
                   )}
+                  {latencyDiagnosticMap[record.proxyId] && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="w-full justify-start"
+                      onClick={(event) => { event.stopPropagation(); closeMore(); onClearDiagnostic(record.proxyId) }}
+                    >
+                      清除结果
+                    </Button>
+                  )}
                   <Button
                     size="sm"
                     variant="ghost"
@@ -325,7 +396,7 @@ export function ProxyPoolTableCard({
                     loading={checkingIPHealthIds.has(record.proxyId)}
                     disabled={record.proxyConfig === 'direct://'}
                   >
-                    IP健康
+                    IP 健康
                   </Button>
                   <Button
                     size="sm"
@@ -355,7 +426,10 @@ export function ProxyPoolTableCard({
     ipHealthMap,
     latencyMap,
     latencyEngineMap,
+    latencyErrorMap,
+    latencyDiagnosticMap,
     onCheckOneIPHealth,
+    onClearDiagnostic,
     onDelete,
     onEdit,
     onOpenIPHealthDetail,
@@ -369,8 +443,8 @@ export function ProxyPoolTableCard({
   ])
 
   return (
-    <section className="overflow-hidden border border-[var(--color-border-default)] bg-[var(--color-bg-surface)]">
-      <div className="flex flex-col gap-3 border-b border-[var(--color-border-default)] bg-[var(--color-bg-subtle)] px-4 py-3 xl:flex-row xl:items-center">
+    <section className="network-proxy-table overflow-hidden border border-[var(--color-border-default)] bg-[var(--color-bg-surface)]">
+      <div className="network-proxy-toolbar flex flex-col gap-3 border-b border-[var(--color-border-default)] bg-[var(--color-bg-subtle)] px-4 py-3 xl:flex-row xl:items-center">
         <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
         <div className="relative w-full sm:w-64">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[var(--color-text-muted)]" aria-hidden="true" />
@@ -382,6 +456,7 @@ export function ProxyPoolTableCard({
           />
         </div>
         <select
+          aria-label="按代理协议筛选"
           value={filterProtocol}
           onChange={event => onFilterProtocolChange(event.target.value)}
           className="h-9 rounded-md border border-[var(--color-border-default)] bg-[var(--color-bg-surface)] px-3 text-sm text-[var(--color-text-primary)] transition-colors duration-150 focus:border-[var(--color-border-strong)] focus:outline-none focus:ring-1 focus:ring-[var(--color-border-strong)]"
@@ -391,6 +466,7 @@ export function ProxyPoolTableCard({
           ))}
         </select>
         <select
+          aria-label="按代理分组筛选"
           value={filterGroup}
           onChange={event => onFilterGroupChange(event.target.value)}
           className="h-9 rounded-md border border-[var(--color-border-default)] bg-[var(--color-bg-surface)] px-3 text-sm text-[var(--color-text-primary)] transition-colors duration-150 focus:border-[var(--color-border-strong)] focus:outline-none focus:ring-1 focus:ring-[var(--color-border-strong)]"
@@ -407,13 +483,14 @@ export function ProxyPoolTableCard({
         <label className="flex h-9 items-center gap-1.5 px-1.5 text-xs text-[var(--color-text-secondary)] cursor-pointer select-none">
           <input
             type="checkbox"
+            aria-label="仅显示已有成功测速或通过 IP 检测的代理"
             checked={filterAvailableOnly}
             onChange={event => onFilterAvailableOnlyChange(event.target.checked)}
             className="h-4 w-4 cursor-pointer rounded-sm border-[var(--color-border-default)] accent-[var(--color-accent)]"
           />
-          只展示可用
+          <span title="需有成功测速或通过 IP 检测">仅已验证</span>
         </label>
-        <div className="flex h-9 items-center gap-2 border-l border-[var(--color-border-default)] pl-3">
+        <div className="flex h-9 items-center gap-2 border-l border-[var(--color-border-default)] pl-3" role="group" aria-label="订阅源自动刷新">
           <span className="whitespace-nowrap text-xs text-[var(--color-text-muted)]">自动刷新</span>
           <Switch
             checked={globalAutoRefreshEnabled}
@@ -436,6 +513,7 @@ export function ProxyPoolTableCard({
           <label className="flex h-9 items-center gap-1.5 px-1.5 text-xs text-[var(--color-text-muted)] cursor-pointer select-none">
             <input
               type="checkbox"
+              aria-label="选择当前筛选结果中的全部代理"
               checked={allFilteredSelected}
               ref={(element) => {
                 if (element) {
@@ -457,17 +535,26 @@ export function ProxyPoolTableCard({
         </div>
       </div>
       <div className="px-0 py-0">
-      <Table
-        columns={columns}
-        data={data}
-        rowKey="proxyId"
-        loading={loading}
-        emptyText="暂无代理配置，点击上方按钮添加或导入"
-        sortColumn={sortColumn}
-        sortOrder={sortOrder}
-        onSort={onSort}
-        className="proxy-pool-table"
-      />
+        {loading || data.length > 0 ? (
+          <Table
+            columns={columns}
+            data={data}
+            rowKey="proxyId"
+            loading={loading}
+            emptyText="暂无代理配置"
+            sortColumn={sortColumn}
+            sortOrder={sortOrder}
+            onSort={onSort}
+            className="proxy-pool-table"
+          />
+        ) : (
+          <SignalEmptyState
+            symbol="network"
+            title={hasActiveFilters ? '没有匹配的代理配置' : '代理池尚无配置'}
+            description={hasActiveFilters ? '调整协议、分组、关键词或验证状态后再试。' : '通过页面顶部的导入操作添加代理节点。'}
+            action={hasActiveFilters ? <Button size="sm" variant="secondary" onClick={onClearFilters}>清除筛选</Button> : undefined}
+          />
+        )}
       </div>
     </section>
   )

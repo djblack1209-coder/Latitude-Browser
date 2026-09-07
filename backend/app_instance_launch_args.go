@@ -145,6 +145,9 @@ func (a *App) markProfileStoppedLocked(profileId string, profile *BrowserProfile
 }
 
 func (a *App) openBrowserWindowForRunningProfile(profile *BrowserProfile, extraLaunchArgs []string, startURLs []string) error {
+	if profile != nil && browser.IsTorNetworkMode(profile.NetworkMode) {
+		return fmt.Errorf("Tor 实例禁止通过独立浏览器进程回退打开窗口；请使用现有受管实例的本地 CDP 通道")
+	}
 	chromeBinaryPath, err := a.browserMgr.ResolveChromeBinary(profile)
 	if err != nil {
 		return err

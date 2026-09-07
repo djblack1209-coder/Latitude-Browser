@@ -1,4 +1,4 @@
-import { Card } from '../../../../shared/components'
+import { LaunchDocsCodeBlock } from './LaunchDocsCodeBlock'
 
 interface LaunchDocsFlowPageProps {
   baseUrl: string
@@ -71,60 +71,38 @@ POST ${baseUrl}/api/launch`,
   ]
 
   return (
-    <div className="apple-page space-y-5">
-      <Card className="apple-section bg-[var(--color-bg-elevated)]">
-        <div className="space-y-2">
-          <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
-            操作流程
-          </div>
-          <h1 className="text-2xl font-bold text-[var(--color-text-primary)]">
-            从配置到调用
-          </h1>
-          <p className="text-sm leading-6 text-[var(--color-text-secondary)]">
-            把内核、代理、实例、启动和接口调用串成一条线。每一步先做什么、做到什么，这里一次讲清楚。
-          </p>
-        </div>
-      </Card>
+    <article className="space-y-7">
+      <header className="border-b border-[var(--color-border-default)] pb-5">
+        <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.2em] text-[var(--color-text-muted)]">OPERATOR FLOW</p>
+        <h1 className="mt-2 text-2xl font-semibold tracking-tight text-[var(--color-text-primary)]">从配置到调用</h1>
+        <p className="mt-2 max-w-3xl text-sm leading-6 text-[var(--color-text-secondary)]">
+          按顺序完成内核、代理、实例、首次启动和接口接入。
+        </p>
+      </header>
 
-      <Card className="apple-section bg-[var(--color-bg-elevated)]">
-        <div className="relative">
-          <div className="absolute bottom-4 left-[20px] top-4 w-px bg-[var(--color-border-default)]" />
-          <div className="space-y-7">
-            {steps.map((step) => (
-              <section key={step.step} className="relative flex gap-4">
-                <div className="relative z-10 flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-[var(--color-accent)] bg-transparent text-sm font-semibold text-[var(--color-accent)]">
-                  {step.step}
+      <div className="relative">
+        <div className="absolute bottom-3 left-[15px] top-3 w-px bg-[var(--color-border-default)]" aria-hidden="true" />
+        <div className="space-y-8">
+          {steps.map((step) => (
+            <section key={step.step} className="relative grid grid-cols-[32px_minmax(0,1fr)] gap-4">
+              <div className="relative z-10 flex h-8 w-8 items-center justify-center rounded-sm border border-[var(--color-accent-border)] bg-[var(--color-bg-surface)] font-mono text-[11px] font-semibold text-[var(--color-accent)]">
+                {step.step}
+              </div>
+              <div className="min-w-0 space-y-3 pb-1">
+                <div>
+                  <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">{step.title}</h2>
+                  <p className="mt-1 text-sm leading-6 text-[var(--color-text-secondary)]">{step.summary}</p>
                 </div>
-                <div className="min-w-0 flex-1 space-y-3 pb-2">
-                  <div className="space-y-1">
-                    <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">
-                      {step.title}
-                    </h2>
-                    <p className="text-sm leading-6 text-[var(--color-text-secondary)]">
-                      {step.summary}
-                    </p>
-                  </div>
-
-                  <div className="apple-row bg-[var(--color-bg-surface)] px-4 py-3">
-                    <div className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--color-text-muted)]">
-                      操作路径
-                    </div>
-                    <div className="mt-2 text-sm text-[var(--color-text-primary)]">
-                      {step.path}
-                    </div>
-                  </div>
-
-                  {step.example ? (
-                    <pre className="overflow-x-auto rounded-md border border-[var(--color-border-muted)] bg-[var(--color-bg-muted)] px-4 py-3 text-xs leading-6 text-[var(--color-text-secondary)]">
-{step.example}
-                    </pre>
-                  ) : null}
+                <div className="border-y border-[var(--color-border-muted)] bg-[var(--color-bg-surface)] px-3 py-2.5">
+                  <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-[var(--color-text-muted)]">PATH</span>
+                  <p className="mt-1.5 text-sm text-[var(--color-text-primary)]">{step.path}</p>
                 </div>
-              </section>
-            ))}
-          </div>
+                {step.example ? <LaunchDocsCodeBlock language={step.step === '02' ? 'yaml' : step.step === '03' ? 'json' : 'bash'} code={step.example} /> : null}
+              </div>
+            </section>
+          ))}
         </div>
-      </Card>
-    </div>
+      </div>
+    </article>
   )
 }

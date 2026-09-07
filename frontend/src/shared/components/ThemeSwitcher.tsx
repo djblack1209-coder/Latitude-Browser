@@ -7,7 +7,7 @@ interface ThemeSwitcherProps {
 }
 
 const themePreview: Record<ThemeType, { bg: string; sidebar: string; accent: string }> = {
-  dark: { bg: '#090c0d', sidebar: '#0f1415', accent: '#72f59a' },
+  dark: { bg: '#0b0e10', sidebar: '#111517', accent: '#89e5ad' },
   light: { bg: '#f8fafc', sidebar: '#ffffff', accent: '#1e293b' },
   cream: { bg: '#faf7f2', sidebar: '#fffdf8', accent: '#8b7355' },
   mint: { bg: '#f6f9f8', sidebar: '#fbfdfc', accent: '#3d5a4c' },
@@ -19,7 +19,7 @@ export function ThemeSwitcher({ className }: ThemeSwitcherProps) {
 
   return (
     <div className={clsx('space-y-4', className)}>
-      <div className="grid grid-cols-5 gap-3">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
         {themeConfigs.map((config) => {
           const isActive = theme === config.id
           const preview = themePreview[config.id]
@@ -28,6 +28,8 @@ export function ThemeSwitcher({ className }: ThemeSwitcherProps) {
             <button
               key={config.id}
               onClick={() => setTheme(config.id)}
+              aria-pressed={isActive}
+              aria-label={`使用${config.name}`}
               className={clsx(
                 'group relative flex flex-col items-center gap-2.5 rounded-md border p-3 transition-[background-color,border-color,color] duration-150',
                 isActive
@@ -38,6 +40,7 @@ export function ThemeSwitcher({ className }: ThemeSwitcherProps) {
             >
               {/* 主题预览 - 模拟界面布局 */}
               <div 
+                aria-hidden="true"
                 className="w-full aspect-[4/3] rounded-lg overflow-hidden border border-black/10"
                 style={{ backgroundColor: preview.bg }}
               >

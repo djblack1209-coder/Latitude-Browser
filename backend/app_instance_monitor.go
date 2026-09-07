@@ -18,7 +18,18 @@ func (a *App) waitBrowserProcess(profileId string, monitor *browserProcessMonito
 
 	a.browserMgr.Mutex.Lock()
 	profile, exists := a.browserMgr.Profiles[profileId]
-	wasRunning := exists && profile.Running
+	if !exists || profile == nil || a.browserMgr.BrowserProcesses[profileId] != monitor.cmd {
+		// A completed stop can release ownership before this goroutine wakes;
+		// a restart may already own a different command for the same profile.
+		// Never let an old exit stop that replacement or release its transport.
+		alreadyStopped := exists && profile != nil && !profile.Running
+		a.browserMgr.Mutex.Unlock()
+		if alreadyStopped && a.ctx != nil {
+			runtime.EventsEmit(a.ctx, "browser:instance:stopped", profileId)
+		}
+		return
+	}
+	wasRunning := profile.Running
 	if exists {
 		profileName = profile.ProfileName
 		debugPort = profile.DebugPort
@@ -41,7 +52,7 @@ func (a *App) waitBrowserProcess(profileId string, monitor *browserProcessMonito
 
 		a.browserMgr.Mutex.Lock()
 		profile, exists = a.browserMgr.Profiles[profileId]
-		if exists && profile.Running && profile.DebugPort == debugPort && profile.DebugReady && canConnectDebugPort(debugPort, 250*time.Millisecond) {
+		if exists && profile != nil && a.browserMgr.BrowserProcesses[profileId] == monitor.cmd && profile.Running && profile.DebugPort == debugPort && profile.DebugReady && canConnectDebugPort(debugPort, 250*time.Millisecond) {
 			delete(a.browserMgr.BrowserProcesses, profileId)
 			profile.Pid = 0
 			shouldMonitorDetached = true
@@ -60,10 +71,15 @@ func (a *App) waitBrowserProcess(profileId string, monitor *browserProcessMonito
 
 	a.browserMgr.Mutex.Lock()
 	profile, exists = a.browserMgr.Profiles[profileId]
-	wasRunning = exists && profile.Running
-	if exists {
-		profileName = profile.ProfileName
-		a.markProfileStoppedLocked(profileId, profile)
+	if !exists || profile == nil || a.browserMgr.BrowserProcesses[profileId] != monitor.cmd {
+		a.browserMgr.Mutex.Unlock()
+		return
+	}
+	wasRunning = profile.Running
+	profileName = profile.ProfileName
+	a.markProfileStoppedLocked(profileId, profile)
+	if wasRunning && err != nil {
+		profile.LastError = fmt.Sprintf("实例运行异常退出：%s", err.Error())
 	}
 	a.browserMgr.Mutex.Unlock()
 
@@ -72,9 +88,6 @@ func (a *App) waitBrowserProcess(profileId string, monitor *browserProcessMonito
 	}
 
 	if wasRunning && err != nil {
-		if exists && profile != nil {
-			profile.LastError = fmt.Sprintf("实例运行异常退出：%s", err.Error())
-		}
 		log.Error("浏览器进程异常退出", logger.F("profile_id", profileId), logger.F("profile_name", profileName), logger.F("error", err))
 		runtime.EventsEmit(a.ctx, "browser:instance:crashed", map[string]interface{}{
 			"profileId":   profileId,

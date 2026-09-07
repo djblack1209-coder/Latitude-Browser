@@ -1,4 +1,5 @@
-﻿import { useState } from 'react'
+﻿import { useEffect, useMemo, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { toast } from '../../../shared/components'
 import type { BrowserProfile, BrowserProfileCopyOptions, BrowserProxy } from '../types'
 import { BrowserCoreEditorModal, BrowserListHeader, BrowserListSettingsModal } from '../components/BrowserListLayout'
@@ -17,6 +18,13 @@ import { useBrowserListSettings } from './browserList/useBrowserListSettings'
 import { useBrowserListData } from './browserList/useBrowserListData'
 import { useBrowserProfileActions } from './browserList/useBrowserProfileActions'
 import { warmupProfileProxyBeforeStart } from '../utils/proxyWarmup'
+import {
+  compareBrowserProfilesByRecent,
+  getBrowserProfileActivity,
+  getBrowserProfileAttentionReasons,
+  hasReusableFingerprintConfig,
+  resolveBrowserWorkspaceMode,
+} from './browserList/workspaceMode'
 import {
   copyBrowserProfile,
   deleteBrowserProfile,
@@ -38,6 +46,8 @@ type BackupLoadingMode = 'none' | 'export' | 'import-merge' | 'import-reset'
 const directProxyID = '__direct__'
 
 export function BrowserListPage() {
+  const [searchParams] = useSearchParams()
+  const workspaceMode = resolveBrowserWorkspaceMode(searchParams)
   const {
     viewMode,
     setViewMode,
@@ -95,7 +105,7 @@ export function BrowserListPage() {
 
   const openCopyModal = (profile: BrowserProfile) => {
     setCopyName(buildBrowserProfileCopyName(profile.profileName))
-    setCopyOptions(createBrowserProfileCopyOptions())
+    setCopyOptions(createBrowserProfileCopyOptions(workspaceMode === 'templates' ? 'regular' : 'auto_fingerprint'))
     setCopyModal({ open: true, profile })
   }
   const closeCopyModal = () => {
@@ -187,7 +197,7 @@ export function BrowserListPage() {
 
 
   const handleSelectAll = () => {
-    setSelectedIds(new Set(filteredProfiles.map(p => p.profileId)))
+    setSelectedIds(new Set(workspaceProfiles.map(p => p.profileId)))
   }
 
   const handleDeselectAll = () => {
@@ -487,6 +497,39 @@ export function BrowserListPage() {
   const copyConfirmDisabled =
     !copyName.trim() || !isBrowserProfileCopyOptionsValid(copyOptions)
 
+  const attentionProfiles = useMemo(
+    () => profiles.filter((profile) => (
+      getBrowserProfileAttentionReasons(profile, Boolean(resolveProfileCore(profile))).length > 0
+    )),
+    [profiles, cores],
+  )
+  const fingerprintSourceProfiles = useMemo(
+    () => profiles.filter(hasReusableFingerprintConfig),
+    [profiles],
+  )
+  const recentRecordedCount = useMemo(
+    () => profiles.filter((profile) => getBrowserProfileActivity(profile) !== null).length,
+    [profiles],
+  )
+  const workspaceProfiles = useMemo(() => {
+    if (workspaceMode === 'recent') {
+      return [...filteredProfiles].sort(compareBrowserProfilesByRecent)
+    }
+    if (workspaceMode === 'attention') {
+      const attentionIds = new Set(attentionProfiles.map((profile) => profile.profileId))
+      return filteredProfiles.filter((profile) => attentionIds.has(profile.profileId))
+    }
+    if (workspaceMode === 'templates') {
+      const sourceIds = new Set(fingerprintSourceProfiles.map((profile) => profile.profileId))
+      return filteredProfiles.filter((profile) => sourceIds.has(profile.profileId))
+    }
+    return filteredProfiles
+  }, [attentionProfiles, filteredProfiles, fingerprintSourceProfiles, workspaceMode])
+
+  useEffect(() => {
+    setSelectedIds(new Set())
+  }, [workspaceMode])
+
   const hasActiveFilters = !isFiltersEmpty(filters)
   const clearFilters = () => setFilters({ ...EMPTY_FILTERS, tags: new Set() })
 
@@ -525,9 +568,14 @@ export function BrowserListPage() {
   return (
     <div className="apple-page flex min-h-full flex-col gap-4">
       <BrowserListHeader
+        workspaceMode={workspaceMode}
         profileCount={profiles.length}
-        filteredProfileCount={filteredProfiles.length}
+        filteredProfileCount={workspaceProfiles.length}
+        hasActiveFilters={hasActiveFilters}
         runningCount={runningCount}
+        attentionCount={attentionProfiles.length}
+        fingerprintSourceCount={fingerprintSourceProfiles.length}
+        recentRecordedCount={recentRecordedCount}
         headerCollapsed={headerCollapsed}
         viewMode={viewMode}
         proxies={proxies}
@@ -549,7 +597,7 @@ export function BrowserListPage() {
       {/* 批量操作工具栏 */}
       <BatchToolbar
         selectedCount={selectedIds.size}
-        totalCount={filteredProfiles.length}
+        totalCount={workspaceProfiles.length}
         onSelectAll={handleSelectAll}
         onDeselectAll={handleDeselectAll}
         onBatchStart={handleBatchStart}
@@ -579,8 +627,9 @@ export function BrowserListPage() {
         totalProfileCount={profiles.length}
         hasActiveFilters={hasActiveFilters}
         onClearFilters={clearFilters}
+        workspaceMode={workspaceMode}
         viewMode={viewMode}
-        profiles={filteredProfiles}
+        profiles={workspaceProfiles}
         proxies={proxies}
         selectedIds={selectedIds}
         resolveProfileCore={resolveProfileCore}

@@ -3,6 +3,8 @@ package proxy
 import (
 	"strings"
 	"testing"
+
+	"ant-chrome/backend/internal/config"
 )
 
 func TestMaskProxyConfigMasksURIUserInfoAndSensitiveQuery(t *testing.T) {
@@ -84,5 +86,35 @@ func TestMaskProxyConfigFailsClosedForMalformedURI(t *testing.T) {
 		if strings.Contains(got, "alice") || strings.Contains(got, "secret") {
 			t.Fatalf("malformed proxy URI leaked credentials: %s", got)
 		}
+	}
+}
+
+func TestBuildProxyDiagnosticUsesConfiguredConnectorStack(t *testing.T) {
+	proxyConfig := "ss://YWVzLTEyOC1nY206cGFzc3dvcmQ@example.com:8388"
+
+	combined := BuildProxyDiagnostic(proxyConfig, nil, "", BuildDiagnosticOptions{
+		ConnectorType: config.BrowserConnectorXray,
+	})
+	if !combined.Ok || combined.Engine != ProxyKernelXray {
+		t.Fatalf("combined-stack diagnostic = %+v, want successful Xray diagnostic", combined)
+	}
+
+	mihomo := BuildProxyDiagnostic(proxyConfig, nil, "", BuildDiagnosticOptions{
+		ConnectorType: config.BrowserConnectorMihomo,
+	})
+	if !mihomo.Ok || mihomo.Engine != ProxyKernelMihomo {
+		t.Fatalf("mihomo-stack diagnostic = %+v, want successful Mihomo diagnostic", mihomo)
+	}
+}
+
+func TestBuildProxyDiagnosticRejectsCrossStackFallback(t *testing.T) {
+	diagnostic := BuildProxyDiagnostic(mieruClashNode, nil, "", BuildDiagnosticOptions{
+		ConnectorType: config.BrowserConnectorXray,
+	})
+	if diagnostic.Ok {
+		t.Fatalf("xray stack must not diagnose a mihomo-only node as usable: %+v", diagnostic)
+	}
+	if len(diagnostic.Errors) == 0 || !strings.Contains(diagnostic.Errors[0], "browser.default_connector_type=mihomo") {
+		t.Fatalf("diagnostic errors = %#v, want actionable Mihomo stack-switch guidance", diagnostic.Errors)
 	}
 }

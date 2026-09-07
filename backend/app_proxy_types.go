@@ -18,6 +18,10 @@ type ProxyTestResult struct {
 	LatencyMs int64  `json:"latencyMs"`
 	Engine    string `json:"engine"`
 	Error     string `json:"error"`
+	Stage     string `json:"stage"`
+	Code      string `json:"code"`
+	TargetURL string `json:"targetUrl"`
+	Attempted int    `json:"attempted"`
 }
 
 func buildProxyTestResult(result proxy.TestResult) ProxyTestResult {
@@ -27,6 +31,10 @@ func buildProxyTestResult(result proxy.TestResult) ProxyTestResult {
 		LatencyMs: result.LatencyMs,
 		Engine:    result.Engine,
 		Error:     result.Error,
+		Stage:     string(result.Stage),
+		Code:      string(result.Code),
+		TargetURL: result.TargetURL,
+		Attempted: result.Attempted,
 	}
 }
 
@@ -48,6 +56,9 @@ type ProxyBrowserProbeResult struct {
 	Failed      int    `json:"failed"`
 	Concurrency int    `json:"concurrency"`
 	Error       string `json:"error"`
+	Stage       string `json:"stage"`
+	Code        string `json:"code"`
+	TargetURL   string `json:"targetUrl"`
 }
 
 // ProxyBridgeWarmupResult 代理桥接预热结果。
@@ -58,6 +69,16 @@ type ProxyBridgeWarmupResult struct {
 	SocksURL  string `json:"socksUrl"`
 	LatencyMs int64  `json:"latencyMs"`
 	Error     string `json:"error"`
+	// Stage/Code/TargetURL/Attempted follow the shared health contract. Warmup
+	// does not issue an external request, so TargetURL stays empty and Attempted
+	// counts bridge-start attempts rather than target requests.
+	Stage     string `json:"stage"`
+	Code      string `json:"code"`
+	TargetURL string `json:"targetUrl"`
+	Attempted int    `json:"attempted"`
+	// Native Wails responses are available; browser-preview fallbacks override
+	// this with false on the frontend.
+	Available bool `json:"available"`
 }
 
 // ProxyIPHealthResult 代理出口 IP 健康信息（透传第三方接口结果）
@@ -66,6 +87,10 @@ type ProxyIPHealthResult struct {
 	Ok             bool                   `json:"ok"`
 	Source         string                 `json:"source"`
 	Error          string                 `json:"error"`
+	Engine         string                 `json:"engine"`
+	Stage          string                 `json:"stage"`
+	Code           string                 `json:"code"`
+	TargetURL      string                 `json:"targetUrl"`
 	IP             string                 `json:"ip"`
 	FraudScore     int64                  `json:"fraudScore"`
 	IsResidential  bool                   `json:"isResidential"`

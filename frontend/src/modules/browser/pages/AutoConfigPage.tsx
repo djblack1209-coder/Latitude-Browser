@@ -19,7 +19,8 @@ import {
   X,
   type LucideIcon,
 } from 'lucide-react'
-import { Badge, Button, Card, Progress, toast } from '../../../shared/components'
+import { Badge, Button, Progress, toast } from '../../../shared/components'
+import { TelemetryStrip, TerminalPanel, WorkspaceHeader } from '../../../shared/components/SignalPrimitives'
 import type { BrowserProfile, BrowserProxy, BrowserSettings } from '../types'
 import { checkBrowserProfileFingerprint, createBrowserProfile, fetchBrowserProxies, fetchBrowserSettings, startBrowserInstance, testProxyRealConnectivity, testProxyRealConnectivityWithConfig, validateProxyConfig } from '../api'
 import { buildAutoConfigProfileInput, isAutoConfigProxyReady, sanitizeAutoConfigDraft } from '../utils/autoConfig'
@@ -312,7 +313,7 @@ function SelectionOption({
       aria-checked={selected}
       onClick={onSelect}
       className={[
-        'group w-full rounded-md border p-5 text-left transition-[background-color,border-color,color,transform] duration-150',
+        'group w-full rounded-sm border p-4 text-left transition-[background-color,border-color,color,transform] duration-150 active:translate-y-px',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)]',
 
         selected
@@ -323,7 +324,7 @@ function SelectionOption({
       <span className="flex items-start justify-between gap-4">
         <span
           className={[
-            'flex h-10 w-10 items-center justify-center rounded-md border',
+            'flex h-9 w-9 items-center justify-center rounded-sm border',
             selected
               ? 'border-[var(--color-accent)] text-[var(--color-accent)]'
               : 'border-[var(--color-border-default)] text-[var(--color-text-secondary)] group-hover:text-[var(--color-text-primary)]',
@@ -343,7 +344,7 @@ function SelectionOption({
           <Check className="h-3 w-3" strokeWidth={3} />
         </span>
       </span>
-      <span className="mt-4 block">
+      <span className="mt-3 block">
         <span className="flex items-center gap-2 text-sm font-semibold text-[var(--color-text-primary)]">
           {title}
           {badge && <Badge variant="info" size="sm">{badge}</Badge>}
@@ -694,25 +695,36 @@ export function AutoConfigPage() {
       : '自定义配置（内容已隐藏）'
   const operationBusy = operationStatus === 'loading'
 
+  const telemetryItems = [
+    { label: '当前步骤', value: `${step + 1} / ${STEPS.length}`, detail: STEPS[step].label, tone: 'accent' as const },
+    { label: '网络入口', value: networkMode ? networkLabel[networkMode] : '待选择' },
+    {
+      label: '连接栈',
+      value: networkMode === 'direct' ? connectorLabel.none : settingsLoadError ? '读取失败' : recommendation ? connectorLabel[recommendation.connectorStack] : settings ? connectorLabel[getConnectorStack(settings.defaultConnectorType)] : '读取中',
+      tone: settingsLoadError ? 'warning' as const : 'neutral' as const,
+    },
+    { label: '指纹策略', value: fingerprintMode ? fingerprintLabel[fingerprintMode] : '待选择' },
+  ]
+
   return (
     <div className="apple-page mx-auto w-full max-w-5xl pb-12">
-      <header className="mb-8 flex flex-col gap-5 border-b border-[var(--color-border-muted)] pb-7 md:flex-row md:items-end md:justify-between">
-        <div>
-                    <h1 className="text-2xl font-semibold tracking-tight text-[var(--color-text-primary)]">自动配置</h1>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-[var(--color-text-secondary)]">
-            用四个步骤生成一份与当前设备环境相互协调的实例，并在确认后直接创建、启动和检查。代理协议只由当前连接栈负责解析。
-          </p>
-        </div>
-        <Button type="button" variant="ghost" size="sm" onClick={() => navigate('/browser/list')}>
-          <X className="h-4 w-4" />
-          取消
-        </Button>
-      </header>
+      <WorkspaceHeader
+        eyebrow="INSTANCE / SETUP"
+        title="自动配置实例"
+        description="按网络、设备、指纹和确认四步完成。"
+        actions={(
+          <Button type="button" variant="ghost" size="sm" onClick={() => navigate('/browser/list')}>
+            <X className="h-4 w-4" />
+            取消
+          </Button>
+        )}
+      />
+      <TelemetryStrip items={telemetryItems} className="mt-4" />
 
       {savedDraft && (
         <section
           aria-labelledby="auto-config-draft-title"
-          className="mb-6 flex flex-col gap-4 border-l-2 border-[var(--color-accent)] bg-[var(--color-bg-subtle)] px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
+          className="mt-5 flex flex-col gap-4 rounded-sm border border-[var(--color-border-default)] bg-[var(--color-bg-subtle)] px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
         >
           <div className="flex items-start gap-3">
             <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[var(--color-accent)]" />
@@ -739,7 +751,7 @@ export function AutoConfigPage() {
         </section>
       )}
 
-      <nav aria-label="自动配置步骤" className="mb-8">
+      <nav aria-label="自动配置步骤" className="mb-8 mt-6">
         <ol className="grid grid-cols-2 gap-2 md:grid-cols-4">
           {STEPS.map((item, index) => {
             const isCurrent = index === step
@@ -750,12 +762,12 @@ export function AutoConfigPage() {
                   type="button"
                   onClick={() => index <= step && setStep(index)}
                   disabled={index > step}
-                  className="flex w-full items-center gap-3 rounded-md px-2 py-2 text-left disabled:cursor-default disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)]"
+                  className="flex w-full items-center gap-3 rounded-sm px-2 py-2 text-left disabled:cursor-default disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)]"
                   aria-current={isCurrent ? 'step' : undefined}
                 >
                   <span
                     className={[
-                      'flex h-7 w-7 shrink-0 items-center justify-center rounded-full border font-mono text-[10px]',
+                      'flex h-7 w-7 shrink-0 items-center justify-center rounded-sm border font-mono text-[10px]',
                       isComplete || isCurrent
                         ? 'border-[var(--color-accent)] bg-[var(--color-accent-muted)] text-[var(--color-accent)]'
                         : 'border-[var(--color-border-default)] text-[var(--color-text-muted)]',
@@ -777,14 +789,14 @@ export function AutoConfigPage() {
       {step === 0 && (
         <section aria-labelledby="network-choice-title">
           <div className="mb-5">
-            <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-[var(--color-text-muted)]">Network / Entry</p>
-            <h2 id="network-choice-title" className="mt-2 text-lg font-semibold text-[var(--color-text-primary)]">先决定实例如何联网</h2>
-            <p className="mt-2 text-sm text-[var(--color-text-secondary)]">直连可以直接创建；代理模式需要选择代理池节点或填写一份可验证的配置，避免生成一个看似可用但实际直连的实例。</p>
+            <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-[var(--color-text-muted)]">网络 / 入口</p>
+            <h2 id="network-choice-title" className="mt-2 text-lg font-semibold text-[var(--color-text-primary)]">网络入口</h2>
+            <p className="mt-2 text-sm text-[var(--color-text-secondary)]">选择代理或直连。代理模式需先选节点或填写配置。</p>
           </div>
           <div className="grid gap-4 md:grid-cols-2" role="radiogroup" aria-label="网络入口">
             <SelectionOption
               title="使用代理"
-              description="从代理池或自定义配置接入实例。当前连接栈会严格遵循全局设置，不会把 Xray、sing-box 与 Mihomo 混用。"
+              description="从代理池或自定义配置接入。"
               icon={Network}
               selected={networkMode === 'proxy'}
               onSelect={() => setNetworkMode('proxy')}
@@ -792,14 +804,14 @@ export function AutoConfigPage() {
             />
             <SelectionOption
               title="直连"
-              description="直接使用当前网络，不启动代理内核。适合先熟悉浏览器和指纹配置的第一条实例。"
+              description="使用当前网络，不启动代理内核。"
               icon={Wifi}
               selected={networkMode === 'direct'}
               onSelect={() => setNetworkMode('direct')}
             />
           </div>
           {networkMode === 'proxy' && (
-            <div className="mt-5 border border-[var(--color-border-default)] bg-[var(--color-bg-surface)] p-4" aria-label="代理来源">
+            <div className="mt-5 rounded-sm border border-[var(--color-border-default)] bg-[var(--color-bg-surface)] p-4" aria-label="代理来源">
               <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
                 <div>
                   <p className="text-sm font-semibold text-[var(--color-text-primary)]">代理来源</p>
@@ -816,7 +828,7 @@ export function AutoConfigPage() {
                   aria-checked={proxySource === 'pool'}
                   onClick={() => setProxySource('pool')}
                   className={[
-                    'border px-3 py-2 text-xs font-medium transition-[background-color,border-color,color] duration-150',
+                    'rounded-sm border px-3 py-2 text-xs font-medium transition-[background-color,border-color,color] duration-150',
                     proxySource === 'pool'
                       ? 'border-[var(--color-accent)] bg-[var(--color-accent-muted)] text-[var(--color-accent)]'
                       : 'border-[var(--color-border-default)] text-[var(--color-text-secondary)] hover:border-[var(--color-border-strong)]',
@@ -830,7 +842,7 @@ export function AutoConfigPage() {
                   aria-checked={proxySource === 'custom'}
                   onClick={() => setProxySource('custom')}
                   className={[
-                    'border px-3 py-2 text-xs font-medium transition-[background-color,border-color,color] duration-150',
+                    'rounded-sm border px-3 py-2 text-xs font-medium transition-[background-color,border-color,color] duration-150',
                     proxySource === 'custom'
                       ? 'border-[var(--color-accent)] bg-[var(--color-accent-muted)] text-[var(--color-accent)]'
                       : 'border-[var(--color-border-default)] text-[var(--color-text-secondary)] hover:border-[var(--color-border-strong)]',
@@ -847,7 +859,7 @@ export function AutoConfigPage() {
                     value={proxyId}
                     onChange={(event) => setProxyId(event.target.value)}
                     disabled={proxyLoading || proxies.length === 0}
-                    className="h-10 w-full border border-[var(--color-border-default)] bg-[var(--color-bg-base)] px-3 text-sm text-[var(--color-text-primary)] outline-none transition-[border-color,box-shadow] focus:border-[var(--color-accent)] focus:ring-2 focus:ring-[var(--color-accent)]/20 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="h-10 w-full rounded-sm border border-[var(--color-border-default)] bg-[var(--color-bg-base)] px-3 text-sm text-[var(--color-text-primary)] outline-none transition-[border-color,box-shadow] focus:border-[var(--color-accent)] focus:ring-2 focus:ring-[var(--color-accent)]/20 disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     <option value="">{proxyLoading ? '正在读取代理池…' : proxies.length ? '请选择节点' : '暂无可用代理池节点'}</option>
                     {proxies.map((proxy) => (
@@ -870,26 +882,26 @@ export function AutoConfigPage() {
                     onChange={(event) => setProxyConfig(event.target.value)}
                     rows={4}
                     placeholder="例如 socks5://user:password@host:port，或项目支持的代理配置格式"
-                    className="w-full resize-y border border-[var(--color-border-default)] bg-[var(--color-bg-base)] px-3 py-2 font-mono text-xs leading-5 text-[var(--color-text-primary)] outline-none transition-[border-color,box-shadow] focus:border-[var(--color-accent)] focus:ring-2 focus:ring-[var(--color-accent)]/20"
+                    className="w-full resize-y rounded-sm border border-[var(--color-border-default)] bg-[var(--color-bg-base)] px-3 py-2 font-mono text-xs leading-5 text-[var(--color-text-primary)] outline-none transition-[border-color,box-shadow] focus:border-[var(--color-accent)] focus:ring-2 focus:ring-[var(--color-accent)]/20"
                   />
                   <p className="mt-2 flex items-start gap-2 text-xs leading-5 text-[var(--color-text-muted)]">
                     <HelpCircle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[var(--color-accent)]" />
-                    <span>配置只用于本次实例创建，不会把内容写入页面文案或指纹签名。</span>
+                    <span>仅用于本次创建，不写入页面文案或指纹签名。</span>
                   </p>
                 </div>
               )}
             </div>
           )}
           {settingsLoadError && (
-            <div className="mt-4 flex items-start gap-3 border-l-2 border-[var(--color-warning)] bg-[var(--color-bg-subtle)] px-4 py-3 text-xs leading-5 text-[var(--color-text-secondary)]" role="status">
+            <div className="mt-4 flex items-start gap-3 rounded-sm border border-[var(--color-warning)]/45 bg-[var(--color-bg-subtle)] px-4 py-3 text-xs leading-5 text-[var(--color-text-secondary)]" role="status">
               <HelpCircle className="mt-0.5 h-4 w-4 shrink-0 text-[var(--color-warning)]" />
               <span>{settingsLoadError}</span>
             </div>
           )}
           {networkMode !== 'proxy' && (
-            <div className="mt-5 flex items-start gap-3 border-l-2 border-[var(--color-accent)] bg-[var(--color-bg-subtle)] px-4 py-3 text-sm leading-6 text-[var(--color-text-secondary)]">
+            <div className="mt-5 flex items-start gap-3 rounded-sm border border-[var(--color-accent)]/40 bg-[var(--color-bg-subtle)] px-4 py-3 text-sm leading-6 text-[var(--color-text-secondary)]">
               <HelpCircle className="mt-0.5 h-4 w-4 shrink-0 text-[var(--color-accent)]" />
-              <span>直连不会启动代理内核；如果之后需要代理，可以在实例设置里切换到代理池或自定义配置。</span>
+              <span>直连不启动代理内核；需要代理时在实例设置中切换。</span>
             </div>
           )}
         </section>
@@ -899,9 +911,9 @@ export function AutoConfigPage() {
         <section aria-labelledby="baseline-title">
           <div className="mb-5 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
             <div>
-              <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-[var(--color-text-muted)]">Device / Baseline</p>
-              <h2 id="baseline-title" className="mt-2 text-lg font-semibold text-[var(--color-text-primary)]">读取当前设备基线</h2>
-              <p className="mt-2 text-sm text-[var(--color-text-secondary)]">我们只读取当前桌面环境（Wails WebView）已经公开的信息，用来保持语言、时区、分辨率和浏览器类型之间的一致性；最终实例仍以目标浏览器核心的运行时自测为准。</p>
+              <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-[var(--color-text-muted)]">设备 / 基线</p>
+              <h2 id="baseline-title" className="mt-2 text-lg font-semibold text-[var(--color-text-primary)]">设备基线</h2>
+              <p className="mt-2 text-sm text-[var(--color-text-secondary)]">读取桌面环境参数，用于生成初始指纹。</p>
             </div>
             <Button type="button" variant="secondary" size="sm" onClick={() => setBaseline(captureDeviceBaseline())}>
               <RefreshCw className="h-4 w-4" />
@@ -909,16 +921,16 @@ export function AutoConfigPage() {
             </Button>
           </div>
           {!baseline ? (
-            <Card padding="lg">
-              <div className="flex items-center gap-3 text-sm text-[var(--color-text-secondary)]">
+            <TerminalPanel title="设备基线" meta="正在读取">
+              <div className="flex items-center gap-3 p-4 text-sm text-[var(--color-text-secondary)]">
                 <Monitor className="h-5 w-5 text-[var(--color-accent)]" />
                 正在读取本机基线…
               </div>
-            </Card>
+            </TerminalPanel>
           ) : (
             <div className="grid gap-4 md:grid-cols-[1.1fr_0.9fr]">
-              <Card title="环境摘要" subtitle={`读取于 ${formatCapturedAt(baseline.capturedAt)}`} padding="md">
-                <dl>
+              <TerminalPanel title="环境摘要" meta={`读取于 ${formatCapturedAt(baseline.capturedAt)}`}>
+                <dl className="px-4">
                   <DetailRow label="浏览器" value={baseline.browserFamily} />
                   <DetailRow label="平台" value={baseline.platform} />
                   <DetailRow label="语言" value={baseline.languages.length ? baseline.languages.join(', ') : baseline.language} />
@@ -926,16 +938,16 @@ export function AutoConfigPage() {
                   <DetailRow label="屏幕" value={`${baseline.screenWidth} × ${baseline.screenHeight} / DPR ${baseline.pixelRatio}`} mono />
                   <DetailRow label="视口" value={`${baseline.viewportWidth} × ${baseline.viewportHeight}`} mono />
                 </dl>
-              </Card>
-              <Card title="硬件线索" subtitle="缺失信息会保持为空，不会伪造数值" padding="md">
-                <dl>
+              </TerminalPanel>
+              <TerminalPanel title="硬件线索" meta="缺失项保持为空">
+                <dl className="px-4">
                   <DetailRow label="并发线程" value={baseline.hardwareConcurrency ? `${baseline.hardwareConcurrency}` : '未提供'} mono />
                   <DetailRow label="设备内存" value={baseline.deviceMemory ? `${baseline.deviceMemory} GB` : '未提供'} mono />
                   <DetailRow label="色深" value={baseline.colorDepth ? `${baseline.colorDepth} bit` : '未提供'} mono />
                   <DetailRow label="触控点" value={`${baseline.touchPoints}`} mono />
                   <DetailRow label="UA 摘要" value={baseline.userAgent} mono />
                 </dl>
-              </Card>
+              </TerminalPanel>
             </div>
           )}
         </section>
@@ -944,14 +956,14 @@ export function AutoConfigPage() {
       {step === 2 && (
         <section aria-labelledby="fingerprint-title">
           <div className="mb-5">
-            <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-[var(--color-text-muted)]">Fingerprint / Policy</p>
-            <h2 id="fingerprint-title" className="mt-2 text-lg font-semibold text-[var(--color-text-primary)]">选择指纹如何保持稳定</h2>
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-[var(--color-text-secondary)]">先用一致性换取可理解性。当前版本把约束随机作为策略预览，先沿用已验证的安全默认参数，不会偷偷生成未经验证的随机字段。</p>
+            <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-[var(--color-text-muted)]">指纹 / 策略</p>
+            <h2 id="fingerprint-title" className="mt-2 text-lg font-semibold text-[var(--color-text-primary)]">指纹策略</h2>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-[var(--color-text-secondary)]">固定指纹，或预览约束随机策略。</p>
           </div>
           <div className="space-y-3" role="radiogroup" aria-label="指纹策略">
             <SelectionOption
               title="固定指纹"
-              description="为这个实例保留同一套设备特征。适合登录、长期会话和需要稳定环境的工作流。"
+              description="为实例保留同一套设备特征。"
               icon={LockKeyhole}
               selected={fingerprintMode === 'fixed'}
               onSelect={() => setFingerprintMode('fixed')}
@@ -959,16 +971,16 @@ export function AutoConfigPage() {
             />
             <SelectionOption
               title="约束随机（预览）"
-              description="记录未来的约束随机策略，但当前创建仍沿用安全默认参数。适合先熟悉流程，不建议把它当成已经启用的随机轮换。"
+              description="策略预览；当前仍使用已验证的默认参数。"
               icon={Shuffle}
               selected={fingerprintMode === 'constrained-random'}
               onSelect={() => setFingerprintMode('constrained-random')}
               badge="策略预览"
             />
           </div>
-          <div className="mt-5 flex items-start gap-3 border-l-2 border-[var(--color-warning)] bg-[var(--color-bg-subtle)] px-4 py-3 text-sm leading-6 text-[var(--color-text-secondary)]">
+          <div className="mt-5 flex items-start gap-3 rounded-sm border border-[var(--color-warning)]/45 bg-[var(--color-bg-subtle)] px-4 py-3 text-sm leading-6 text-[var(--color-text-secondary)]">
             <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-[var(--color-warning)]" />
-            <span>固定指纹会直接使用一致参数；约束随机目前保留为策略标签，并沿用同一套安全默认参数，避免首次创建时产生未验证的随机字段。</span>
+            <span>固定指纹会直接使用一致参数；约束随机目前保留为策略标签，并沿用同一套已验证的默认参数，避免首次创建时产生未验证的随机字段。</span>
           </div>
         </section>
       )}
@@ -976,30 +988,32 @@ export function AutoConfigPage() {
       {step === 3 && baseline && networkMode && fingerprintMode && recommendation && (
         <section aria-labelledby="review-title">
           <div className="mb-5">
-            <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-[var(--color-text-muted)]">Review / Save</p>
-            <h2 id="review-title" className="mt-2 text-lg font-semibold text-[var(--color-text-primary)]">确认并创建实例</h2>
-            <p className="mt-2 text-sm text-[var(--color-text-secondary)]">确认后会写入浏览器实例配置，执行代理检查（如适用），然后启动实例并尝试完成指纹自测。</p>
+            <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-[var(--color-text-muted)]">确认 / 创建</p>
+            <h2 id="review-title" className="mt-2 text-lg font-semibold text-[var(--color-text-primary)]">确认实例</h2>
+            <p className="mt-2 text-sm text-[var(--color-text-secondary)]">写入配置，执行检查并启动。</p>
           </div>
-          <Card padding="none" className="overflow-hidden">
-            <div className="border-b border-[var(--color-border-muted)] bg-[var(--color-bg-subtle)] px-5 py-4">
-              <div className="flex flex-wrap items-center gap-2">
-                <Badge variant="success" dot>配置可用</Badge>
+          <TerminalPanel
+            title="创建预览"
+            meta={<Badge variant="warning" dot>待创建前校验</Badge>}
+          >
+            <div className="px-4">
+              <div className="border-b border-[var(--color-border-muted)] py-4">
                 <Badge variant="default">指纹签名 {recommendation.signature}</Badge>
+                <h3 className="mt-3 text-base font-semibold text-[var(--color-text-primary)]">{recommendation.profileName}</h3>
+                <p className="mt-1 text-sm text-[var(--color-text-secondary)]">{fingerprintLabel[fingerprintMode]} · {networkLabel[networkMode]}</p>
               </div>
-              <h3 className="mt-3 text-base font-semibold text-[var(--color-text-primary)]">{recommendation.profileName}</h3>
-              <p className="mt-1 text-sm text-[var(--color-text-secondary)]">{fingerprintLabel[fingerprintMode]} · {networkLabel[networkMode]}</p>
+              <dl>
+                <DetailRow label="网络入口" value={networkLabel[networkMode]} />
+                <DetailRow label="代理来源" value={proxySummary} />
+                <DetailRow label="连接栈" value={connectorLabel[recommendation.connectorStack]} />
+                <DetailRow label="指纹策略" value={fingerprintLabel[fingerprintMode]} />
+                <DetailRow label="设备类型" value={`${recommendation.osFamily} · ${recommendation.hardwareClass}`} />
+                <DetailRow label="语言 / 时区" value={`${recommendation.locale} · ${recommendation.timezone}`} mono />
+                <DetailRow label="视口" value={recommendation.viewport} mono />
+              </dl>
             </div>
-            <dl className="px-5">
-              <DetailRow label="网络入口" value={networkLabel[networkMode]} />
-              <DetailRow label="代理来源" value={proxySummary} />
-              <DetailRow label="连接栈" value={connectorLabel[recommendation.connectorStack]} />
-              <DetailRow label="指纹策略" value={fingerprintLabel[fingerprintMode]} />
-              <DetailRow label="设备类型" value={`${recommendation.osFamily} · ${recommendation.hardwareClass}`} />
-              <DetailRow label="语言 / 时区" value={`${recommendation.locale} · ${recommendation.timezone}`} mono />
-              <DetailRow label="视口" value={recommendation.viewport} mono />
-            </dl>
-          </Card>
-          <details className="mt-4 rounded-md border border-[var(--color-border-default)] bg-[var(--color-bg-surface)]">
+          </TerminalPanel>
+          <details className="mt-4 rounded-sm border border-[var(--color-border-default)] bg-[var(--color-bg-surface)]">
             <summary className="cursor-pointer list-none px-5 py-4 text-sm font-semibold text-[var(--color-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--color-accent)]">
               高级设置预览
               <span className="ml-2 text-xs font-normal text-[var(--color-text-muted)]">不改也能直接使用</span>
@@ -1022,7 +1036,7 @@ export function AutoConfigPage() {
           {operationStatus !== 'idle' && (
             <div
               className={[
-                'mt-4 flex items-start gap-3 border-l-2 px-4 py-3 text-sm leading-6',
+                'mt-4 flex items-start gap-3 rounded-sm border px-4 py-3 text-sm leading-6',
                 operationStatus === 'success'
                   ? 'border-[var(--color-success)] bg-[var(--color-success)]/10 text-[var(--color-text-secondary)]'
                   : operationStatus === 'error'
@@ -1142,7 +1156,7 @@ export function AutoConfigPage() {
 
       <p className="mt-6 flex items-center gap-2 text-xs text-[var(--color-text-muted)]">
         <Globe2 className="h-3.5 w-3.5" />
-        自动配置 v1 · 本地草稿 · 连接栈遵循当前项目代理规则
+        本地草稿 · 按当前连接栈创建
       </p>
     </div>
   )

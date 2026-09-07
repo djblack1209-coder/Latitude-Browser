@@ -14,6 +14,7 @@ import {
 } from "../automationScriptApi";
 import {
   createAutomationScriptDraft,
+  resolveAutomationScriptPublicAPIConfig,
   type AutomationScriptPublicAPIConfig,
   type AutomationScriptRecord,
   type AutomationScriptType,
@@ -371,6 +372,10 @@ export function AutomationPage() {
         refreshing={refreshing}
         exporting={busyAction === "export"}
         selectedCount={selectedScriptIds.length}
+        scriptCount={scripts.length}
+        readyCount={scripts.filter((script) => script.status === "ready").length}
+        apiCount={scripts.filter((script) => resolveAutomationScriptPublicAPIConfig(script).enabled).length}
+        profileCount={profiles.length}
         onRefresh={() => void handleRefresh()}
         onCreate={() => setCreateOpen(true)}
         onExportSelected={() => void handleExportSelectedScripts()}

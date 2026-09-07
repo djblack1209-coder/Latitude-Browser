@@ -1,5 +1,6 @@
-import { Edit2, Settings } from 'lucide-react'
-import { Button, Card } from '../../../../shared/components'
+import { Edit2 } from 'lucide-react'
+import { Button } from '../../../../shared/components'
+import { TerminalPanel } from '../../../../shared/components/SignalPrimitives'
 import type { BrowserSettings } from '../../types'
 
 interface CoreSettingsCardProps {
@@ -7,64 +8,54 @@ interface CoreSettingsCardProps {
   onEdit: () => void
 }
 
-const settingsValueClass = 'min-h-8 rounded-lg border border-[var(--color-border-muted)] bg-[var(--color-bg-subtle)] px-2.5 py-1.5 text-sm leading-5 text-[var(--color-text-primary)]'
-const settingsListClass = 'min-h-9 max-h-32 overflow-auto whitespace-pre-wrap rounded-lg border border-[var(--color-border-muted)] bg-[var(--color-bg-subtle)] px-3 py-2 text-sm leading-5 text-[var(--color-text-primary)]'
-const settingsCompactListClass = `${settingsValueClass} max-h-16 overflow-auto whitespace-pre-wrap`
+const settingsValueClass = 'min-h-8 break-all font-mono text-xs leading-5 text-[var(--color-text-primary)]'
 
 export function CoreSettingsCard({ settings, onEdit }: CoreSettingsCardProps) {
   return (
-    <Card>
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2">
-          <Settings className="w-5 h-5 text-[var(--color-text-muted)]" />
-          <h3 className="text-base font-medium text-[var(--color-text-primary)]">全局设置</h3>
-        </div>
-        <Button size="sm" variant="ghost" onClick={onEdit}>
-          <Edit2 className="w-4 h-4 mr-1" />
-          编辑
+    <TerminalPanel
+      title="GLOBAL BOOT PROFILE"
+      meta={(
+        <Button size="sm" variant="ghost" onClick={onEdit} aria-label="编辑全局启动设置">
+          <Edit2 className="h-3.5 w-3.5" aria-hidden="true" />
+          编辑设置
         </Button>
+      )}
+    >
+      <div className="grid divide-y divide-[var(--color-border-muted)] lg:grid-cols-12 lg:divide-x lg:divide-y-0">
+        <SettingsValue className="lg:col-span-4" label="用户数据根目录" value={settings.userDataRoot || '未指定'} />
+        <SettingsValue className="lg:col-span-2" label="会话恢复" value={settings.restoreLastSession ? 'ENABLED' : 'DISABLED'} />
+        <SettingsValue className="lg:col-span-2" label="轻启动" value={settings.lightStartEnabled ? 'ENABLED' : 'DISABLED'} />
+        <SettingsValue className="lg:col-span-2" label="就绪超时" value={`${settings.startReadyTimeoutMs} ms`} />
+        <SettingsValue className="lg:col-span-2" label="稳定窗口" value={`${settings.startStableWindowMs} ms`} />
       </div>
-      <div className="space-y-4">
-        <div className="grid grid-cols-2 gap-3 lg:grid-cols-12">
-          <SettingsValue className="col-span-2 lg:col-span-3" label="用户数据根目录" value={settings.userDataRoot || '-'} />
-          <SettingsValue className="lg:col-span-1" label="恢复历史标签" value={settings.restoreLastSession ? '开启' : '关闭'} />
-          <SettingsValue className="lg:col-span-1" label="轻启动模式" value={settings.lightStartEnabled ? '开启' : '关闭'} />
-          <SettingsValue className="lg:col-span-2" label="启动就绪超时" value={`${settings.startReadyTimeoutMs} ms`} />
-          <SettingsValue className="lg:col-span-2" label="启动稳定窗口" value={`${settings.startStableWindowMs} ms`} />
-          <SettingsList className="col-span-2 lg:col-span-3" label="默认启动页面" values={settings.defaultStartUrls} compact />
-        </div>
-        <div className="grid grid-cols-1 gap-3">
-          <SettingsList label="默认指纹参数" values={settings.defaultFingerprintArgs} />
-          <SettingsList label="默认启动参数" values={settings.defaultLaunchArgs} />
-        </div>
+      <div className="grid border-t border-[var(--color-border-muted)] lg:grid-cols-3 lg:divide-x lg:divide-[var(--color-border-muted)]">
+        <SettingsList label="默认启动页面" values={settings.defaultStartUrls} />
+        <SettingsList label="默认指纹参数" values={settings.defaultFingerprintArgs} />
+        <SettingsList label="默认启动参数" values={settings.defaultLaunchArgs} />
       </div>
-    </Card>
+    </TerminalPanel>
   )
 }
 
 function SettingsValue({ label, value, className = '' }: { label: string; value: string; className?: string }) {
   return (
-    <div className={className}>
-      <p className="text-xs text-[var(--color-text-muted)] mb-1">{label}</p>
-      <div className={`${settingsValueClass} break-all`}>
-        {value}
-      </div>
+    <div className={`min-w-0 px-4 py-3 ${className}`}>
+      <p className="mb-1 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--color-text-muted)]">{label}</p>
+      <div className={settingsValueClass}>{value}</div>
     </div>
   )
 }
 
-function SettingsList({ label, values, className = '', compact = false }: { label: string; values: string[]; className?: string; compact?: boolean }) {
+function SettingsList({ label, values }: { label: string; values: string[] }) {
   return (
-    <div className={className}>
-      <p className="text-xs text-[var(--color-text-muted)] mb-1">{label}</p>
+    <div className="min-w-0 px-4 py-3">
+      <p className="mb-1 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--color-text-muted)]">{label}</p>
       {values.length > 0 ? (
-        <pre className={compact ? settingsCompactListClass : settingsListClass}>
+        <pre className="max-h-24 overflow-auto whitespace-pre-wrap break-all font-mono text-xs leading-5 text-[var(--color-text-secondary)]">
           {values.join('\n')}
         </pre>
       ) : (
-        <div className={settingsValueClass}>
-          -
-        </div>
+        <div className="font-mono text-xs text-[var(--color-text-muted)]">EMPTY</div>
       )}
     </div>
   )

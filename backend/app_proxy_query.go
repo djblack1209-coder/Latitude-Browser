@@ -4,6 +4,7 @@ import (
 	"ant-chrome/backend/internal/browser"
 	"ant-chrome/backend/internal/config"
 	"ant-chrome/backend/internal/proxy"
+	"errors"
 	"strings"
 	"sync"
 	"time"
@@ -21,6 +22,23 @@ func (a *App) BrowserProxyListGroups() []string {
 // BrowserProxyListByGroup 按分组名称查询代理
 func (a *App) BrowserProxyListByGroup(groupName string) []BrowserProxy {
 	return browser.ListProxiesByGroupWithFallback(a.browserMgr.ProxyDAO, groupName, a.config.Browser.Proxies)
+}
+
+// BrowserProxyClearSpeedDiagnostic clears the persisted speed result and
+// structured diagnostic for one proxy. It is intentionally idempotent: a
+// missing proxy or already-empty result simply returns false/true respectively
+// according to the DAO operation result.
+func (a *App) BrowserProxyClearSpeedDiagnostic(proxyId string) bool {
+	proxyId = strings.TrimSpace(proxyId)
+	if a == nil || a.browserMgr == nil || a.browserMgr.ProxyDAO == nil || proxyId == "" {
+		return false
+	}
+	if diagnosticDAO, ok := a.browserMgr.ProxyDAO.(interface {
+		ClearSpeedDiagnostic(proxyId string) error
+	}); ok {
+		return diagnosticDAO.ClearSpeedDiagnostic(proxyId) == nil
+	}
+	return false
 }
 
 // ValidateProxyConfig 验证代理配置是否支持
@@ -113,63 +131,77 @@ func (a *App) BrowserProxyBatchWarmupBridge(proxyIds []string, concurrency int) 
 func (a *App) warmupProxyBridge(proxyId string, proxyConfig string, proxies []BrowserProxy) ProxyBridgeWarmupResult {
 	startedAt := time.Now()
 	proxyId = strings.TrimSpace(proxyId)
-	result := ProxyBridgeWarmupResult{ProxyId: proxyId}
-	src := strings.TrimSpace(resolveProxyConfigForApp(proxyConfig, proxies, proxyId))
-	if src == "" {
-		result.Error = "代理配置为空"
-		return result
+	result := ProxyBridgeWarmupResult{
+		ProxyId:   proxyId,
+		Stage:     string(proxy.HealthStageResolveConfig),
+		Code:      string(proxy.HealthCodeUnknown),
+		Available: true,
 	}
-
-	resolution, err := proxy.ResolveProxyKernel(src, proxies, proxyId, "")
-	result.Engine = resolution.Kernel
-	if err != nil {
-		result.Error = err.Error()
-		result.LatencyMs = time.Since(startedAt).Milliseconds()
-		return result
-	}
-	if resolution.Kernel == proxy.ProxyKernelNative {
-		result.Ok = true
-		if strings.EqualFold(src, "direct://") {
-			result.Engine = "direct"
+	finishFailure := func(err error, fallbackStage proxy.HealthStage) ProxyBridgeWarmupResult {
+		if err != nil {
+			stage, code := proxy.ClassifyHealthError(err, fallbackStage)
+			result.Stage = string(stage)
+			result.Code = string(code)
+			result.Error = err.Error()
 		}
 		result.LatencyMs = time.Since(startedAt).Milliseconds()
 		return result
 	}
 
+	src := strings.TrimSpace(resolveProxyConfigForApp(proxyConfig, proxies, proxyId))
+	if src == "" {
+		return finishFailure(errors.New("代理配置为空"), proxy.HealthStageResolveConfig)
+	}
+
+	resolution, err := proxy.ResolveProxyKernelForConnector(src, proxies, proxyId, a.defaultProxyConnectorType())
+	result.Engine = resolution.Kernel
+	if err != nil {
+		return finishFailure(err, proxy.HealthStageResolveKernel)
+	}
+	if resolution.Kernel == proxy.ProxyKernelNative {
+		result.Ok = true
+		result.Stage = string(proxy.HealthStageComplete)
+		if strings.EqualFold(src, "direct://") {
+			result.Engine = "direct"
+			result.Code = string(proxy.HealthCodeDirect)
+		} else {
+			result.Code = string(proxy.HealthCodeOK)
+		}
+		result.LatencyMs = time.Since(startedAt).Milliseconds()
+		return result
+	}
+
+	result.Stage = string(proxy.HealthStagePrepareBridge)
 	var socksURL string
 	switch resolution.Kernel {
 	case proxy.ProxyKernelMihomo:
 		if a.clashMgr == nil {
-			result.Error = "mihomo 管理器不可用，请先下载 Mihomo 内核"
-			result.LatencyMs = time.Since(startedAt).Milliseconds()
-			return result
+			return finishFailure(errors.New("mihomo 管理器不可用，请先下载 Mihomo 内核"), proxy.HealthStagePrepareBridge)
 		}
+		result.Attempted++
 		socksURL, err = a.clashMgr.EnsureNodeBridge(src, proxies, proxyId)
 	case proxy.ProxyKernelSingBox:
 		if a.singboxMgr == nil {
-			result.Error = "sing-box 管理器不可用"
-			result.LatencyMs = time.Since(startedAt).Milliseconds()
-			return result
+			return finishFailure(errors.New("sing-box 管理器不可用"), proxy.HealthStagePrepareBridge)
 		}
+		result.Attempted++
 		socksURL, err = a.singboxMgr.EnsureBridge(src, proxies, proxyId)
 	case proxy.ProxyKernelXray:
 		if a.xrayMgr == nil {
-			result.Error = "xray 管理器不可用"
-			result.LatencyMs = time.Since(startedAt).Milliseconds()
-			return result
+			return finishFailure(errors.New("xray 管理器不可用"), proxy.HealthStagePrepareBridge)
 		}
+		result.Attempted++
 		socksURL, err = a.xrayMgr.EnsureBridge(src, proxies, proxyId)
 	default:
-		result.Error = "无法选择代理内核"
-		result.LatencyMs = time.Since(startedAt).Milliseconds()
-		return result
+		return finishFailure(errors.New("无法选择代理内核"), proxy.HealthStageResolveKernel)
 	}
-	result.LatencyMs = time.Since(startedAt).Milliseconds()
 	if err != nil {
-		result.Error = err.Error()
-		return result
+		return finishFailure(err, proxy.HealthStagePrepareBridge)
 	}
 	result.Ok = true
+	result.Stage = string(proxy.HealthStageComplete)
+	result.Code = string(proxy.HealthCodeOK)
+	result.LatencyMs = time.Since(startedAt).Milliseconds()
 	result.SocksURL = socksURL
 	return result
 }

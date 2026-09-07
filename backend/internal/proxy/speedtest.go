@@ -19,26 +19,51 @@ import (
 )
 
 // ─── Clash 标准测速 URL ───
-// 使用 HTTP 与 Clash 客户端保持一致
+// 使用多个轻量、无内容目标，避免单一站点的 DNS、地区或策略故障把
+// 一个本来可用的代理误判为失败。DefaultSpeedTestURL 保留为兼容入口。
 
 const DefaultSpeedTestURL = "http://www.gstatic.com/generate_204"
+
+// SpeedTestTarget 描述一个测速目标及其请求策略。
+// ExpectedStatus 为空时接受所有 2xx 响应。
+type SpeedTestTarget struct {
+	URL            string
+	Method         string
+	Timeout        time.Duration
+	ExpectedStatus []int
+}
 
 // SpeedTestConfig 测速参数
 type SpeedTestConfig struct {
 	Timeout        time.Duration
 	TCPTimeout     time.Duration
+	Method         string
 	URLs           []string
 	ExpectedStatus []int
+	Targets        []SpeedTestTarget
 }
 
 var DefaultSpeedTestConfig = SpeedTestConfig{
-	Timeout:    3 * time.Second,
-	TCPTimeout: 3 * time.Second,
+	Timeout:    8 * time.Second,
+	TCPTimeout: 15 * time.Second,
+	Method:     http.MethodGet,
+	URLs: []string{
+		DefaultSpeedTestURL,
+		"https://cp.cloudflare.com/generate_204",
+		"http://www.msftconnecttest.com/connecttest.txt",
+		"https://www.cloudflare.com/cdn-cgi/trace",
+	},
+	Targets: []SpeedTestTarget{
+		{URL: DefaultSpeedTestURL, Method: http.MethodGet, Timeout: 8 * time.Second, ExpectedStatus: []int{http.StatusNoContent}},
+		{URL: "https://cp.cloudflare.com/generate_204", Method: http.MethodGet, Timeout: 8 * time.Second, ExpectedStatus: []int{http.StatusNoContent}},
+		{URL: "http://www.msftconnecttest.com/connecttest.txt", Method: http.MethodGet, Timeout: 8 * time.Second, ExpectedStatus: []int{http.StatusOK}},
+		{URL: "https://www.cloudflare.com/cdn-cgi/trace", Method: http.MethodGet, Timeout: 8 * time.Second, ExpectedStatus: []int{http.StatusOK}},
+	},
 }
 
 // ─── 对外入口 ───
 
-// SpeedTest 按单个代理的内核决策执行轻量 HTTP 延迟测试。
+// SpeedTest 使用向后兼容的 xray 组合栈执行轻量 HTTP 延迟测试。
 func SpeedTest(
 	proxyId string,
 	proxies []config.BrowserProxy,
@@ -49,8 +74,8 @@ func SpeedTest(
 	return SpeedTestWithConnector(proxyId, proxies, xrayMgr, singboxMgr, nil, config.BrowserConnectorXray, cfg)
 }
 
-// SpeedTestWithConnector 保留 connectorType 参数用于旧调用兼容。
-// 实际测速内核由 ResolveProxyKernel 按单个代理决定。
+// SpeedTestWithConnector 严格按 connectorType 指定的全局连接栈执行测速；
+// 单代理 preferredKernel 只能在该连接栈内部选择，不允许跨栈自动回退。
 func SpeedTestWithConnector(
 	proxyId string,
 	proxies []config.BrowserProxy,
@@ -79,24 +104,43 @@ func lightHTTPDelayTestWithConnector(
 		c := DefaultSpeedTestConfig
 		cfg = &c
 	}
+	connectorType = config.NormalizeBrowserConnectorType(connectorType)
+	base := TestResult{ProxyId: proxyId, Engine: connectorType, Stage: HealthStageResolveConfig, Code: HealthCodeUnknown}
 
 	src := resolveProxyConfig("", proxies, proxyId)
 	if src == "" {
-		return TestResult{ProxyId: proxyId, Ok: false, Engine: connectorType, Error: "代理配置为空"}
+		base.Code = HealthCodeConfigEmpty
+		base.Error = "代理配置为空"
+		return base
 	}
 
-	if strings.ToLower(src) == "direct://" {
-		return TestResult{ProxyId: proxyId, Ok: true, LatencyMs: 0, Engine: "direct"}
+	if strings.EqualFold(strings.TrimSpace(src), "direct://") {
+		return TestResult{ProxyId: proxyId, Ok: true, LatencyMs: 0, Engine: "direct", Stage: HealthStageComplete, Code: HealthCodeDirect}
 	}
 
-	testURLs := speedTestTargetURLs(cfg)
-	if len(testURLs) == 0 {
-		return TestResult{ProxyId: proxyId, Ok: false, Engine: connectorType, Error: "测速目标 URL 为空"}
+	targetSpecs := speedTestTargetSpecs(cfg)
+	testURLs := speedTestTargetURLList(targetSpecs)
+	if len(targetSpecs) == 0 {
+		base.Code = HealthCodeTargetEmpty
+		base.Error = "测速目标 URL 为空"
+		return base
 	}
 	engine := speedTestProbeEngine(src, proxies, proxyId, connectorType)
+	base.Engine = engine
+	base.Stage = HealthStageResolveKernel
+
+	resolution, resolutionErr := ResolveProxyKernelForConnector(src, proxies, proxyId, connectorType)
+	if resolutionErr != nil {
+		stage, code := ClassifyHealthError(resolutionErr, HealthStageResolveKernel)
+		base.Stage, base.Code, base.Error = stage, code, resolutionErr.Error()
+		return base
+	}
+	if resolution.Kernel != "" {
+		base.Engine = resolution.Kernel
+	}
 	log.Info("开始代理测速",
 		logger.F("proxy_id", proxyId),
-		logger.F("engine", engine),
+		logger.F("engine", base.Engine),
 		logger.F("timeout_ms", cfg.Timeout.Milliseconds()),
 		logger.F("tcp_timeout_ms", cfg.TCPTimeout.Milliseconds()),
 		logger.F("targets", strings.Join(testURLs, ",")),
@@ -108,40 +152,56 @@ func lightHTTPDelayTestWithConnector(
 			logger.F("proxy_id", proxyId),
 			logger.F("error", err.Error()),
 		)
-		return TestResult{ProxyId: proxyId, Ok: false, Engine: engine, Error: err.Error()}
+		stage, code := ClassifyHealthError(err, HealthStagePrepareBridge)
+		base.Stage, base.Code, base.Error = stage, code, err.Error()
+		return base
 	}
 
 	var lastErr error
 	var lastLatency int64
-	for _, testURL := range testURLs {
-		latency, statusCode, err := doSpeedTestRequest(client, testURL)
+	var lastTarget string
+	var lastStage HealthStage = HealthStageRequest
+	var lastCode HealthCode = HealthCodeUnknown
+	for _, target := range targetSpecs {
+		testURL := target.URL
+		base.Attempted++
+		lastTarget = testURL
+		latency, statusCode, err := doSpeedTestRequestWithTarget(client, target)
 		lastLatency = latency
 		if err != nil {
 			lastErr = err
+			lastStage, lastCode = ClassifyHealthError(err, HealthStageRequest)
 			log.Warn("代理测速请求失败",
 				logger.F("proxy_id", proxyId),
-				logger.F("engine", engine),
-				logger.F("url", testURL),
+				logger.F("engine", base.Engine),
+				logger.F("url", target.URL),
+				logger.F("method", target.Method),
 				logger.F("latency_ms", latency),
 				logger.F("error", err.Error()),
 			)
 			continue
 		}
-		if speedTestStatusOK(statusCode, cfg) {
+		if speedTestStatusOKForTarget(statusCode, target.ExpectedStatus) {
 			log.Info("代理测速成功",
 				logger.F("proxy_id", proxyId),
-				logger.F("engine", engine),
-				logger.F("url", testURL),
+				logger.F("engine", base.Engine),
+				logger.F("url", target.URL),
+				logger.F("method", target.Method),
 				logger.F("status", statusCode),
 				logger.F("latency_ms", latency),
 			)
-			return TestResult{ProxyId: proxyId, Ok: true, LatencyMs: latency, Engine: engine}
+			return TestResult{
+				ProxyId: proxyId, Ok: true, LatencyMs: latency, Engine: base.Engine,
+				Stage: HealthStageComplete, Code: HealthCodeOK, TargetURL: target.URL, Attempted: base.Attempted,
+			}
 		}
-		lastErr = fmt.Errorf("HTTP %d", statusCode)
+		lastErr = fmt.Errorf("%s: HTTP %d", target.URL, statusCode)
+		lastStage, lastCode = HealthStageValidateResult, HealthCodeUnexpectedStatus
 		log.Warn("代理测速状态码不符合预期",
 			logger.F("proxy_id", proxyId),
-			logger.F("engine", engine),
-			logger.F("url", testURL),
+			logger.F("engine", base.Engine),
+			logger.F("url", target.URL),
+			logger.F("method", target.Method),
 			logger.F("status", statusCode),
 			logger.F("latency_ms", latency),
 		)
@@ -149,19 +209,26 @@ func lightHTTPDelayTestWithConnector(
 
 	if lastErr != nil {
 		errorMessage := lastErr.Error()
-		if runtimeError := speedTestRuntimeError(engine, src, proxies, proxyId, xrayMgr); runtimeError != "" {
+		if runtimeError := speedTestRuntimeError(base.Engine, src, proxies, proxyId, xrayMgr); runtimeError != "" {
 			errorMessage = runtimeError
+			lastStage, lastCode = ClassifyHealthError(fmt.Errorf("%s", runtimeError), HealthStageRequest)
 		}
 		log.Warn("代理测速失败",
 			logger.F("proxy_id", proxyId),
-			logger.F("engine", engine),
+			logger.F("engine", base.Engine),
 			logger.F("latency_ms", lastLatency),
 			logger.F("error", errorMessage),
 		)
-		return TestResult{ProxyId: proxyId, Ok: false, LatencyMs: lastLatency, Engine: engine, Error: errorMessage}
+		return TestResult{
+			ProxyId: proxyId, Ok: false, LatencyMs: lastLatency, Engine: base.Engine, Error: errorMessage,
+			Stage: lastStage, Code: lastCode, TargetURL: lastTarget, Attempted: base.Attempted,
+		}
 	}
-	log.Warn("代理测速失败", logger.F("proxy_id", proxyId), logger.F("engine", engine), logger.F("error", "测速失败"))
-	return TestResult{ProxyId: proxyId, Ok: false, LatencyMs: lastLatency, Engine: engine, Error: "测速失败"}
+	log.Warn("代理测速失败", logger.F("proxy_id", proxyId), logger.F("engine", base.Engine), logger.F("error", "测速失败"))
+	return TestResult{
+		ProxyId: proxyId, Ok: false, Engine: base.Engine, Error: "测速失败",
+		Stage: HealthStageRequest, Code: HealthCodeUnknown, Attempted: base.Attempted,
+	}
 }
 
 func buildSpeedTestHTTPClient(
@@ -174,12 +241,9 @@ func buildSpeedTestHTTPClient(
 	connectorType string,
 	cfg *SpeedTestConfig,
 ) (*http.Client, error) {
-	timeout := DefaultSpeedTestConfig.Timeout
+	timeout := effectiveSpeedTestClientTimeout(cfg)
 	prepareTimeout := DefaultSpeedTestConfig.TCPTimeout
 	if cfg != nil {
-		if cfg.Timeout > 0 {
-			timeout = cfg.Timeout
-		}
 		if cfg.TCPTimeout > 0 {
 			prepareTimeout = cfg.TCPTimeout
 		}
@@ -208,22 +272,86 @@ func buildSpeedTestHTTPClient(
 	}
 }
 
-func primarySpeedTestURL(cfg *SpeedTestConfig) string {
-	if cfg != nil {
-		if urls := normalizeSpeedTestURLs(cfg.URLs); len(urls) > 0 {
-			return urls[0]
+func effectiveSpeedTestClientTimeout(cfg *SpeedTestConfig) time.Duration {
+	timeout := DefaultSpeedTestConfig.Timeout
+	if cfg != nil && cfg.Timeout > 0 {
+		timeout = cfg.Timeout
+	}
+	for _, target := range speedTestTargetSpecs(cfg) {
+		if target.Timeout > timeout {
+			timeout = target.Timeout
 		}
+	}
+	return timeout
+}
+
+func primarySpeedTestURL(cfg *SpeedTestConfig) string {
+	targets := speedTestTargetSpecs(cfg)
+	if len(targets) > 0 {
+		return targets[0].URL
 	}
 	return strings.TrimSpace(DefaultSpeedTestURL)
 }
 
 func speedTestTargetURLs(cfg *SpeedTestConfig) []string {
-	if cfg != nil {
-		if urls := uniqueSpeedTestURLs(cfg.URLs); len(urls) > 0 {
-			return urls
+	return speedTestTargetURLList(speedTestTargetSpecs(cfg))
+}
+
+func speedTestTargetURLList(targets []SpeedTestTarget) []string {
+	urls := make([]string, 0, len(targets))
+	for _, target := range targets {
+		if url := strings.TrimSpace(target.URL); url != "" {
+			urls = append(urls, url)
 		}
 	}
-	return []string{DefaultSpeedTestURL}
+	return urls
+}
+
+func speedTestTargetSpecs(cfg *SpeedTestConfig) []SpeedTestTarget {
+	if cfg == nil {
+		defaults := cloneSpeedTestConfig(DefaultSpeedTestConfig)
+		cfg = &defaults
+	}
+	timeout := cfg.Timeout
+	if timeout <= 0 {
+		timeout = DefaultSpeedTestConfig.Timeout
+	}
+	method := normalizeSpeedTestMethod(cfg.Method)
+	var raw []SpeedTestTarget
+	if len(cfg.Targets) > 0 {
+		raw = append(raw, cfg.Targets...)
+	} else if len(cfg.URLs) > 0 {
+		for _, url := range cfg.URLs {
+			raw = append(raw, SpeedTestTarget{URL: url, Method: method, Timeout: timeout, ExpectedStatus: append([]int{}, cfg.ExpectedStatus...)})
+		}
+	} else {
+		raw = append(raw, DefaultSpeedTestConfig.Targets...)
+	}
+	result := make([]SpeedTestTarget, 0, len(raw))
+	seen := map[string]struct{}{}
+	for _, target := range raw {
+		target.URL = strings.TrimSpace(target.URL)
+		if target.URL == "" {
+			continue
+		}
+		key := strings.ToLower(target.URL)
+		if _, ok := seen[key]; ok {
+			continue
+		}
+		seen[key] = struct{}{}
+		rawMethod := strings.TrimSpace(target.Method)
+		if rawMethod == "" {
+			target.Method = method
+		} else {
+			target.Method = normalizeSpeedTestMethod(rawMethod)
+		}
+		if target.Timeout <= 0 {
+			target.Timeout = timeout
+		}
+		target.ExpectedStatus = append([]int{}, target.ExpectedStatus...)
+		result = append(result, target)
+	}
+	return result
 }
 
 func speedTestProbeEngine(src string, proxies []config.BrowserProxy, proxyId string, connectorType string) string {
@@ -280,29 +408,45 @@ func latestXrayErrorSummary(path string) string {
 }
 
 func doSpeedTestRequest(client *http.Client, testURL string) (int64, int, error) {
-	latency, statusCode, err := doSpeedTestRequestWithMethod(client, http.MethodHead, testURL)
-	if err != nil || statusCode != http.StatusMethodNotAllowed {
-		if err != nil {
-			return latency, statusCode, err
-		}
-		secondLatency, secondStatusCode, secondErr := doSpeedTestRequestWithMethod(client, http.MethodHead, testURL)
-		if secondErr == nil {
-			return secondLatency, secondStatusCode, nil
-		}
-		return latency, statusCode, nil
+	return doSpeedTestRequestWithTarget(client, SpeedTestTarget{URL: testURL, Method: http.MethodHead, Timeout: DefaultSpeedTestConfig.Timeout})
+}
+
+func doSpeedTestRequestWithTarget(client *http.Client, target SpeedTestTarget) (int64, int, error) {
+	method := normalizeSpeedTestMethod(target.Method)
+	latency, statusCode, err := doSpeedTestRequestWithMethodTimeout(client, method, target.URL, target.Timeout)
+	if err != nil {
+		return latency, statusCode, err
 	}
-	return doSpeedTestRequestWithMethod(client, http.MethodGet, testURL)
+	// HEAD is cheap, but a number of connectivity endpoints intentionally
+	// reject it. Only then fall back to GET; never repeat the same HEAD request.
+	if method == http.MethodHead && (statusCode == http.StatusMethodNotAllowed || statusCode == http.StatusNotImplemented) {
+		return doSpeedTestRequestWithMethodTimeout(client, http.MethodGet, target.URL, target.Timeout)
+	}
+	return latency, statusCode, nil
 }
 
 func doSpeedTestRequestWithMethod(client *http.Client, method string, testURL string) (int64, int, error) {
+	return doSpeedTestRequestWithMethodTimeout(client, method, testURL, 0)
+}
+
+func doSpeedTestRequestWithMethodTimeout(client *http.Client, method string, testURL string, timeout time.Duration) (int64, int, error) {
 	start := time.Now()
-	req, err := http.NewRequest(method, testURL, nil)
+	ctx := context.Background()
+	var cancel context.CancelFunc
+	if timeout > 0 {
+		ctx, cancel = context.WithTimeout(ctx, timeout)
+		defer cancel()
+	}
+	req, err := http.NewRequestWithContext(ctx, normalizeSpeedTestMethod(method), testURL, nil)
 	if err != nil {
 		return 0, 0, fmt.Errorf("测速请求创建失败: %w", err)
 	}
 	resp, err := client.Do(req)
 	latency := time.Since(start).Milliseconds()
 	if err != nil {
+		if ctx.Err() == context.DeadlineExceeded {
+			return latency, 0, fmt.Errorf("测速超时（%dms）", timeout.Milliseconds())
+		}
 		return latency, 0, err
 	}
 	_ = resp.Body.Close()
@@ -311,8 +455,15 @@ func doSpeedTestRequestWithMethod(client *http.Client, method string, testURL st
 
 func speedTestStatusOK(statusCode int, cfg *SpeedTestConfig) bool {
 	if cfg != nil && len(cfg.ExpectedStatus) > 0 {
-		for _, expected := range cfg.ExpectedStatus {
-			if statusCode == expected {
+		return speedTestStatusOKForTarget(statusCode, cfg.ExpectedStatus)
+	}
+	return isSpeedTestSuccessStatus(statusCode)
+}
+
+func speedTestStatusOKForTarget(statusCode int, expected []int) bool {
+	if len(expected) > 0 {
+		for _, candidate := range expected {
+			if statusCode == candidate {
 				return true
 			}
 		}

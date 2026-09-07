@@ -30,6 +30,7 @@ type App struct {
 	xrayMgr        *proxy.XrayManager
 	clashMgr       *proxy.ClashManager
 	singboxMgr     *proxy.SingBoxManager
+	torMgr         *proxy.TorManager
 	launchCodeSvc  *launchcode.LaunchCodeService
 	launchServer   *launchcode.LaunchServer
 	automationMgr  *automation.Manager
@@ -37,16 +38,22 @@ type App struct {
 	appRoot        string
 	version        string
 
+	// quitMu protects only the short-lived quit state. Native close callbacks
+	// must never wait on the lifecycle gate held during network bootstrap.
+	quitMu                 sync.Mutex
 	forceQuit              bool
 	quitMode               quitMode
+	quitRequested          bool
 	maintenanceMu          sync.Mutex
+	torConfigMu            sync.RWMutex
+	torLifecycleMu         sync.Mutex
 	bridgeMu               sync.Mutex
 	profileBridgeRefs      map[string]profileProxyBridgeRef
 	deferredStartTargetsMu sync.Mutex
 	deferredStartTargets   map[string]deferredStartTargetsPlan
 	automationTargetMu     sync.Mutex
 	automationTargetCursor map[string]string
-	stopServicesOnce       sync.Once
+	stopServicesMu         sync.Mutex
 	finalizeOnce           sync.Once
 }
 

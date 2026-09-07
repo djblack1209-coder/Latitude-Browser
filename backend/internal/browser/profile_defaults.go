@@ -25,8 +25,14 @@ func (m *Manager) ApplyDefaults(profile *Profile) bool {
 			profile.CoreId = defaultCore.CoreId
 		}
 	}
+	networkStateChanged := NormalizeProfileNetworkState(profile)
+	if IsTorNetworkMode(profile.NetworkMode) {
+		// Tor is an independent transport. Never bind its profile to the direct
+		// sentinel or reconcile it through either proxy connector stack.
+		return networkStateChanged
+	}
 
-	proxyChanged := false
+	proxyChanged := networkStateChanged
 	bindChanged, boundInPool, bindMode := m.ResolveProfileProxyBinding(profile)
 	if bindChanged {
 		proxyChanged = true

@@ -14,7 +14,6 @@ import {
   QuitAppOnly as QuitAppOnlyApp,
 } from "./wailsjs/go/main/App";
 import {
-  Quit,
   WindowHide,
   WindowMinimise,
 } from "./wailsjs/runtime/runtime";
@@ -65,10 +64,20 @@ function useWailsNotifications() {
       },
     );
 
+    const offTorDied = runtime.EventsOn(
+      "tor:runtime:died",
+      (data: { profileId: string; error: string }) => {
+        const message = data.error || "Tor 传输已中断，不会切换到常规代理或直连。请检查实例状态。";
+        addNotification({ type: "error", title: "Tor 传输中断", message });
+        toast.error(message, 8000);
+      },
+    );
+
     return () => {
       offCrashed?.();
       offBridgeFailed?.();
       offBridgeDied?.();
+      offTorDied?.();
     };
   }, [addNotification]);
 }
@@ -114,7 +123,7 @@ function useGlobalErrorNotifications() {
 
 function CloseConfirmModal() {
   const [open, setOpen] = useState(false);
-  const [platform, setPlatform] = useState("windows");
+  const [platform, setPlatform] = useState("");
   const [quittingAction, setQuittingAction] = useState<
     "app-only" | "app-and-browser" | null
   >(null);
@@ -185,7 +194,8 @@ function CloseConfirmModal() {
     try {
       await QuitAppOnlyApp();
     } catch (error) {
-      console.error("QuitAppOnly failed", error);
+      console.error("QuitAppOnly failed; runtime remains open for retry", error);
+      toast.error("受管实例或其运行时尚未确认退出，应用保持打开状态，可重试关闭");
       setQuittingAction(null);
     }
   };
@@ -193,16 +203,14 @@ function CloseConfirmModal() {
   const handleQuitAppAndBrowsers = async () => {
     setQuittingAction("app-and-browser");
     try {
-      await Promise.race([
-        ForceQuitApp(),
-        new Promise((resolve) => setTimeout(resolve, 1200)),
-      ]);
+      // ForceQuit owns the shutdown gate. Never fall back to runtime.Quit:
+      // the backend deliberately returns without quitting when a browser or
+      // Tor sidecar cannot be proven stopped.
+      await ForceQuitApp();
     } catch (error) {
-      console.error("ForceQuit failed, falling back to runtime.Quit()", error);
-    }
-    const runtime = (window as any).runtime;
-    if (typeof runtime?.Quit === "function") {
-      Quit();
+      console.error("ForceQuit failed; runtime remains open for retry", error);
+      toast.error("仍有浏览器或 Tor 运行时未能确认退出，应用保持打开状态");
+      setQuittingAction(null);
     }
   };
 
@@ -210,7 +218,7 @@ function CloseConfirmModal() {
     <Modal
       open={open}
       onClose={closeModal}
-      title={importInProgress ? "关闭应用确认" : undefined}
+      title="关闭应用确认"
       width={importInProgress ? "360px" : "420px"}
       closable={!quitting}
     >
@@ -218,8 +226,8 @@ function CloseConfirmModal() {
         <div
           className={`w-12 h-12 rounded-full flex items-center justify-center mb-4 ${
             importInProgress
-              ? "bg-amber-50 text-amber-500"
-              : "bg-red-50 text-red-500"
+              ? "bg-[var(--color-bg-muted)] text-[var(--color-warning)]"
+              : "bg-[var(--color-bg-muted)] text-[var(--color-error)]"
           }`}
         >
           <AlertCircle className="w-6 h-6" />
@@ -234,11 +242,13 @@ function CloseConfirmModal() {
             当前正在加载配置
             {importProgress > 0 ? `（${importProgress}%）` : ""}。
             <br />
-            {importMessage || "强制关闭会中断本次加载，是否仍要关闭应用？"}
+            {importMessage || "退出将等待当前配置操作和受管进程清理完成。"}
           </p>
         ) : (
           <p className="mb-6 text-sm text-center text-[var(--color-text-secondary)]">
-            可仅退出应用，或连同浏览器一起关闭。
+            仅退出应用通常保留普通浏览器。
+            <br />
+            有 Tor 会话时，两种退出方式均执行完整清理，关闭全部受管浏览器与传输。
           </p>
         )}
 
@@ -268,7 +278,7 @@ function CloseConfirmModal() {
             <>
               <Button
                 variant="secondary"
-                className="w-full !bg-[#f3f4f6] !border-[#e5e7eb] !text-[var(--color-text-primary)] hover:!bg-[#e5e7eb]"
+                className="w-full"
                 onClick={supportsTray ? handleMinimize : closeModal}
                 disabled={quitting}
               >

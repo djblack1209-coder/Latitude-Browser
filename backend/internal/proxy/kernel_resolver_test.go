@@ -1,6 +1,7 @@
 package proxy
 
 import (
+	"strings"
 	"testing"
 
 	"ant-chrome/backend/internal/config"
@@ -63,28 +64,123 @@ func TestResolveProxyKernelForConnectorPrefersMihomoStack(t *testing.T) {
 	}
 }
 
-func TestResolveProxyKernelForConnectorKeepsSingBoxOnlyProtocols(t *testing.T) {
-	got, err := ResolveProxyKernelForConnector("hysteria2://pass@example.com:443", nil, "", config.BrowserConnectorXray)
-	if err != nil {
-		t.Fatalf("ResolveProxyKernelForConnector returned error: %v", err)
+func TestResolveProxyKernelForConnectorRoutesSingBoxProtocolsInsideCombinedStack(t *testing.T) {
+	protocols := []string{
+		"hysteria2://pass@example.com:443",
+		"tuic://00000000-0000-0000-0000-000000000000:pass@example.com:443",
+		"anytls://pass@example.com:443?sni=example.com",
 	}
-	if got.Kernel != ProxyKernelSingBox {
-		t.Fatalf("kernel = %q, want %q; resolution=%+v", got.Kernel, ProxyKernelSingBox, got)
+	for _, proxyConfig := range protocols {
+		got, err := ResolveProxyKernelForConnector(proxyConfig, nil, "", config.BrowserConnectorXray)
+		if err != nil {
+			t.Fatalf("ResolveProxyKernelForConnector(%q) returned error: %v", proxyConfig, err)
+		}
+		if got.Kernel != ProxyKernelSingBox {
+			t.Fatalf("proxy %q kernel = %q, want %q; resolution=%+v", proxyConfig, got.Kernel, ProxyKernelSingBox, got)
+		}
 	}
 }
 
-func TestResolveProxyKernelForConnectorExplicitPreferenceWins(t *testing.T) {
+func TestResolveProxyKernelForConnectorHonorsPreferenceInsideSelectedStack(t *testing.T) {
 	proxyID := "p1"
 	proxies := []config.BrowserProxy{{
 		ProxyId:         proxyID,
 		ProxyConfig:     "vless://00000000-0000-0000-0000-000000000000@example.com:443",
 		PreferredKernel: ProxyKernelXray,
 	}}
-	got, err := ResolveProxyKernelForConnector("", proxies, proxyID, config.BrowserConnectorMihomo)
+	got, err := ResolveProxyKernelForConnector("", proxies, proxyID, config.BrowserConnectorXray)
 	if err != nil {
 		t.Fatalf("ResolveProxyKernelForConnector returned error: %v", err)
 	}
 	if got.Kernel != ProxyKernelXray {
 		t.Fatalf("kernel = %q, want explicit %q; resolution=%+v", got.Kernel, ProxyKernelXray, got)
+	}
+}
+
+func TestResolveProxyKernelForConnectorRejectsCrossStackPreference(t *testing.T) {
+	cases := []struct {
+		name              string
+		connectorType     string
+		preferredKernel   string
+		wantErrorContains string
+	}{
+		{
+			name:              "xray combined stack rejects mihomo preference",
+			connectorType:     config.BrowserConnectorXray,
+			preferredKernel:   ProxyKernelMihomo,
+			wantErrorContains: "preferredKernel=mihomo",
+		},
+		{
+			name:              "mihomo stack rejects xray preference",
+			connectorType:     config.BrowserConnectorMihomo,
+			preferredKernel:   ProxyKernelXray,
+			wantErrorContains: "preferredKernel=xray",
+		},
+		{
+			name:              "mihomo stack rejects sing-box preference",
+			connectorType:     config.BrowserConnectorMihomo,
+			preferredKernel:   ProxyKernelSingBox,
+			wantErrorContains: "preferredKernel=sing-box",
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			proxyID := "p1"
+			proxies := []config.BrowserProxy{{
+				ProxyId:         proxyID,
+				ProxyConfig:     "vless://00000000-0000-0000-0000-000000000000@example.com:443",
+				PreferredKernel: tc.preferredKernel,
+			}}
+			_, err := ResolveProxyKernelForConnector("", proxies, proxyID, tc.connectorType)
+			if err == nil {
+				t.Fatal("expected cross-stack preferred kernel to be rejected")
+			}
+			if !strings.Contains(err.Error(), tc.wantErrorContains) || !strings.Contains(err.Error(), "browser.default_connector_type") {
+				t.Fatalf("error = %q, want actionable stack conflict", err)
+			}
+		})
+	}
+}
+
+func TestResolveProxyKernelForConnectorDoesNotFallbackAcrossStacks(t *testing.T) {
+	_, err := ResolveProxyKernelForConnector(mieruClashNode, nil, "", config.BrowserConnectorXray)
+	if err == nil {
+		t.Fatal("expected xray combined stack to reject mihomo-only protocol")
+	}
+	if !strings.Contains(err.Error(), "browser.default_connector_type=mihomo") {
+		t.Fatalf("error = %q, want actionable mihomo stack switch guidance", err)
+	}
+}
+
+func TestResolveProxyKernelForConnectorUsesConfiguredStack(t *testing.T) {
+	cfg := config.DefaultConfig()
+	proxyConfig := "hysteria2://pass@example.com:443"
+
+	cfg.Browser.DefaultConnectorType = config.BrowserConnectorXray
+	combined, err := ResolveProxyKernelForConnector(proxyConfig, nil, "", cfg.Browser.DefaultConnectorType)
+	if err != nil {
+		t.Fatalf("combined stack resolution returned error: %v", err)
+	}
+	if combined.Kernel != ProxyKernelSingBox {
+		t.Fatalf("combined stack kernel = %q, want %q", combined.Kernel, ProxyKernelSingBox)
+	}
+
+	cfg.Browser.DefaultConnectorType = config.BrowserConnectorMihomo
+	mihomo, err := ResolveProxyKernelForConnector(proxyConfig, nil, "", cfg.Browser.DefaultConnectorType)
+	if err != nil {
+		t.Fatalf("mihomo stack resolution returned error: %v", err)
+	}
+	if mihomo.Kernel != ProxyKernelMihomo {
+		t.Fatalf("mihomo stack kernel = %q, want %q", mihomo.Kernel, ProxyKernelMihomo)
+	}
+}
+
+func TestResolveProxyKernelForConnectorRoutesStandardProxyThroughMihomoStack(t *testing.T) {
+	got, err := ResolveProxyKernelForConnector("socks5://127.0.0.1:1080", nil, "", config.BrowserConnectorMihomo)
+	if err != nil {
+		t.Fatalf("ResolveProxyKernelForConnector returned error: %v", err)
+	}
+	if got.Kernel != ProxyKernelMihomo {
+		t.Fatalf("kernel = %q, want %q; resolution=%+v", got.Kernel, ProxyKernelMihomo, got)
 	}
 }

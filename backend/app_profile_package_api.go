@@ -567,6 +567,16 @@ func (a *App) prepareProfileProxyForPackage(profile *browser.Profile) {
 	if profile == nil {
 		return
 	}
+	profile.NetworkMode = browser.NormalizeNetworkMode(profile.NetworkMode)
+	if browser.IsTorNetworkMode(profile.NetworkMode) {
+		profile.ProxyId = ""
+		profile.ProxyConfig = ""
+		profile.ProxyBindSourceID = ""
+		profile.ProxyBindSourceURL = ""
+		profile.ProxyBindName = ""
+		profile.ProxyBindUpdatedAt = ""
+		return
+	}
 	proxyName := strings.TrimSpace(profile.ProxyBindName)
 	if proxyName == "" {
 		if proxy, ok := a.browserMgr.GetProxyByID(profile.ProxyId); ok {
@@ -583,6 +593,16 @@ func (a *App) prepareProfileProxyForPackage(profile *browser.Profile) {
 
 func (a *App) applyImportedProfileProxyByName(profile *browser.Profile) string {
 	if profile == nil {
+		return ""
+	}
+	profile.NetworkMode = browser.NormalizeNetworkMode(profile.NetworkMode)
+	if browser.IsTorNetworkMode(profile.NetworkMode) {
+		profile.ProxyId = ""
+		profile.ProxyConfig = ""
+		profile.ProxyBindSourceID = ""
+		profile.ProxyBindSourceURL = ""
+		profile.ProxyBindName = ""
+		profile.ProxyBindUpdatedAt = ""
 		return ""
 	}
 	proxyName := strings.TrimSpace(profile.ProxyBindName)

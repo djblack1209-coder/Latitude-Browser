@@ -1,11 +1,22 @@
-import type { ProxyIPHealthResult } from '../../types'
+import type { ProxyCheckDiagnostic, ProxyIPHealthResult } from '../../types'
 
 import type { ClashProxy } from './helpers'
 import { normalizeRefreshIntervalM, resolveImportedProxyName } from './helpers'
 
-const PROXY_LATENCY_CACHE_KEY = 'browser:proxyPool:latencyMap:v2'
-const PROXY_LATENCY_ENGINE_CACHE_KEY = 'browser:proxyPool:latencyEngineMap:v2'
-const PROXY_IP_HEALTH_CACHE_KEY = 'browser:proxyPool:ipHealthMap:v1'
+const PROXY_LATENCY_CACHE_KEY = 'browser:proxyPool:latencyMap:v3'
+const PROXY_LATENCY_ENGINE_CACHE_KEY = 'browser:proxyPool:latencyEngineMap:v3'
+const PROXY_IP_HEALTH_CACHE_KEY = 'browser:proxyPool:ipHealthMap:v2'
+const PROXY_DIAGNOSTIC_CACHE_KEY = 'browser:proxyPool:diagnosticMap:v1'
+
+export type ProxyConnectorStack = 'xray' | 'mihomo'
+
+function normalizeConnectorStack(value?: string | null): ProxyConnectorStack {
+  return value?.trim().toLowerCase() === 'mihomo' ? 'mihomo' : 'xray'
+}
+
+function scopedCacheKey(base: string, connectorType?: string | null) {
+  return `${base}:${normalizeConnectorStack(connectorType)}`
+}
 const PROXY_SOURCE_IGNORED_NAMES_KEY = 'browser:proxyPool:sourceIgnoredProxyNames:v1'
 const PROXY_GLOBAL_AUTO_REFRESH_KEY = 'browser:proxyPool:globalAutoRefreshEnabled:v1'
 const PROXY_GLOBAL_REFRESH_INTERVAL_KEY = 'browser:proxyPool:globalRefreshIntervalM:v1'
@@ -123,9 +134,9 @@ export function toLatencyValue(ok: boolean, latencyMs: number, error?: string): 
   return -4
 }
 
-export function readLatencyCache(): Record<string, number> {
+export function readLatencyCache(connectorType?: string | null): Record<string, number> {
   try {
-    const raw = localStorage.getItem(PROXY_LATENCY_CACHE_KEY)
+    const raw = localStorage.getItem(scopedCacheKey(PROXY_LATENCY_CACHE_KEY, connectorType))
     if (!raw) return {}
     const parsed = JSON.parse(raw) as { timestamp?: number; data?: Record<string, number> }
     if (!parsed?.timestamp || !parsed?.data) return {}
@@ -143,7 +154,7 @@ export function readLatencyCache(): Record<string, number> {
   }
 }
 
-export function writeLatencyCache(data: Record<string, number>) {
+export function writeLatencyCache(data: Record<string, number>, connectorType?: string | null) {
   try {
     const cleaned: Record<string, number> = {}
     Object.entries(data).forEach(([proxyId, latency]) => {
@@ -151,7 +162,7 @@ export function writeLatencyCache(data: Record<string, number>) {
         cleaned[proxyId] = latency
       }
     })
-    localStorage.setItem(PROXY_LATENCY_CACHE_KEY, JSON.stringify({
+    localStorage.setItem(scopedCacheKey(PROXY_LATENCY_CACHE_KEY, connectorType), JSON.stringify({
       timestamp: Date.now(),
       data: cleaned,
     }))
@@ -160,9 +171,9 @@ export function writeLatencyCache(data: Record<string, number>) {
   }
 }
 
-export function readLatencyEngineCache(): Record<string, string> {
+export function readLatencyEngineCache(connectorType?: string | null): Record<string, string> {
   try {
-    const raw = localStorage.getItem(PROXY_LATENCY_ENGINE_CACHE_KEY)
+    const raw = localStorage.getItem(scopedCacheKey(PROXY_LATENCY_ENGINE_CACHE_KEY, connectorType))
     if (!raw) return {}
     const parsed = JSON.parse(raw) as { timestamp?: number; data?: Record<string, string> }
     if (!parsed?.timestamp || !parsed?.data) return {}
@@ -179,14 +190,14 @@ export function readLatencyEngineCache(): Record<string, string> {
   }
 }
 
-export function writeLatencyEngineCache(data: Record<string, string>) {
+export function writeLatencyEngineCache(data: Record<string, string>, connectorType?: string | null) {
   try {
     const cleaned: Record<string, string> = {}
     Object.entries(data).forEach(([proxyId, engine]) => {
       const value = typeof engine === 'string' ? engine.trim() : ''
       if (value) cleaned[proxyId] = value
     })
-    localStorage.setItem(PROXY_LATENCY_ENGINE_CACHE_KEY, JSON.stringify({
+    localStorage.setItem(scopedCacheKey(PROXY_LATENCY_ENGINE_CACHE_KEY, connectorType), JSON.stringify({
       timestamp: Date.now(),
       data: cleaned,
     }))
@@ -195,9 +206,52 @@ export function writeLatencyEngineCache(data: Record<string, string>) {
   }
 }
 
-export function readIPHealthCache(): Record<string, ProxyIPHealthResult> {
+
+export function readLatencyDiagnosticCache(connectorType?: string | null): Record<string, ProxyCheckDiagnostic> {
   try {
-    const raw = localStorage.getItem(PROXY_IP_HEALTH_CACHE_KEY)
+    const raw = localStorage.getItem(scopedCacheKey(PROXY_DIAGNOSTIC_CACHE_KEY, connectorType))
+    if (!raw) return {}
+    const parsed = JSON.parse(raw) as { timestamp?: number; data?: Record<string, ProxyCheckDiagnostic> }
+    if (!parsed?.data || typeof parsed.data !== 'object') return {}
+
+    const fallbackCheckedAt = parsed.timestamp && Number.isFinite(parsed.timestamp)
+      ? new Date(parsed.timestamp).toISOString()
+      : undefined
+    const cleaned: Record<string, ProxyCheckDiagnostic> = {}
+    Object.entries(parsed.data).forEach(([proxyId, item]) => {
+      if (!item || typeof item !== 'object') return
+      cleaned[proxyId] = {
+        ...item,
+        proxyId: item.proxyId || proxyId,
+        checkedAt: item.checkedAt || fallbackCheckedAt,
+        source: item.source || 'cache',
+      }
+    })
+    return cleaned
+  } catch {
+    return {}
+  }
+}
+
+export function writeLatencyDiagnosticCache(data: Record<string, ProxyCheckDiagnostic>, connectorType?: string | null) {
+  try {
+    const cleaned: Record<string, ProxyCheckDiagnostic> = {}
+    Object.entries(data).forEach(([proxyId, diagnostic]) => {
+      if (!diagnostic || typeof diagnostic !== 'object') return
+      cleaned[proxyId] = { ...diagnostic, proxyId: diagnostic.proxyId || proxyId }
+    })
+    localStorage.setItem(scopedCacheKey(PROXY_DIAGNOSTIC_CACHE_KEY, connectorType), JSON.stringify({
+      timestamp: Date.now(),
+      data: cleaned,
+    }))
+  } catch {
+    // ignore write failures
+  }
+}
+
+export function readIPHealthCache(connectorType?: string | null): Record<string, ProxyIPHealthResult> {
+  try {
+    const raw = localStorage.getItem(scopedCacheKey(PROXY_IP_HEALTH_CACHE_KEY, connectorType))
     if (!raw) return {}
     const parsed = JSON.parse(raw) as { timestamp?: number; data?: Record<string, ProxyIPHealthResult> }
     if (!parsed?.timestamp || !parsed?.data) return {}
@@ -215,9 +269,9 @@ export function readIPHealthCache(): Record<string, ProxyIPHealthResult> {
   }
 }
 
-export function writeIPHealthCache(data: Record<string, ProxyIPHealthResult>) {
+export function writeIPHealthCache(data: Record<string, ProxyIPHealthResult>, connectorType?: string | null) {
   try {
-    localStorage.setItem(PROXY_IP_HEALTH_CACHE_KEY, JSON.stringify({
+    localStorage.setItem(scopedCacheKey(PROXY_IP_HEALTH_CACHE_KEY, connectorType), JSON.stringify({
       timestamp: Date.now(),
       data,
     }))

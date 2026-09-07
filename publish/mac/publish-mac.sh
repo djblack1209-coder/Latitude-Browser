@@ -101,6 +101,7 @@ require_cmd() {
 require_cmd python3
 require_cmd ditto
 require_cmd wails
+require_cmd codesign
 
 if [[ -z "$VERSION" ]]; then
   VERSION="$(python3 - "$ROOT_DIR/wails.json" <<'PY'
@@ -122,8 +123,10 @@ TARGET="darwin-$ARCH"
 RUNTIME_DIR="$ROOT_DIR/bin/$TARGET"
 XRAY_SRC="$RUNTIME_DIR/xray"
 SINGBOX_SRC="$RUNTIME_DIR/sing-box"
+MIHOMO_SRC="$RUNTIME_DIR/mihomo"
 APP_BIN_DIR="$ROOT_DIR/build/bin"
 CHROME_README_SRC="$ROOT_DIR/chrome/README.md"
+THIRD_PARTY_SRC="$ROOT_DIR/third_party"
 CONFIG_INIT_SRC="$ROOT_DIR/publish/config.init.mac.yaml"
 APP_ICON_SRC="$ROOT_DIR/build/appicon.png"
 ZIP_NAME="LatitudeBrowser-${VERSION}-macos-${ARCH}.zip"
@@ -239,13 +242,34 @@ fi
 mkdir -p "$APP_MACOS_DIR/bin"
 cp "$XRAY_SRC" "$APP_MACOS_DIR/bin/xray"
 cp "$SINGBOX_SRC" "$APP_MACOS_DIR/bin/sing-box"
+if [[ -f "$MIHOMO_SRC" ]]; then
+  cp "$MIHOMO_SRC" "$APP_MACOS_DIR/bin/mihomo"
+  echo "Including optional Mihomo runtime: $MIHOMO_SRC"
+fi
 cp "$CONFIG_INIT_SRC" "$APP_MACOS_DIR/config.yaml"
 chmod +x "$APP_MACOS_DIR/bin/xray" "$APP_MACOS_DIR/bin/sing-box"
+if [[ -f "$APP_MACOS_DIR/bin/mihomo" ]]; then
+  chmod +x "$APP_MACOS_DIR/bin/mihomo"
+fi
 
 if [[ -f "$CHROME_README_SRC" ]]; then
   mkdir -p "$APP_MACOS_DIR/chrome"
   cp "$CHROME_README_SRC" "$APP_MACOS_DIR/chrome/README.md"
 fi
+
+# Ship third-party attribution with the distributable app instead of leaving
+# the notices only in the source tree.  Keep them under Resources so they are
+# visible to packagers without changing runtime path resolution.
+if [[ -d "$THIRD_PARTY_SRC" ]]; then
+  mkdir -p "$APP_STAGE/Contents/Resources/third_party"
+  ditto "$THIRD_PARTY_SRC" "$APP_STAGE/Contents/Resources/third_party"
+fi
+
+# Wails signs the base bundle before runtime files are added. Re-sign the
+# assembled bundle so the final .app is verifiable and launchable after the
+# Xray/sing-box/config/notice files are copied in.
+codesign --force --deep --sign - "$APP_STAGE"
+codesign --verify --deep --strict "$APP_STAGE"
 
 ditto "$APP_STAGE" "$APP_EXPORT"
 rm -f "$OUTPUT_DIR/$ZIP_NAME"

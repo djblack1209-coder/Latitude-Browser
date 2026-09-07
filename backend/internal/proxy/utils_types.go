@@ -7,4 +7,8 @@ type TestResult struct {
 	LatencyMs int64
 	Engine    string
 	Error     string
+	Stage     HealthStage
+	Code      HealthCode
+	TargetURL string
+	Attempted int
 }

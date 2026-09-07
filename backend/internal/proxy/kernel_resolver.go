@@ -85,8 +85,48 @@ func ResolveProxyKernel(proxyConfig string, proxies []config.BrowserProxy, proxy
 
 func ResolveProxyKernelForConnector(proxyConfig string, proxies []config.BrowserProxy, proxyId string, connectorType string) (ProxyKernelResolution, error) {
 	src := strings.TrimSpace(resolveProxyConfig(proxyConfig, proxies, proxyId))
-	preferredKernel := preferredKernelForConnector(src, proxies, proxyId, connectorType)
-	return ResolveProxyKernel(src, proxies, proxyId, preferredKernel)
+	connectorType = config.NormalizeBrowserConnectorType(connectorType)
+	protocol := DetectProxyProtocol(src)
+	supported := SupportedKernelsForProtocol(protocol, src, proxies, proxyId)
+	resolution := ProxyKernelResolution{
+		Protocol:         protocol,
+		PreferredKernel:  ProxyKernelAuto,
+		SupportedKernels: filterKernelsForConnector(supported, connectorType, protocol),
+	}
+	if len(supported) == 0 {
+		return resolution, fmt.Errorf("不支持的代理协议: %s", protocol)
+	}
+
+	preferred := preferredKernelFromProxy(proxies, proxyId)
+	if preferred != "" {
+		resolution.PreferredKernel = preferred
+		if !kernelAllowedForConnector(preferred, connectorType, protocol) {
+			return resolution, connectorPreferredKernelConflictError(preferred, connectorType)
+		}
+		resolved, err := ResolveProxyKernel(src, proxies, proxyId, preferred)
+		resolved.SupportedKernels = resolution.SupportedKernels
+		if err != nil {
+			return resolved, err
+		}
+		resolved.Reason = connectorResolutionReason(connectorType, resolved.Kernel, true)
+		return resolved, nil
+	}
+
+	for _, kernel := range supported {
+		if !kernelAllowedForConnector(kernel, connectorType, protocol) {
+			continue
+		}
+		resolved, err := ResolveProxyKernel(src, proxies, proxyId, kernel)
+		resolved.PreferredKernel = ProxyKernelAuto
+		resolved.SupportedKernels = resolution.SupportedKernels
+		if err != nil {
+			return resolved, err
+		}
+		resolved.Reason = connectorResolutionReason(connectorType, resolved.Kernel, false)
+		return resolved, nil
+	}
+
+	return resolution, connectorProtocolConflictError(protocol, supported, connectorType)
 }
 
 func DetectProxyProtocol(proxyConfig string) string {
@@ -121,12 +161,12 @@ func SupportedKernelsForProtocol(protocol string, proxyConfig string, proxies []
 		return []string{ProxyKernelNative}
 	case "http", "https", "socks5":
 		// 带账号密码鉴权的 socks5/http 代理：Chromium 的 --proxy-server 无法携带凭据，
-		// 浏览器 native 会静默丢弃鉴权信息导致连接失败。这类代理必须通过 xray / mihomo
-		// 桥接成本地无鉴权 socks5 再交给浏览器。无鉴权的代理仍走 native。
+		// 浏览器 native 会静默丢弃鉴权信息导致连接失败。这类代理必须通过连接栈桥接。
+		// 无鉴权代理在 xray 组合栈可继续走 native；mihomo 栈则由 Mihomo 独立管理。
 		if RequiresLocalProxyBridgeForBrowser(proxyConfig) {
 			return []string{ProxyKernelXray, ProxyKernelMihomo}
 		}
-		return []string{ProxyKernelNative}
+		return []string{ProxyKernelNative, ProxyKernelMihomo}
 	case "vmess", "vless", "trojan", "chain+socks5":
 		return []string{ProxyKernelXray, ProxyKernelMihomo}
 	case "ss", "shadowsocks":
@@ -172,30 +212,64 @@ func containsKernel(kernels []string, kernel string) bool {
 	return false
 }
 
-func preferredKernelForConnector(src string, proxies []config.BrowserProxy, proxyId string, connectorType string) string {
-	if config.NormalizeBrowserConnectorType(connectorType) != config.BrowserConnectorMihomo {
+func preferredKernelFromProxy(proxies []config.BrowserProxy, proxyId string) string {
+	proxyId = strings.TrimSpace(proxyId)
+	if proxyId == "" {
 		return ""
 	}
-	if proxyHasExplicitPreferredKernel(proxies, proxyId) {
-		return ""
-	}
-	src = strings.TrimSpace(resolveProxyConfig(src, proxies, proxyId))
-	protocol := DetectProxyProtocol(src)
-	if containsKernel(SupportedKernelsForProtocol(protocol, src, proxies, proxyId), ProxyKernelMihomo) {
-		return ProxyKernelMihomo
+	for _, item := range proxies {
+		if strings.EqualFold(strings.TrimSpace(item.ProxyId), proxyId) {
+			return NormalizePreferredKernel(item.PreferredKernel)
+		}
 	}
 	return ""
 }
 
-func proxyHasExplicitPreferredKernel(proxies []config.BrowserProxy, proxyId string) bool {
-	proxyId = strings.TrimSpace(proxyId)
-	if proxyId == "" {
-		return false
-	}
-	for _, item := range proxies {
-		if strings.EqualFold(strings.TrimSpace(item.ProxyId), proxyId) {
-			return NormalizePreferredKernel(item.PreferredKernel) != ""
+func filterKernelsForConnector(kernels []string, connectorType string, protocol string) []string {
+	filtered := make([]string, 0, len(kernels))
+	for _, kernel := range kernels {
+		if kernelAllowedForConnector(kernel, connectorType, protocol) {
+			filtered = append(filtered, kernel)
 		}
 	}
-	return false
+	return filtered
+}
+
+func kernelAllowedForConnector(kernel string, connectorType string, protocol string) bool {
+	kernel = NormalizePreferredKernel(kernel)
+	connectorType = config.NormalizeBrowserConnectorType(connectorType)
+	if connectorType == config.BrowserConnectorMihomo {
+		return kernel == ProxyKernelMihomo || (kernel == ProxyKernelNative && protocol == "direct")
+	}
+	return kernel == ProxyKernelXray || kernel == ProxyKernelSingBox || kernel == ProxyKernelNative
+}
+
+func connectorPreferredKernelConflictError(preferredKernel string, connectorType string) error {
+	if connectorType == config.BrowserConnectorMihomo {
+		return fmt.Errorf("代理 preferredKernel=%s 不属于当前 browser.default_connector_type=mihomo 独立栈；请将 preferredKernel 改为 auto 或 mihomo，或切换全局连接栈后重新测速、检查出口 IP 和泄漏诊断", preferredKernel)
+	}
+	return fmt.Errorf("代理 preferredKernel=%s 不属于当前 browser.default_connector_type=xray（Xray + sing-box）组合栈；请将 preferredKernel 改为 auto、xray 或 sing-box，或切换全局连接栈后重新测速、检查出口 IP 和泄漏诊断", preferredKernel)
+}
+
+func connectorProtocolConflictError(protocol string, supported []string, connectorType string) error {
+	if connectorType == config.BrowserConnectorMihomo {
+		return fmt.Errorf("协议 %s 不可由当前 browser.default_connector_type=mihomo 连接栈处理（可用内核: %s）；请切换为 xray 组合栈后重新测速、检查出口 IP 和泄漏诊断", protocol, strings.Join(supported, ", "))
+	}
+	return fmt.Errorf("协议 %s 不可由当前 browser.default_connector_type=xray（Xray + sing-box）连接栈处理（可用内核: %s）；请切换 browser.default_connector_type=mihomo 后重新测速、检查出口 IP 和泄漏诊断", protocol, strings.Join(supported, ", "))
+}
+
+func connectorResolutionReason(connectorType string, kernel string, explicit bool) string {
+	if explicit {
+		if connectorType == config.BrowserConnectorMihomo {
+			return "使用代理指定内核（符合 Mihomo 独立栈）"
+		}
+		return "使用代理指定内核（符合 Xray + sing-box 组合栈）"
+	}
+	if connectorType == config.BrowserConnectorMihomo {
+		return "按 Mihomo 独立栈选择内核"
+	}
+	if kernel == ProxyKernelSingBox {
+		return "按 Xray + sing-box 组合栈选择 sing-box 内核"
+	}
+	return "按 Xray + sing-box 组合栈选择内核"
 }

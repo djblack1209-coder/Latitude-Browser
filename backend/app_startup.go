@@ -124,6 +124,7 @@ func (a *App) startupInitManagers(cfg *config.Config, db *database.DB) {
 	a.xrayMgr = proxy.NewXrayManager(cfg, a.appRoot)
 	a.clashMgr = proxy.NewClashManager(cfg, a.appRoot)
 	a.singboxMgr = proxy.NewSingBoxManager(cfg, a.appRoot)
+	a.torMgr = proxy.NewTorManager(cfg, a.appRoot)
 
 	conn := db.GetConn()
 	a.browserMgr.ProfileDAO = browser.NewSQLiteProfileDAO(conn)
@@ -181,6 +182,9 @@ func (a *App) startupInitAutomation() {
 }
 
 func (a *App) startupInitBridgeHooks() {
+	if a.torMgr != nil {
+		a.torMgr.OnRuntimeDiedWithGeneration = a.handleTorRuntimeDiedGeneration
+	}
 	a.xrayMgr.OnBridgeDied = func(key string, err error) {
 		if a.ctx != nil {
 			runtime.EventsEmit(a.ctx, "proxy:bridge:died", map[string]interface{}{

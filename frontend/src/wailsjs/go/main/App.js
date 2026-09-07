@@ -410,6 +410,14 @@ export function BrowserProxyCheckIPHealth(arg1) {
   return window['go']['main']['App']['BrowserProxyCheckIPHealth'](arg1);
 }
 
+export function BrowserProxyClearSpeedDiagnostic(arg1) {
+  return window['go']['main']['App']['BrowserProxyClearSpeedDiagnostic'](arg1);
+}
+
+export function BrowserProxyConnectorPreflight(arg1) {
+  return window['go']['main']['App']['BrowserProxyConnectorPreflight'](arg1);
+}
+
 export function BrowserProxyCoreDownload(arg1) {
   return window['go']['main']['App']['BrowserProxyCoreDownload'](arg1);
 }
@@ -554,6 +562,10 @@ export function GetRunningInstances() {
   return window['go']['main']['App']['GetRunningInstances']();
 }
 
+export function GetTorStatus() {
+  return window['go']['main']['App']['GetTorStatus']();
+}
+
 export function InstallAutomationRuntime() {
   return window['go']['main']['App']['InstallAutomationRuntime']();
 }
@@ -620,6 +632,10 @@ export function SaveProxyCheckSettings(arg1) {
 
 export function SetLogLevel(arg1) {
   return window['go']['main']['App']['SetLogLevel'](arg1);
+}
+
+export function SetTorRuntimePath(arg1) {
+  return window['go']['main']['App']['SetTorRuntimePath'](arg1);
 }
 
 export function StartInstance(arg1) {

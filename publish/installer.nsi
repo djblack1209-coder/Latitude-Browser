@@ -79,6 +79,7 @@ fallback_taskkill:
   ExecWait '"$SYSDIR\taskkill.exe" /F /T /IM ${PRODUCT_EXE}' $2
   ExecWait '"$SYSDIR\taskkill.exe" /F /T /IM xray.exe' $2
   ExecWait '"$SYSDIR\taskkill.exe" /F /T /IM sing-box.exe' $2
+  ExecWait '"$SYSDIR\taskkill.exe" /F /T /IM mihomo.exe' $2
   Sleep 1500
 
 done:
@@ -115,6 +116,7 @@ fallback_taskkill:
   ExecWait '"$SYSDIR\taskkill.exe" /F /T /IM ${PRODUCT_EXE}' $2
   ExecWait '"$SYSDIR\taskkill.exe" /F /T /IM xray.exe' $2
   ExecWait '"$SYSDIR\taskkill.exe" /F /T /IM sing-box.exe' $2
+  ExecWait '"$SYSDIR\taskkill.exe" /F /T /IM mihomo.exe' $2
   Sleep 1500
 
 done:
@@ -237,6 +239,15 @@ Section "Proxy Runtime (xray / sing-box)" SecRuntime
   File "${STAGINGDIR}\bin\sing-box.exe"
 SectionEnd
 
+Section /o "Mihomo Runtime (optional)" SecMihomoRuntime
+  SetOutPath "$INSTDIR\bin"
+!if /FileExists "${STAGINGDIR}\bin\mihomo.exe"
+  File "${STAGINGDIR}\bin\mihomo.exe"
+!else
+  DetailPrint "Optional Mihomo runtime not present in staging; it can be downloaded from the app."
+!endif
+SectionEnd
+
 Section /o "Desktop Shortcut" SecDesktop
   CreateShortcut "$DESKTOP\${PRODUCT_NAME}.lnk" "$INSTDIR\${PRODUCT_EXE}" "" "$INSTDIR\${PRODUCT_ICON}"
 SectionEnd
@@ -244,6 +255,7 @@ SectionEnd
 !insertmacro MUI_FUNCTION_DESCRIPTION_BEGIN
   !insertmacro MUI_DESCRIPTION_TEXT ${SecMain}    "Latitude Browser main program and default config (required)"
   !insertmacro MUI_DESCRIPTION_TEXT ${SecRuntime} "xray and sing-box proxy tools (vless/vmess/hysteria2)"
+  !insertmacro MUI_DESCRIPTION_TEXT ${SecMihomoRuntime} "Optional Mihomo proxy runtime for the independent Mihomo connector stack"
   !insertmacro MUI_DESCRIPTION_TEXT ${SecDesktop} "Create a shortcut on the desktop"
 !insertmacro MUI_FUNCTION_DESCRIPTION_END
 

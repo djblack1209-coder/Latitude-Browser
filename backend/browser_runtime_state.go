@@ -5,6 +5,8 @@ import (
 	"os"
 	"os/exec"
 	stdruntime "runtime"
+	"strconv"
+	"strings"
 	"syscall"
 	"time"
 
@@ -229,5 +231,23 @@ func isProcessAlive(pid int) bool {
 	if err != nil || process == nil {
 		return false
 	}
+	// A killed child may remain unreaped briefly. Treat a zombie as stopped:
+	// it cannot execute browser traffic, and retaining it as live would make
+	// shutdown/startup state permanently false-positive.
+	if isProcessZombie(pid) {
+		return false
+	}
 	return process.Signal(syscall.Signal(0)) == nil
+}
+
+func isProcessZombie(pid int) bool {
+	if pid <= 0 || stdruntime.GOOS == "windows" {
+		return false
+	}
+	output, err := exec.Command("ps", "-o", "stat=", "-p", strconv.Itoa(pid)).Output()
+	if err != nil {
+		return false
+	}
+	state := strings.TrimSpace(string(output))
+	return strings.HasPrefix(state, "Z")
 }

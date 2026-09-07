@@ -37,7 +37,13 @@ func (m *Manager) loadProfiles() {
 		} else {
 			for _, p := range profiles {
 				p.CoreId = normalizeProfileCoreID(p.CoreId)
+				networkStateChanged := NormalizeProfileNetworkState(p)
 				p.FingerprintArgs = upgradeLegacyMinimalFingerprintArgs(p.FingerprintArgs)
+				if networkStateChanged {
+					if err := m.ProfileDAO.Upsert(p); err != nil {
+						log.Warn("实例网络状态归一化持久化失败", logger.F("profile_id", p.ProfileId), logger.F("error", err))
+					}
+				}
 				m.Profiles[p.ProfileId] = p
 			}
 			if len(profiles) > 0 {
@@ -67,13 +73,14 @@ func (m *Manager) loadProfiles() {
 		if updatedAt == "" {
 			updatedAt = createdAt
 		}
-		m.Profiles[profileId] = &Profile{
+		profile := &Profile{
 			ProfileId:          profileId,
 			ProfileName:        item.ProfileName,
 			UserDataDir:        item.UserDataDir,
 			CoreId:             normalizeProfileCoreID(item.CoreId),
 			RestoreLastSession: NormalizeRestoreLastSessionMode(item.RestoreLastSession),
 			FingerprintArgs:    upgradeLegacyMinimalFingerprintArgs(item.FingerprintArgs),
+			NetworkMode:        NormalizeNetworkMode(item.NetworkMode),
 			ProxyId:            item.ProxyId,
 			ProxyConfig:        item.ProxyConfig,
 			ProxyBindSourceID:  item.ProxyBindSourceID,
@@ -91,6 +98,8 @@ func (m *Manager) loadProfiles() {
 			CreatedAt:          createdAt,
 			UpdatedAt:          updatedAt,
 		}
+		NormalizeProfileNetworkState(profile)
+		m.Profiles[profileId] = profile
 	}
 	log.Info("浏览器配置从文件加载完成", logger.F("count", len(m.Profiles)))
 }
@@ -101,6 +110,7 @@ func (m *Manager) SaveProfiles() error {
 	if m.ProfileDAO != nil {
 		for _, profile := range m.Profiles {
 			profile.CoreId = normalizeProfileCoreID(profile.CoreId)
+			NormalizeProfileNetworkState(profile)
 			if err := m.ProfileDAO.Upsert(profile); err != nil {
 				log.Error("实例配置持久化失败", logger.F("profile_id", profile.ProfileId), logger.F("error", err))
 				return err
@@ -112,6 +122,7 @@ func (m *Manager) SaveProfiles() error {
 
 	profiles := make([]ProfileConfig, 0, len(m.Profiles))
 	for _, profile := range m.Profiles {
+		NormalizeProfileNetworkState(profile)
 		profiles = append(profiles, ProfileConfig{
 			ProfileId:          profile.ProfileId,
 			ProfileName:        profile.ProfileName,
@@ -119,6 +130,7 @@ func (m *Manager) SaveProfiles() error {
 			CoreId:             normalizeProfileCoreID(profile.CoreId),
 			RestoreLastSession: NormalizeRestoreLastSessionMode(profile.RestoreLastSession),
 			FingerprintArgs:    append([]string{}, profile.FingerprintArgs...),
+			NetworkMode:        NormalizeNetworkMode(profile.NetworkMode),
 			ProxyId:            profile.ProxyId,
 			ProxyConfig:        profile.ProxyConfig,
 			ProxyBindSourceID:  profile.ProxyBindSourceID,

@@ -18,10 +18,7 @@ func (a *App) BrowserProxyTestSpeed(proxyId string) ProxyTestResult {
 	proxies := a.getLatestProxies()
 	connectorType := a.defaultProxyConnectorType()
 	result := proxy.SpeedTestWithConnector(proxyId, proxies, a.xrayMgr, a.singboxMgr, a.clashMgr, connectorType, a.proxySpeedTestConfig())
-	if a.browserMgr.ProxyDAO != nil {
-		testedAt := time.Now().Format(time.RFC3339)
-		_ = a.browserMgr.ProxyDAO.UpdateSpeedResult(proxyId, result.Ok, result.LatencyMs, testedAt)
-	}
+	a.persistProxySpeedResult(result)
 	return buildProxyTestResult(result)
 }
 
@@ -61,10 +58,7 @@ func (a *App) BrowserProxyBatchTestSpeed(proxyIds []string, concurrency int) []P
 			defer wg.Done()
 			for job := range jobs {
 				result := proxy.SpeedTestWithConnector(job.ProxyId, proxies, a.xrayMgr, a.singboxMgr, a.clashMgr, connectorType, a.proxySpeedTestConfig())
-				if a.browserMgr.ProxyDAO != nil {
-					testedAt := time.Now().Format(time.RFC3339)
-					_ = a.browserMgr.ProxyDAO.UpdateSpeedResult(job.ProxyId, result.Ok, result.LatencyMs, testedAt)
-				}
+				a.persistProxySpeedResult(result)
 				item := buildProxyTestResult(result)
 				results[job.Idx] = item
 
@@ -82,6 +76,33 @@ func (a *App) BrowserProxyBatchTestSpeed(proxyIds []string, concurrency int) []P
 
 	wg.Wait()
 	return results
+}
+
+// persistProxySpeedResult keeps the legacy speed columns updated and, when the
+// active DAO supports it, stores the structured health contract for diagnostics.
+// The optional interface is intentional: older integrations implementing ProxyDAO
+// continue to work without a breaking interface change.
+func (a *App) persistProxySpeedResult(result proxy.TestResult) {
+	if a == nil || a.browserMgr == nil || a.browserMgr.ProxyDAO == nil {
+		return
+	}
+	testedAt := time.Now().Format(time.RFC3339)
+	_ = a.browserMgr.ProxyDAO.UpdateSpeedResult(result.ProxyId, result.Ok, result.LatencyMs, testedAt)
+	if diagnosticDAO, ok := a.browserMgr.ProxyDAO.(interface {
+		UpdateSpeedDiagnostic(proxyId string, ok bool, latencyMs int64, testedAt, engine, stage, code, targetURL, errorMessage string) error
+	}); ok {
+		_ = diagnosticDAO.UpdateSpeedDiagnostic(
+			result.ProxyId,
+			result.Ok,
+			result.LatencyMs,
+			testedAt,
+			result.Engine,
+			string(result.Stage),
+			string(result.Code),
+			result.TargetURL,
+			result.Error,
+		)
+	}
 }
 
 func (a *App) testProxySpeedWithConnector(proxyId string, proxies []BrowserProxy, connectorType string) proxy.TestResult {
@@ -167,6 +188,10 @@ func buildProxyIPHealthResult(proxyId string, data map[string]interface{}, err e
 			Ok:        false,
 			Source:    mapStringDefault(data, "_source", "ip_health"),
 			Error:     err.Error(),
+			Engine:    mapString(data, "_engine"),
+			Stage:     mapStringDefault(data, "_stage", string(proxy.HealthStageRequest)),
+			Code:      mapStringDefault(data, "_code", string(proxy.HealthCodeUnknown)),
+			TargetURL: mapString(data, "_targetUrl"),
 			RawData:   data,
 			UpdatedAt: time.Now().Format(time.RFC3339),
 		}
@@ -177,6 +202,10 @@ func buildProxyIPHealthResult(proxyId string, data map[string]interface{}, err e
 		Ok:             true,
 		Source:         mapStringDefault(data, "_source", "ip_health"),
 		Error:          "",
+		Engine:         mapString(data, "_engine"),
+		Stage:          mapStringDefault(data, "_stage", string(proxy.HealthStageComplete)),
+		Code:           mapStringDefault(data, "_code", string(proxy.HealthCodeOK)),
+		TargetURL:      mapString(data, "_targetUrl"),
 		IP:             mapString(data, "ip"),
 		FraudScore:     mapInt64(data, "fraudScore"),
 		IsResidential:  mapBool(data, "isResidential"),
@@ -199,7 +228,7 @@ func mapStringDefault(data map[string]interface{}, key string, fallback string) 
 }
 
 func (a *App) persistProxyIPHealthResult(result ProxyIPHealthResult) {
-	if a.browserMgr.ProxyDAO == nil {
+	if a == nil || a.browserMgr == nil || a.browserMgr.ProxyDAO == nil {
 		return
 	}
 	payload, err := json.Marshal(result)

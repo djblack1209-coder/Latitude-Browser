@@ -1,6 +1,7 @@
 package backend
 
 import (
+	"ant-chrome/backend/internal/browser"
 	"ant-chrome/backend/internal/config"
 	"ant-chrome/backend/internal/logger"
 	"ant-chrome/backend/internal/proxy"
@@ -12,8 +13,32 @@ const temporaryDirectProxyID = "__direct__"
 
 func (a *App) resolveBrowserStartProxy(input browserStartInput, profile *BrowserProfile) (string, profileProxyBridgeRef, bool, error) {
 	log := logger.New("Browser")
-	proxies := a.getLatestProxies()
 	profileID := input.ProfileID
+
+	if browser.IsTorNetworkMode(profile.NetworkMode) {
+		if input.ForceDirectProxy || input.hasTemporaryProxy() || strings.TrimSpace(profile.ProxyId) != "" || strings.TrimSpace(profile.ProxyConfig) != "" {
+			err := fmt.Errorf("实例启动失败：Tor 网络模式不能与直连、临时代理或代理链混用")
+			profile.LastError = err.Error()
+			return "", profileProxyBridgeRef{}, false, err
+		}
+		if a.torMgr == nil {
+			err := fmt.Errorf("实例启动失败：Tor 运行时管理器未初始化")
+			profile.LastError = err.Error()
+			return "", profileProxyBridgeRef{}, false, err
+		}
+		a.torConfigMu.RLock()
+		socksURL, bridgeKey, err := a.torMgr.AcquireProfile(profileID)
+		a.torConfigMu.RUnlock()
+		if err != nil {
+			startErr := fmt.Errorf("实例启动失败：Tor 运行时不可用：%w", err)
+			profile.LastError = startErr.Error()
+			log.Error("Tor 运行时启动失败", logger.F("profile_id", profileID), logger.F("error", err.Error()), logger.F("reason", startErr.Error()))
+			return "", profileProxyBridgeRef{}, false, startErr
+		}
+		return socksURL, newProfileProxyBridgeRef(profileProxyBridgeEngineTor, bridgeKey), bridgeKey != "", nil
+	}
+
+	proxies := a.getLatestProxies()
 
 	if input.ForceDirectProxy {
 		log.Warn("按请求直连启动实例",

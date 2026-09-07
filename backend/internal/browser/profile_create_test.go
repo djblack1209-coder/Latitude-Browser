@@ -63,3 +63,49 @@ func assertStringSliceContains(t *testing.T, values []string, expected string) {
 	}
 	t.Fatalf("values %#v missing %q", values, expected)
 }
+
+func TestCreateTorProfileStaysIndependentFromProxyDefaults(t *testing.T) {
+	manager := NewManager(&config.Config{}, t.TempDir())
+	profile, err := manager.Create(ProfileInput{ProfileName: "tor", NetworkMode: NetworkModeTor})
+	if err != nil {
+		t.Fatalf("Create returned error: %v", err)
+	}
+	if profile.NetworkMode != NetworkModeTor || profile.ProxyId != "" || profile.ProxyConfig != "" {
+		t.Fatalf("unexpected Tor profile: %+v", profile)
+	}
+	if changed := manager.ApplyDefaults(profile); changed {
+		t.Fatal("Tor profile must not be bound to direct/proxy defaults")
+	}
+	if profile.ProxyId != "" || profile.ProxyConfig != "" {
+		t.Fatalf("ApplyDefaults assigned proxy to Tor profile: %+v", profile)
+	}
+}
+
+func TestCreateTorProfileRejectsProxyOrChain(t *testing.T) {
+	manager := NewManager(&config.Config{}, t.TempDir())
+	_, err := manager.Create(ProfileInput{
+		ProfileName: "invalid-tor",
+		NetworkMode: NetworkModeTor,
+		ProxyConfig: "chain://proxy-a,proxy-b",
+	})
+	if err == nil {
+		t.Fatal("expected Tor/proxy exclusivity error")
+	}
+}
+
+func TestValidateNetworkModeRejectsUnknownValue(t *testing.T) {
+	if _, err := ValidateNetworkMode("auto"); err == nil {
+		t.Fatal("expected unsupported network mode error")
+	}
+}
+
+func TestCreateNormalizesTorNetworkModeCasing(t *testing.T) {
+	manager := NewManager(config.DefaultConfig(), t.TempDir())
+	profile, err := manager.Create(ProfileInput{ProfileName: "tor-case", NetworkMode: "ToR"})
+	if err != nil {
+		t.Fatalf("Create: %v", err)
+	}
+	if profile.NetworkMode != NetworkModeTor {
+		t.Fatalf("NetworkMode = %q, want %q", profile.NetworkMode, NetworkModeTor)
+	}
+}

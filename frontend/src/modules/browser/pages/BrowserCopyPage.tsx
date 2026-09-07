@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { Button, Card, FormItem, Select, toast } from '../../../shared/components'
+import { WorkspaceHeader } from '../../../shared/components/SignalPrimitives'
 import { BrowserProfileCopyForm } from '../components/BrowserProfileCopyForm'
 import { createBrowserProfileCopyOptions, isBrowserProfileCopyOptionsValid } from '../copyOptions'
 import { buildBrowserProfileCopyName } from '../copyName'
@@ -59,15 +60,17 @@ export function BrowserCopyPage() {
 
   return (
     <div className="space-y-5 animate-fade-in">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-semibold text-[var(--color-text-primary)]">配置复制</h1>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="secondary" size="sm" onClick={() => navigate('/browser/list')}>返回列表</Button>
-          <Button size="sm" onClick={handleCopy} loading={saving} disabled={!targetName.trim() || !isBrowserProfileCopyOptionsValid(copyOptions)}>生成配置</Button>
-        </div>
-      </div>
+      <WorkspaceHeader
+        eyebrow="INSTANCE / COPY"
+        title="复制实例"
+        description="从现有实例复制选定的指纹参数。"
+        actions={(
+          <>
+            <Button variant="secondary" size="sm" onClick={() => navigate('/browser/list')}>返回列表</Button>
+            <Button size="sm" onClick={handleCopy} loading={saving} disabled={!targetName.trim() || !isBrowserProfileCopyOptionsValid(copyOptions)}>生成配置</Button>
+          </>
+        )}
+      />
 
       <Card title="复制设置">
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">

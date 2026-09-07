@@ -14,6 +14,8 @@ type MemoryLogEntry struct {
 	Component string                 `json:"component"`
 	Message   string                 `json:"message"`
 	Fields    map[string]interface{} `json:"fields,omitempty"`
+	Method    string                 `json:"method,omitempty"`
+	Duration  int64                  `json:"durationMs,omitempty"`
 }
 
 // MemoryWriter 内存环形缓冲写入器，线程安全
@@ -53,6 +55,8 @@ func (w *MemoryWriter) Write(entry *LogEntry) error {
 		Component: entry.Component,
 		Message:   entry.Message,
 		Fields:    entry.Fields,
+		Method:    entry.Method,
+		Duration:  entry.Duration,
 	}
 	if len(w.entries) >= w.maxSize {
 		w.entries = w.entries[1:]

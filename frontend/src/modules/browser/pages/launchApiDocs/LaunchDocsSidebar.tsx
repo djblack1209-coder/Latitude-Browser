@@ -5,25 +5,37 @@ interface LaunchDocsSidebarProps {
   groups: LaunchDocGroup[]
   activeId: string
   onSelect: (id: string) => void
+  onHome?: () => void
 }
 
-export function LaunchDocsSidebar({
-  groups,
-  activeId,
-  onSelect,
-}: LaunchDocsSidebarProps) {
+export function LaunchDocsSidebar({ groups, activeId, onSelect, onHome }: LaunchDocsSidebarProps) {
   return (
-    <div className="space-y-4">
-      <div className="px-1">
-        <p className="text-xs font-semibold uppercase tracking-widest text-[var(--color-text-muted)]">
-          文档目录
-        </p>
+    <div className="space-y-5">
+      <div className="border-b border-[var(--color-border-muted)] px-1 pb-3">
+        <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.2em] text-[var(--color-text-muted)]">LAUNCH API</p>
+        <p className="mt-1 text-sm font-semibold text-[var(--color-text-primary)]">开发文档</p>
       </div>
 
-      <nav className="space-y-4">
+      <nav className="space-y-5" aria-label="文档目录">
+        {onHome ? (
+          <button
+            type="button"
+            onClick={onHome}
+            aria-current={!activeId ? 'page' : undefined}
+            className={[
+              'flex w-full items-start gap-2 border-l px-2.5 py-1.5 text-left transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-[var(--color-accent)]',
+              !activeId
+                ? 'border-[var(--color-accent)] bg-[var(--color-accent-muted)] text-[var(--color-text-primary)]'
+                : 'border-transparent text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-muted)] hover:text-[var(--color-text-primary)]',
+            ].join(' ')}
+          >
+            <FileText className={`mt-0.5 h-3.5 w-3.5 shrink-0 ${!activeId ? 'text-[var(--color-accent)]' : 'text-[var(--color-text-muted)]'}`} aria-hidden="true" />
+            <span className="min-w-0 text-[13px] font-medium leading-5">技术文档中心</span>
+          </button>
+        ) : null}
         {groups.map((group) => (
-          <section key={group.id} className="space-y-1">
-            <p className="px-3 pb-1 text-[11px] font-semibold uppercase tracking-widest text-[var(--color-text-muted)]">
+          <section key={group.id} className="space-y-1" aria-labelledby={`docs-group-${group.id}`}>
+            <p id={`docs-group-${group.id}`} className="px-2 pb-1 font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--color-text-muted)]">
               {group.label}
             </p>
             {group.items.map((item) => {
@@ -31,20 +43,18 @@ export function LaunchDocsSidebar({
               return (
                 <button
                   key={item.id}
+                  type="button"
                   onClick={() => onSelect(item.id)}
+                  aria-current={isActive ? 'page' : undefined}
                   className={[
-                    'w-full rounded-md border px-3 py-2 text-left transition-colors',
+                    'flex w-full items-start gap-2 border-l px-2.5 py-1.5 text-left transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-[var(--color-accent)]',
                     isActive
-                      ? 'border-[var(--color-accent)] bg-[var(--color-accent-muted)]'
-                      : 'border-transparent hover:border-[var(--color-border-muted)] hover:bg-[var(--color-bg-muted)]',
+                      ? 'border-[var(--color-accent)] bg-[var(--color-accent-muted)] text-[var(--color-text-primary)]'
+                      : 'border-transparent text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-muted)] hover:text-[var(--color-text-primary)]',
                   ].join(' ')}
                 >
-                  <div className="flex items-start gap-2">
-                    <FileText className={`mt-0.5 h-3.5 w-3.5 shrink-0 ${isActive ? 'text-[var(--color-accent)]' : 'text-[var(--color-text-muted)]'}`} />
-                    <div className={`min-w-0 text-sm font-medium ${isActive ? 'text-[var(--color-text-primary)]' : 'text-[var(--color-text-secondary)]'}`}>
-                      {item.label}
-                    </div>
-                  </div>
+                  <FileText className={`mt-0.5 h-3.5 w-3.5 shrink-0 ${isActive ? 'text-[var(--color-accent)]' : 'text-[var(--color-text-muted)]'}`} aria-hidden="true" />
+                  <span className="min-w-0 text-[13px] font-medium leading-5">{item.label}</span>
                 </button>
               )
             })}

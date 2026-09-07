@@ -89,6 +89,7 @@ func (m *Manager) copyProfile(profileId string, newName string, fingerprintResol
 		CoreId:             normalizeProfileCoreID(src.CoreId),
 		RestoreLastSession: NormalizeRestoreLastSessionMode(src.RestoreLastSession),
 		FingerprintArgs:    fingerprintResolver(src),
+		NetworkMode:        NormalizeNetworkMode(src.NetworkMode),
 		ProxyId:            src.ProxyId,
 		ProxyConfig:        src.ProxyConfig,
 		ProxyBindSourceID:  src.ProxyBindSourceID,
@@ -106,6 +107,11 @@ func (m *Manager) copyProfile(profileId string, newName string, fingerprintResol
 		LastError:          "",
 		CreatedAt:          nowText,
 		UpdatedAt:          nowText,
+	}
+	if IsTorNetworkMode(profile.NetworkMode) {
+		profile.ProxyId = ""
+		profile.ProxyConfig = ""
+		_ = ClearProfileProxyBinding(profile)
 	}
 
 	m.Profiles[newId] = profile

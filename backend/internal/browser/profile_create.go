@@ -21,10 +21,20 @@ func (m *Manager) Create(input ProfileInput) (*Profile, error) {
 	if userDataDir == "" {
 		userDataDir = profileId
 	}
-	resolvedProxy, err := m.resolveProfileProxyInput(input.ProxyId, input.ProxyConfig)
+	networkMode, err := ValidateNetworkMode(input.NetworkMode)
 	if err != nil {
-		log.Error("代理绑定失败", logger.F("profile_id", profileId), logger.F("proxy_id", strings.TrimSpace(input.ProxyId)), logger.F("error", err.Error()))
 		return nil, err
+	}
+	if err := validateTorProxyExclusivity(networkMode, input.ProxyId, input.ProxyConfig); err != nil {
+		return nil, err
+	}
+	resolvedProxy := resolvedProfileProxyInput{}
+	if networkMode != NetworkModeTor {
+		resolvedProxy, err = m.resolveProfileProxyInput(input.ProxyId, input.ProxyConfig)
+		if err != nil {
+			log.Error("代理绑定失败", logger.F("profile_id", profileId), logger.F("proxy_id", strings.TrimSpace(input.ProxyId)), logger.F("error", err.Error()))
+			return nil, err
+		}
 	}
 	coreId := normalizeProfileCoreID(input.CoreId)
 	if coreId == "" {
@@ -43,6 +53,7 @@ func (m *Manager) Create(input ProfileInput) (*Profile, error) {
 		CoreId:             coreId,
 		RestoreLastSession: NormalizeRestoreLastSessionMode(input.RestoreLastSession),
 		FingerprintArgs:    fingerprintArgs,
+		NetworkMode:        networkMode,
 		ProxyId:            resolvedProxy.ProxyId,
 		ProxyConfig:        resolvedProxy.ProxyConfig,
 		MemoryLimitMB:      normalizeMemoryLimitMB(input.MemoryLimitMB),

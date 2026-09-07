@@ -21,3 +21,9 @@ func RuntimeStateRoot(appRoot string) string {
 func RuntimeUsesDetachedState(appRoot string) bool {
 	return apppath.IsDetached(appRoot)
 }
+
+// TorRuntimeStateRoot returns the private state root used by managed Tor
+// runtimes. Individual profile directories are derived and owned by proxy.
+func TorRuntimeStateRoot(appRoot string) string {
+	return apppath.Resolve(appRoot, "data/tor")
+}

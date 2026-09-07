@@ -214,6 +214,10 @@ export function BrowserProxyBuildDiagnostic(arg1:string,arg2:string):Promise<pro
 
 export function BrowserProxyCheckIPHealth(arg1:string):Promise<backend.ProxyIPHealthResult>;
 
+export function BrowserProxyClearSpeedDiagnostic(arg1:string):Promise<boolean>;
+
+export function BrowserProxyConnectorPreflight(arg1:backend.ProxyConnectorPreflightRequest):Promise<backend.ProxyConnectorPreflightResult>;
+
 export function BrowserProxyCoreDownload(arg1:backend.ProxyCoreDownloadRequest):Promise<void>;
 
 export function BrowserProxyCoreDownloadInfo(arg1:backend.ProxyCoreDownloadRequest):Promise<backend.ProxyCoreDownloadInfoResult>;
@@ -286,6 +290,8 @@ export function GetProxyCheckSettings():Promise<config.ProxyCheckConfig>;
 
 export function GetRunningInstances():Promise<Array<browser.Profile>>;
 
+export function GetTorStatus():Promise<backend.TorRuntimeStatus>;
+
 export function InstallAutomationRuntime():Promise<Record<string, any>>;
 
 export function ListGroups():Promise<Array<browser.GroupWithCount>>;
@@ -319,6 +325,8 @@ export function SaveLaunchServerSettings(arg1:number):Promise<Record<string, any
 export function SaveProxyCheckSettings(arg1:config.ProxyCheckConfig):Promise<void>;
 
 export function SetLogLevel(arg1:string):Promise<void>;
+
+export function SetTorRuntimePath(arg1:string):Promise<backend.TorRuntimeStatus>;
 
 export function StartInstance(arg1:string):Promise<browser.Profile>;
 

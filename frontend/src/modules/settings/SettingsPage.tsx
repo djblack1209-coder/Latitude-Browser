@@ -1,5 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
-import { Save, RotateCcw } from 'lucide-react'
+import { Save, RotateCcw, RefreshCw } from 'lucide-react'
+import { useSearchParams } from 'react-router-dom'
+import { WorkspaceHeader } from '../../shared/components/SignalPrimitives'
+import { RadarSpinner } from '../../shared/components/RadarSpinner'
+import { SettingsSectionNav } from './components/SettingsSectionNav'
+import { ConnectorSettingsPanel } from './components/ConnectorSettingsPanel'
+import { TorLabPanel } from './components/TorLabPanel'
 import { Card, Button, ThemeSwitcher, toast } from '../../shared/components'
 import {
   fetchSettings,
@@ -29,6 +35,61 @@ import type { AutomationRuntimeProgress, BackupExportLogItem, BackupExportProgre
 import { useSettingsProgressEffects } from './hooks/useSettingsProgressEffects'
 
 export function SettingsPage() {
+  const [query] = useSearchParams()
+  const section = query.get('section') || 'general'
+  const separateSection = section === 'connectors' || section === 'tor'
+  const [connectorVisited, setConnectorVisited] = useState(section === 'connectors')
+  const [torVisited, setTorVisited] = useState(section === 'tor')
+  const [generalDirty, setGeneralDirty] = useState(false)
+  const [connectorDirty, setConnectorDirty] = useState(false)
+  const [torDirty, setTorDirty] = useState(false)
+  const hasDrafts = generalDirty || connectorDirty || torDirty
+
+  useEffect(() => {
+    if (section === 'connectors') setConnectorVisited(true)
+    if (section === 'tor') setTorVisited(true)
+  }, [section])
+
+  useEffect(() => {
+    if (!hasDrafts) return
+    const beforeUnload = (event: BeforeUnloadEvent) => {
+      event.preventDefault()
+      event.returnValue = ''
+    }
+    const confirmNavigation = (event: MouseEvent) => {
+      if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return
+      const target = event.target instanceof Element ? event.target.closest<HTMLAnchorElement>('a[href]') : null
+      if (!target || target.target === '_blank' || target.hasAttribute('download')) return
+      const destination = new URL(target.href, window.location.href)
+      // All settings partitions preserve their drafts, including Sidebar links.
+      if (destination.origin === window.location.origin && destination.pathname === '/settings') return
+      if (!window.confirm('有未保存的设置。确定离开设置页面并放弃这些更改？')) {
+        event.preventDefault()
+        event.stopPropagation()
+      }
+    }
+    window.addEventListener('beforeunload', beforeUnload)
+    document.addEventListener('click', confirmNavigation, true)
+    return () => {
+      window.removeEventListener('beforeunload', beforeUnload)
+      document.removeEventListener('click', confirmNavigation, true)
+    }
+  }, [hasDrafts])
+
+  // Mount specialist sections on first visit, then keep their drafts alive.
+  // Hidden Tor panels do not poll; switching partitions never executes Tor.
+  return (
+    <>
+      <div hidden={separateSection}>
+        <GeneralSettingsPage section={separateSection ? 'general' : section} onDirtyChange={setGeneralDirty} />
+      </div>
+      {(connectorVisited || section === 'connectors') && <div hidden={section !== 'connectors'}><ConnectorSettingsPanel active={section === 'connectors'} onDirtyChange={setConnectorDirty} /></div>}
+      {(torVisited || section === 'tor') && <div hidden={section !== 'tor'}><TorLabPanel active={section === 'tor'} onDirtyChange={setTorDirty} /></div>}
+    </>
+  )
+}
+
+function GeneralSettingsPage({ section, onDirtyChange }: { section: string; onDirtyChange: (dirty: boolean) => void }) {
   const [settings, setSettings] = useState<AppSettings>(defaultSettings)
   const [automationState, setAutomationState] = useState<AutomationState>(defaultAutomationState)
   const [automationProgress, setAutomationProgress] = useState<AutomationRuntimeProgress | null>(null)
@@ -43,6 +104,7 @@ export function SettingsPage() {
   const [launchServerReady, setLaunchServerReady] = useState(false)
   const [launchServerSaving, setLaunchServerSaving] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState('')
   const [saving, setSaving] = useState(false)
   const [hasChanges, setHasChanges] = useState(false)
   const [importModalOpen, setImportModalOpen] = useState(false)
@@ -53,8 +115,10 @@ export function SettingsPage() {
   const exportLogsRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
-    loadSettings()
+    void loadSettings()
   }, [])
+
+  useEffect(() => { onDirtyChange(hasChanges || automationRuntimeDirty) }, [hasChanges, automationRuntimeDirty, onDirtyChange])
 
   useSettingsProgressEffects({
     actionLoading,
@@ -77,6 +141,7 @@ export function SettingsPage() {
 
   const loadSettings = async () => {
     setLoading(true)
+    setLoadError('')
     try {
       const [data, automation, launchServer] = await Promise.all([
         fetchSettings(),
@@ -88,6 +153,8 @@ export function SettingsPage() {
       setLaunchServerPortDraft(String(launchServer.preferredPort || launchServer.port || 19876))
       setLaunchServerBaseUrl(launchServer.baseUrl)
       setLaunchServerReady(launchServer.ready)
+    } catch (cause) {
+      setLoadError(cause instanceof Error ? cause.message : String(cause))
     } finally {
       setLoading(false)
     }
@@ -378,40 +445,37 @@ export function SettingsPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="w-6 h-6 border-2 border-[var(--color-border-default)] border-t-[var(--color-accent)] rounded-full animate-spin" />
-      </div>
+      <div className="flex items-center justify-center h-64"><RadarSpinner size="lg" label="正在读取本地设置" /></div>
     )
   }
 
-  return (
-    <div className="apple-page w-full space-y-6">
-      {/* 页面标题 */}
-      <div className="apple-page-header flex flex-wrap justify-between">
-        <div>
-          <h1 className="text-xl font-semibold text-[var(--color-text-primary)]">系统设置</h1>
-          <p className="text-sm text-[var(--color-text-muted)] mt-1">配置应用的各项参数</p>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="secondary" size="sm" onClick={handleReset}>
-            <RotateCcw className="w-4 h-4" />
-            重置
-          </Button>
-          <Button variant="danger" size="sm" onClick={handleSave} loading={saving} disabled={!hasChanges}>
-            <Save className="w-4 h-4" />
-            保存
-          </Button>
-        </div>
-      </div>
+  if (loadError) return (
+    <div className="space-y-5">
+      <WorkspaceHeader eyebrow="SYSTEM / PREFERENCES" title="系统设置" />
+      <SettingsSectionNav current={section} />
+      <div role="alert" className="rounded-md border border-[var(--color-error)] p-5 text-sm text-[var(--color-error)]">无法读取设置：{loadError}</div>
+      <Button onClick={() => void loadSettings()}><RefreshCw size={14} />重试</Button>
+    </div>
+  )
 
+  return (
+    <div className="apple-page w-full space-y-5">
+      <WorkspaceHeader eyebrow="SYSTEM / PREFERENCES" title={section === 'runtime' ? '自动化运行时' : section === 'storage' ? '备份与数据' : '系统设置'}
+        description={section === 'runtime' ? 'Node、脚本和本地 API。' : section === 'storage' ? '备份、恢复与初始化。' : '界面与本地工作区设置。'}
+        actions={(section === 'general' || hasChanges) && <><Button variant="secondary" size="sm" onClick={() => void handleReset()}><RotateCcw size={14} />重置常规设置</Button><Button size="sm" onClick={() => void handleSave()} loading={saving} disabled={!hasChanges}><Save size={14} />保存设置</Button></>} />
+      <SettingsSectionNav current={section} />
+      {hasChanges && <p role="status" className="text-xs text-[var(--color-warning)]">有未保存的常规设置。</p>}
+      {(section === 'general' || !['runtime', 'storage'].includes(section)) && <>
       {/* 主题设置 */}
-      <Card title="主题设置" subtitle="选择您喜欢的界面主题" className="apple-section">
+      <Card title="界面主题" subtitle="不改变浏览器实例或网络策略" className="apple-section">
         <ThemeSwitcher />
       </Card>
 
       {/* 基础设置 */}
       <SettingsBasicFeatureCards settings={settings} onChange={handleChange} />
-      <AutomationSettingsCard
+      <SettingsAdvancedCard settings={settings} onChange={handleChange} />
+      </>}
+      {section === 'runtime' && <AutomationSettingsCard
         automationState={automationState}
         automationProgress={automationProgress}
         automationBusy={automationBusy}
@@ -443,12 +507,9 @@ export function SettingsPage() {
         onSaveRuntimeSettings={() => { void handleAutomationRuntimeSettingsSave() }}
         onInstall={() => { void handleAutomationInstall() }}
         onSelfCheck={() => { void handleAutomationSelfCheck() }}
-      />
+      />}
 
-      {/* 高级设置 */}
-      <SettingsAdvancedCard settings={settings} onChange={handleChange} />
-
-      <BackupSettingsCard
+      {section === 'storage' && <BackupSettingsCard
         actionLoading={actionLoading}
         exportProgress={exportProgress}
         exportLogs={exportLogs}
@@ -459,7 +520,7 @@ export function SettingsPage() {
           setImportProgress(null)
           setImportModalOpen(true)
         }}
-      />
+      />}
 
       <BackupImportModal
         open={importModalOpen}

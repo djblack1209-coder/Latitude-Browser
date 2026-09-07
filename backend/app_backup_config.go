@@ -53,6 +53,8 @@ func (a *App) backupApplyIncomingConfig(incoming *config.Config, resetFirst bool
 	if incoming == nil {
 		return nil
 	}
+	a.torConfigMu.Lock()
+	defer a.torConfigMu.Unlock()
 	current := a.config
 	if current == nil {
 		current = config.DefaultConfig()
@@ -66,11 +68,17 @@ func (a *App) backupApplyIncomingConfig(incoming *config.Config, resetFirst bool
 		target = backupMergeConfig(current, incoming)
 	}
 	target.Database = current.Database
+	// A backup is not an authority to select a local executable. Preserve the
+	// path the user explicitly trusted through SetTorRuntimePath.
+	target.Browser.TorBinaryPath = current.Browser.TorBinaryPath
 
 	if err := target.Save(a.resolveAppPath("config.yaml")); err != nil {
 		return fmt.Errorf("保存导入配置失败: %w", err)
 	}
 	a.config = target
+	if a.torMgr != nil {
+		a.torMgr.UpdateConfig(target)
+	}
 	a.applyRuntimeConfig(target.Runtime)
 	return nil
 }

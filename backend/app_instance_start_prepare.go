@@ -37,6 +37,7 @@ type browserStartPlan struct {
 	startStableWindow    time.Duration
 	maxStartAttempts     int
 	totalReadyTimeout    time.Duration
+	networkMode          string
 }
 
 var clearBrowserSessionRestoreData = browser.ClearSessionRestoreData
@@ -79,6 +80,44 @@ func (a *App) resolveBrowserStartProfile(input browserStartInput) (*BrowserProfi
 		return nil, false, err
 	}
 	a.ensureProfileLaunchCode(profile)
+
+	if browser.IsTorNetworkMode(profile.NetworkMode) {
+		if input.ForceDirectProxy || input.hasTemporaryProxy() {
+			err := fmt.Errorf("实例启动失败：Tor 网络模式不能与直连、临时代理或代理链混用")
+			profile.LastError = err.Error()
+			return profile, profile.Running, err
+		}
+		if profile.Running && (a.torMgr == nil || !a.torMgr.ProfileReady(input.ProfileID)) {
+			cmd := a.browserMgr.BrowserProcesses[input.ProfileID]
+			pid := profile.Pid
+			if pid <= 0 && cmd != nil && cmd.Process != nil {
+				pid = cmd.Process.Pid
+			}
+			debugPort := profile.DebugPort
+			var stopErr error
+			if cmd != nil {
+				stopErr = a.stopProcessCmd(cmd)
+			}
+			if stopErr == nil && !waitBrowserProcessStopped(pid, debugPort, 2*time.Second) {
+				stopErr = fmt.Errorf("旧浏览器进程仍在运行（PID %d，调试端口 %d）", pid, debugPort)
+			}
+			if stopErr != nil {
+				err := fmt.Errorf("实例启动失败：Tor 运行时未就绪，且旧浏览器未能确认停止；拒绝重新启动以避免并发实例或直连回退：%w", stopErr)
+				profile.LastError = err.Error()
+				log.Error("Tor 旧浏览器停止状态无法确认",
+					logger.F("profile_id", input.ProfileID),
+					logger.F("pid", pid),
+					logger.F("debug_port", debugPort),
+					logger.F("error", stopErr.Error()),
+				)
+				return profile, true, err
+			}
+			a.markProfileStoppedLocked(input.ProfileID, profile)
+			log.Warn("Tor 实例缺少就绪的受管 Tor 运行时，已确认停止旧浏览器并准备重新启动",
+				logger.F("profile_id", input.ProfileID),
+			)
+		}
+	}
 
 	if !profile.Running {
 		return profile, false, nil
@@ -134,12 +173,21 @@ func (a *App) prepareBrowserStartPlan(input browserStartInput, profile *BrowserP
 	if err != nil {
 		return nil, err
 	}
+	bridgeHandedOff := false
+	defer func() {
+		if !bridgeHandedOff && releaseProxyBridge {
+			a.releaseProxyBridgeRef(acquiredProxyBridge)
+		}
+	}()
 
 	startReadyTimeout, startStableWindow := a.browserStartTimingSettings()
 	maxStartAttempts := browserStartAttemptCount()
 	totalReadyTimeout := time.Duration(maxStartAttempts) * startReadyTimeout
 	restoreLastSession := profileRestoreLastSession(profile, a.config)
 	extensionDirs := a.browserMgr.EnabledExtensionDirsForProfile(input.ProfileID)
+	if browser.IsTorNetworkMode(profile.NetworkMode) {
+		extensionDirs = nil
+	}
 	fingerprintExpectedArgs := combineFingerprintExpectedArgs(fingerprintLaunchArgs, sanitizedProfileLaunchArgs, sanitizedExtraLaunchArgs)
 	defaultStartURLs := a.resolveFingerprintCheckStartURLsForExpectedArgsAndProfile(profile.ProfileId, fingerprintExpectedArgs, profile, mergeStartURLs(browserDefaultStartURLs(a.config), bookmarkStartURLs(bookmarks)))
 	startURLs := a.resolveFingerprintCheckStartURLsForExpectedArgsAndProfile(profile.ProfileId, fingerprintExpectedArgs, profile, input.StartURLs)
@@ -163,12 +211,12 @@ func (a *App) prepareBrowserStartPlan(input browserStartInput, profile *BrowserP
 		return nil, startErr
 	}
 
-	return &browserStartPlan{
+	plan := &browserStartPlan{
 		profile:              profile,
 		chromeBinaryPath:     chromeBinaryPath,
 		userDataDir:          userDataDir,
 		extensionDirs:        extensionDirs,
-		args:                 buildBrowserLaunchArgs(userDataDir, assignedDebugPort, effectiveProxy, extensionDirs, fingerprintLaunchArgs, sanitizedProfileLaunchArgs, sanitizedExtraLaunchArgs, launchTargets, restoreLastSession),
+		args:                 buildBrowserLaunchArgsForNetworkMode(userDataDir, assignedDebugPort, effectiveProxy, extensionDirs, fingerprintLaunchArgs, sanitizedProfileLaunchArgs, sanitizedExtraLaunchArgs, launchTargets, restoreLastSession, profile.NetworkMode),
 		deferredStartTargets: deferredStartTargets,
 		deferredStartNewTabs: deferredStartNewTabs,
 		effectiveProxy:       effectiveProxy,
@@ -179,7 +227,10 @@ func (a *App) prepareBrowserStartPlan(input browserStartInput, profile *BrowserP
 		startStableWindow:    startStableWindow,
 		maxStartAttempts:     maxStartAttempts,
 		totalReadyTimeout:    totalReadyTimeout,
-	}, nil
+		networkMode:          browser.NormalizeNetworkMode(profile.NetworkMode),
+	}
+	bridgeHandedOff = true
+	return plan, nil
 }
 
 func (a *App) fingerprintCheckExpectedArgsForRunningProfile(profile *BrowserProfile, _ []string) []string {
@@ -189,15 +240,18 @@ func (a *App) fingerprintCheckExpectedArgsForRunningProfile(profile *BrowserProf
 func (a *App) prepareBrowserLaunchContext(input browserStartInput, profile *BrowserProfile, bookmarks []BrowserBookmark) ([]string, []string, []string, string, string, error) {
 	log := logger.New("Browser")
 
-	sanitizedProfileLaunchArgs, managedProfileArgs := sanitizeManagedLaunchArgs(profile.LaunchArgs)
-	sanitizedExtraLaunchArgs, managedExtraArgs := sanitizeManagedLaunchArgs(input.ExtraLaunchArgs)
-	logManagedLaunchArgOverrides(log, input.ProfileID, "profile.launchArgs", managedProfileArgs)
-	logManagedLaunchArgOverrides(log, input.ProfileID, "start.extraLaunchArgs", managedExtraArgs)
-
+	// Resolve inherited args before sanitizing. A freshly created API profile
+	// can have no LaunchArgs until ApplyDefaults; reversing this order drops
+	// first-run/background-networking defaults on its first start only.
 	proxyChanged := a.browserMgr.ApplyDefaults(profile)
 	if proxyChanged {
 		_ = a.browserMgr.SaveProfiles()
 	}
+
+	sanitizedProfileLaunchArgs, managedProfileArgs := sanitizeManagedLaunchArgs(profile.LaunchArgs)
+	sanitizedExtraLaunchArgs, managedExtraArgs := sanitizeManagedLaunchArgs(input.ExtraLaunchArgs)
+	logManagedLaunchArgOverrides(log, input.ProfileID, "profile.launchArgs", managedProfileArgs)
+	logManagedLaunchArgOverrides(log, input.ProfileID, "start.extraLaunchArgs", managedExtraArgs)
 
 	chromeBinaryPath, err := a.browserMgr.ResolveChromeBinary(profile)
 	if err != nil {
@@ -225,6 +279,15 @@ func (a *App) prepareBrowserLaunchContext(input browserStartInput, profile *Brow
 	}
 
 	fingerprintLaunchArgs := a.buildBrowserFingerprintCapabilityReport(input.ProfileID, profile.CoreId, profile.FingerprintArgs).LaunchArgs
+	if browser.IsTorNetworkMode(profile.NetworkMode) {
+		var torManaged []string
+		sanitizedProfileLaunchArgs, torManaged = sanitizeTorLaunchArgs(sanitizedProfileLaunchArgs)
+		logManagedLaunchArgOverrides(log, input.ProfileID, "profile.launchArgs.tor", torManaged)
+		sanitizedExtraLaunchArgs, torManaged = sanitizeTorLaunchArgs(sanitizedExtraLaunchArgs)
+		logManagedLaunchArgOverrides(log, input.ProfileID, "start.extraLaunchArgs.tor", torManaged)
+		fingerprintLaunchArgs, torManaged = sanitizeTorLaunchArgs(fingerprintLaunchArgs)
+		logManagedLaunchArgOverrides(log, input.ProfileID, "profile.fingerprintArgs.tor", torManaged)
+	}
 	fingerprintExpectedArgs := combineFingerprintExpectedArgs(fingerprintLaunchArgs, sanitizedProfileLaunchArgs, sanitizedExtraLaunchArgs)
 	runtimeBookmarks, fingerprintBookmarkURL, bookmarkErr := a.runtimeBookmarksForProfileExpectedArgsAndProfile(profile.ProfileId, fingerprintExpectedArgs, profile, bookmarks)
 	if bookmarkErr != nil {
@@ -244,25 +307,42 @@ func (a *App) prepareBrowserLaunchContext(input browserStartInput, profile *Brow
 	}
 
 	if detection, ok := detectBrowserRuntimeByActivePort(userDataDir); ok && detection.DebugReady {
-		a.markProfileLastLaunchArgsLocked(profile, nil)
-		a.markProfileRunningLocked(input.ProfileID, profile, nil, detection.PID, detection.DebugPort, true, "")
-		log.Warn("检测到同一用户数据目录已有浏览器运行，已接管为当前实例状态",
-			logger.F("profile_id", input.ProfileID),
-			logger.F("user_data_dir", userDataDir),
-			logger.F("pid", detection.PID),
-			logger.F("debug_port", detection.DebugPort),
-		)
-		if len(normalizeNonEmptyStrings(input.StartURLs)) == 0 && len(normalizeNonEmptyStrings(input.ExtraLaunchArgs)) == 0 {
+		if browser.IsTorNetworkMode(profile.NetworkMode) {
+			terminated, terminateErr := terminateBrowserProcessesByUserDataDir(userDataDir, 5*time.Second)
+			if terminateErr != nil || !terminated {
+				if terminateErr == nil {
+					terminateErr = fmt.Errorf("未能确认旧浏览器进程已退出")
+				}
+				startErr := fmt.Errorf("实例启动失败：Tor 模式拒绝接管未由当前 Tor 运行时启动的浏览器。关闭占用用户目录的浏览器失败：%w", terminateErr)
+				profile.LastError = startErr.Error()
+				return nil, nil, nil, "", "", startErr
+			}
+			log.Warn("Tor 模式拒绝接管已有浏览器，已先结束旧进程",
+				logger.F("profile_id", input.ProfileID),
+				logger.F("user_data_dir", userDataDir),
+				logger.F("pid", detection.PID),
+			)
+		} else {
+			a.markProfileLastLaunchArgsLocked(profile, nil)
+			a.markProfileRunningLocked(input.ProfileID, profile, nil, detection.PID, detection.DebugPort, true, "")
+			log.Warn("检测到同一用户数据目录已有浏览器运行，已接管为当前实例状态",
+				logger.F("profile_id", input.ProfileID),
+				logger.F("user_data_dir", userDataDir),
+				logger.F("pid", detection.PID),
+				logger.F("debug_port", detection.DebugPort),
+			)
+			if len(normalizeNonEmptyStrings(input.StartURLs)) == 0 && len(normalizeNonEmptyStrings(input.ExtraLaunchArgs)) == 0 {
+				return nil, nil, nil, "", "", errBrowserStartHandledByRecoveredRuntime
+			}
+			fingerprintExpectedArgs := a.fingerprintCheckExpectedArgsForRunningProfile(profile, input.ExtraLaunchArgs)
+			resolvedStartURLs := a.resolveFingerprintCheckStartURLsForExpectedArgsAndProfile(profile.ProfileId, fingerprintExpectedArgs, profile, input.StartURLs)
+			if err := a.openBrowserTabForRunningProfile(profile, input.ExtraLaunchArgs, resolvedStartURLs); err != nil {
+				startErr := fmt.Errorf("实例已在运行，但新标签打开失败：%w", err)
+				profile.LastError = startErr.Error()
+				return nil, nil, nil, "", "", startErr
+			}
 			return nil, nil, nil, "", "", errBrowserStartHandledByRecoveredRuntime
 		}
-		fingerprintExpectedArgs := a.fingerprintCheckExpectedArgsForRunningProfile(profile, input.ExtraLaunchArgs)
-		resolvedStartURLs := a.resolveFingerprintCheckStartURLsForExpectedArgsAndProfile(profile.ProfileId, fingerprintExpectedArgs, profile, input.StartURLs)
-		if err := a.openBrowserTabForRunningProfile(profile, input.ExtraLaunchArgs, resolvedStartURLs); err != nil {
-			startErr := fmt.Errorf("实例已在运行，但新标签打开失败：%w", err)
-			profile.LastError = startErr.Error()
-			return nil, nil, nil, "", "", startErr
-		}
-		return nil, nil, nil, "", "", errBrowserStartHandledByRecoveredRuntime
 	}
 
 	if !profileRestoreLastSession(profile, a.config) {
@@ -301,6 +381,19 @@ func (a *App) prepareBrowserLaunchContext(input browserStartInput, profile *Brow
 }
 
 func buildBrowserLaunchArgs(userDataDir string, debugPort int, effectiveProxy string, extensionDirs []string, fingerprintLaunchArgs []string, sanitizedProfileLaunchArgs []string, sanitizedExtraLaunchArgs []string, launchTargets []string, restoreLastSession bool) []string {
+	return buildBrowserLaunchArgsForNetworkMode(userDataDir, debugPort, effectiveProxy, extensionDirs, fingerprintLaunchArgs, sanitizedProfileLaunchArgs, sanitizedExtraLaunchArgs, launchTargets, restoreLastSession, browser.NetworkModeProxy)
+}
+
+func buildBrowserLaunchArgsForNetworkMode(userDataDir string, debugPort int, effectiveProxy string, extensionDirs []string, fingerprintLaunchArgs []string, sanitizedProfileLaunchArgs []string, sanitizedExtraLaunchArgs []string, launchTargets []string, restoreLastSession bool, networkMode string) []string {
+	torMode := browser.IsTorNetworkMode(networkMode)
+	if torMode {
+		fingerprintLaunchArgs, _ = sanitizeManagedLaunchArgs(fingerprintLaunchArgs)
+		fingerprintLaunchArgs, _ = sanitizeTorLaunchArgs(fingerprintLaunchArgs)
+		sanitizedProfileLaunchArgs, _ = sanitizeManagedLaunchArgs(sanitizedProfileLaunchArgs)
+		sanitizedProfileLaunchArgs, _ = sanitizeTorLaunchArgs(sanitizedProfileLaunchArgs)
+		sanitizedExtraLaunchArgs, _ = sanitizeManagedLaunchArgs(sanitizedExtraLaunchArgs)
+		sanitizedExtraLaunchArgs, _ = sanitizeTorLaunchArgs(sanitizedExtraLaunchArgs)
+	}
 	args := []string{
 		fmt.Sprintf("--user-data-dir=%s", userDataDir),
 		fmt.Sprintf("--remote-debugging-port=%d", debugPort),
@@ -316,13 +409,18 @@ func buildBrowserLaunchArgs(userDataDir string, debugPort int, effectiveProxy st
 		args = append(args, fmt.Sprintf("--proxy-server=%s", effectiveProxy))
 	}
 
-	if extensionArg := strings.Join(normalizeNonEmptyStrings(extensionDirs), ","); extensionArg != "" {
-		args = append(args, fmt.Sprintf("--disable-extensions-except=%s", extensionArg))
-		args = append(args, fmt.Sprintf("--load-extension=%s", extensionArg))
+	if !torMode {
+		if extensionArg := strings.Join(normalizeNonEmptyStrings(extensionDirs), ","); extensionArg != "" {
+			args = append(args, fmt.Sprintf("--disable-extensions-except=%s", extensionArg))
+			args = append(args, fmt.Sprintf("--load-extension=%s", extensionArg))
+		}
 	}
 
 	args = append(args, normalizeNonEmptyStrings(fingerprintLaunchArgs)...)
 	args = append(args, sanitizedProfileLaunchArgs...)
 	args = append(args, sanitizedExtraLaunchArgs...)
+	if torMode {
+		args = append(args, torEnforcedBrowserLaunchArgs()...)
+	}
 	return browser.BuildLaunchArgs(args, launchTargets)
 }

@@ -17,7 +17,12 @@ func (a *App) ReloadConfig() error {
 		return fmt.Errorf("重载配置文件失败: %w", err)
 	}
 
+	a.torConfigMu.Lock()
 	a.config = cfg
+	if a.torMgr != nil {
+		a.torMgr.UpdateConfig(cfg)
+	}
+	a.torConfigMu.Unlock()
 	a.applyRuntimeConfig(cfg.Runtime)
 	if a.browserMgr != nil {
 		a.browserMgr.Config = cfg

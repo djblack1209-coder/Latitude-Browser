@@ -1,6 +1,7 @@
 package backend
 
 import (
+	"ant-chrome/backend/internal/browser"
 	"fmt"
 	"strings"
 
@@ -17,7 +18,7 @@ func (a *App) BrowserInstanceStatus(profileId string) (*BrowserProfile, error) {
 		return nil, fmt.Errorf("profile not found")
 	}
 	a.ensureProfileLaunchCode(profile)
-	if !profile.Running {
+	if !profile.Running && !browser.IsTorNetworkMode(profile.NetworkMode) {
 		userDataDir := a.browserMgr.ResolveUserDataDir(profile)
 		if detection, ok := detectBrowserRuntimeByUserDataDir(userDataDir); ok && detection.DebugReady {
 			a.markProfileRunningLocked(profileId, profile, nil, detection.PID, detection.DebugPort, true, "")
@@ -50,6 +51,10 @@ func (a *App) BrowserInstanceOpenUrl(profileId string, targetUrl string) (bool, 
 	a.ensureProfileLaunchCode(profile)
 	trackedCmd := a.browserMgr.BrowserProcesses[profileId]
 	if !profile.Running {
+		if browser.IsTorNetworkMode(profile.NetworkMode) {
+			a.browserMgr.Mutex.Unlock()
+			return false, fmt.Errorf("打开地址失败：Tor 实例当前未由应用管理运行，请先启动实例后再试。")
+		}
 		userDataDir := a.browserMgr.ResolveUserDataDir(profile)
 		if detection, ok := detectBrowserRuntimeByUserDataDir(userDataDir); ok && detection.DebugReady {
 			a.markProfileRunningLocked(profileId, profile, nil, detection.PID, detection.DebugPort, true, "")

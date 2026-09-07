@@ -129,6 +129,7 @@ TARGET="linux-$ARCH"
 RUNTIME_DIR="$ROOT_DIR/bin/$TARGET"
 XRAY_SRC="$RUNTIME_DIR/xray"
 SINGBOX_SRC="$RUNTIME_DIR/sing-box"
+MIHOMO_SRC="$RUNTIME_DIR/mihomo"
 APP_ICON_SRC="$ROOT_DIR/build/appicon.png"
 APP_BIN="$ROOT_DIR/build/bin/latitude-browser"
 WAILS_CONFIG="$ROOT_DIR/wails.json"
@@ -219,7 +220,14 @@ cp "$APP_BIN" "$APP_STAGE/latitude-browser"
 cp "$ROOT_DIR/publish/config.init.linux.yaml" "$APP_STAGE/config.yaml"
 cp "$XRAY_SRC" "$APP_STAGE/bin/xray"
 cp "$SINGBOX_SRC" "$APP_STAGE/bin/sing-box"
+if [[ -f "$MIHOMO_SRC" ]]; then
+  cp "$MIHOMO_SRC" "$APP_STAGE/bin/mihomo"
+  echo "Including optional Mihomo runtime: $MIHOMO_SRC"
+fi
 chmod +x "$APP_STAGE/latitude-browser" "$APP_STAGE/bin/xray" "$APP_STAGE/bin/sing-box"
+if [[ -f "$APP_STAGE/bin/mihomo" ]]; then
+  chmod +x "$APP_STAGE/bin/mihomo"
+fi
 
 if [[ -f "$CHROME_README_SRC" ]]; then
   mkdir -p "$APP_STAGE/chrome"
@@ -246,6 +254,9 @@ cp "$APP_STAGE/latitude-browser" "$INSTALL_ROOT/latitude-browser"
 cp "$APP_STAGE/config.yaml" "$INSTALL_ROOT/config.yaml"
 cp "$APP_STAGE/bin/xray" "$INSTALL_ROOT/bin/xray"
 cp "$APP_STAGE/bin/sing-box" "$INSTALL_ROOT/bin/sing-box"
+if [[ -f "$APP_STAGE/bin/mihomo" ]]; then
+  cp "$APP_STAGE/bin/mihomo" "$INSTALL_ROOT/bin/mihomo"
+fi
 if [[ -f "$APP_STAGE/chrome/README.md" ]]; then
   mkdir -p "$INSTALL_ROOT/chrome"
   cp "$APP_STAGE/chrome/README.md" "$INSTALL_ROOT/chrome/README.md"
@@ -259,6 +270,9 @@ done
 ln -sf "../icons/hicolor/512x512/apps/${APP_ICON_NAME}.png" "$PIXMAPS_ROOT/${APP_ICON_NAME}.png"
 touch "$INSTALL_ROOT/data/.keep"
 chmod +x "$INSTALL_ROOT/latitude-browser" "$INSTALL_ROOT/bin/xray" "$INSTALL_ROOT/bin/sing-box"
+if [[ -f "$INSTALL_ROOT/bin/mihomo" ]]; then
+  chmod +x "$INSTALL_ROOT/bin/mihomo"
+fi
 
 cat > "$DESKTOP_ROOT/$APP_DESKTOP_ID" <<EOF
 [Desktop Entry]

@@ -1,5 +1,6 @@
 import { PlusSquare, Upload } from "lucide-react";
 import { Button } from "../../../shared/components";
+import { SignalEmptyState, TerminalPanel } from "../../../shared/components/SignalPrimitives";
 import { resolveAutomationScriptPublicAPIConfig, type AutomationScriptRecord } from "../automationScripts";
 import { AutomationScriptSummaryCard } from "./AutomationScriptSummaryCard";
 import type { AutomationCardPresentation } from "./AutomationPage.helpers";
@@ -33,79 +34,62 @@ export function AutomationCardsSection({
   const selectedScriptIdSet = new Set(selectedScriptIds);
 
   return (
-      <section className="apple-section border border-[var(--color-border-default)] bg-[var(--color-bg-surface)] p-3 md:p-4">
-        {loading ? (
-          <div className="apple-empty-state px-6 py-12 text-center text-sm text-[var(--color-text-muted)]">
-            正在加载脚本列表...
-          </div>
-        ) : cards.length === 0 ? (
-          <div className="apple-empty-state px-6 py-14 text-center">
-            <div className="text-base font-medium text-[var(--color-text-primary)]">
-              还没有脚本
-            </div>
-            <div className="mt-2 text-sm text-[var(--color-text-muted)]">
-              先新建一套脚本，或者导入已有脚本。
-            </div>
-            <div className="mt-5 flex justify-center gap-2">
-              <Button size="sm" onClick={() => onCreate()}>
-                <PlusSquare className="h-4 w-4" />
-                新建
+    <TerminalPanel
+      title="SCRIPT REGISTRY"
+      meta={<span className="font-mono tabular-nums">{selectedScriptIds.length} SELECTED / {cards.length} TOTAL</span>}
+    >
+      {loading ? (
+        <div className="px-6 py-12 text-center font-mono text-xs text-[var(--color-text-muted)]" role="status">
+          LOADING SCRIPT INDEX...
+        </div>
+      ) : cards.length === 0 ? (
+        <SignalEmptyState
+          symbol="code"
+          title="还没有自动化脚本"
+          description="新建一套脚本，或从本地目录、文件与 Git 仓库导入。"
+          action={(
+            <div className="flex flex-wrap justify-center gap-2">
+              <Button size="sm" onClick={onCreate}>
+                <PlusSquare className="h-4 w-4" aria-hidden="true" />
+                新建脚本
               </Button>
-              <Button
-                size="sm"
-                variant="secondary"
-                onClick={() => onImport()}
-              >
-                <Upload className="h-4 w-4" />
-                导入
+              <Button size="sm" variant="secondary" onClick={onImport}>
+                <Upload className="h-4 w-4" aria-hidden="true" />
+                导入脚本
               </Button>
             </div>
-          </div>
-        ) : (
-          <div
-            className="grid items-stretch gap-3"
-            style={{
-              gridTemplateColumns:
-                "repeat(auto-fit, minmax(min(100%, max(458px, calc((100% - 24px) / 3))), 1fr))",
-            }}
-          >
-            {cards.map((card) => {
-              const scriptId = card.scriptId;
-              const onOpen = scriptId ? () => onOpenScript(scriptId) : undefined;
-              const script = scriptId ? scriptMap.get(scriptId) : undefined;
-              const publicAPIEnabled = script
-                ? resolveAutomationScriptPublicAPIConfig(script).enabled
-                : false;
-              const runScriptAction = script && script.type !== "launch-api"
-                ? () => onRunAutomationScript(script)
-                : undefined;
-              const onRunAPI = script
-                ? () =>
-                    onOpenPublicApi(script, {
-                      focusTest: publicAPIEnabled,
-                    })
-                : undefined;
+          )}
+        />
+      ) : (
+        <div className="grid items-stretch gap-3 p-3 md:p-4 xl:grid-cols-2 2xl:grid-cols-3">
+          {cards.map((card) => {
+            const scriptId = card.scriptId;
+            const onOpen = scriptId ? () => onOpenScript(scriptId) : undefined;
+            const script = scriptId ? scriptMap.get(scriptId) : undefined;
+            const publicAPIEnabled = script
+              ? resolveAutomationScriptPublicAPIConfig(script).enabled
+              : false;
+            const runScriptAction = script && script.type !== "launch-api"
+              ? () => onRunAutomationScript(script)
+              : undefined;
+            const onRunAPI = script
+              ? () => onOpenPublicApi(script, { focusTest: publicAPIEnabled })
+              : undefined;
 
-              return (
-                <div key={card.key} className="min-w-0">
-                  <AutomationScriptSummaryCard
-                    card={card}
-                    onOpen={onOpen}
-                    onRunScript={runScriptAction}
-                    onRunAPI={onRunAPI}
-                    selected={scriptId ? selectedScriptIdSet.has(scriptId) : false}
-                    onSelectedChange={
-                      scriptId
-                        ? (selected) => onToggleScriptSelection(scriptId, selected)
-                        : undefined
-                    }
-                  />
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </section>
+            return (
+              <AutomationScriptSummaryCard
+                key={card.key}
+                card={card}
+                onOpen={onOpen}
+                onRunScript={runScriptAction}
+                onRunAPI={onRunAPI}
+                selected={scriptId ? selectedScriptIdSet.has(scriptId) : false}
+                onSelectedChange={scriptId ? (selected) => onToggleScriptSelection(scriptId, selected) : undefined}
+              />
+            );
+          })}
+        </div>
+      )}
+    </TerminalPanel>
   );
-
 }

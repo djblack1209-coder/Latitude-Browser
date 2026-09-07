@@ -6,6 +6,7 @@ const (
 	profileProxyBridgeEngineXray    = "xray"
 	profileProxyBridgeEngineSingBox = "sing-box"
 	profileProxyBridgeEngineMihomo  = "mihomo"
+	profileProxyBridgeEngineTor     = "tor"
 )
 
 type profileProxyBridgeRef struct {
@@ -68,6 +69,10 @@ func (a *App) releaseProxyBridgeRef(ref profileProxyBridgeRef) {
 	case profileProxyBridgeEngineMihomo:
 		if a.clashMgr != nil {
 			a.clashMgr.ReleaseNodeBridge(ref.Key)
+		}
+	case profileProxyBridgeEngineTor:
+		if a.torMgr != nil {
+			a.torMgr.ReleaseProfile(ref.Key)
 		}
 	}
 }

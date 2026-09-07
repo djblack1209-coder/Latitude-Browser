@@ -1,18 +1,138 @@
-import { useEffect, useRef, useState } from 'react'
-import { RefreshCw, Trash2 } from 'lucide-react'
-import { Badge, Button, Card } from '../../../shared/components'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { ChevronDown, RefreshCw, RotateCcw, Trash2 } from 'lucide-react'
+import { useSearchParams } from 'react-router-dom'
+import { Badge, Button, toast } from '../../../shared/components'
+import { SignalEmptyState, TelemetryStrip, TerminalPanel, WorkspaceHeader } from '../../../shared/components/SignalPrimitives'
+import './network-pages.css'
 
 interface LogEntry {
   time: string
   level: string
   component: string
   message: string
-  fields?: Record<string, any>
+  method?: string
+  durationMs?: number
+  fields?: Record<string, unknown>
 }
 
-const LEVELS = ['ALL', 'DEBUG', 'INFO', 'WARN', 'ERROR']
+type LogView = 'all' | 'network' | 'runs'
+type QuickFilter = 'ALL' | 'ERRORS' | 'SLOW' | 'FRONTEND' | 'BACKEND'
 
-const levelVariant = (level: string) => {
+const LEVELS = ['ALL', 'DEBUG', 'INFO', 'WARN', 'ERROR'] as const
+const SENSITIVE_FIELD_NAMES = new Set(['password', 'token', 'secret'])
+const NETWORK_COMPONENTS = new Set(['Xray', 'SingBox', 'Mihomo', 'Clash', 'SpeedTest', 'ProxyHTTPClient', 'ProxyCore', 'Tor'])
+const RUN_COMPONENTS = new Set(['Automation', 'LaunchServer', 'Browser'])
+const NETWORK_METHOD_PREFIXES = [
+  'BrowserProxy',
+  'GetProxyCheckSettings',
+  'SaveBrowserProxies',
+  'SaveProxyCheckSettings',
+  'TestProxy',
+  'ValidateProxyConfig',
+  'GetTorStatus',
+  'SetTorRuntimePath',
+  'BrowserInstanceStart',
+  'BrowserInstanceStop',
+  'BrowserInstanceRestart',
+]
+const RUN_METHOD_PREFIXES = [
+  'AutomationDemoLaunchProfile',
+  'AutomationProbeSystemNode',
+  'AutomationRuntimeSelfCheck',
+  'AutomationScriptRun',
+  'GetAutomationState',
+  'GetLaunchServerInfo',
+  'InstallAutomationRuntime',
+  'SaveAutomationRuntimeSettings',
+  'SaveAutomationSettings',
+  'SaveLaunchServerSettings',
+  'StartInstanceWithParams',
+  'BrowserInstanceStart',
+  'BrowserInstanceStop',
+  'BrowserInstanceRestart',
+]
+
+const VIEW_CONFIG: Record<LogView, { eyebrow: string; title: string; description: string; terminalTitle: string; emptyTitle: string }> = {
+  all: {
+    eyebrow: 'RUNTIME / LOGS',
+    title: '日志与诊断',
+    description: '查看内存缓冲中的运行日志。',
+    terminalTitle: '应用内存缓冲 · 全部日志',
+    emptyTitle: '当前没有应用日志',
+  },
+  network: {
+    eyebrow: 'NETWORK / DIAGNOSTICS',
+    title: '网络诊断日志',
+    description: '筛选代理组件日志；不代表泄漏检测结果。',
+    terminalTitle: '应用内存缓冲 · 网络类别',
+    emptyTitle: '当前没有网络类别日志',
+  },
+  runs: {
+    eyebrow: 'AUTOMATION / RUNS',
+    title: '运行相关日志',
+    description: '筛选自动化与实例运行日志。',
+    terminalTitle: '应用内存缓冲 · 运行类别',
+    emptyTitle: '当前没有运行类别日志',
+  },
+}
+
+function resolveLogView(value: string | null): LogView {
+  if (value === 'network' || value === 'runs') return value
+  return 'all'
+}
+
+function getMethod(entry: LogEntry) {
+  return String(entry.method || entry.fields?.method || '')
+}
+
+function getDuration(entry: LogEntry) {
+  const value = Number(entry.durationMs ?? entry.fields?.duration_ms ?? entry.fields?.durationMs ?? 0)
+  return Number.isFinite(value) ? value : 0
+}
+
+function hasMethodPrefix(method: string, prefixes: string[]) {
+  return prefixes.some(prefix => method.startsWith(prefix))
+}
+
+function belongsToView(entry: LogEntry, view: LogView) {
+  if (view === 'all') return true
+  const method = getMethod(entry)
+  if (view === 'network') {
+    return NETWORK_COMPONENTS.has(entry.component) || hasMethodPrefix(method, NETWORK_METHOD_PREFIXES)
+  }
+  return RUN_COMPONENTS.has(entry.component) || hasMethodPrefix(method, RUN_METHOD_PREFIXES)
+}
+
+function redactKnownSensitiveFields(value: unknown, fieldName = ''): unknown {
+  if (SENSITIVE_FIELD_NAMES.has(fieldName.toLowerCase())) return '[REDACTED]'
+  if (Array.isArray(value)) return value.map(item => redactKnownSensitiveFields(item))
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(
+      Object.entries(value as Record<string, unknown>).map(([key, item]) => [key, redactKnownSensitiveFields(item, key)]),
+    )
+  }
+  return value
+}
+
+function serializeFields(fields?: Record<string, unknown>) {
+  if (!fields || Object.keys(fields).length === 0) return ''
+  try {
+    return JSON.stringify(redactKnownSensitiveFields(fields))
+  } catch {
+    return '[字段无法序列化]'
+  }
+}
+
+function formatFields(fields?: Record<string, unknown>) {
+  const redacted = redactKnownSensitiveFields(fields || {}) as Record<string, unknown>
+  try {
+    return JSON.stringify(redacted, null, 2)
+  } catch {
+    return '[字段无法序列化]'
+  }
+}
+
+function levelVariant(level: string): 'default' | 'info' | 'warning' | 'error' {
   switch (level) {
     case 'ERROR': return 'error'
     case 'WARN': return 'warning'
@@ -21,46 +141,50 @@ const levelVariant = (level: string) => {
   }
 }
 
-const levelColor = (level: string) => {
-  switch (level) {
-    case 'ERROR': return 'text-[var(--color-error)]'
-    case 'WARN': return 'text-[var(--color-warning)]'
-    case 'DEBUG': return 'text-[var(--color-text-muted)]'
-    default: return 'text-[var(--color-text-secondary)]'
-  }
-}
-
 async function fetchLogs(): Promise<LogEntry[]> {
-  try {
-    if (!(globalThis as any).go?.main?.App) return []
-    const bindings: any = await import('../../../wailsjs/go/main/App')
-    return (await bindings.GetAppLogs()) || []
-  } catch { return [] }
+  const app = (globalThis as any).go?.main?.App
+  if (!app || typeof app.GetAppLogs !== 'function') {
+    throw new Error('日志桥接尚未就绪')
+  }
+  const bindings: any = await import('../../../wailsjs/go/main/App')
+  const entries = await bindings.GetAppLogs()
+  if (!Array.isArray(entries)) throw new Error('日志数据格式异常')
+  return entries
 }
 
 async function clearLogs() {
-  try {
-    if (!(globalThis as any).go?.main?.App) return
-    const bindings: any = await import('../../../wailsjs/go/main/App')
-    await bindings.ClearAppLogs()
-  } catch { /* ignore */ }
+  const app = (globalThis as any).go?.main?.App
+  if (!app || typeof app.ClearAppLogs !== 'function') {
+    throw new Error('日志桥接尚未就绪')
+  }
+  const bindings: any = await import('../../../wailsjs/go/main/App')
+  await bindings.ClearAppLogs()
 }
 
 export function BrowserLogsPage() {
+  const [searchParams] = useSearchParams()
+  const view = resolveLogView(searchParams.get('view'))
+  const viewConfig = VIEW_CONFIG[view]
   const [logs, setLogs] = useState<LogEntry[]>([])
   const [levelFilter, setLevelFilter] = useState('ALL')
   const [componentFilter, setComponentFilter] = useState('ALL')
   const [methodFilter, setMethodFilter] = useState('ALL')
   const [keyword, setKeyword] = useState('')
   const [fieldKeyword, setFieldKeyword] = useState('')
-  const [quickFilter, setQuickFilter] = useState('ALL')
+  const [quickFilter, setQuickFilter] = useState<QuickFilter>('ALL')
   const [durationMin, setDurationMin] = useState('')
   const [timeFrom, setTimeFrom] = useState('')
   const [timeTo, setTimeTo] = useState('')
   const [autoScroll, setAutoScroll] = useState(false)
+  const [autoRefresh, setAutoRefresh] = useState(true)
   const [loading, setLoading] = useState(false)
+  const [clearing, setClearing] = useState(false)
+  const [readError, setReadError] = useState('')
+  const [lastLoadedAt, setLastLoadedAt] = useState<Date | null>(null)
   const logContainerRef = useRef<HTMLDivElement>(null)
   const initialScrollDoneRef = useRef(false)
+  const latestLoadIdRef = useRef(0)
+  const manualLoadCountRef = useRef(0)
 
   const scrollLogsToBottom = (behavior: ScrollBehavior = 'auto') => {
     requestAnimationFrame(() => {
@@ -70,38 +194,63 @@ export function BrowserLogsPage() {
     })
   }
 
-  const load = async () => {
-    setLoading(true)
+  const load = useCallback(async (silent = false) => {
+    const requestId = ++latestLoadIdRef.current
+    if (!silent) {
+      manualLoadCountRef.current += 1
+      setLoading(true)
+    }
     try {
       const data = await fetchLogs()
+      if (requestId !== latestLoadIdRef.current) return
       setLogs(data)
+      setReadError('')
+      setLastLoadedAt(new Date())
+    } catch (error) {
+      if (requestId !== latestLoadIdRef.current) return
+      setReadError(error instanceof Error ? error.message : '读取日志失败')
     } finally {
-      setLoading(false)
+      if (!silent) {
+        manualLoadCountRef.current = Math.max(0, manualLoadCountRef.current - 1)
+        if (manualLoadCountRef.current === 0) setLoading(false)
+      }
     }
-  }
-
-  useEffect(() => {
-    load()
-    const timer = setInterval(load, 3000)
-    return () => clearInterval(timer)
   }, [])
 
   useEffect(() => {
-    if (autoScroll) {
-      scrollLogsToBottom('smooth')
-    }
-  }, [logs, autoScroll])
+    void load()
+  }, [load])
 
-  const handleClear = async () => {
-    await clearLogs()
-    setLogs([])
-  }
+  useEffect(() => {
+    if (!autoRefresh) return
+    const timer = window.setInterval(() => void load(true), 3000)
+    return () => window.clearInterval(timer)
+  }, [autoRefresh, load])
 
-  const filtered = logs.filter(entry => {
+  useEffect(() => {
+    setComponentFilter('ALL')
+    setMethodFilter('ALL')
+    setQuickFilter('ALL')
+    initialScrollDoneRef.current = false
+  }, [view])
+
+  const viewRows = useMemo(() => logs
+    .filter(entry => belongsToView(entry, view))
+    .map((entry, index) => ({
+      entry,
+      line: index + 1,
+      method: getMethod(entry),
+      duration: getDuration(entry),
+      serializedFields: serializeFields(entry.fields),
+    })), [logs, view])
+
+  const components = useMemo(() => Array.from(new Set(viewRows.map(row => row.entry.component).filter(Boolean))).sort(), [viewRows])
+  const methods = useMemo(() => Array.from(new Set(viewRows.map(row => row.method).filter(Boolean))).sort(), [viewRows])
+
+  const filteredRows = useMemo(() => viewRows.filter(row => {
+    const { entry, method, duration, serializedFields } = row
     if (levelFilter !== 'ALL' && entry.level !== levelFilter) return false
     if (componentFilter !== 'ALL' && entry.component !== componentFilter) return false
-    const method = String(entry.fields?.method || '')
-    const duration = Number(entry.fields?.duration_ms || entry.fields?.durationMs || 0)
     if (methodFilter !== 'ALL' && method !== methodFilter) return false
     if (quickFilter === 'ERRORS' && entry.level !== 'ERROR') return false
     if (quickFilter === 'SLOW' && duration < 1000) return false
@@ -110,24 +259,44 @@ export function BrowserLogsPage() {
     if (durationMin && duration < Number(durationMin)) return false
     if (timeFrom && entry.time < timeFrom.replace('T', ' ')) return false
     if (timeTo && entry.time > timeTo.replace('T', ' ')) return false
-    const fieldText = entry.fields ? JSON.stringify(entry.fields).toLowerCase() : ''
-    const q = keyword.trim().toLowerCase()
-    if (q && !entry.message.toLowerCase().includes(q) &&
-        !entry.component.toLowerCase().includes(q) &&
-        !method.toLowerCase().includes(q) &&
-        !fieldText.includes(q)) return false
-    const fq = fieldKeyword.trim().toLowerCase()
-    if (fq && !fieldText.includes(fq)) return false
+    const fieldText = serializedFields.toLowerCase()
+    const query = keyword.trim().toLowerCase()
+    if (query && !entry.message.toLowerCase().includes(query) &&
+        !entry.component.toLowerCase().includes(query) &&
+        !method.toLowerCase().includes(query) &&
+        !fieldText.includes(query)) return false
+    const fieldQuery = fieldKeyword.trim().toLowerCase()
+    if (fieldQuery && !fieldText.includes(fieldQuery)) return false
     return true
-  })
+  }), [componentFilter, durationMin, fieldKeyword, keyword, levelFilter, methodFilter, quickFilter, timeFrom, timeTo, viewRows])
+
   useEffect(() => {
-    if (initialScrollDoneRef.current || loading || logs.length === 0) return
+    if (autoScroll) scrollLogsToBottom('auto')
+  }, [autoScroll, filteredRows.length])
+
+  useEffect(() => {
+    if (initialScrollDoneRef.current || loading || filteredRows.length === 0) return
     initialScrollDoneRef.current = true
     scrollLogsToBottom('auto')
-  }, [filtered.length, loading, logs.length])
+  }, [filteredRows.length, loading])
 
-  const components = Array.from(new Set(logs.map(entry => entry.component).filter(Boolean))).sort()
-  const methods = Array.from(new Set(logs.map(entry => String(entry.fields?.method || '')).filter(Boolean))).sort()
+  const handleClear = async () => {
+    setClearing(true)
+    try {
+      await clearLogs()
+      latestLoadIdRef.current += 1
+      setLogs([])
+      setReadError('')
+      initialScrollDoneRef.current = false
+      toast.success('内存日志已清空')
+    } catch (error) {
+      const message = error instanceof Error ? error.message : '清空日志失败'
+      toast.error(`${message}，已保留当前记录`)
+    } finally {
+      setClearing(false)
+    }
+  }
+
   const resetFilters = () => {
     setLevelFilter('ALL')
     setComponentFilter('ALL')
@@ -140,178 +309,245 @@ export function BrowserLogsPage() {
     setTimeTo('')
   }
 
+  const advancedFilterCount = [componentFilter !== 'ALL', methodFilter !== 'ALL', !!fieldKeyword, !!durationMin, !!timeFrom, !!timeTo]
+    .filter(Boolean).length
+  const errors = viewRows.filter(row => row.entry.level === 'ERROR').length
+  const warnings = viewRows.filter(row => row.entry.level === 'WARN').length
+  const lastReadLabel = lastLoadedAt
+    ? lastLoadedAt.toLocaleTimeString('zh-CN', { hour12: false })
+    : '尚未成功读取'
+
   return (
-    <div className="apple-page space-y-4">
-      <div className="apple-page-header flex flex-wrap justify-between">
-        <div>
-          <h1 className="text-xl font-semibold text-[var(--color-text-primary)]">日志查看</h1>
-          <p className="text-sm text-[var(--color-text-muted)] mt-1">应用运行日志，每 3 秒自动刷新</p>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="secondary" size="sm" onClick={load} loading={loading}>
-            <RefreshCw className="w-4 h-4" />刷新
-          </Button>
-          <Button variant="secondary" size="sm" onClick={handleClear}>
-            <Trash2 className="w-4 h-4" />清空
-          </Button>
-        </div>
-      </div>
+    <div className="network-page network-logs-page space-y-4">
+      <WorkspaceHeader
+        eyebrow={viewConfig.eyebrow}
+        title={viewConfig.title}
+        description={viewConfig.description}
+        className="network-workspace-header"
+        actions={(
+          <>
+            <label className="network-auto-refresh-control">
+              <input
+                type="checkbox"
+                checked={autoRefresh}
+                onChange={event => setAutoRefresh(event.target.checked)}
+                aria-label="自动刷新日志"
+              />
+              <span className="network-auto-refresh-track" aria-hidden="true"><span /></span>
+              <span className="network-auto-refresh-copy">
+                <strong>自动刷新</strong>
+                <small>{autoRefresh ? '每 3 秒' : '已暂停'}</small>
+              </span>
+            </label>
+            <Button variant="secondary" size="sm" onClick={() => void load()} loading={loading} className="gap-1.5">
+              <RefreshCw className="h-3.5 w-3.5" aria-hidden="true" />
+              刷新
+            </Button>
+            <Button variant="secondary" size="sm" onClick={() => void handleClear()} loading={clearing} className="gap-1.5">
+              <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
+              清空
+            </Button>
+          </>
+        )}
+      >
+        <TelemetryStrip
+          className="network-telemetry-strip"
+          items={[
+            {
+              label: '当前类别',
+              value: viewRows.length,
+              detail: `内存缓冲共 ${logs.length} 条`,
+              tone: viewRows.length > 0 ? 'accent' : 'neutral',
+            },
+            {
+              label: '筛选显示',
+              value: filteredRows.length,
+              detail: filteredRows.length === viewRows.length ? '未排除类别内记录' : `已排除 ${viewRows.length - filteredRows.length} 条`,
+            },
+            {
+              label: '错误',
+              value: errors,
+              detail: 'ERROR 级别记录',
+              tone: errors > 0 ? 'danger' : 'neutral',
+            },
+            {
+              label: '警告',
+              value: warnings,
+              detail: 'WARN 级别记录',
+              tone: warnings > 0 ? 'warning' : 'neutral',
+            },
+          ]}
+        />
+      </WorkspaceHeader>
 
-      <div className="apple-control-strip border border-[var(--color-border-default)] bg-[var(--color-bg-surface)] p-3">
-        <div className="flex flex-wrap items-center gap-2">
-          {LEVELS.map(l => (
-            <button
-              key={l}
-              onClick={() => setLevelFilter(l)}
-              className={`px-2.5 py-1 text-xs rounded-md transition-colors ${
-                levelFilter === l
-                  ? 'bg-[var(--color-accent)] text-white'
-                  : 'bg-[var(--color-bg-muted)] text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]'
-              }`}
-            >
-              {l}
-            </button>
-          ))}
-
-          {[
-            ['ALL', '全部'],
-            ['ERRORS', '只看异常'],
-            ['SLOW', '慢调用'],
-            ['FRONTEND', '前端操作'],
-            ['BACKEND', '后端组件'],
-          ].map(([value, label]) => (
-            <button
-              key={value}
-              onClick={() => setQuickFilter(value)}
-              className={`px-2.5 py-1 text-xs rounded-md transition-colors ${
-                quickFilter === value
-                  ? 'bg-[var(--color-text-primary)] text-white'
-                  : 'bg-[var(--color-bg-muted)] text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]'
-              }`}
-            >
-              {label}
-            </button>
-          ))}
-
-          <span className="ml-auto text-xs text-[var(--color-text-muted)]">
-            {filtered.length} / {logs.length} 条
-          </span>
-        </div>
-
-        <div className="mt-3 grid grid-cols-1 gap-2 lg:grid-cols-6">
-          <input
-            value={keyword}
-            onChange={e => setKeyword(e.target.value)}
-            placeholder="搜索消息 / 组件 / 方法"
-            className="px-3 py-1.5 text-sm rounded-md border border-[var(--color-border-default)] bg-[var(--color-bg-secondary)] text-[var(--color-text-primary)] focus:outline-none focus:ring-1 focus:ring-[var(--color-accent)] lg:col-span-2"
-          />
-          <input
-            value={fieldKeyword}
-            onChange={e => setFieldKeyword(e.target.value)}
-            placeholder="搜索字段"
-            className="px-3 py-1.5 text-sm rounded-md border border-[var(--color-border-default)] bg-[var(--color-bg-secondary)] text-[var(--color-text-primary)] focus:outline-none focus:ring-1 focus:ring-[var(--color-accent)]"
-          />
-          <select
-            value={componentFilter}
-            onChange={e => setComponentFilter(e.target.value)}
-            className="px-3 py-1.5 text-sm rounded-md border border-[var(--color-border-default)] bg-[var(--color-bg-secondary)] text-[var(--color-text-primary)] focus:outline-none focus:ring-1 focus:ring-[var(--color-accent)]"
-          >
-            <option value="ALL">全部组件</option>
-            {components.map(component => (
-              <option key={component} value={component}>{component}</option>
+      <section className="network-log-controls" aria-label="日志筛选">
+        <div className="network-log-filter-row">
+          <div className="network-filter-buttons" aria-label="按日志级别筛选">
+            {LEVELS.map(level => (
+              <button
+                type="button"
+                key={level}
+                onClick={() => setLevelFilter(level)}
+                aria-pressed={levelFilter === level}
+                data-active={levelFilter === level ? 'true' : 'false'}
+              >
+                {level}
+              </button>
             ))}
-          </select>
-          <select
-            value={methodFilter}
-            onChange={e => setMethodFilter(e.target.value)}
-            className="px-3 py-1.5 text-sm rounded-md border border-[var(--color-border-default)] bg-[var(--color-bg-secondary)] text-[var(--color-text-primary)] focus:outline-none focus:ring-1 focus:ring-[var(--color-accent)]"
-          >
-            <option value="ALL">全部方法</option>
-            {methods.map(method => (
-              <option key={method} value={method}>{method}</option>
+          </div>
+          <div className="network-filter-buttons network-quick-filters" aria-label="快速筛选">
+            {([
+              ['ALL', '全部'],
+              ['ERRORS', '只看异常'],
+              ['SLOW', '慢调用'],
+              ['FRONTEND', '前端操作'],
+              ['BACKEND', '后端组件'],
+            ] as Array<[QuickFilter, string]>).map(([value, label]) => (
+              <button
+                type="button"
+                key={value}
+                onClick={() => setQuickFilter(value)}
+                aria-pressed={quickFilter === value}
+                data-active={quickFilter === value ? 'true' : 'false'}
+              >
+                {label}
+              </button>
             ))}
-          </select>
-          <input
-            type="number"
-            min="0"
-            value={durationMin}
-            onChange={e => setDurationMin(e.target.value)}
-            placeholder="最小耗时 ms"
-            className="px-3 py-1.5 text-sm rounded-md border border-[var(--color-border-default)] bg-[var(--color-bg-secondary)] text-[var(--color-text-primary)] focus:outline-none focus:ring-1 focus:ring-[var(--color-accent)]"
-          />
+          </div>
+          <span className="network-log-count">{filteredRows.length} / {viewRows.length} 条</span>
         </div>
 
-        <div className="mt-2 flex flex-wrap items-center gap-2">
-          <input
-            type="datetime-local"
-            value={timeFrom}
-            onChange={e => setTimeFrom(e.target.value)}
-            className="px-3 py-1.5 text-sm rounded-md border border-[var(--color-border-default)] bg-[var(--color-bg-secondary)] text-[var(--color-text-primary)] focus:outline-none focus:ring-1 focus:ring-[var(--color-accent)]"
-          />
-          <span className="text-xs text-[var(--color-text-muted)]">到</span>
-          <input
-            type="datetime-local"
-            value={timeTo}
-            onChange={e => setTimeTo(e.target.value)}
-            className="px-3 py-1.5 text-sm rounded-md border border-[var(--color-border-default)] bg-[var(--color-bg-secondary)] text-[var(--color-text-primary)] focus:outline-none focus:ring-1 focus:ring-[var(--color-accent)]"
-          />
-          <label className="ml-auto flex items-center gap-1.5 text-xs text-[var(--color-text-muted)] cursor-pointer select-none">
+        <div className="network-log-search-row">
+          <label className="network-field network-log-search">
+            <span>搜索</span>
             <input
-              type="checkbox"
-              checked={autoScroll}
-              onChange={e => setAutoScroll(e.target.checked)}
-              className="w-3.5 h-3.5"
+              value={keyword}
+              onChange={event => setKeyword(event.target.value)}
+              placeholder="消息、组件、方法或字段"
             />
-            自动滚动
           </label>
-          <Button variant="secondary" size="sm" onClick={resetFilters}>重置筛选</Button>
+          <label className="network-auto-scroll-control">
+            <input type="checkbox" checked={autoScroll} onChange={event => setAutoScroll(event.target.checked)} />
+            <span>跟随最新日志</span>
+          </label>
+          <Button variant="ghost" size="sm" onClick={resetFilters} className="gap-1.5">
+            <RotateCcw className="h-3.5 w-3.5" aria-hidden="true" />
+            重置筛选
+          </Button>
         </div>
-      </div>
 
-      {/* 日志列表 */}
-      <Card padding="none" className="apple-section">
-        <div
-          ref={logContainerRef}
-          className="overflow-auto font-mono text-xs"
-          style={{ maxHeight: 'calc(100vh - 280px)' }}
-        >
-          {filtered.length === 0 ? (
-            <div className="py-16 text-center text-sm text-[var(--color-text-muted)]">暂无日志</div>
+        <details className="network-advanced-filters">
+          <summary>
+            <span><ChevronDown className="h-3.5 w-3.5" aria-hidden="true" />高级筛选</span>
+            <span>{advancedFilterCount > 0 ? `${advancedFilterCount} 项已启用` : '按组件、方法、字段、耗时与时间过滤'}</span>
+          </summary>
+          <div className="network-advanced-filter-grid">
+            <label className="network-field">
+              <span>组件</span>
+              <select value={componentFilter} onChange={event => setComponentFilter(event.target.value)}>
+                <option value="ALL">全部组件</option>
+                {components.map(component => <option key={component} value={component}>{component}</option>)}
+              </select>
+            </label>
+            <label className="network-field">
+              <span>方法</span>
+              <select value={methodFilter} onChange={event => setMethodFilter(event.target.value)}>
+                <option value="ALL">全部方法</option>
+                {methods.map(method => <option key={method} value={method}>{method}</option>)}
+              </select>
+            </label>
+            <label className="network-field">
+              <span>字段内容</span>
+              <input value={fieldKeyword} onChange={event => setFieldKeyword(event.target.value)} placeholder="搜索结构化字段" />
+            </label>
+            <label className="network-field">
+              <span>最小耗时</span>
+              <input type="number" min="0" value={durationMin} onChange={event => setDurationMin(event.target.value)} placeholder="毫秒" />
+            </label>
+            <label className="network-field">
+              <span>开始时间</span>
+              <input type="datetime-local" value={timeFrom} onChange={event => setTimeFrom(event.target.value)} />
+            </label>
+            <label className="network-field">
+              <span>结束时间</span>
+              <input type="datetime-local" value={timeTo} onChange={event => setTimeTo(event.target.value)} />
+            </label>
+          </div>
+        </details>
+      </section>
+
+      <TerminalPanel
+        title={viewConfig.terminalTitle}
+        className="network-log-terminal"
+        meta={<span>{readError ? '读取失败，保留上次结果' : `最近读取 ${lastReadLabel}`}</span>}
+      >
+        {readError && (
+          <div className="network-log-error" role="alert">
+            <strong>日志读取失败</strong>
+            <span>{readError}。{logs.length > 0 ? '下方仍显示最后一次成功读取的记录。' : '当前没有可显示的缓存记录。'}</span>
+          </div>
+        )}
+        <div ref={logContainerRef} className="network-log-viewport">
+          {loading && logs.length === 0 ? (
+            <SignalEmptyState symbol="logs" title="正在读取日志" description="等待应用内存缓冲返回记录。" />
+          ) : readError && logs.length === 0 ? (
+            <SignalEmptyState
+              symbol="logs"
+              title="无法读取日志"
+              description={readError}
+              action={<Button size="sm" variant="secondary" onClick={() => void load()}>重新读取</Button>}
+            />
+          ) : filteredRows.length === 0 ? (
+            <SignalEmptyState
+              symbol="logs"
+              title={viewRows.length === 0 ? viewConfig.emptyTitle : '没有匹配当前筛选的日志'}
+              description={viewRows.length === 0 ? '新的匹配记录写入内存缓冲后会出现在这里。' : '调整级别、快速筛选或高级条件后再试。'}
+              action={viewRows.length > 0 ? <Button size="sm" variant="secondary" onClick={resetFilters}>清除筛选</Button> : undefined}
+            />
           ) : (
-            <table className="min-w-full">
-              <thead className="sticky top-0 z-10 bg-[var(--color-bg-muted)]">
+            <table className="network-log-table">
+              <thead>
                 <tr>
-                  <th className="px-3 py-2 text-left text-[var(--color-text-muted)] font-semibold w-40">时间</th>
-                  <th className="px-3 py-2 text-left text-[var(--color-text-muted)] font-semibold w-16">级别</th>
-                  <th className="px-3 py-2 text-left text-[var(--color-text-muted)] font-semibold w-28">组件</th>
-                  <th className="px-3 py-2 text-left text-[var(--color-text-muted)] font-semibold">消息</th>
+                  <th aria-label="行号">#</th>
+                  <th>时间</th>
+                  <th>级别</th>
+                  <th>组件</th>
+                  <th>消息</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[var(--color-border-muted)]">
-                {filtered.map((entry, i) => (
-                  <tr key={i} className="hover:bg-[var(--color-bg-muted)]/40">
-                    <td className="px-3 py-1.5 text-[var(--color-text-muted)] whitespace-nowrap">{entry.time}</td>
-                    <td className="px-3 py-1.5">
-                      <Badge variant={levelVariant(entry.level)} className="text-[10px]">{entry.level}</Badge>
-                    </td>
-                    <td className="px-3 py-1.5 text-[var(--color-text-muted)] truncate max-w-[112px]" title={entry.component}>
-                      {entry.component}
-                    </td>
-                    <td className={`px-3 py-1.5 ${levelColor(entry.level)}`}>
-                      <span>{entry.message}</span>
-                      {entry.fields && Object.keys(entry.fields).length > 0 && (
-                        <span className="ml-2 text-[var(--color-text-muted)]">
-                          {Object.entries(entry.fields).map(([k, v]) => `${k}=${JSON.stringify(v)}`).join(' ')}
-                        </span>
-                      )}
-                    </td>
-                  </tr>
-                ))}
+              <tbody>
+                {filteredRows.map(({ entry, line, method, duration }) => {
+                  const fieldCount = entry.fields ? Object.keys(entry.fields).length : 0
+                  return (
+                    <tr key={`${entry.time}-${entry.component}-${line}`} data-level={entry.level}>
+                      <td className="network-log-line">{String(line).padStart(3, '0')}</td>
+                      <td className="network-log-time">{entry.time}</td>
+                      <td><Badge variant={levelVariant(entry.level)} className="network-log-level">{entry.level}</Badge></td>
+                      <td className="network-log-component" title={entry.component}>{entry.component || 'Unknown'}</td>
+                      <td className="network-log-message">
+                        <div>
+                          <span>{entry.message}</span>
+                          {(method || duration > 0) && (
+                            <span className="network-log-inline-meta">
+                              {method && `method=${method}`}{method && duration > 0 ? ' ' : ''}{duration > 0 && `duration=${duration}ms`}
+                            </span>
+                          )}
+                        </div>
+                        {fieldCount > 0 && (
+                          <details className="network-log-fields">
+                            <summary>结构化字段 {fieldCount}</summary>
+                            <pre>{formatFields(entry.fields)}</pre>
+                          </details>
+                        )}
+                      </td>
+                    </tr>
+                  )
+                })}
               </tbody>
             </table>
           )}
         </div>
-      </Card>
+      </TerminalPanel>
     </div>
   )
 }

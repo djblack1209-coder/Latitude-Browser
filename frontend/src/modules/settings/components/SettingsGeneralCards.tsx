@@ -1,4 +1,4 @@
-﻿import { Card, FormItem, Input, Select, Switch } from '../../../shared/components'
+import { Card, FormItem, Input, Select, Switch } from '../../../shared/components'
 import type { AppSettings } from '../types'
 
 type SettingsChangeHandler = <K extends keyof AppSettings>(key: K, value: AppSettings[K]) => void
@@ -11,11 +11,11 @@ interface SettingsCardsProps {
 export function SettingsBasicFeatureCards({ settings, onChange }: SettingsCardsProps) {
   return (
     <>
-      <Card title="基础设置" subtitle="应用的基本信息配置" className="apple-section">
+      <Card title="工作区偏好" className="apple-section">
         <div className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <FormItem label="应用名称" required>
-              <Input value={settings.appName} onChange={e => onChange('appName', e.target.value)} placeholder="请输入应用名称" />
+              <Input value="Latitude Browser" readOnly aria-describedby="product-name-note" /><p id="product-name-note" className="mt-1 text-[10px] text-[var(--color-text-muted)]">正式产品名称固定，不影响实例命名。</p>
             </FormItem>
             <FormItem label="语言">
               <Select
@@ -31,14 +31,14 @@ export function SettingsBasicFeatureCards({ settings, onChange }: SettingsCardsP
         </div>
       </Card>
 
-      <Card title="功能设置" subtitle="启用或禁用特定功能" className="apple-section">
+      <Card title="本地行为" className="apple-section">
         <div className="space-y-5">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-[var(--color-text-primary)]">启用通知</p>
               <p className="text-xs text-[var(--color-text-muted)] mt-0.5">接收系统通知和提醒</p>
             </div>
-            <Switch checked={settings.enableNotifications} onChange={v => onChange('enableNotifications', v)} />
+            <Switch aria-label="启用通知" checked={settings.enableNotifications} onChange={v => onChange('enableNotifications', v)} />
           </div>
           <div className="h-px bg-[var(--color-border-muted)]" />
           <div className="flex items-center justify-between">
@@ -46,7 +46,7 @@ export function SettingsBasicFeatureCards({ settings, onChange }: SettingsCardsP
               <p className="text-sm font-medium text-[var(--color-text-primary)]">自动保存</p>
               <p className="text-xs text-[var(--color-text-muted)] mt-0.5">自动保存编辑中的内容</p>
             </div>
-            <Switch checked={settings.enableAutoSave} onChange={v => onChange('enableAutoSave', v)} />
+            <Switch aria-label="自动保存" checked={settings.enableAutoSave} onChange={v => onChange('enableAutoSave', v)} />
           </div>
           {settings.enableAutoSave && (
             <div className="pl-4 border-l-2 border-[var(--color-border-muted)]">
@@ -68,7 +68,7 @@ export function SettingsBasicFeatureCards({ settings, onChange }: SettingsCardsP
               <p className="text-sm font-medium text-[var(--color-text-primary)]">启用缓存</p>
               <p className="text-xs text-[var(--color-text-muted)] mt-0.5">缓存数据以提高性能</p>
             </div>
-            <Switch checked={settings.cacheEnabled} onChange={v => onChange('cacheEnabled', v)} />
+            <Switch aria-label="启用缓存" checked={settings.cacheEnabled} onChange={v => onChange('cacheEnabled', v)} />
           </div>
         </div>
       </Card>
@@ -78,7 +78,7 @@ export function SettingsBasicFeatureCards({ settings, onChange }: SettingsCardsP
 
 export function SettingsAdvancedCard({ settings, onChange }: SettingsCardsProps) {
   return (
-    <Card title="高级设置" subtitle="高级配置选项" className="apple-section">
+    <Card title="资源与日志" className="apple-section">
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         <FormItem label="最大上传大小（MB）">
           <Input type="number" value={settings.maxUploadSize} onChange={e => onChange('maxUploadSize', parseInt(e.target.value) || 10)} min={1} max={100} />

@@ -30,7 +30,7 @@ export function Card({
   return (
     <div 
       className={clsx(
-        'bg-[var(--color-bg-surface)] rounded-md overflow-hidden',
+        'signal-panel bg-[var(--color-bg-surface)] rounded-md overflow-hidden',
         'border border-[var(--color-border-default)]',
         'transition-[border-color,box-shadow] duration-200',
         hover && 'hover:shadow-[var(--shadow-sm)] hover:border-[var(--color-border-strong)]',
@@ -38,10 +38,10 @@ export function Card({
       )}
     >
       {(title || actions) && (
-        <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--color-border-muted)]">
+        <div className="signal-panel-header flex items-center justify-between px-5 py-4 border-b border-[var(--color-border-muted)]">
           <div>
             {title && (
-              <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">
+              <h3 className="text-sm font-semibold tracking-[0.01em] text-[var(--color-text-primary)]">
                 {title}
               </h3>
             )}

@@ -19,7 +19,7 @@ export function LaunchResponsePanel({
   return (
     <Card
       title="最近响应"
-      subtitle="调试响应固定留在右侧，避免正文和操作区混在一起。"
+      subtitle="调试响应"
       className="bg-[var(--color-bg-elevated)] shadow-[var(--shadow-sm)]"
       actions={(
         <Button

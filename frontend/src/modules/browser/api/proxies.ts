@@ -1,4 +1,5 @@
-﻿import type { BrowserProxy, ProxyBridgeWarmupResult, ProxyCoreDownloadInfoResult, ProxyCoreStatusResult, ProxyIPHealthResult, ProxyLocationResolveResult, ProxySpeedTestResult } from '../types'
+import type { BrowserProxy, ProxyBridgeWarmupResult, ProxyConnectorPreflightResult, ProxyCoreDownloadInfoResult, ProxyCoreStatusResult, ProxyIPHealthResult, ProxyLocationResolveResult, ProxySpeedTestResult } from '../types'
+import { normalizeProxyCoreStatus } from '../utils/proxyCoreStatus'
 import { getBindings, getGoApp, getMockProxies, nowISOString, setMockProxies } from './runtime'
 
 export interface ClashImportURLResult {
@@ -9,8 +10,76 @@ export interface ClashImportURLResult {
   suggestedGroup?: string
 }
 
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms))
+const DESKTOP_BRIDGE_UNAVAILABLE_CODE = 'DESKTOP_BRIDGE_UNAVAILABLE'
+const DESKTOP_BRIDGE_UNAVAILABLE_MESSAGE = '当前为浏览器预览，桌面桥接不可用；请启动 Latitude Browser 桌面应用后重试'
+
+function unavailableSpeedResult(proxyId: string, operation = '测速'): ProxySpeedTestResult {
+  return {
+    proxyId,
+    ok: false,
+    latencyMs: 0,
+    engine: 'preview',
+    error: `${operation}需要 Latitude Browser 桌面桥接`,
+    stage: 'bridge_failed',
+    code: DESKTOP_BRIDGE_UNAVAILABLE_CODE,
+    targetUrl: '',
+    checkedAt: nowISOString(),
+    available: false,
+    diagnostic: {
+      proxyId,
+      stage: 'bridge_failed',
+      code: DESKTOP_BRIDGE_UNAVAILABLE_CODE,
+      message: DESKTOP_BRIDGE_UNAVAILABLE_MESSAGE,
+      error: DESKTOP_BRIDGE_UNAVAILABLE_MESSAGE,
+      engine: 'preview',
+      checkedAt: nowISOString(),
+      source: 'local',
+    },
+  }
+}
+
+function unavailableWarmupResult(proxyId: string): ProxyBridgeWarmupResult {
+  return {
+    proxyId,
+    ok: false,
+    engine: 'preview',
+    socksUrl: '',
+    latencyMs: 0,
+    error: DESKTOP_BRIDGE_UNAVAILABLE_MESSAGE,
+    stage: 'bridge_failed',
+    code: DESKTOP_BRIDGE_UNAVAILABLE_CODE,
+    attempted: 0,
+    available: false,
+  }
+}
+
+function unavailableIPHealthResult(proxyId: string): ProxyIPHealthResult {
+  const updatedAt = nowISOString()
+  return {
+    proxyId,
+    ok: false,
+    source: 'preview',
+    error: DESKTOP_BRIDGE_UNAVAILABLE_MESSAGE,
+    ip: '',
+    fraudScore: 0,
+    isResidential: false,
+    isBroadcast: false,
+    country: '',
+    region: '',
+    city: '',
+    asOrganization: '',
+    rawData: {
+      _stage: 'bridge_failed',
+      _code: DESKTOP_BRIDGE_UNAVAILABLE_CODE,
+      _message: DESKTOP_BRIDGE_UNAVAILABLE_MESSAGE,
+    },
+    updatedAt,
+    engine: 'preview',
+    stage: 'bridge_failed',
+    code: DESKTOP_BRIDGE_UNAVAILABLE_CODE,
+    targetUrl: '',
+    available: false,
+  }
 }
 
 export async function fetchBrowserProxies(): Promise<BrowserProxy[]> {
@@ -105,8 +174,7 @@ export async function testProxyConnectivity(proxyId: string, proxyConfig: string
   if (bindings?.TestProxyConnectivity) {
     return (await bindings.TestProxyConnectivity(proxyId, proxyConfig)) || { proxyId, ok: false, latencyMs: 0, engine: 'unknown', error: '调用失败' }
   }
-  await sleep(300 + Math.random() * 500)
-  return { proxyId, ok: true, latencyMs: Math.floor(100 + Math.random() * 200), engine: 'mock', error: '' }
+  return unavailableSpeedResult(proxyId, '连通性测试')
 }
 
 export async function testProxyRealConnectivity(proxyId: string): Promise<ProxySpeedTestResult> {
@@ -114,8 +182,7 @@ export async function testProxyRealConnectivity(proxyId: string): Promise<ProxyS
   if (bindings?.TestProxyRealConnectivity) {
     return (await bindings.TestProxyRealConnectivity(proxyId)) || { proxyId, ok: false, latencyMs: 0, engine: 'unknown', error: '调用失败' }
   }
-  await sleep(300 + Math.random() * 500)
-  return { proxyId, ok: true, latencyMs: Math.floor(100 + Math.random() * 400), engine: 'mock', error: '' }
+  return unavailableSpeedResult(proxyId, '真实连通性测试')
 }
 
 export async function testProxyRealConnectivityWithConfig(proxyId: string, proxyConfig: string): Promise<ProxySpeedTestResult> {
@@ -131,8 +198,7 @@ export async function testProxyRealConnectivityWithConfig(proxyId: string, proxy
     return (await goApp.TestProxyRealConnectivityWithConfig(proxyId, proxyConfig)) || { proxyId, ok: false, latencyMs: 0, engine: 'unknown', error: '调用失败' }
   }
 
-  await sleep(300 + Math.random() * 500)
-  return { proxyId, ok: true, latencyMs: Math.floor(100 + Math.random() * 400), engine: 'mock', error: '' }
+  return unavailableSpeedResult(proxyId, '真实连通性测试')
 }
 
 export async function browserProxyTestSpeed(proxyId: string): Promise<ProxySpeedTestResult> {
@@ -140,8 +206,7 @@ export async function browserProxyTestSpeed(proxyId: string): Promise<ProxySpeed
   if (bindings?.BrowserProxyTestSpeed) {
     return (await bindings.BrowserProxyTestSpeed(proxyId)) || { proxyId, ok: false, latencyMs: 0, engine: 'unknown', error: '调用失败' }
   }
-  await sleep(300 + Math.random() * 500)
-  return { proxyId, ok: true, latencyMs: Math.floor(100 + Math.random() * 400), engine: 'mock', error: '' }
+  return unavailableSpeedResult(proxyId)
 }
 
 export async function browserProxyBatchTestSpeed(proxyIds: string[], concurrency: number = 20): Promise<ProxySpeedTestResult[]> {
@@ -149,8 +214,23 @@ export async function browserProxyBatchTestSpeed(proxyIds: string[], concurrency
   if (bindings?.BrowserProxyBatchTestSpeed) {
     return (await bindings.BrowserProxyBatchTestSpeed(proxyIds, concurrency)) || []
   }
-  await sleep(1000)
-  return proxyIds.map((proxyId) => ({ proxyId, ok: true, latencyMs: Math.floor(100 + Math.random() * 400), engine: 'mock', error: '' }))
+  return proxyIds.map((proxyId) => unavailableSpeedResult(proxyId))
+}
+
+/** Clear the persisted speed result so a refresh cannot resurrect stale diagnostics. */
+export async function browserProxyClearSpeedDiagnostic(proxyId: string): Promise<boolean> {
+  const bindings: any = await getBindings()
+  if (bindings?.BrowserProxyClearSpeedDiagnostic) {
+    return (await bindings.BrowserProxyClearSpeedDiagnostic(proxyId)) === true
+  }
+
+  // Keep compatibility with a desktop runtime whose generated App.js predates
+  // this binding. In browser preview there is no persistence layer to mutate.
+  const goApp = getGoApp()
+  if (goApp?.BrowserProxyClearSpeedDiagnostic) {
+    return (await goApp.BrowserProxyClearSpeedDiagnostic(proxyId)) === true
+  }
+  return false
 }
 
 export async function browserProxyWarmupBridge(proxyId: string): Promise<ProxyBridgeWarmupResult> {
@@ -165,8 +245,7 @@ export async function browserProxyWarmupBridge(proxyId: string): Promise<ProxyBr
       error: '调用失败',
     }
   }
-  await sleep(200)
-  return { proxyId, ok: true, engine: 'mock', socksUrl: '', latencyMs: 0, error: '' }
+  return unavailableWarmupResult(proxyId)
 }
 
 export async function browserProxyWarmupBridgeWithConfig(proxyId: string, proxyConfig: string): Promise<ProxyBridgeWarmupResult> {
@@ -189,8 +268,7 @@ export async function browserProxyBatchWarmupBridge(proxyIds: string[], concurre
   if (bindings?.BrowserProxyBatchWarmupBridge) {
     return (await bindings.BrowserProxyBatchWarmupBridge(proxyIds, concurrency)) || []
   }
-  await sleep(400)
-  return proxyIds.map((proxyId) => ({ proxyId, ok: true, engine: 'mock', socksUrl: '', latencyMs: 0, error: '' }))
+  return proxyIds.map((proxyId) => unavailableWarmupResult(proxyId))
 }
 
 export async function browserProxyCheckIPHealth(proxyId: string): Promise<ProxyIPHealthResult> {
@@ -216,23 +294,7 @@ export async function browserProxyCheckIPHealth(proxyId: string): Promise<ProxyI
     )
   }
 
-  await sleep(600)
-  return {
-    proxyId,
-    ok: true,
-    source: 'ip_health',
-    error: '',
-    ip: '127.0.0.1',
-    fraudScore: Math.floor(Math.random() * 100),
-    isResidential: Math.random() > 0.5,
-    isBroadcast: false,
-    country: 'Mock',
-    region: 'Mock',
-    city: 'Mock',
-    asOrganization: 'Mock ISP',
-    rawData: {},
-    updatedAt: nowISOString(),
-  }
+  return unavailableIPHealthResult(proxyId)
 }
 
 export async function browserProxyResolveLocation(proxyId: string): Promise<ProxyLocationResolveResult> {
@@ -254,20 +316,20 @@ export async function browserProxyResolveLocation(proxyId: string): Promise<Prox
     }
   }
 
-  await sleep(400)
   return {
     proxyId,
-    ok: true,
-    auto: true,
-    source: 'mock',
-    error: '',
-    ip: '127.0.0.1',
-    country: 'US',
-    region: 'New York',
-    city: 'New York',
-    timezone: 'America/New_York',
-    lang: 'en-US',
+    ok: false,
+    auto: false,
+    source: 'preview',
+    error: DESKTOP_BRIDGE_UNAVAILABLE_MESSAGE,
+    ip: '',
+    country: '',
+    region: '',
+    city: '',
+    timezone: '',
+    lang: '',
     resolvedAt: nowISOString(),
+    available: false,
   }
 }
 
@@ -277,23 +339,29 @@ export async function browserProxyBatchCheckIPHealth(proxyIds: string[], concurr
     return (await bindings.BrowserProxyBatchCheckIPHealth(proxyIds, concurrency)) || []
   }
 
-  await sleep(1200)
-  return proxyIds.map((proxyId) => ({
-    proxyId,
-    ok: true,
-    source: 'ip_health',
-    error: '',
-    ip: '127.0.0.1',
-    fraudScore: Math.floor(Math.random() * 100),
-    isResidential: Math.random() > 0.5,
-    isBroadcast: false,
-    country: 'Mock',
-    region: 'Mock',
-    city: 'Mock',
-    asOrganization: 'Mock ISP',
-    rawData: {},
-    updatedAt: nowISOString(),
-  }))
+  return proxyIds.map((proxyId) => unavailableIPHealthResult(proxyId))
+}
+
+export async function browserProxyConnectorPreflight(connectorType = '', goos = '', goarch = ''): Promise<ProxyConnectorPreflightResult> {
+  const fallback: ProxyConnectorPreflightResult = {
+    connectorType: connectorType.trim() || 'xray',
+    goos,
+    goarch,
+    ready: false,
+    state: 'unavailable',
+    requiredCores: connectorType.trim().toLowerCase() === 'mihomo' ? ['mihomo'] : ['xray', 'sing-box'],
+    missingCores: [],
+    cores: [],
+    message: '未连接后端',
+    available: false,
+  }
+  const bindings: any = await getBindings()
+  if (bindings?.BrowserProxyConnectorPreflight) {
+    const result = await bindings.BrowserProxyConnectorPreflight({ connectorType, goos, goarch })
+    if (!result) return fallback
+    return { ...result, available: result.available !== false }
+  }
+  return fallback
 }
 
 export async function browserProxyCoreDownload(core: string, goos: string, goarch: string, proxyConfig = ''): Promise<boolean> {
@@ -306,13 +374,16 @@ export async function browserProxyCoreDownload(core: string, goos: string, goarc
 }
 
 export async function browserProxyCoreStatus(core: string, goos: string, goarch: string): Promise<ProxyCoreStatusResult> {
+  const fallback = (message: string, available = false): ProxyCoreStatusResult => normalizeProxyCoreStatus({
+    core, goos, goarch, installed: false, configured: false, active: false, binaryPath: '', source: '', message, available,
+  })
   const bindings: any = await getBindings()
   if (bindings?.BrowserProxyCoreStatus) {
-    return (await bindings.BrowserProxyCoreStatus({ core, goos, goarch })) || {
-      core, goos, goarch, installed: false, configured: false, active: false, binaryPath: '', source: '', message: '状态查询失败',
-    }
+    const result = await bindings.BrowserProxyCoreStatus({ core, goos, goarch })
+    if (!result) return fallback('状态查询失败')
+    return { ...normalizeProxyCoreStatus(result), available: result.available !== false }
   }
-  return { core, goos, goarch, installed: false, configured: false, active: false, binaryPath: '', source: '', message: '未连接后端' }
+  return fallback('未连接后端')
 }
 
 export async function browserProxyCoreDownloadInfo(core: string, goos: string, goarch: string, proxyConfig = ''): Promise<ProxyCoreDownloadInfoResult> {

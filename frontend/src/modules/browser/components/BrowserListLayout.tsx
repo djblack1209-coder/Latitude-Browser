@@ -3,18 +3,25 @@ import { Link } from 'react-router-dom'
 import { Archive, CheckCircle, ChevronRight, ChevronUp, Edit2, LayoutGrid, List, MoreHorizontal, Plus, RefreshCw, Sliders, Star, Trash2, Upload, XCircle } from 'lucide-react'
 
 import { Button, Card, FormItem, Input, Modal, Switch, Table, Textarea } from '../../../shared/components'
+import { TelemetryStrip, WorkspaceHeader } from '../../../shared/components/SignalPrimitives'
 import type { TableColumn } from '../../../shared/components/Table'
 
 import type { BrowserCore, BrowserCoreInput, BrowserGroupWithCount, BrowserProxy, BrowserSettings } from '../types'
 import { InstanceFilterBar } from './InstanceFilterBar'
 import type { InstanceFilters } from './InstanceFilterBar'
+import type { BrowserWorkspaceMode } from '../pages/browserList/workspaceMode'
 
 export type BrowserViewMode = 'card' | 'table'
 
 interface BrowserListHeaderProps {
+  workspaceMode: BrowserWorkspaceMode
   profileCount: number
   filteredProfileCount: number
+  hasActiveFilters: boolean
   runningCount: number
+  attentionCount: number
+  fingerprintSourceCount: number
+  recentRecordedCount: number
   headerCollapsed: boolean
   viewMode: BrowserViewMode
   proxies: BrowserProxy[]
@@ -74,13 +81,13 @@ function HeaderUtilityMenu({
         aria-haspopup="menu"
         aria-label="管理实例"
         title="管理"
-        className="inline-flex h-8 items-center gap-1.5 rounded-md px-2 text-xs text-[var(--color-text-secondary)] transition-[background-color,color] duration-150 hover:bg-[var(--color-bg-muted)] hover:text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
+        className="inline-flex h-8 items-center gap-1.5 rounded-sm px-2 text-xs text-[var(--color-text-secondary)] transition-[background-color,color] duration-150 hover:bg-[var(--color-bg-muted)] hover:text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
       >
         <MoreHorizontal className="h-4 w-4" aria-hidden="true" />
         <span className="hidden sm:inline">管理</span>
       </button>
       {open && (
-        <div role="menu" aria-label="实例管理" className="absolute right-0 top-full z-30 mt-2 w-40 rounded-md border border-[var(--color-border-default)] bg-[var(--color-bg-elevated)] p-1 shadow-[var(--shadow-sm)]">
+        <div role="menu" aria-label="实例管理" className="absolute right-0 top-full z-30 mt-2 w-40 rounded-sm border border-[var(--color-border-default)] bg-[var(--color-bg-elevated)] p-1 shadow-[var(--shadow-sm)]">
           <button type="button" role="menuitem" className={itemClass} onClick={() => runAndClose(onOpenSettings)}>
             <Sliders className="h-3.5 w-3.5" aria-hidden="true" />
             基础配置
@@ -104,9 +111,14 @@ function HeaderUtilityMenu({
 }
 
 export function BrowserListHeader({
+  workspaceMode,
   profileCount,
   filteredProfileCount,
+  hasActiveFilters,
   runningCount,
+  attentionCount,
+  fingerprintSourceCount,
+  recentRecordedCount,
   headerCollapsed,
   viewMode,
   proxies,
@@ -124,74 +136,114 @@ export function BrowserListHeader({
   importingProfiles = false,
   onViewModeChange,
 }: BrowserListHeaderProps) {
-  const filtered = filteredProfileCount !== profileCount
+  const pageCopy: Record<BrowserWorkspaceMode, { eyebrow: string; title: string; description: string }> = {
+    all: {
+      eyebrow: 'INSTANCE WORKSPACE',
+      title: '实例',
+      description: '启动、筛选与维护浏览器实例。',
+    },
+    recent: {
+      eyebrow: 'INSTANCE WORKSPACE / RECENT',
+      title: '最近活动',
+      description: '按最近启动或停止时间排序。',
+    },
+    attention: {
+      eyebrow: 'INSTANCE WORKSPACE / ATTENTION',
+      title: '待处理',
+      description: '仅显示异常、缺目录或缺可用内核的实例。',
+    },
+    templates: {
+      eyebrow: 'INSTANCE WORKSPACE / FINGERPRINT',
+      title: '指纹来源',
+      description: '从现有实例复用已保存的指纹参数。',
+    },
+  }
+  const copy = pageCopy[workspaceMode]
+  const telemetryItems = workspaceMode === 'templates'
+    ? [
+        { label: '可复用来源', value: fingerprintSourceCount, detail: '来自现有实例配置', tone: 'accent' as const },
+        { label: '当前显示', value: filteredProfileCount, detail: hasActiveFilters ? '已叠加筛选条件' : '指纹来源视图' },
+        { label: '运行中', value: runningCount, detail: '全部实例', tone: runningCount > 0 ? 'success' as const : 'neutral' as const },
+        { label: '实例总数', value: profileCount },
+      ]
+    : workspaceMode === 'recent'
+      ? [
+          { label: '有使用记录', value: recentRecordedCount, detail: '来自启动或停止时间', tone: 'accent' as const },
+          { label: '当前显示', value: filteredProfileCount, detail: hasActiveFilters ? '已叠加筛选条件' : '按最近记录排序' },
+          { label: '运行中', value: runningCount, detail: '全部实例', tone: runningCount > 0 ? 'success' as const : 'neutral' as const },
+          { label: '实例总数', value: profileCount },
+        ]
+      : [
+          { label: workspaceMode === 'attention' ? '需要处理' : '实例总数', value: workspaceMode === 'attention' ? attentionCount : profileCount, tone: attentionCount > 0 ? 'warning' as const : 'neutral' as const },
+          { label: '当前显示', value: filteredProfileCount, detail: hasActiveFilters ? '已叠加筛选条件' : workspaceMode === 'attention' ? '按诊断依据筛选' : '未叠加筛选条件' },
+          { label: '运行中', value: runningCount, detail: '全部实例', tone: runningCount > 0 ? 'success' as const : 'neutral' as const },
+          { label: workspaceMode === 'attention' ? '实例总数' : '需要处理', value: workspaceMode === 'attention' ? profileCount : attentionCount, tone: attentionCount > 0 ? 'warning' as const : 'neutral' as const },
+        ]
+
+  const actions = (
+    <div className="browser-list-actions flex flex-wrap items-center justify-end gap-1.5">
+      <Link to="/browser/edit/new">
+        <Button size="sm" className="px-3.5">
+          <Plus className="h-4 w-4" />新建实例
+        </Button>
+      </Link>
+      <div className="mx-1 hidden h-5 w-px bg-[var(--color-border-muted)] sm:block" aria-hidden="true" />
+      <HeaderUtilityMenu
+        onOpenSettings={onOpenSettings}
+        onOpenTrash={onOpenTrash}
+        onImportProfiles={onImportProfiles}
+        onOpenBackup={onOpenBackup}
+        importingProfiles={importingProfiles}
+      />
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={onToggleHeaderCollapsed}
+        aria-label={headerCollapsed ? '显示筛选' : '隐藏筛选'}
+        title={headerCollapsed ? '显示筛选' : '隐藏筛选'}
+        className="px-2"
+      >
+        {headerCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
+        <span className="hidden sm:inline">筛选</span>
+      </Button>
+      <Button variant="ghost" size="sm" onClick={onRefresh} aria-label="刷新实例" title="刷新" className="px-2">
+        <RefreshCw className="h-4 w-4" />
+      </Button>
+      <div className="ml-1 flex items-center rounded-sm border border-[var(--color-border-default)] bg-[var(--color-bg-muted)]/50 p-0.5" role="group" aria-label="视图模式">
+        <button
+          type="button"
+          aria-label="卡片视图"
+          aria-pressed={viewMode === 'card'}
+          className={`rounded-sm p-1.5 text-[var(--color-text-muted)] transition-[background-color,color,transform] duration-150 active:translate-y-px hover:text-[var(--color-text-primary)] ${viewMode === 'card' ? 'bg-[var(--color-bg-surface)] text-[var(--color-accent)] shadow-[var(--shadow-xs)]' : ''}`}
+          onClick={() => onViewModeChange('card')}
+          title="卡片视图"
+        >
+          <LayoutGrid className="h-4 w-4" />
+        </button>
+        <button
+          type="button"
+          aria-label="表格视图"
+          aria-pressed={viewMode === 'table'}
+          className={`rounded-sm p-1.5 text-[var(--color-text-muted)] transition-[background-color,color,transform] duration-150 active:translate-y-px hover:text-[var(--color-text-primary)] ${viewMode === 'table' ? 'bg-[var(--color-bg-surface)] text-[var(--color-accent)] shadow-[var(--shadow-xs)]' : ''}`}
+          onClick={() => onViewModeChange('table')}
+          title="表格视图"
+        >
+          <List className="h-4 w-4" />
+        </button>
+      </div>
+    </div>
+  )
 
   return (
     <>
-      <div className="browser-list-header apple-page-header flex flex-wrap items-center justify-between gap-4">
-        <div className="flex min-w-0 items-baseline gap-3">
-          <h1 className="text-[22px] font-semibold tracking-[-0.02em] text-[var(--color-text-primary)]">实例</h1>
-          <span className="text-sm tabular-nums text-[var(--color-text-muted)]">
-            {filtered ? `${filteredProfileCount} / ${profileCount}` : profileCount}
-          </span>
-          <span className="hidden h-3.5 w-px bg-[var(--color-border-muted)] sm:block" />
-          <span className="hidden text-xs text-[var(--color-text-muted)] sm:inline">
-            {runningCount > 0 ? `${runningCount} 个运行中` : '当前没有运行中的实例'}
-          </span>
-        </div>
-
-        <div className="browser-list-actions flex flex-wrap items-center justify-end gap-1.5">
-          <Link to="/browser/edit/new">
-            <Button size="sm" className="px-3.5">
-              <Plus className="w-4 h-4" />新建实例
-            </Button>
-          </Link>
-          <div className="mx-1 h-5 w-px bg-[var(--color-border-muted)]" aria-hidden="true" />
-          <HeaderUtilityMenu
-            onOpenSettings={onOpenSettings}
-            onOpenTrash={onOpenTrash}
-            onImportProfiles={onImportProfiles}
-            onOpenBackup={onOpenBackup}
-            importingProfiles={importingProfiles}
-          />
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onToggleHeaderCollapsed}
-            aria-label={headerCollapsed ? '显示筛选' : '隐藏筛选'}
-            title={headerCollapsed ? '显示筛选' : '隐藏筛选'}
-            className="px-2"
-          >
-            {headerCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
-            <span className="hidden sm:inline">筛选</span>
-          </Button>
-          <Button variant="ghost" size="sm" onClick={onRefresh} aria-label="刷新实例" title="刷新" className="px-2">
-            <RefreshCw className="w-4 h-4" />
-          </Button>
-          <div className="ml-1 flex items-center rounded-md border border-[var(--color-border-default)] bg-[var(--color-bg-muted)]/50 p-0.5" role="group" aria-label="视图模式">
-            <button
-              type="button"
-              aria-label="卡片视图"
-              aria-pressed={viewMode === 'card'}
-              className={`rounded-sm p-1.5 text-[var(--color-text-muted)] transition-colors hover:text-[var(--color-text-primary)] ${viewMode === 'card' ? 'bg-[var(--color-bg-surface)] text-[var(--color-accent)] shadow-[var(--shadow-xs)]' : ''}`}
-              onClick={() => onViewModeChange('card')}
-              title="卡片视图"
-            >
-              <LayoutGrid className="w-4 h-4" />
-            </button>
-            <button
-              type="button"
-              aria-label="表格视图"
-              aria-pressed={viewMode === 'table'}
-              className={`rounded-sm p-1.5 text-[var(--color-text-muted)] transition-colors hover:text-[var(--color-text-primary)] ${viewMode === 'table' ? 'bg-[var(--color-bg-surface)] text-[var(--color-accent)] shadow-[var(--shadow-xs)]' : ''}`}
-              onClick={() => onViewModeChange('table')}
-              title="表格视图"
-            >
-              <List className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
-      </div>
+      <WorkspaceHeader
+        eyebrow={copy.eyebrow}
+        title={copy.title}
+        description={copy.description}
+        actions={actions}
+        className="browser-list-header"
+      />
+      <TelemetryStrip items={telemetryItems} className="browser-list-telemetry" />
       {!headerCollapsed && (
         <InstanceFilterBar
           filters={filters}

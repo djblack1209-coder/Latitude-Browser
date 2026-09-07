@@ -1,5 +1,6 @@
 /* 引入主题样式 - 必须在最前面 */
 @import './shared/theme/themes/index.css';
+@import './shared/components/signal.css';
 
 @tailwind base;
 @tailwind components;
@@ -13,17 +14,142 @@
 
 html {
   font-size: 16px;
+  background: var(--color-bg-base);
+}
+
+html, body, #root {
+  min-height: 100%;
 }
 
 body {
-  font-family: 'IBM Plex Sans', 'SF Pro Text', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans SC', sans-serif;
+  font-family: var(--font-sans);
+  font-size: 0.875rem;
+
   background: var(--color-bg-base);
   color: var(--color-text-primary);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   line-height: 1.5;
-  letter-spacing: -0.005em;
+  letter-spacing: 0.002em;
   transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+/* Shared Signal shell ----------------------------------------------------- */
+/* The grid is deliberately quiet: it gives the graphite canvas depth without
+   turning the workspace into a decorative dashboard. */
+[data-theme='dark'] body {
+  background-image:
+    radial-gradient(circle at 12% -8%, rgba(146, 232, 173, 0.06), transparent 30rem),
+    linear-gradient(to right, var(--color-grid-line) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--color-grid-line) 1px, transparent 1px);
+  background-size: auto, 48px 48px, 48px 48px;
+  background-attachment: fixed;
+}
+
+.signal-shell {
+  background: var(--color-bg-base);
+}
+
+.signal-shell-main {
+  min-width: 0;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--color-bg-surface) 18%, transparent), transparent 9rem);
+}
+
+.signal-main {
+  scrollbar-gutter: stable both-edges;
+}
+
+.signal-sidebar {
+  position: relative;
+  background: linear-gradient(180deg, var(--color-bg-surface), var(--color-bg-subtle));
+  box-shadow: 8px 0 24px rgba(0, 0, 0, 0.08);
+}
+
+.signal-sidebar::after {
+  position: absolute;
+  top: 0;
+  right: -1px;
+  bottom: 0;
+  width: 1px;
+  content: '';
+  background: linear-gradient(180deg, var(--color-accent-border), transparent 28%, transparent 78%, var(--color-accent-border));
+  pointer-events: none;
+}
+
+.signal-topbar {
+  position: relative;
+  z-index: 20;
+  background: color-mix(in srgb, var(--color-bg-surface) 94%, transparent);
+  box-shadow: 0 1px 0 var(--color-border-muted), 0 8px 24px rgba(0, 0, 0, 0.06);
+}
+
+.signal-topbar::after {
+  position: absolute;
+  right: 0;
+  bottom: -1px;
+  left: 0;
+  height: 1px;
+  content: '';
+  background: linear-gradient(90deg, transparent, var(--color-accent-border), transparent);
+  opacity: .7;
+  pointer-events: none;
+}
+
+.signal-panel {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-surface);
+  box-shadow: var(--shadow-xs);
+}
+
+.signal-panel::before {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  height: 1px;
+  content: '';
+  background: linear-gradient(90deg, transparent, var(--color-panel-highlight), transparent);
+  pointer-events: none;
+}
+
+.signal-panel-header {
+  min-height: 2.75rem;
+  border-bottom: 1px solid var(--color-border-muted);
+  background: linear-gradient(180deg, var(--color-bg-surface), var(--color-bg-subtle));
+}
+
+.signal-kicker {
+  color: var(--color-text-muted);
+  font-family: var(--font-mono);
+  font-size: .625rem;
+  font-weight: 500;
+  letter-spacing: .14em;
+  line-height: 1.5;
+  text-transform: uppercase;
+}
+
+.signal-hairline {
+  height: 1px;
+  background: linear-gradient(90deg, var(--color-accent-border), var(--color-border-muted) 32%, transparent);
+}
+
+.signal-status-dot {
+  width: .375rem;
+  height: .375rem;
+  border-radius: 999px;
+  background: var(--color-text-muted);
+  box-shadow: 0 0 0 3px var(--color-accent-muted);
+}
+
+.signal-status-dot[data-tone='success'] { background: var(--color-success); }
+.signal-status-dot[data-tone='warning'] { background: var(--color-warning); }
+.signal-status-dot[data-tone='danger'] { background: var(--color-error); }
+
+.signal-page-content {
+  animation: signalReveal var(--motion-base) ease-out both;
 }
 
 /* 选中文本样式 */
@@ -82,6 +208,11 @@ input, select, textarea {
 }
 
 /* 动画 */
+@keyframes signalReveal {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 @keyframes fadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
@@ -117,7 +248,8 @@ input, select, textarea {
 
 /* 极客工作台辅助文本 */
 .font-mono {
-  font-family: 'JetBrains Mono', 'SFMono-Regular', Consolas, 'Liberation Mono', monospace;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
 }
 
 /* 文本截断 */
@@ -298,7 +430,7 @@ input, select, textarea {
 }
 
 .apple-page-header h1 {
-  letter-spacing: -0.025em;
+  letter-spacing: normal;
 }
 
 .apple-section {
@@ -338,3 +470,24 @@ input, select, textarea {
 .apple-page textarea {
   border-radius: var(--radius-sm);
 }
+
+/* Respect the system setting everywhere, including older screens. A nonanimated
+   pending indicator remains visible; the application never relies on motion alone. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation: none !important;
+    transition-duration: 0s !important;
+    scroll-behavior: auto !important;
+  }
+}
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .signal-press:active:not(:disabled):not(:focus-visible) { transform: scale(.97); }
+}
+button, a, input, select, textarea { touch-action: manipulation; }
+input[type='checkbox'], input[type='radio'] { accent-color: var(--color-accent); }
+html { color-scheme: dark; }
+html[data-theme]:not([data-theme='dark']) { color-scheme: light; }
+
+/* Keep pointer controls stable while making keyboard focus unmistakable. */
+button, a, input, select, textarea { transition-timing-function: cubic-bezier(.2, .8, .2, 1); }
+.signal-panel:focus-within { border-color: var(--color-accent-border); }

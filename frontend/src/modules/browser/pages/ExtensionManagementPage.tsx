@@ -415,6 +415,11 @@ export function ExtensionManagementPage() {
         loading={loading}
         importing={importing}
         downloadDirectoryLoading={manualFileLoading && downloadDirOpen}
+        installedCount={items.length}
+        enabledCount={items.filter((item) => item.enabled).length}
+        historyCount={historyRecords.length}
+        useProxy={useProxy}
+        selectedProxy={selectedProxy}
         onOpenProxy={() => setProxyModalOpen(true)}
         onOpenHistory={() => setHistoryOpen(true)}
         onImportFile={() => void handleImportLocal('file')}

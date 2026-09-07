@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { Copy, Globe, Play, RefreshCw, RotateCcw, Square } from 'lucide-react'
+import { Copy, Globe, Play, RadioTower, RefreshCw, RotateCcw, Square } from 'lucide-react'
 import { Badge, Button, Card, Input, Table, toast } from '../../../shared/components'
+import { WorkspaceHeader } from '../../../shared/components/SignalPrimitives'
 import type { TableColumn } from '../../../shared/components/Table'
 import type { BrowserProfile, BrowserTab } from '../types'
 import { EventsOn } from '../../../wailsjs/runtime/runtime'
@@ -18,6 +19,7 @@ import { CookieManagerCard } from '../components/CookieManagerCard'
 import { SnapshotTab } from '../components/SnapshotTab'
 import { resolveActionErrorMessage, resolveActionFeedback } from '../utils/actionErrors'
 import { warmupProfileProxyBeforeStart } from '../utils/proxyWarmup'
+import { TorModeNotice } from './TorModeNotice'
 
 const resolveRuntimeStatus = (running: boolean, debugReady: boolean) => {
   if (!running) return { variant: 'warning' as const, label: '已停止' }
@@ -107,6 +109,8 @@ export function BrowserDetailPage() {
     )
   }
 
+  const isTorMode = profile.networkMode === 'tor'
+
   const handleOpenUrl = async () => {
     const normalizedTargetUrl = targetUrl.trim()
     if (!normalizedTargetUrl) {
@@ -134,7 +138,7 @@ export function BrowserDetailPage() {
   const handleStart = async () => {
     setPendingAction('starting')
     try {
-      await warmupProfileProxyBeforeStart(profile)
+      if (!isTorMode) await warmupProfileProxyBeforeStart(profile)
       const startedProfile = await startBrowserInstance(profile.profileId)
       if (startedProfile) {
         setProfile(startedProfile)
@@ -176,7 +180,7 @@ export function BrowserDetailPage() {
   const handleRestart = async () => {
     setPendingAction('restarting')
     try {
-      await warmupProfileProxyBeforeStart(profile)
+      if (!isTorMode) await warmupProfileProxyBeforeStart(profile)
       const restartedProfile = await restartBrowserInstance(profile.profileId)
       if (restartedProfile) {
         setProfile(restartedProfile)
@@ -215,21 +219,31 @@ export function BrowserDetailPage() {
 
   return (
     <div className="space-y-5 animate-fade-in">
-      {/* 页头 */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-semibold text-[var(--color-text-primary)]">实例详情</h1>
-          <p className="text-sm text-[var(--color-text-muted)] mt-1">{profile.profileName}</p>
-        </div>
-        <div className="flex gap-2">
-          <Link to={`/browser/edit/${profile.profileId}`}>
-            <Button variant="secondary" size="sm">编辑配置</Button>
-          </Link>
-          <Link to="/browser/list">
-            <Button variant="ghost" size="sm">返回列表</Button>
-          </Link>
-        </div>
-      </div>
+      <WorkspaceHeader
+        eyebrow="INSTANCE / DETAIL"
+        title="实例详情"
+        description={(
+          <span className="inline-flex flex-wrap items-center gap-2">
+            <span>{profile.profileName}</span>
+            {isTorMode && (
+              <Badge variant="warning">
+                <RadioTower className="mr-1 h-3 w-3" aria-hidden="true" />
+                Tor 实验性模式
+              </Badge>
+            )}
+          </span>
+        )}
+        actions={(
+          <>
+            <Link to={`/browser/edit/${profile.profileId}`}>
+              <Button variant="secondary" size="sm">编辑配置</Button>
+            </Link>
+            <Link to="/browser/list">
+              <Button variant="ghost" size="sm">返回列表</Button>
+            </Link>
+          </>
+        )}
+      />
 
       {/* Tab 导航 */}
       <div className="flex border-b border-[var(--color-border)]">
@@ -253,7 +267,7 @@ export function BrowserDetailPage() {
       {activeTab === 'overview' && (
         <div className="space-y-4">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <Card title="运行信息" subtitle="实例运行状态与端口信息">
+            <Card title="运行信息" subtitle="状态与端口">
               <div className="space-y-3 text-sm text-[var(--color-text-secondary)]">
                 <div className="flex justify-between">
                   <span>状态</span>
@@ -282,7 +296,7 @@ export function BrowserDetailPage() {
               </div>
             </Card>
 
-            <Card title="配置摘要" subtitle="指纹与启动参数">
+            <Card title="配置摘要" subtitle={isTorMode ? 'Tor、指纹与启动参数' : '网络、指纹与启动参数'}>
               <div className="space-y-3 text-sm text-[var(--color-text-secondary)]">
                 <div className="flex justify-between">
                   <span>用户数据目录</span>
@@ -292,9 +306,17 @@ export function BrowserDetailPage() {
                   <span>内核</span>
                   <span>{profile.coreId || '默认'}</span>
                 </div>
-                <div className="flex justify-between">
-                  <span>代理配置</span>
-                  <span>{profile.proxyConfig || '-'}</span>
+                <div className="flex justify-between gap-4">
+                  <span>网络模式</span>
+                  <span className={isTorMode ? 'font-medium text-[var(--color-warning)]' : ''}>
+                    {isTorMode ? 'Tor TCP 路由（实验性）' : '常规网络'}
+                  </span>
+                </div>
+                <div className="flex justify-between gap-4">
+                  <span>网络入口</span>
+                  <span className="max-w-[65%] break-all text-right">
+                    {isTorMode ? '由应用受管 Tor 运行时提供' : profile.proxyConfig || profile.proxyBindName || profile.proxyId || '-'}
+                  </span>
                 </div>
                 <div className="flex justify-between">
                   <span>指纹参数</span>
@@ -342,7 +364,9 @@ export function BrowserDetailPage() {
             </Card>
           </div>
 
-          <Card title="快捷操作" subtitle="快速控制实例">
+          {isTorMode && <TorModeNotice />}
+
+          <Card title="快捷操作" subtitle="控制实例">
             <div className="flex flex-wrap items-center gap-2">
               {profile.running ? (
                 <Button size="sm" variant="secondary" onClick={handleStop} loading={isStopping} disabled={isBusy && !isStopping}>
@@ -363,7 +387,7 @@ export function BrowserDetailPage() {
           </Card>
 
           {profile.lastError && (
-            <Card title="最近错误" subtitle="最近一次启动或运行失败原因">
+            <Card title="最近错误" subtitle="最近一次失败原因">
               <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 whitespace-pre-line">
                 {profile.lastError}
               </div>
@@ -371,14 +395,14 @@ export function BrowserDetailPage() {
           )}
 
           {profile.runtimeWarning && (
-            <Card title="运行提示" subtitle="当前实例处于部分可用状态">
+            <Card title="运行提示" subtitle="当前实例部分可用">
               <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700 whitespace-pre-line">
                 {profile.runtimeWarning}
               </div>
             </Card>
           )}
 
-          <Card title="打开地址" subtitle="向实例发送打开 URL 指令">
+          <Card title="打开地址" subtitle="发送打开 URL 指令">
             <div className="flex flex-col md:flex-row gap-3">
               <Input value={targetUrl} onChange={e => setTargetUrl(e.target.value)} placeholder="请输入目标地址" />
               <Button onClick={handleOpenUrl}>
@@ -388,7 +412,7 @@ export function BrowserDetailPage() {
             </div>
           </Card>
 
-          <Card title="标签页列表" subtitle="当前实例标签页信息">
+          <Card title="标签页列表" subtitle="当前标签页">
             <Table columns={tabsColumns} data={tabs} rowKey="tabId" />
           </Card>
 

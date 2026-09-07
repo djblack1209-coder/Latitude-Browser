@@ -1,10 +1,12 @@
-﻿export interface BrowserProfile {
+export interface BrowserProfile {
   profileId: string
   profileName: string
   userDataDir: string
   coreId: string
   restoreLastSession?: '' | 'enabled' | 'disabled' | string
   fingerprintArgs: string[]
+  /** Explicit experiment; absent keeps normal direct/proxy behavior. */
+  networkMode?: 'proxy' | 'tor'
   proxyId: string
   proxyConfig: string
   proxyBindSourceId?: string
@@ -37,6 +39,8 @@ export interface BrowserProfileInput {
   coreId: string
   restoreLastSession?: '' | 'enabled' | 'disabled' | string
   fingerprintArgs: string[]
+  /** Explicit experiment; absent keeps normal direct/proxy behavior. */
+  networkMode?: 'proxy' | 'tor'
   proxyId: string
   proxyConfig: string
   memoryLimitMb: number
@@ -219,6 +223,37 @@ export interface BrowserCoreValidateResult {
   message: string
 }
 
+export type ProxyDiagnosticStage =
+  | 'not_tested'
+  | 'queued'
+  | 'testing'
+  | 'config_invalid'
+  | 'core_missing'
+  | 'bridge_failed'
+  | 'network_failed'
+  | 'target_failed'
+  | 'unsupported'
+  | 'timeout'
+  | 'stale'
+  | 'expired'
+  | 'success'
+  | 'failed'
+  | string
+
+export interface ProxyCheckDiagnostic {
+  proxyId?: string
+  stage?: ProxyDiagnosticStage
+  code?: string
+  message?: string
+  error?: string
+  engine?: string
+  targetUrl?: string
+  checkedAt?: string
+  stale?: boolean
+  expired?: boolean
+  source?: 'backend' | 'cache' | 'local' | string
+}
+
 export interface BrowserProxy {
   proxyId: string
   proxyName: string
@@ -235,6 +270,16 @@ export interface BrowserProxy {
   lastLatencyMs?: number
   lastTestOk?: boolean
   lastTestedAt?: string
+  /** Optional diagnostic fields supplied by newer desktop runtimes. */
+  lastTestEngine?: string
+  lastTestStage?: ProxyDiagnosticStage
+  lastTestCode?: string
+  lastTestError?: string
+  /** Persisted target URL used by the latest speed check. */
+  lastTestTarget?: string
+  /** Newer desktop runtimes serialize the persisted target as lastTestTargetUrl. */
+  lastTestTargetUrl?: string
+  lastTestDiagnostic?: ProxyCheckDiagnostic
   lastIPHealthJson?: string
 }
 
@@ -253,6 +298,12 @@ export interface ProxyIPHealthResult {
   asOrganization: string
   rawData: Record<string, any>
   updatedAt: string
+  /** Optional diagnostic context returned by newer desktop runtimes. */
+  engine?: string
+  stage?: ProxyDiagnosticStage
+  code?: string
+  targetUrl?: string
+  available?: boolean
 }
 
 
@@ -265,6 +316,8 @@ export interface ProxyCoreDownloadProgress {
   message: string
 }
 
+export type ProxyCoreState = 'ready' | 'installed' | 'downloaded' | 'missing' | 'unavailable'
+
 export interface ProxyCoreStatusResult {
   core: string
   goos: string
@@ -272,9 +325,32 @@ export interface ProxyCoreStatusResult {
   installed: boolean
   configured: boolean
   active: boolean
+  state?: ProxyCoreState
   binaryPath: string
   source: string
   message: string
+  /** False only when the desktop bridge is unavailable; native responses are true. */
+  available?: boolean
+}
+
+export interface ProxyConnectorPreflightRequest {
+  connectorType?: string
+  goos?: string
+  goarch?: string
+}
+
+export interface ProxyConnectorPreflightResult {
+  connectorType: string
+  goos: string
+  goarch: string
+  ready: boolean
+  state: ProxyCoreState
+  requiredCores: string[]
+  missingCores: string[]
+  cores: ProxyCoreStatusResult[]
+  message: string
+  /** False only when the desktop bridge is unavailable; native responses are true. */
+  available?: boolean
 }
 
 export interface ProxyCoreDownloadInfoResult {
@@ -298,6 +374,14 @@ export interface ProxyBridgeWarmupResult {
   socksUrl: string
   latencyMs: number
   error: string
+  /** Optional diagnostic context returned by newer desktop runtimes. */
+  stage?: ProxyDiagnosticStage
+  code?: string
+  targetUrl?: string
+  /** Number of local bridge-start attempts; warmup does not issue target requests. */
+  attempted?: number
+  /** False only when the desktop bridge is unavailable (for example browser preview). */
+  available?: boolean
 }
 
 export interface ProxySpeedTestResult {
@@ -306,6 +390,14 @@ export interface ProxySpeedTestResult {
   latencyMs: number
   engine?: string
   error: string
+  /** Optional fields returned by diagnostic-aware desktop runtimes. */
+  stage?: ProxyDiagnosticStage
+  code?: string
+  targetUrl?: string
+  checkedAt?: string
+  diagnostic?: ProxyCheckDiagnostic
+  /** False when running in a browser preview without the desktop bridge. */
+  available?: boolean
 }
 
 
@@ -330,6 +422,7 @@ export interface ProxyLocationResolveResult {
   health?: ProxyIPHealthResult
   alternates?: ProxyLocationOption[]
   resolvedAt: string
+  available?: boolean
 }
 
 export interface BrowserCoreExtended {

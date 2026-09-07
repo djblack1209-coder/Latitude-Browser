@@ -1,6 +1,7 @@
 package proxy
 
 import (
+	"errors"
 	"io"
 	"net/http"
 	"sort"
@@ -14,15 +15,17 @@ import (
 const defaultBrowserPageProbeConcurrency = 8
 
 var DefaultBrowserPageProbeConfig = BrowserPageProbeConfig{
-	URLs:        []string{DefaultSpeedTestURL},
-	Timeout:     15 * time.Second,
-	Concurrency: defaultBrowserPageProbeConcurrency,
+	URLs:          []string{DefaultSpeedTestURL},
+	Timeout:       15 * time.Second,
+	Concurrency:   defaultBrowserPageProbeConcurrency,
+	ConnectorType: config.BrowserConnectorXray,
 }
 
 type BrowserPageProbeConfig struct {
-	URLs        []string
-	Timeout     time.Duration
-	Concurrency int
+	URLs          []string
+	Timeout       time.Duration
+	Concurrency   int
+	ConnectorType string
 }
 
 type BrowserPageProbeResult struct {
@@ -36,6 +39,9 @@ type BrowserPageProbeResult struct {
 	Failed      int
 	Concurrency int
 	Error       string
+	Stage       HealthStage
+	Code        HealthCode
+	TargetURL   string
 }
 
 func ProbeBrowserPageConnectivity(
@@ -47,9 +53,10 @@ func ProbeBrowserPageConnectivity(
 	cfg *BrowserPageProbeConfig,
 ) BrowserPageProbeResult {
 	normalized := normalizeBrowserPageProbeConfig(cfg)
-	client, err := buildProxyHTTPClient("", proxyId, proxies, xrayMgr, singboxMgr, clashMgr, config.BrowserConnectorXray, normalized.Timeout)
+	client, err := buildProxyHTTPClient("", proxyId, proxies, xrayMgr, singboxMgr, clashMgr, normalized.ConnectorType, normalized.Timeout)
 	if err != nil {
-		return BrowserPageProbeResult{ProxyId: proxyId, Ok: false, Error: err.Error(), Concurrency: normalized.Concurrency}
+		stage, code := ClassifyHealthError(err, HealthStagePrepareBridge)
+		return BrowserPageProbeResult{ProxyId: proxyId, Ok: false, Error: err.Error(), Concurrency: normalized.Concurrency, Stage: stage, Code: code}
 	}
 	return runBrowserPageProbe(proxyId, client, normalized)
 }
@@ -75,6 +82,7 @@ func normalizeBrowserPageProbeConfig(cfg *BrowserPageProbeConfig) BrowserPagePro
 	if cfg.Concurrency > 0 {
 		normalized.Concurrency = cfg.Concurrency
 	}
+	normalized.ConnectorType = config.NormalizeBrowserConnectorType(cfg.ConnectorType)
 	return normalized
 }
 
@@ -83,6 +91,7 @@ func runBrowserPageProbe(proxyId string, client *http.Client, cfg BrowserPagePro
 	latencies := make([]int64, 0, cfg.Concurrency)
 	var totalBytes int64
 	var firstError string
+	var firstErrorURL string
 	var failed int
 	var mu sync.Mutex
 	var wg sync.WaitGroup
@@ -100,6 +109,7 @@ func runBrowserPageProbe(proxyId string, client *http.Client, cfg BrowserPagePro
 				failed++
 				if firstError == "" {
 					firstError = err.Error()
+					firstErrorURL = targetURL
 				}
 				mu.Unlock()
 				return
@@ -116,6 +126,7 @@ func runBrowserPageProbe(proxyId string, client *http.Client, cfg BrowserPagePro
 					} else {
 						firstError = resp.Status
 					}
+					firstErrorURL = targetURL
 				}
 				return
 			}
@@ -135,12 +146,19 @@ func runBrowserPageProbe(proxyId string, client *http.Client, cfg BrowserPagePro
 		Failed:      failed,
 		Concurrency: cfg.Concurrency,
 		Error:       firstError,
+		Stage:       HealthStageComplete,
+		Code:        HealthCodeOK,
+		TargetURL:   firstErrorURL,
 	}
 	if completed == 0 {
 		if result.Error == "" {
 			result.Error = "并发探测全部失败"
 		}
+		result.Stage, result.Code = ClassifyHealthError(errors.New(result.Error), HealthStageRequest)
 		return result
+	}
+	if failed > 0 {
+		result.Stage, result.Code = ClassifyHealthError(errors.New(result.Error), HealthStageRequest)
 	}
 	sort.Slice(latencies, func(i, j int) bool { return latencies[i] < latencies[j] })
 	var sum int64

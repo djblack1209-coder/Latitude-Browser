@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { Plus, Trash2, RotateCcw, GripVertical, RefreshCw } from 'lucide-react'
-import { Button, Card, ConfirmModal, Input, toast } from '../../../shared/components'
+import { Badge, Button, ConfirmModal, Input, toast } from '../../../shared/components'
+import { SignalEmptyState, TelemetryStrip, TerminalPanel, WorkspaceHeader } from '../../../shared/components/SignalPrimitives'
+import { AssetScopeTabs } from './AssetScopeTabs'
 import type { BrowserBookmark } from '../types'
 import { fetchBookmarks, resetBookmarks, saveBookmarks, syncBookmarksToProfiles } from '../api'
 
@@ -118,125 +120,152 @@ export function BookmarkSettingsPage() {
   }
   const handleDragEnd = () => setDragIndex(null)
 
+  const startupCount = items.filter((item) => item.openOnStart).length
+
   return (
-    <div className="apple-page space-y-5">
-      <div className="apple-page-header flex flex-wrap justify-between">
-        <div>
-          <h1 className="text-xl font-semibold text-[var(--color-text-primary)]">默认书签</h1>
-          <p className="text-sm text-[var(--color-text-muted)] mt-1">新建实例首次启动时自动写入书签栏，已有书签不受影响</p>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="secondary" size="sm" onClick={() => setSyncOpen(true)} loading={syncing}>
-            <RefreshCw className="w-4 h-4 mr-1.5" />
-            手动同步
-          </Button>
-          <Button variant="secondary" size="sm" onClick={() => setResetOpen(true)}>
-            <RotateCcw className="w-4 h-4 mr-1.5" />
-            恢复默认
-          </Button>
-          <Button size="sm" onClick={handleSave} loading={saving}>保存</Button>
+    <div className="apple-page space-y-4">
+      <WorkspaceHeader
+        eyebrow="FINGERPRINT / BOOKMARKS"
+        title="默认书签"
+        description="维护新实例书签；可增量同步到已停止实例。"
+        actions={(
+          <>
+            <Button variant="secondary" size="sm" onClick={() => setSyncOpen(true)} loading={syncing}>
+              <RefreshCw className="h-4 w-4" aria-hidden="true" />
+              同步实例
+            </Button>
+            <Button variant="secondary" size="sm" onClick={() => setResetOpen(true)}>
+              <RotateCcw className="h-4 w-4" aria-hidden="true" />
+              恢复默认
+            </Button>
+            <Button size="sm" onClick={handleSave} loading={saving}>保存书签</Button>
+          </>
+        )}
+      />
+
+      <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+        <AssetScopeTabs />
+        <div className="min-w-0 flex-1 xl:max-w-3xl">
+          <TelemetryStrip
+            items={[
+              { label: '书签总数', value: items.length, detail: '新实例默认写入' },
+              { label: '内置检测', value: protectedItems.length, detail: '受保护条目', tone: 'accent' },
+              { label: '自定义', value: regularItems.length, detail: '可排序与编辑' },
+              { label: '启动时打开', value: startupCount, detail: '随实例启动', tone: startupCount > 0 ? 'success' : 'neutral' },
+            ]}
+          />
         </div>
       </div>
 
-      <Card title={`内置检测（${protectedItems.length} 项）`} className="apple-section">
-        <div className="space-y-2">
+      <TerminalPanel
+        title="SYSTEM BOOKMARKS"
+        meta={<span className="font-mono tabular-nums">{protectedItems.length} PROTECTED</span>}
+      >
+        <div className="divide-y divide-[var(--color-border-muted)]">
           {protectedItems.map(({ item, index }) => (
-            <div
-              key={`${item.url}-${index}`}
-              className="apple-row flex items-center gap-2 p-2.5 bg-[var(--color-bg-muted)]"
-            >
-              <GripVertical className="w-4 h-4 text-[var(--color-text-muted)] opacity-40 shrink-0" />
-              <Input
-                value={item.name}
-                readOnly
-                className="w-36 shrink-0 bg-[var(--color-bg-subtle)]"
-              />
-              <Input
-                value={item.url}
-                readOnly
-                className="flex-1 bg-[var(--color-bg-subtle)]"
-              />
-              <label className="flex items-center gap-1.5 px-2 text-xs text-[var(--color-text-secondary)] whitespace-nowrap select-none">
+            <div key={`${item.url}-${index}`} className="flex items-start gap-3 px-4 py-3">
+              <GripVertical className="mt-2.5 h-4 w-4 shrink-0 text-[var(--color-text-muted)] opacity-40" aria-hidden="true" />
+              <div className="grid min-w-0 flex-1 gap-2 md:grid-cols-[9rem_minmax(0,1fr)]">
+                <label className="sr-only" htmlFor={`protected-bookmark-name-${index}`}>内置书签名称</label>
+                <Input id={`protected-bookmark-name-${index}`} value={item.name} readOnly className="font-medium" />
+                <label className="sr-only" htmlFor={`protected-bookmark-url-${index}`}>内置书签地址</label>
+                <Input id={`protected-bookmark-url-${index}`} value={item.url} readOnly className="font-mono text-xs" />
+              </div>
+              <label className="mt-2 flex shrink-0 items-center gap-2 text-xs text-[var(--color-text-secondary)]">
                 <input
                   type="checkbox"
                   checked={Boolean(item.openOnStart)}
-                  onChange={e => handleOpenOnStartChange(index, e.target.checked)}
+                  onChange={event => handleOpenOnStartChange(index, event.target.checked)}
                   className="h-4 w-4 rounded border-[var(--color-border-default)] accent-[var(--color-accent)]"
                 />
                 启动打开
               </label>
-              <span className="px-2 py-1 rounded-lg bg-[var(--color-bg-subtle)] text-xs text-[var(--color-text-muted)] shrink-0">
-                内置
-              </span>
+              <Badge variant="default" size="sm">内置</Badge>
             </div>
           ))}
         </div>
-      </Card>
+      </TerminalPanel>
 
-      <Card title={`书签列表（${regularItems.length} 项）`} subtitle="拖拽左侧图标可调整顺序" className="apple-section">
-        <div className="space-y-2">
-          {regularItems.map(({ item, index }) => (
-            <div
-              key={`${item.url}-${index}`}
-              draggable
-              onDragStart={() => handleDragStart(index)}
-              onDragOver={e => handleDragOver(e, index)}
-              onDragEnd={handleDragEnd}
-              className={`apple-row flex items-center gap-2 p-2.5 transition-all duration-150 ${
-                dragIndex === index
-                  ? 'bg-[var(--color-accent-muted)] ring-1 ring-[var(--color-border-strong)]'
-                  : 'bg-[var(--color-bg-muted)] hover:bg-[var(--color-bg-subtle)]'
-              }`}
-            >
-              <GripVertical className="w-4 h-4 text-[var(--color-text-muted)] cursor-grab shrink-0" />
-              <Input
-                value={item.name}
-                onChange={e => handleChange(index, 'name', e.target.value)}
-                placeholder="名称，如 Google"
-                className="w-36 shrink-0"
-              />
-              <Input
-                value={item.url}
-                onChange={e => handleChange(index, 'url', e.target.value)}
-                placeholder="https://..."
-                className="flex-1"
-              />
-              <label className="flex items-center gap-1.5 px-2 text-xs text-[var(--color-text-secondary)] whitespace-nowrap select-none">
-                <input
-                  type="checkbox"
-                  checked={Boolean(item.openOnStart)}
-                  onChange={e => handleOpenOnStartChange(index, e.target.checked)}
-                  className="h-4 w-4 rounded border-[var(--color-border-default)] accent-[var(--color-accent)]"
-                />
-                启动打开
-              </label>
-              <button
-                type="button"
-                onClick={() => handleDelete(index)}
-                className="p-1.5 rounded text-[var(--color-text-muted)] hover:text-[var(--color-error)] hover:bg-[var(--color-error)]/10 transition-colors shrink-0"
+      <TerminalPanel
+        title="BOOKMARK MANIFEST"
+        meta={<span className="font-mono tabular-nums">{regularItems.length} EDITABLE</span>}
+      >
+        {regularItems.length === 0 ? (
+          <SignalEmptyState
+            symbol="files"
+            title="暂无自定义书签"
+            description="添加书签后，可拖动排序并设置是否随实例启动打开。"
+            action={(
+              <Button size="sm" onClick={handleAdd}>
+                <Plus className="h-4 w-4" aria-hidden="true" />
+                添加书签
+              </Button>
+            )}
+          />
+        ) : (
+          <div className="divide-y divide-[var(--color-border-muted)]">
+            {regularItems.map(({ item, index }) => (
+              <div
+                key={`${item.url}-${index}`}
+                draggable
+                onDragStart={() => handleDragStart(index)}
+                onDragOver={event => handleDragOver(event, index)}
+                onDragEnd={handleDragEnd}
+                className={`flex items-start gap-3 px-4 py-3 transition-[background-color,opacity] duration-150 ${
+                  dragIndex === index ? 'bg-[var(--color-accent-muted)] opacity-80' : 'hover:bg-[var(--color-bg-subtle)]'
+                }`}
               >
-                <Trash2 className="w-4 h-4" />
-              </button>
+                <GripVertical className="mt-2.5 h-4 w-4 shrink-0 cursor-grab text-[var(--color-text-muted)]" aria-label="拖动调整顺序" />
+                <div className="grid min-w-0 flex-1 gap-2 md:grid-cols-[9rem_minmax(0,1fr)]">
+                  <label className="sr-only" htmlFor={`bookmark-name-${index}`}>书签名称</label>
+                  <Input
+                    id={`bookmark-name-${index}`}
+                    value={item.name}
+                    onChange={event => handleChange(index, 'name', event.target.value)}
+                    placeholder="名称，如 Google"
+                    autoComplete="off"
+                  />
+                  <label className="sr-only" htmlFor={`bookmark-url-${index}`}>书签地址</label>
+                  <Input
+                    id={`bookmark-url-${index}`}
+                    value={item.url}
+                    onChange={event => handleChange(index, 'url', event.target.value)}
+                    placeholder="https://..."
+                    className="font-mono text-xs"
+                    inputMode="url"
+                    autoComplete="url"
+                    spellCheck={false}
+                  />
+                </div>
+                <label className="mt-2 flex shrink-0 items-center gap-2 text-xs text-[var(--color-text-secondary)]">
+                  <input
+                    type="checkbox"
+                    checked={Boolean(item.openOnStart)}
+                    onChange={event => handleOpenOnStartChange(index, event.target.checked)}
+                    className="h-4 w-4 rounded border-[var(--color-border-default)] accent-[var(--color-accent)]"
+                  />
+                  启动打开
+                </label>
+                <button
+                  type="button"
+                  onClick={() => handleDelete(index)}
+                  className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-[var(--color-text-muted)] transition-[background-color,color,transform] duration-150 hover:bg-[var(--color-error)]/10 hover:text-[var(--color-error)] active:translate-y-px"
+                  aria-label={`删除书签 ${item.name || index + 1}`}
+                  title="删除书签"
+                >
+                  <Trash2 className="h-4 w-4" aria-hidden="true" />
+                </button>
+              </div>
+            ))}
+            <div className="px-4 py-3">
+              <Button size="sm" variant="secondary" onClick={handleAdd}>
+                <Plus className="h-4 w-4" aria-hidden="true" />
+                添加书签
+              </Button>
             </div>
-          ))}
-
-          {regularItems.length === 0 && (
-            <p className="text-sm text-[var(--color-text-muted)] text-center py-6">
-              暂无书签，点击下方按钮添加
-            </p>
-          )}
-        </div>
-
-        <button
-          type="button"
-          onClick={handleAdd}
-          className="mt-3 flex w-full items-center justify-center gap-2 rounded-md border border-[var(--color-border-muted)] bg-transparent py-2.5 text-sm text-[var(--color-text-primary)] transition-colors hover:border-[var(--color-border-default)] hover:bg-[var(--color-bg-muted)]"
-        >
-          <Plus className="w-4 h-4" />
-          添加书签
-        </button>
-      </Card>
-
+          </div>
+        )}
+      </TerminalPanel>
       <ConfirmModal
         open={resetOpen}
         onClose={() => setResetOpen(false)}

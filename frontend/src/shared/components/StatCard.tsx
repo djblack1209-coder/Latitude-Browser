@@ -15,7 +15,7 @@ export function StatCard({ title, value, icon, trend }: StatCardProps) {
   return (
     <div 
       className={clsx(
-        'min-w-0 bg-[var(--color-bg-surface)] rounded-md overflow-hidden',
+        'signal-panel min-w-0 bg-[var(--color-bg-surface)] rounded-md overflow-hidden',
         'border border-[var(--color-border-default)]',
         'transition-[border-color,box-shadow] duration-200',
         'hover:border-[var(--color-border-strong)] hover:shadow-[var(--shadow-sm)]',

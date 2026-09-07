@@ -8,11 +8,25 @@ import (
 	"strings"
 )
 
+// backupInitializeLocked serializes the full reset lifecycle with browser/Tor
+// starts and Tor runtime death handling. The lock is intentionally held from
+// runtime stop through config/data mutation and the optional reload.
 func (a *App) backupInitializeLocked(applyReload bool) (map[string]interface{}, error) {
+	a.torLifecycleMu.Lock()
+	defer a.torLifecycleMu.Unlock()
+	return a.backupInitializeLockedNoLifecycle(applyReload)
+}
+
+// backupInitializeLockedNoLifecycle is the reset implementation for callers
+// that already hold torLifecycleMu (for example, an import transaction).
+func (a *App) backupInitializeLockedNoLifecycle(applyReload bool) (map[string]interface{}, error) {
 	log := logger.New("Backup")
-	a.backupStopRuntimeForMaintenance()
+	if err := a.backupStopRuntimeForMaintenance(); err != nil {
+		return nil, fmt.Errorf("初始化已取消：无法安全停止当前运行时: %w", err)
+	}
 
 	defaultCfg := config.DefaultConfig()
+	a.torConfigMu.Lock()
 	oldCfg := a.config
 	if oldCfg == nil {
 		oldCfg = config.DefaultConfig()
@@ -25,9 +39,14 @@ func (a *App) backupInitializeLocked(applyReload bool) (map[string]interface{}, 
 	}
 
 	if err := defaultCfg.Save(a.resolveAppPath("config.yaml")); err != nil {
+		a.torConfigMu.Unlock()
 		return nil, fmt.Errorf("写入默认配置失败: %w", err)
 	}
 	a.config = defaultCfg
+	if a.torMgr != nil {
+		a.torMgr.UpdateConfig(defaultCfg)
+	}
+	a.torConfigMu.Unlock()
 	a.applyRuntimeConfig(defaultCfg.Runtime)
 	_ = os.Remove(a.resolveAppPath("proxies.yaml"))
 

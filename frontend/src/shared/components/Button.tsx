@@ -17,7 +17,7 @@ export function Button({
   children,
   ...props
 }: ButtonProps) {
-  const baseStyles = 'inline-flex items-center justify-center font-medium rounded-md transition-[background-color,color,border-color,box-shadow,transform] duration-150 active:translate-y-px focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-bg-base)]'
+  const baseStyles = 'signal-press signal-button inline-flex shrink-0 items-center justify-center font-medium rounded-md transition-[background-color,color,border-color,box-shadow,transform] duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-bg-base)]'
   
   const variants = {
     primary: 'bg-[var(--color-accent)] text-[var(--color-text-inverse)] hover:bg-[var(--color-accent-hover)] focus-visible:ring-[var(--color-accent)]',
@@ -27,9 +27,9 @@ export function Button({
   }
 
   const sizes = {
-    sm: 'h-8 px-3 text-xs gap-1.5',
-    md: 'h-9 px-4 text-sm gap-2',
-    lg: 'h-10 px-5 text-sm gap-2',
+    sm: 'h-8 px-3 text-xs gap-1.5 tracking-[0.01em]',
+    md: 'h-9 px-4 text-sm gap-2 tracking-[0.005em]',
+    lg: 'h-10 px-5 text-sm gap-2 tracking-[0.005em]',
   }
 
   return (
@@ -41,6 +41,7 @@ export function Button({
         (disabled || loading) && 'opacity-50 cursor-not-allowed',
         className
       )}
+      aria-busy={loading || undefined}
       disabled={disabled || loading}
       {...props}
     >

@@ -53,14 +53,12 @@ func (m *ClashManager) StartForProfile(profile ClashProfile, userDataDir string)
 	if profile.GetClashRunning() {
 		return nil
 	}
-	clashBinaryPath := strings.TrimSpace(m.Config.Browser.ClashBinaryPath)
-	if clashBinaryPath == "" {
-		err := fmt.Errorf("clash binary path not configured")
-		profile.SetClashLastError(err.Error())
-		log.Error("Clash 启动失败", logger.F("profile_id", profile.GetProfileId()), logger.F("error", err))
-		return err
-	}
-	if _, err := os.Stat(clashBinaryPath); err != nil {
+	// Resolve the binary through the same managed-runtime lookup used by the
+	// independent Mihomo connector.  The old code required an absolute
+	// ClashBinaryPath, which meant a packaged `bin/mihomo` (or a downloaded
+	// platform runtime) could pass preflight but still fail at profile start.
+	clashBinaryPath, err := m.resolveMihomoBinary()
+	if err != nil {
 		profile.SetClashLastError(err.Error())
 		log.Error("Clash 启动失败", logger.F("profile_id", profile.GetProfileId()), logger.F("error", err))
 		return err

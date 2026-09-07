@@ -58,67 +58,95 @@ func FetchIPHealthInfo(
 		"_source":    source,
 		"_targetUrl": targetURL,
 		"_parser":    parser,
+		"_stage":     string(HealthStageResolveConfig),
+		"_code":      string(HealthCodeUnknown),
 	}
 	if targetURL == "" {
-		meta["error"] = "IP 健康检测目标 URL 为空"
-		return meta, fmt.Errorf("IP 健康检测目标 URL 为空")
+		err := fmt.Errorf("IP 健康检测目标 URL 为空")
+		setHealthFailureMeta(meta, err, HealthStageResolveConfig, HealthCodeTargetEmpty)
+		return meta, err
 	}
 
 	src := resolveProxyConfig("", proxies, proxyId)
 	if src == "" {
-		meta["error"] = "未找到代理配置"
-		return meta, fmt.Errorf("未找到代理配置")
+		err := fmt.Errorf("未找到代理配置")
+		setHealthFailureMeta(meta, err, HealthStageResolveConfig, HealthCodeConfigEmpty)
+		return meta, err
 	}
+	meta["_engine"] = speedTestProbeEngine(src, proxies, proxyId, connectorType)
 
 	client, err := buildIPHealthHTTPClient(src, proxyId, proxies, xrayMgr, singboxMgr, clashMgr, connectorType, timeout)
 	if err != nil {
-		meta["error"] = err.Error()
-		return meta, fmt.Errorf("创建 IP 健康检测客户端失败（source=%s）: %w", source, err)
+		wrapped := fmt.Errorf("创建 IP 健康检测客户端失败（source=%s）: %w", source, err)
+		stage, code := ClassifyHealthError(err, HealthStagePrepareBridge)
+		setHealthFailureMeta(meta, wrapped, stage, code)
+		return meta, wrapped
 	}
 
 	req, err := http.NewRequest(http.MethodGet, targetURL, nil)
 	if err != nil {
-		meta["error"] = err.Error()
-		return meta, fmt.Errorf("创建 IP 健康检测请求失败（source=%s）: %w", source, err)
+		wrapped := fmt.Errorf("创建 IP 健康检测请求失败（source=%s）: %w", source, err)
+		stage, code := ClassifyHealthError(err, HealthStageRequest)
+		setHealthFailureMeta(meta, wrapped, stage, code)
+		return meta, wrapped
 	}
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("User-Agent", "LatitudeBrowser/1.0")
 
 	resp, err := client.Do(req)
 	if err != nil {
-		meta["error"] = err.Error()
-		return meta, fmt.Errorf("调用 IP 健康检测接口失败（source=%s）: %w", source, err)
+		wrapped := fmt.Errorf("调用 IP 健康检测接口失败（source=%s）: %w", source, err)
+		stage, code := ClassifyHealthError(err, HealthStageRequest)
+		setHealthFailureMeta(meta, wrapped, stage, code)
+		return meta, wrapped
 	}
 	defer resp.Body.Close()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		meta["error"] = err.Error()
-		return meta, fmt.Errorf("读取 IP 健康检测响应失败（source=%s）: %w", source, err)
+		wrapped := fmt.Errorf("读取 IP 健康检测响应失败（source=%s）: %w", source, err)
+		setHealthFailureMeta(meta, wrapped, HealthStageRequest, HealthCodeResponseReadFailed)
+		return meta, wrapped
 	}
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		snippet := bodySnippet(body, 180)
-		meta["error"] = fmt.Sprintf("HTTP %d", resp.StatusCode)
+		wrapped := fmt.Errorf("IP 健康检测 HTTP %d（source=%s）: %s", resp.StatusCode, source, snippet)
+		setHealthFailureMeta(meta, wrapped, HealthStageValidateResult, HealthCodeUnexpectedStatus)
 		meta["_statusCode"] = resp.StatusCode
 		if snippet != "" {
 			meta["_bodySnippet"] = snippet
 		}
-		return meta, fmt.Errorf("IP 健康检测 HTTP %d（source=%s）: %s", resp.StatusCode, source, snippet)
+		return meta, wrapped
 	}
 
 	result, err := parseIPHealthBody(body, cfg.Parser)
 	if err != nil {
 		snippet := bodySnippet(body, 180)
-		meta["error"] = err.Error()
+		wrapped := fmt.Errorf("IP 健康检测响应解析失败（source=%s, parser=%s）: %w", source, parser, err)
+		setHealthFailureMeta(meta, wrapped, HealthStageValidateResult, HealthCodeResponseParseFailed)
 		if snippet != "" {
 			meta["_bodySnippet"] = snippet
 		}
-		return meta, fmt.Errorf("IP 健康检测响应解析失败（source=%s, parser=%s）: %w", source, parser, err)
+		return meta, wrapped
 	}
 	result["_source"] = source
 	result["_targetUrl"] = targetURL
 	result["_parser"] = parser
+	result["_engine"] = meta["_engine"]
+	result["_stage"] = string(HealthStageComplete)
+	result["_code"] = string(HealthCodeOK)
 	return result, nil
+}
+
+func setHealthFailureMeta(meta map[string]interface{}, err error, stage HealthStage, code HealthCode) {
+	if meta == nil {
+		return
+	}
+	meta["_stage"] = string(stage)
+	meta["_code"] = string(code)
+	if err != nil {
+		meta["error"] = err.Error()
+	}
 }
 
 func parseIPHealthBody(body []byte, parser string) (map[string]interface{}, error) {

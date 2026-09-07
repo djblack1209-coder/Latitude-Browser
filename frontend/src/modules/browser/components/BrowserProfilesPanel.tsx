@@ -1,15 +1,21 @@
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Link } from 'react-router-dom'
-import { Copy, Download, FolderOpen, Key, Loader2, MoreHorizontal, Play, Puzzle, Repeat2, RotateCcw, Settings, Square, Trash2, Wifi } from 'lucide-react'
+import { Copy, Download, FolderOpen, Key, Loader2, MoreHorizontal, Play, Puzzle, RadioTower, Repeat2, RotateCcw, Settings, Square, Trash2, Wifi } from 'lucide-react'
 
 import { Badge, Button, Card, Table } from '../../../shared/components'
+import { SignalEmptyState } from '../../../shared/components/SignalPrimitives'
 import type { TableColumn } from '../../../shared/components/Table'
 
 import type { BrowserCore, BrowserProfile, BrowserProxy, ProxySpeedTestResult } from '../types'
 import { browserProxyTestSpeed, testProxyConnectivity } from '../api'
 import type { BrowserViewMode } from './BrowserListLayout'
 import { LaunchCodeCell } from './BrowserListWidgets'
+import {
+  formatBrowserProfileActivity,
+  getBrowserProfileAttentionReasons,
+  type BrowserWorkspaceMode,
+} from '../pages/browserList/workspaceMode'
 
 type ProfileStatusVariant = 'default' | 'success' | 'error' | 'warning' | 'info'
 
@@ -19,6 +25,7 @@ interface ProfileStatus {
 }
 
 interface BrowserProfilesPanelProps {
+  workspaceMode: BrowserWorkspaceMode
   loading: boolean
   totalProfileCount: number
   hasActiveFilters: boolean
@@ -51,6 +58,9 @@ interface BrowserProfilesPanelProps {
 
 
 function formatProxyLabel(profile: BrowserProfile, proxy?: BrowserProxy): string {
+  if (profile.networkMode === 'tor') {
+    return 'Tor TCP（实验性）'
+  }
   if (proxy?.proxyName) {
     return proxy.proxyName
   }
@@ -90,6 +100,21 @@ function ProxyInlineActions({
 }) {
   const [testing, setTesting] = useState(false)
   const [speedResult, setSpeedResult] = useState<ProxySpeedTestResult | null>(null)
+
+  if (profile.networkMode === 'tor') {
+    return (
+      <div
+        className={`inline-flex ${maxWidthClass} items-center gap-1.5 text-xs text-[var(--color-warning)]`}
+        title="Tor TCP 路由（实验性），常规代理切换与测速不适用"
+      >
+        <RadioTower className="h-3.5 w-3.5 shrink-0" />
+        <span className="min-w-0 truncate">Tor TCP</span>
+        <span className="shrink-0 rounded-sm border border-[color:color-mix(in_srgb,var(--color-warning)_45%,transparent)] px-1 py-0.5 text-[10px] leading-none">
+          实验性
+        </span>
+      </div>
+    )
+  }
   const historyResult = proxy?.lastTestedAt
     ? {
         proxyId: proxy.proxyId,
@@ -312,12 +337,64 @@ function ProfileMoreActions({
   )
 }
 
+function BrowserProfileWorkspaceContext({
+  profile,
+  workspaceMode,
+  hasResolvedCore,
+  compact = false,
+  onOpenCopy,
+}: {
+  profile: BrowserProfile
+  workspaceMode: BrowserWorkspaceMode
+  hasResolvedCore: boolean
+  compact?: boolean
+  onOpenCopy: (profile: BrowserProfile) => void
+}) {
+  if (workspaceMode === 'all') return null
+
+  if (workspaceMode === 'recent') {
+    return (
+      <span className="font-mono text-[11px] tabular-nums text-[var(--color-text-muted)]">
+        {formatBrowserProfileActivity(profile)}
+      </span>
+    )
+  }
+
+  if (workspaceMode === 'attention') {
+    const reasons = getBrowserProfileAttentionReasons(profile, hasResolvedCore)
+    const fullText = reasons.join('；')
+    return (
+      <span className="block min-w-0 text-xs leading-5 text-[var(--color-warning)]" title={fullText}>
+        {compact ? reasons[0] : fullText}
+        {compact && reasons.length > 1 ? `，另有 ${reasons.length - 1} 项` : ''}
+      </span>
+    )
+  }
+
+  const argumentCount = profile.fingerprintArgs.filter((argument) => argument.trim()).length
+  return (
+    <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-2">
+      <div className="min-w-0">
+        <span className="block text-xs font-medium text-[var(--color-text-primary)]">来源：现有实例配置</span>
+        <span className="mt-0.5 block font-mono text-[11px] tabular-nums text-[var(--color-text-muted)]">
+          {argumentCount} 条显式指纹参数
+        </span>
+      </div>
+      <Button size="sm" variant="secondary" onClick={() => onOpenCopy(profile)} className="shrink-0">
+        <Copy className="h-3.5 w-3.5" />按原配置克隆
+      </Button>
+    </div>
+  )
+}
+
 function BrowserProfileCard({
   profile,
+  workspaceMode,
   proxy,
   isSelected,
   status,
   coreLabel,
+  hasResolvedCore,
   isStarting,
   isStopping,
   isBusy,
@@ -335,10 +412,12 @@ function BrowserProfileCard({
   onDelete,
 }: {
   profile: BrowserProfile
+  workspaceMode: BrowserWorkspaceMode
   proxy: BrowserProxy | undefined
   isSelected: boolean
   status: ProfileStatus
   coreLabel: string
+  hasResolvedCore: boolean
   isStarting: boolean
   isStopping: boolean
   isBusy: boolean
@@ -359,7 +438,7 @@ function BrowserProfileCard({
 
   return (
     <div
-      className={`browser-profile-card relative flex min-h-[176px] flex-col overflow-visible rounded-md border bg-[var(--color-bg-surface)] p-4 shadow-none transition-[border-color,background-color] duration-150
+      className={`browser-profile-card relative flex min-h-[176px] flex-col overflow-visible rounded-sm border bg-[var(--color-bg-surface)] p-4 shadow-none transition-[border-color,background-color] duration-150
         ${isSelected ? 'border-[var(--color-accent)] bg-[var(--color-accent-muted)]/35' : 'border-[var(--color-border-default)] hover:border-[var(--color-border-strong)]'}
       `}
     >
@@ -390,6 +469,17 @@ function BrowserProfileCard({
             <Badge variant={status.variant} dot dotClassName="h-1.5 w-1.5 shrink-0">{status.label}</Badge>
           </div>
           <p className="mt-1 truncate text-xs text-[var(--color-text-muted)]">{coreLabel}</p>
+          {workspaceMode !== 'all' && (
+            <div className="mt-2 border-t border-[var(--color-border-muted)] pt-2">
+              <BrowserProfileWorkspaceContext
+                profile={profile}
+                workspaceMode={workspaceMode}
+                hasResolvedCore={hasResolvedCore}
+                compact
+                onOpenCopy={onOpenCopy}
+              />
+            </div>
+          )}
         </div>
         <div className="flex shrink-0 items-center gap-1">
           <Link to={`/browser/edit/${profile.profileId}`}><Button size="sm" variant="ghost" aria-label={`配置实例：${profile.profileName}`} title="配置" className="px-2" disabled={isBusy}><Settings className="w-3.5 h-3.5" /></Button></Link>
@@ -430,6 +520,7 @@ function BrowserProfileCard({
 }
 
 export function BrowserProfilesPanel({
+  workspaceMode,
   loading,
   totalProfileCount,
   hasActiveFilters,
@@ -550,6 +641,19 @@ export function BrowserProfilesPanel({
         return <ProxyInlineActions profile={record} proxy={proxy} isBusy={isBusy} onOpenProxyPicker={onOpenProxyPicker} />
       },
     },
+    ...(workspaceMode === 'all' ? [] : [{
+      key: 'workspaceContext',
+      title: workspaceMode === 'recent' ? '最近记录' : workspaceMode === 'attention' ? '诊断依据' : '配置来源',
+      width: workspaceMode === 'templates' ? 260 : 240,
+      render: (_: unknown, record: BrowserProfile) => (
+        <BrowserProfileWorkspaceContext
+          profile={record}
+          workspaceMode={workspaceMode}
+          hasResolvedCore={Boolean(resolveProfileCore(record))}
+          onOpenCopy={onOpenCopy}
+        />
+      ),
+    } satisfies TableColumn<BrowserProfile>]),
     {
       key: 'actions',
       title: '操作',
@@ -591,16 +695,33 @@ export function BrowserProfilesPanel({
             <span>正在加载实例</span>
           </div>
         ) : profiles.length === 0 ? (
-          <div className="flex min-h-64 flex-col items-center justify-center gap-2 px-6 py-16 text-center" role="status" aria-live="polite">
-            <p className="text-sm font-medium text-[var(--color-text-primary)]">{hasActiveFilters && totalProfileCount > 0 ? '没有匹配的实例' : '还没有实例配置'}</p>
-            <p className="max-w-md text-xs text-[var(--color-text-muted)]">
-              {hasActiveFilters && totalProfileCount > 0 ? '当前筛选条件没有结果，调整条件或清除筛选后重试。' : '创建一个实例后，它会出现在这里。'}
-            </p>
-            {hasActiveFilters && totalProfileCount > 0 && (
-              <Button size="sm" variant="secondary" onClick={onClearFilters} className="mt-2">
-                清除筛选
-              </Button>
-            )}
+          <div className="flex min-h-64 items-center justify-center px-6 py-12" role="status" aria-live="polite">
+            <SignalEmptyState
+              symbol={workspaceMode === 'templates' ? 'fingerprint' : 'logs'}
+              title={
+                hasActiveFilters && totalProfileCount > 0
+                  ? '没有匹配的实例'
+                  : workspaceMode === 'attention'
+                    ? '当前没有需要处理的实例'
+                    : workspaceMode === 'templates'
+                      ? '没有可复用的指纹配置'
+                      : '还没有实例配置'
+              }
+              description={
+                hasActiveFilters && totalProfileCount > 0
+                  ? '当前筛选条件没有结果，调整条件或清除筛选后重试。'
+                  : workspaceMode === 'attention'
+                    ? '没有检测到运行错误、运行警告、缺失数据目录或缺失可用内核。'
+                    : workspaceMode === 'templates'
+                      ? '现有实例没有显式指纹参数。保存一份实例配置后，才会在这里作为复用来源出现。'
+                      : '创建一个实例后，它会出现在这里。'
+              }
+              action={hasActiveFilters && totalProfileCount > 0 ? (
+                <Button size="sm" variant="secondary" onClick={onClearFilters}>
+                  清除筛选
+                </Button>
+              ) : undefined}
+            />
           </div>
         ) : viewMode === 'table' ? (
           <Table
@@ -615,10 +736,12 @@ export function BrowserProfilesPanel({
               <div key={profile.profileId} className="min-w-[320px] max-w-[620px] flex-[1_1_420px]">
                 <BrowserProfileCard
                   profile={profile}
+                  workspaceMode={workspaceMode}
                   proxy={proxies.find(item => item.proxyId === profile.proxyId)}
                   isSelected={selectedIds.has(profile.profileId)}
                   status={getProfileStatus(profile)}
                   coreLabel={resolveProfileCore(profile)?.coreName || getProfileCoreLabel(profile)}
+                  hasResolvedCore={Boolean(resolveProfileCore(profile))}
                   isStarting={isProfileStarting(profile.profileId)}
                   isStopping={isProfileStopping(profile.profileId)}
                   isBusy={isProfileBusy(profile.profileId)}

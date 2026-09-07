@@ -7,7 +7,15 @@ import (
 )
 
 func (a *App) backupImportFromPathLocked(zipPath string, resetFirst bool) (map[string]interface{}, error) {
-	a.backupStopRuntimeForMaintenance()
+	// Keep the lifecycle gate for the entire stop -> import/reset -> reload
+	// transaction. Otherwise a concurrent browser start could create a new Tor
+	// runtime after the initial stop and race the config/data mutation.
+	a.torLifecycleMu.Lock()
+	defer a.torLifecycleMu.Unlock()
+
+	if err := a.backupStopRuntimeForMaintenance(); err != nil {
+		return nil, fmt.Errorf("加载已取消：无法安全停止当前运行时: %w", err)
+	}
 	a.backupEmitImportProgress("preparing", 10, "正在解压并校验备份包...")
 
 	extractRoot, manifest, err := backupExtractAndValidate(zipPath)
@@ -24,7 +32,7 @@ func (a *App) backupImportFromPathLocked(zipPath string, resetFirst bool) (map[s
 
 	if resetFirst {
 		a.backupEmitImportProgress("preparing", 30, "正在初始化系统数据...")
-		if _, err := a.backupInitializeLocked(false); err != nil {
+		if _, err := a.backupInitializeLockedNoLifecycle(false); err != nil {
 			return nil, err
 		}
 		a.backupEmitImportProgress("preparing", 40, "初始化完成，继续加载备份内容...")

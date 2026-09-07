@@ -10,9 +10,10 @@ import (
 func (a *App) BrowserProxyBuildDiagnostic(proxyId string, proxyConfig string) ProxyBuildDiagnostic {
 	proxies := a.getLatestProxies()
 	return proxy.BuildProxyDiagnostic(proxyConfig, proxies, proxyId, proxy.BuildDiagnosticOptions{
-		XrayMgr:    a.xrayMgr,
-		SingBoxMgr: a.singboxMgr,
-		ClashMgr:   a.clashMgr,
+		XrayMgr:       a.xrayMgr,
+		SingBoxMgr:    a.singboxMgr,
+		ClashMgr:      a.clashMgr,
+		ConnectorType: a.defaultProxyConnectorType(),
 	})
 }
 
@@ -20,7 +21,7 @@ func (a *App) BrowserProxyBuildDiagnostic(proxyId string, proxyConfig string) Pr
 func (a *App) BrowserProxyProbeBrowserPage(request ProxyBrowserProbeRequest) ProxyBrowserProbeResult {
 	request.ProxyId = strings.TrimSpace(request.ProxyId)
 	proxies := a.getLatestProxies()
-	cfg := buildProxyBrowserProbeConfig(request)
+	cfg := buildProxyBrowserProbeConfig(request, a.defaultProxyConnectorType())
 	result := proxy.ProbeBrowserPageConnectivity(request.ProxyId, proxies, a.xrayMgr, a.singboxMgr, a.clashMgr, &cfg)
 	return ProxyBrowserProbeResult{
 		ProxyId:     result.ProxyId,
@@ -33,11 +34,15 @@ func (a *App) BrowserProxyProbeBrowserPage(request ProxyBrowserProbeRequest) Pro
 		Failed:      result.Failed,
 		Concurrency: result.Concurrency,
 		Error:       result.Error,
+		Stage:       string(result.Stage),
+		Code:        string(result.Code),
+		TargetURL:   result.TargetURL,
 	}
 }
 
-func buildProxyBrowserProbeConfig(request ProxyBrowserProbeRequest) proxy.BrowserPageProbeConfig {
+func buildProxyBrowserProbeConfig(request ProxyBrowserProbeRequest, connectorType string) proxy.BrowserPageProbeConfig {
 	cfg := proxy.DefaultBrowserPageProbeConfig
+	cfg.ConnectorType = connectorType
 	cfg.URLs = append([]string{}, proxy.DefaultBrowserPageProbeConfig.URLs...)
 	if len(request.URLs) > 0 {
 		urls := make([]string, 0, len(request.URLs))

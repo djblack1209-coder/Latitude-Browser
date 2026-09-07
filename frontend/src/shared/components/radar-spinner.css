@@ -1,0 +1,119 @@
+/* Component-local adaptation of komari-theme-commander's HUD spinner.
+   It uses Latitude's existing semantic tokens and animates transforms only. */
+.radar-spinner {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-accent);
+  vertical-align: middle;
+}
+
+.radar-spinner[data-size='sm'] {
+  width: 16px;
+  height: 16px;
+}
+
+.radar-spinner[data-size='md'] {
+  width: 22px;
+  height: 22px;
+}
+
+.radar-spinner[data-size='lg'] {
+  width: 48px;
+  height: 48px;
+}
+
+.radar-spinner__graphic {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.radar-spinner__label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.radar-spinner__rotor {
+  transform-box: view-box;
+  transform-origin: center;
+  animation: radar-spinner-rotate 2.5s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+  will-change: transform;
+}
+
+.radar-spinner[data-size='sm'] .radar-spinner__rotor {
+  animation-duration: 1.8s;
+}
+
+.radar-spinner[data-size='lg'] .radar-spinner__rotor {
+  animation-duration: 2.4s;
+  animation-timing-function: linear;
+}
+
+.radar-spinner__diamond {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.25;
+  opacity: 0.55;
+}
+
+.radar-spinner[data-size='sm'] .radar-spinner__diamond {
+  stroke-width: 1.75;
+}
+
+.radar-spinner__ring {
+  fill: none;
+  stroke: var(--color-accent-border);
+}
+
+.radar-spinner__ring--outer {
+  stroke-width: 1;
+}
+
+.radar-spinner__ring--inner {
+  stroke-width: 0.75;
+}
+
+.radar-spinner__crosshair {
+  fill: none;
+  stroke: var(--color-border-default);
+  stroke-width: 0.75;
+}
+
+.radar-spinner__sweep-field {
+  fill: currentColor;
+  opacity: 0.08;
+}
+
+.radar-spinner__sweep-line {
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-width: 1.25;
+  opacity: 0.7;
+}
+
+.radar-spinner__core {
+  fill: currentColor;
+}
+
+@keyframes radar-spinner-rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .radar-spinner__rotor {
+    animation: none !important;
+    will-change: auto;
+  }
+}

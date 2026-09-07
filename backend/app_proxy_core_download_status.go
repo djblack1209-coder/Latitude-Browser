@@ -9,11 +9,13 @@ import (
 	"strings"
 
 	"ant-chrome/backend/internal/apppath"
+	"ant-chrome/backend/internal/config"
 	"ant-chrome/backend/internal/fsutil"
 )
 
-func (a *App) proxyCoreStatus(spec proxyCoreSpec, target proxyCoreTarget) ProxyCoreStatusResult {
-	result := ProxyCoreStatusResult{Core: spec.Core, GOOS: target.GOOS, GOARCH: target.GOARCH}
+func (a *App) proxyCoreStatus(spec proxyCoreSpec, target proxyCoreTarget) (result ProxyCoreStatusResult) {
+	result = ProxyCoreStatusResult{Core: spec.Core, GOOS: target.GOOS, GOARCH: target.GOARCH}
+	defer func() { result.State = proxyCoreStateForStatus(result) }()
 	if a == nil || a.config == nil {
 		result.Message = "配置未初始化"
 		return result
@@ -21,7 +23,7 @@ func (a *App) proxyCoreStatus(spec proxyCoreSpec, target proxyCoreTarget) ProxyC
 	result.Active = proxyCoreIsActive(a, spec)
 	configuredPath := strings.TrimSpace(proxyCoreConfiguredPath(a, spec))
 	if configuredPath != "" && target.GOOS == goruntime.GOOS && target.GOARCH == goruntime.GOARCH {
-		if path, ok := existingProxyCoreFile(configuredPath, a.appRoot); ok {
+		if path, ok := existingProxyCoreFile(configuredPath, a.appRoot); ok && proxyCoreBinaryUsable(path, target.GOOS) {
 			result.Installed = true
 			result.Configured = true
 			result.BinaryPath = path
@@ -51,21 +53,118 @@ func (a *App) proxyCoreStatus(spec proxyCoreSpec, target proxyCoreTarget) ProxyC
 	return result
 }
 
+// BrowserProxyConnectorPreflight reports whether every local core required by
+// a connector stack is present for the requested target. It intentionally does
+// not start a proxy bridge or perform an external request; callers should run
+// the real connectivity check only after this local gate is ready.
+func (a *App) BrowserProxyConnectorPreflight(input ProxyConnectorPreflightRequest) ProxyConnectorPreflightResult {
+	connector := strings.TrimSpace(input.ConnectorType)
+	if connector == "" && a != nil && a.config != nil {
+		connector = a.config.Browser.DefaultConnectorType
+	}
+	connector = config.NormalizeBrowserConnectorType(connector)
+
+	target, err := normalizeProxyCoreTarget(input.GOOS, input.GOARCH)
+	result := ProxyConnectorPreflightResult{
+		ConnectorType: connector,
+		RequiredCores: requiredProxyCoreNames(connector),
+		Cores:         []ProxyCoreStatusResult{},
+		MissingCores:  []string{},
+	}
+	if err != nil {
+		result.State = ProxyCoreStateUnavailable
+		result.Message = err.Error()
+		return result
+	}
+	result.GOOS = target.GOOS
+	result.GOARCH = target.GOARCH
+
+	unavailable := false
+	for _, core := range result.RequiredCores {
+		spec, specErr := normalizeProxyCoreSpec(core)
+		if specErr != nil {
+			result.MissingCores = append(result.MissingCores, core)
+			continue
+		}
+		status := a.proxyCoreStatus(spec, target)
+		// The selected connector in this request is authoritative. This allows
+		// settings screens to preflight a pending selection before saving it,
+		// without mutating persisted configuration or pretending to run it.
+		status.Active = true
+		status.State = proxyCoreStateForRequirement(status, true)
+		if status.State == ProxyCoreStateUnavailable {
+			unavailable = true
+		}
+		result.Cores = append(result.Cores, status)
+		if !status.Installed {
+			result.MissingCores = append(result.MissingCores, core)
+		}
+	}
+	if unavailable {
+		result.State = ProxyCoreStateUnavailable
+		result.Message = "无法读取本机内核状态"
+		return result
+	}
+	result.Ready = len(result.MissingCores) == 0 && len(result.Cores) == len(result.RequiredCores)
+	if result.Ready {
+		result.State = ProxyCoreStateReady
+		result.Message = "连接栈本地内核就绪"
+	} else {
+		result.State = ProxyCoreStateMissing
+		if len(result.MissingCores) > 0 {
+			result.Message = "缺少必需内核: " + strings.Join(result.MissingCores, ", ")
+		} else {
+			result.Message = "连接栈本地内核未就绪"
+		}
+	}
+	return result
+}
+
+func requiredProxyCoreNames(connector string) []string {
+	if config.NormalizeBrowserConnectorType(connector) == config.BrowserConnectorMihomo {
+		return []string{"mihomo"}
+	}
+	return []string{"xray", "sing-box"}
+}
+
+func proxyCoreStateForStatus(status ProxyCoreStatusResult) ProxyCoreState {
+	if status.Core == "" || (status.Message == "配置未初始化" && !status.Installed) {
+		return ProxyCoreStateUnavailable
+	}
+	return proxyCoreStateForRequirement(status, status.Active)
+}
+
+func proxyCoreStateForRequirement(status ProxyCoreStatusResult, required bool) ProxyCoreState {
+	if !status.Installed {
+		if status.Message == "配置未初始化" {
+			return ProxyCoreStateUnavailable
+		}
+		return ProxyCoreStateMissing
+	}
+	if required {
+		return ProxyCoreStateReady
+	}
+	if strings.EqualFold(strings.TrimSpace(status.Source), "downloaded") && !status.Configured {
+		return ProxyCoreStateDownloaded
+	}
+	return ProxyCoreStateInstalled
+}
+
 func proxyCoreIsActive(a *App, spec proxyCoreSpec) bool {
 	if a == nil || a.config == nil {
 		return false
 	}
-	current := strings.ToLower(strings.TrimSpace(a.config.Browser.DefaultConnectorType))
-	if current == "" {
-		current = "xray"
-	}
+
+	// The xray connector is a combined Xray + sing-box stack. The persisted
+	// connector value is normalized to "xray", so both components are active
+	// requirements when that stack is selected. Mihomo is intentionally kept
+	// isolated and never treated as a fallback for the combined stack.
+	current := config.NormalizeBrowserConnectorType(a.config.Browser.DefaultConnectorType)
 	switch spec.Core {
-	case "xray":
-		return current == "xray"
+	case "xray", "sing-box":
+		return current == config.BrowserConnectorXray
 	case "mihomo":
-		return current == "mihomo" || current == "clash"
-	case "sing-box":
-		return current == "sing-box" || current == "singbox"
+		return current == config.BrowserConnectorMihomo
 	default:
 		return false
 	}
@@ -112,7 +211,7 @@ func findInstalledProxyCoreBinary(appRoot string, spec proxyCoreSpec, target pro
 		if strings.TrimSpace(dir.path) == "" {
 			continue
 		}
-		if path, err := findProxyCoreBinary(dir.path, spec.BinaryBase, target.GOOS); err == nil {
+		if path, err := findProxyCoreBinary(dir.path, spec.BinaryBase, target.GOOS); err == nil && proxyCoreBinaryUsable(path, target.GOOS) {
 			return path, dir.source, true
 		}
 	}
@@ -122,6 +221,20 @@ func findInstalledProxyCoreBinary(appRoot string, spec proxyCoreSpec, target pro
 		}
 	}
 	return "", "", false
+}
+
+func proxyCoreBinaryUsable(path string, targetOS string) bool {
+	info, err := os.Stat(path)
+	if err != nil || info.IsDir() {
+		return false
+	}
+	// Windows does not expose a meaningful executable bit. On Unix targets,
+	// a downloaded core without any execute bit can never start and must not be
+	// reported as ready.
+	if targetOS != "windows" && info.Mode().Perm()&0o111 == 0 {
+		return false
+	}
+	return true
 }
 
 func proxyCoreConfiguredPath(a *App, spec proxyCoreSpec) string {
