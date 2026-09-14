@@ -1,371 +1,101 @@
-# Latitude Browser
+<p align="center"><img src="images/showcase/hero.svg" alt="Latitude Browser — A local workspace for isolated browser environments" width="100%" /></p>
 
+<p align="center"><strong>把独立浏览器环境、代理连接与自动化，放进一个本地工作台。</strong><br />A local desktop workspace for browser profiles, proxy routing, and automation.</p>
 
-> Latitude Browser 是一个独立维护的桌面浏览器工作台。本工作树包含上游代码，
-> 上游仓库当前未附带独立 LICENSE；在获得作者明确授权或上游补充许可证前，请将本项目视为私有/内部使用，
-> 不要直接公开分发修改后的安装包或源码。法律与来源说明见 `docs/plan/source-migration-and-license.md`。
-> 面向多账号隔离、代理绑定和本地环境管理的桌面浏览器工具（Windows / Linux / macOS unsigned）。
-> 产品入口说明：正式产品名为 `Latitude Browser`。macOS 验收、Dock 配置和自动化测试统一使用 `/Applications/Latitude Browser.app`。历史构建和存储兼容由迁移逻辑处理，不代表第二个产品入口。
+<p align="center">
+  <a href="https://github.com/djblack1209-coder/Latitude-Browser/actions/workflows/ci.yml"><img src="https://img.shields.io/badge/CI-GitHub_Actions-485c50?style=flat-square" alt="View CI runs on GitHub Actions" /></a>
+  <img src="https://img.shields.io/badge/Go-Wails_v2-00ADD8?style=flat-square" alt="Go and Wails v2" />
+  <img src="https://img.shields.io/badge/React-TypeScript-61DAFB?style=flat-square" alt="React and TypeScript" />
+  <img src="https://img.shields.io/badge/storage-local_SQLite-95E8B5?style=flat-square" alt="Local SQLite storage" />
+</p>
 
-[![Release](https://img.shields.io/github/v/release/djblack1209-coder/Latitude-Browser?sort=semver)](https://github.com/djblack1209-coder/Latitude-Browser/releases)
-[![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-blue)](https://github.com/djblack1209-coder/Latitude-Browser/releases)
-[![Issues](https://img.shields.io/github/issues/djblack1209-coder/Latitude-Browser)](https://github.com/djblack1209-coder/Latitude-Browser/issues)
+<p align="center">简体中文 · <a href="README.en.md">English</a> · <a href="docs/showcase/ENGINEERING.md">工程导览</a> · <a href="docs/showcase/DEMO.md">五分钟演示</a> · <a href="ROADMAP.md">Roadmap</a></p>
 
-## 推荐内核项目
+## 为什么做 Latitude
 
-Latitude Browser 当前推荐配套使用的浏览器内核，来源于开源项目 [fingerprint-chromium](https://github.com/adryfish/fingerprint-chromium)。
+调试多个身份、地区或站点环境时，浏览器配置、代理客户端和脚本往往分散在不同工具里。Latitude 将它们组织为可命名、可检索、可单独启动的浏览器实例，适合本地 Web 测试、环境复现和可信脚本自动化。
 
-如果你正在寻找可直接下载和维护的指纹内核版本，建议先查看它的 Releases 页面：
+本项目基于 [black-ant/Ant-Browser](https://github.com/black-ant/Ant-Browser) 持续改造。Latitude 的工作包括终端风格界面、分步环境配置、连接栈与网络状态处理、macOS 安装入口及工程验证。它不是从零编写的 Chromium 内核；[工程导览](docs/showcase/ENGINEERING.md) 区分上游基础、可追溯的改动和后续工作。
 
-- <https://github.com/adryfish/fingerprint-chromium/releases>
+## 看一眼工作台
 
-这个项目为 Latitude Browser 的内核准备提供了直接可用的基础来源，这里先对原项目做明确推荐与致谢。
+<img src="images/showcase/workspace.png" alt="Latitude Browser 深色实例工作台，展示四个虚构测试环境" width="100%" />
 
-Latitude Browser 的目标很明确：在一台桌面设备上，帮助用户稳定管理多个彼此隔离的浏览器实例，并配合代理池、浏览器内核和快捷启动能力完成日常运营或测试工作。
+<p align="center"><sub>当前代码的浏览器 UI 预览，使用虚构演示数据；不是已启动浏览器、真实代理出口或桌面集成测试的证明。</sub></p>
 
-## 目录
+<details>
+<summary><strong>查看分步配置与连接栈</strong></summary>
 
-- [项目简介](#项目简介)
-- [近期更新](#近期更新)
-- [更新日志](CHANGELOG.md)
-- [核心特性](#核心特性)
-- [界面预览](#界面预览)
-- [快速开始](#快速开始)
-- [常用操作](#常用操作)
-- [常见问题](#常见问题)
-- [Roadmap](#roadmap)
-- [贡献](#贡献)
-- [支持与反馈](#支持与反馈)
-- [License](#license)
+<img src="images/showcase/setup.png" alt="环境自动配置：网络入口、设备基线、指纹策略、确认并创建" width="100%" />
 
-## 项目简介
+<img src="images/showcase/connectors.png" alt="连接栈设置：Xray 加 sing-box 组合栈与独立 Mihomo 栈" width="100%" />
 
-Latitude Browser 适合以下场景：
+</details>
 
-- 多账号环境隔离
-- 跨境电商与社媒账号运营
-- 需要独立代理出口的本地测试
-- 需要统一管理浏览器内核和实例配置的团队
+## 可以做什么
 
-这个项目当前提供的核心价值是：
+| 能力 | 使用方式 | 实现入口 |
+| --- | --- | --- |
+| 独立浏览器实例 | 管理配置目录、启动参数、标签与代理绑定 | [实例管理](backend/internal/browser/profile_store.go) |
+| 分步配置 | 从网络入口、设备基线到指纹策略，最后确认创建 | [AutoConfigPage](frontend/src/modules/browser/pages/AutoConfigPage.tsx) |
+| 两套连接栈 | 明确选择 Xray + sing-box 或独立 Mihomo | [连接栈约定](docs/proxy-connector-stacks.md) |
+| 启动与诊断 | 组织启动计划，检查运行状态并报告错误 | [启动准备](backend/app_instance_start_prepare.go) |
+| 本地自动化 | 通过脚本包与本地 API 驱动自己的测试流程 | [脚本包说明](backend/internal/automation/demo-library/README.md) |
+| 本地数据管理 | SQLite 配置、备份与恢复入口 | [备份入口](backend/app_backup_entry.go) |
 
-- 给每个账号分配独立浏览器实例
-- 给每个实例绑定独立代理
-- 统一管理浏览器内核、标签、关键字和快捷打开码
-- 在本地保存配置和运行数据，便于自主控制
-
-## 近期更新
-
-### 未发布
-
-- SOCKS5 优化：完善 SOCKS5 与链式代理连接流程，统一实例启动、测速和健康检测体验
-- 体验优化：优化代理池、实例列表、日志查看和异常提示等日常操作细节
-- 内存限制：新增实例最大内存配置，支持按实例控制浏览器内存占用
-
-### 1.5.0 · 2026-07-25
-
-- 代理增强：支持 HTTPS 代理桥接，完善代理导入、测速和连接可用性处理
-- 实例安全：增加实例删除数据审计，避免误删用户数据目录时缺少确认依据
-- 会话恢复：新增实例最近会话恢复配置，创建、复制、更新和启动流程保持一致
-- 启动服务：补充启动 API 服务端口设置，设置页可查看当前地址并保存偏好端口
-- 界面优化：精简代理池导入流程，新增代理池使用说明入口，减少页面信息堆叠
-
-### 1.4.0 · 2026-07-15
-
-- VPN 优化：完善代理/VPN 检测展示，可直接查看配置代理、认证状态、浏览器出口 IP、ASN/网络、多源归属冲突和来源明细，避免单一 IP 库误判
-- 指纹优化：优化指纹检测页的基线、修改前后对比、自动刷新和启动逻辑；Linux / macOS 指纹环境自动切换英文，避免中文字体缺失导致方块字
-- 移除控制台栏目，应用启动后直接进入实例列表，减少无用入口
-- 增强观测能力：提供指纹识别页面
-
-### 1.3.0 · 2026-06-23
-
-- 自动化增强：完善自动化脚本导入、运行、目标实例选择和执行记录管理，提升多实例自动化编排能力
-- 插件管理：新增插件包管理能力，支持插件安装、导入、启停、删除、实例限制和单实例插件配置
-- VPN 优化：优化代理/VPN 连接链路，完善 Xray、sing-box、Mihomo 等连接栈的启动、测速、检测和预热能力
-- 实例迁移：支持实例导入导出，可将实例配置和完整浏览器用户数据目录打包迁移到新环境
-- 代理适配：实例导入时按代理名称匹配本地同名代理，匹配不到或同名不唯一时自动清空代理
-- 界面优化：优化实例列表、关键字展示、操作菜单和导入导出入口，减少页面拥挤和无效信息
-
-### 1.2.0 · 2026-05-09
-
-- 重点升级接口调用：Launch API 补齐实例增删改查、按 code / selector 启动、runtime session / status / stop 和统一 CDP 入口，方便外部系统直接调用浏览器能力
-- 完善自动化接口链路：脚本执行支持 selector / params 覆盖和 `timeoutMs` 超时控制，双实例 runtime 流程支持超时取消与错误返回
-- 增强代理池：新增链式代理导入、编辑和预览能力，支持 HTTP / SOCKS5 两层链路，并优化直连代理批量导入
-- 优化代理检测：新增测速目标、IP 健康检测目标和桥接启动超时配置，链式代理也可以参与测速与健康检测
-- 改进实例启动：代理异常时支持本次直连启动，不修改实例原有代理配置；默认代理池只保留直连节点
-- 升级书签能力：新增 IP 检测站点默认书签，支持设置启动时自动打开，并可同步到已有未运行实例
-
-### 1.1.0 · 2026-03-19
-
-- 完善 Linux 支持：补齐 Linux 环境下的开发、打包、安装、启动与运行链路，并持续修复安装版启动与退出稳定性问题
-- 补齐 macOS unsigned 内测构建链路：支持在原生 macOS 主机上打包 `.app` / `.zip`，用户状态目录统一使用 `~/Library/Application Support/latitude-browser`，旧状态会在首次启动时自动迁移
-- 新增 SOCKS 代理测试支持：SOCKS 代理能力已进入测试阶段，后续会继续验证稳定性与兼容性
-- 实验性支持接口触发浏览器：支持通过接口启动浏览器实例，便于后续接入自动化流程
-
-完整历史版本记录见 [CHANGELOG.md](CHANGELOG.md)。
-
-## 源码分支说明
-
-- `master`：面向开发者的干净基线分支，不提交 `data/app.db`、实例目录或其他用户数据。首次启动时会自动初始化空数据库。
-- `user_data`：在 `master` 基础上额外提交一份 `data/app.db` 测试快照，便于演示、联调和复现问题。
-- 代理运行时 `bin/xray.exe`、`bin/sing-box.exe` 已随源码仓库提供；开发和发布打包不需要再单独下载这些运行时文件。
-
-## 核心特性
-
-- 实例隔离管理：支持创建、编辑、启动、停止、重启、克隆和删除浏览器实例
-- 代理池配置：支持统一维护代理节点，并将代理分配到具体实例
-- 多协议支持：支持常见代理配置方式，并支持导入 Clash
-- 内核管理：支持维护多个 Chrome 内核版本，并设置默认内核
-- 快捷启动：支持通过实例 Code 和 `Ctrl + K` 快速打开目标实例
-- 标签与检索：支持按标签、关键字、状态、代理、内核、分组进行筛选
-- 自动化脚本：支持脚本导入、运行、目标实例选择、执行记录和外部接口调用
-- 插件管理：支持插件安装、导入、启停、删除、实例限制和单实例插件配置
-- 实例迁移：支持将实例配置和浏览器用户数据目录导出为 ZIP，并导入为新实例
-- VPN / 代理检测：支持连接栈预热、测速、IP 健康检测和代理异常处理
-- 本地化存储：配置和实例数据保存在本地，适合长期使用和备份
-
-## 界面预览
-
-### 1. 控制台
-
-<img src="images/readme/001-首页.png" alt="控制台" width="100%" />
-
-对应功能点：
-
-- 查看实例总数、运行中实例、代理节点数量和内核版本
-- 从首页快速进入 `实例列表`、`代理池配置`、`内核管理`、`系统设置`
-- 查看客户端版本、运行环境、数据存储和当前实例运行状态
-
-### 2. 实例列表
-
-<img src="images/readme/002-实例列表.png" alt="实例列表" width="100%" />
-
-对应功能点：
-
-- 统一查看和管理所有浏览器实例
-- 按状态、代理、内核、分组、关键字筛选实例
-- 支持 `新建配置`、启动、停止、重启、配置、克隆、删除
-- 给实例分配快捷打开码，后续可以直接快速启动
-
-### 3. 代理池配置
-
-<img src="images/readme/003-设置代理池.png" alt="代理池配置" width="100%" />
-
-对应功能点：
-
-- 统一管理代理节点
-- 支持按协议、分组筛选代理
-- 支持手动维护代理和导入 Clash
-- 支持查看延迟、IP 健康并挑选可用节点
-
-代理连接栈规则：
-
-- `default_connector_type` 只有两套连接栈：`xray` 和 `mihomo`。
-- `xray` 表示 Xray + sing-box 组合栈：Xray 负责 vmess/vless/trojan/shadowsocks/链式代理等，sing-box 负责 hysteria2/tuic/anytls 等协议。
-- `mihomo` 表示独立 Mihomo 栈：需要桥接的代理统一走 mihomo。
-- 实例启动、代理测速、真实连通性、IP 健康、预热和插件下载代理必须按当前连接栈执行；不得在 `xray` 组合栈和 `mihomo` 栈之间自动混用。
-- 详细约束见 `docs/proxy-connector-stacks.md`。
-
-### 4. 代理生效验证
-
-<img src="images/readme/004-自定义代理.png" alt="代理生效验证" width="100%" />
-
-对应功能点：
-
-- 启动实例后访问 IP 检测网站验证代理是否真正生效
-- 检查 IP 地区、ASN、运营商和风险值等信息
-- 用于确认当前实例是否已经走目标代理出口
+配置隔离不等于安全沙箱，也不保证匿名性或绕过站点检测。自动化脚本以当前用户权限执行，仅运行自己检查并信任的代码。
 
 ## 快速开始
 
-### 环境要求
+### 先看界面
 
-- 操作系统：
-  - Windows 10 / 11（64 位）
-  - Linux（amd64 / arm64）
-  - macOS（amd64 / arm64，当前为 unsigned 内测包）
-- 建议内存：8 GB 及以上
-- 建议磁盘空间：2 GB 以上
-
-### 下载与运行
-
-1. 前往 Releases 页面下载最新版本：<https://github.com/djblack1209-coder/Latitude-Browser/releases>
-2. 安装版直接运行 `LatitudeBrowser-Setup-*.exe`
-3. 便携版解压后运行 `latitude-browser.exe`
-4. Linux 包下载后可直接安装 `latitude-browser_<version>_<arch>.deb`，或解压 `tar.gz` 后运行 `latitude-browser`
-5. macOS unsigned 包解压后运行 `LatitudeBrowser-<version>-macos-<arch>.app`；如被 Gatekeeper 拦截，请对本机测试包执行 `xattr -dr com.apple.quarantine <app路径>` 后再打开
-
-### 从源码运行
-
-1. 开发默认使用 `master` 分支；该分支不带测试用户数据，适合作为日常开发基线。
-2. 如需带测试库的演示环境，请切换到 `user_data` 分支。
-3. Windows 统一执行 `bat\dev.bat`；默认是 `live` 热更新模式，如需静态资源排查使用 `bat\dev.bat stable`，如需受限内存复现使用 `bat\dev.bat limited`。
-4. Windows 运行时使用 `bin/xray.exe`、`bin/sing-box.exe`；Linux 运行时使用 `bin/linux-<arch>/xray`、`bin/linux-<arch>/sing-box`；macOS 运行时使用 `bin/darwin-<arch>/xray`、`bin/darwin-<arch>/sing-box`。
-5. 运行时文件采用“仓库固定 + 哈希校验”，校验清单在 `publish/runtime-manifest.json`，固定来源清单在 `publish/runtime-sources.json`。
-6. 如需刷新 Linux / macOS 运行时，执行 `python3 tools/runtime/sync-runtime.py --target <target>`（会按固定来源下载、校验归档并更新 manifest）。
-
-开发模式说明：
-
-- `bat\dev.bat`：默认 `live` 模式，启动 Vite watcher，并通过 `-frontenddevserverurl` 接入桌面壳
-- `bat\dev.bat stable`：先构建 `frontend/dist`，再以静态资源模式启动 Wails，不依赖外部 Vite dev server
-- `bat\dev.bat live`：显式指定 `live` 模式，效果与默认一致
-- `bat\dev.bat limited`：在 `live` 基础上为 watcher 与其子进程附加 Windows Job Object 内存限制
-- 如需为依赖下载配置代理，可在启动前设置 `DEV_PROXY_URL`、`DEV_NO_PROXY`、`DEV_GOPROXY`
-
-### 自动化脚本包
-
-自动化脚本现在分成两层：
-
-- 仓库里的可提交 demo 脚本库：`backend/internal/automation/demo-library/`
-- 本地运行时 / 用户自定义脚本：`data/automation/scripts/`
-
-规则是：
-
-- 只有 demo 脚本库里的脚本会提交到 git
-- `data/automation/scripts/` 下的运行时脚本统一忽略，不提交 git
-- 默认只同步三个 demo：`dual-instance-runtime-switch`、`news-query-txt`、`web-image-generate-download`
-
-脚本包采用“一脚本一目录”的可搬运结构：
-
-```text
-<script-id>/
-├── automation.script.json
-├── index.cjs
-└── 其他辅助文件
-```
-
-其中：
-
-- `automation.script.json`：脚本元数据和默认参数
-- `index.cjs`：入口脚本，`entryFile` 也可以改成相对路径，例如 `scripts/index.cjs`
-- 其他辅助文件：脚本依赖的本地模块、模板、静态资源
-
-运行时落盘结构和分发结构不同。应用内部会把脚本写到：
-
-```text
-data/automation/scripts/<script-id>/
-├── config
-├── index.cjs
-└── 其他辅助文件
-```
-
-这里的 `config` 是应用内部持久化格式；对外复制、导入、脚本库管理一律使用 `automation.script.json` 包结构。
-
-### Windows 发布打包（源码）
-
-Windows 发布脚本默认保持原有 NSIS 安装包行为，也可以生成便携 ZIP，或一次生成两种产物：
-
-```powershell
-bat\publish.bat zip
-bat\publish.bat both
-bat\publish.bat -Target WINDOWS -WindowsFormat INSTALLER
-bat\publish.bat -Target WINDOWS -WindowsFormat PORTABLE
-bat\publish.bat -Target WINDOWS -WindowsFormat BOTH
-```
-
-省略 `-WindowsFormat` 时等同于 `INSTALLER`。`zip` 快捷命令只生成便携 ZIP，`both` 快捷命令同时生成安装包和便携 ZIP。安装包和便携 ZIP 输出到 `publish\output\`。
-
-### Linux 发布打包（源码）
-
-Linux 发布脚本位于 `publish/linux/`。
+需要 Node.js 22 与 npm。在已获得源码使用权限的环境中：
 
 ```bash
-bash publish/linux/publish-linux.sh --arch amd64
-bash publish/linux/publish-linux.sh --arch arm64
+git clone --depth 1 https://github.com/djblack1209-coder/Latitude-Browser.git
+cd Latitude-Browser/frontend
+npm ci
+npm run dev:raw
 ```
 
-详细说明见 [publish/linux/README.md](publish/linux/README.md)。
+打开终端显示的本地地址（默认 `http://127.0.0.1:5218`）。浏览器预览使用演示状态，不会启动桌面浏览器进程；实际启动、代理和本地文件操作需要 Wails 桌面运行时。仓库包含固定版本的代理二进制，首次克隆体积较大。
 
-### macOS unsigned 发布打包（源码）
+### 开发与检查
 
-macOS 发布脚本位于 `publish/mac/`，必须在原生 macOS 主机上执行，且目标架构需与主机架构一致。
+从仓库根目录运行：
 
 ```bash
-bash publish/mac/publish-mac.sh --arch amd64
-bash publish/mac/publish-mac.sh --arch arm64
+npm --prefix frontend run build:clean
+go test ./backend/...
+python3 tools/check-showcase.py
 ```
 
-脚本会生成 unsigned `.app` 和 `.zip`，适合 PR 验证与内部测试。详细说明见 [publish/mac/README.md](publish/mac/README.md)。
+CI 使用 Go 1.26.x。桌面开发还需要 Wails v2.12.0 和各系统的原生依赖，参见 [Wails 官方安装说明](https://wails.io/docs/gettingstarted/installation)。Windows 入口为 `bat\dev.bat`；[macOS 构建说明](publish/mac/README.md) 与 [Linux 构建说明](publish/linux/README.md) 单独维护。macOS 正式安装入口为 `/Applications/Latitude Browser.app`。
 
-### 准备浏览器内核
+**目前没有本仓库发布的可下载 Release。** Windows/Linux/macOS 有相应实现与打包入口；这不表示各平台都完成了本轮原生验收。macOS 签名、公证及跨平台发布仍列在 [Roadmap](ROADMAP.md)。
 
-代理运行时已经随仓库提供，你只需要准备浏览器内核。
-
-1. 打开应用，进入 `指纹浏览器 > 内核管理`
-2. 优先使用应用内下载功能准备内核
-3. 如果手动准备内核，请确保目录下存在 `chrome.exe`
-
-建议目录结构：
+## 从哪里读代码
 
 ```text
-chrome/
-  chrom-142/
-    chrome.exe
-    ...
+frontend/src/                 React 页面、状态与桌面桥接
+backend/                     Wails API 与应用用例编排
+backend/internal/browser/    实例、内核、配置与浏览器进程
+backend/internal/proxy/      连接栈、协议转换、检测与桥接进程
+backend/internal/automation/ 本地脚本运行时
+backend/internal/database/   SQLite 持久化
+publish/                     平台打包与运行时版本清单
 ```
 
-### 第一次使用建议流程
+[工程导览](docs/showcase/ENGINEERING.md) 包含架构图、请求路径、设计取舍和可复核的提交；[演示指南](docs/showcase/DEMO.md) 给出从界面到代码的讲解顺序。
 
-1. 在 `代理池配置` 中先导入或新增可用代理节点
-2. 在 `实例列表` 中点击 `新建配置`
-3. 选择实例名称、内核、代理、标签和需要的启动参数
-4. 返回实例列表，点击启动按钮运行实例
-5. 打开 IP 检测网站，确认代理结果是否符合预期
+## 参与和支持
 
-## 常用操作
+欢迎提交可复现的 [Bug](https://github.com/djblack1209-coder/Latitude-Browser/issues/new?template=bug_report.yml)、使用建议或文档改进。请先阅读 [贡献指南](CONTRIBUTING.md)；敏感问题参见 [安全说明](SECURITY.md)。
 
-| 目标 | 入口 | 说明 |
-| --- | --- | --- |
-| 新建浏览器实例 | `实例列表 > 新建配置` | 创建一个新的独立浏览器环境 |
-| 配置代理池 | `代理池配置` | 维护代理节点并检查延迟、健康状态 |
-| 绑定实例代理 | `实例编辑页` | 给指定实例分配目标代理节点 |
-| 启动实例 | `实例列表` | 单击启动按钮即可运行目标实例 |
-| 快速打开实例 | `Ctrl + K` | 可按 Code、实例名、标签、关键字快速检索 |
-| 管理浏览器内核 | `内核管理` | 新增、编辑、删除和设置默认内核 |
-| 验证代理结果 | 启动实例后访问 IP 检测网站 | 核对 IP、地区、ASN、风险值 |
+如果这个工作台对你有帮助，欢迎点一颗 **Star**，或分享你的使用场景。具体反馈会帮助决定下一步优先完善什么。
 
-## 常见问题
+## 来源与许可状态
 
-### 1. 应用无法启动怎么办？
+感谢 [Ant-Browser](https://github.com/black-ant/Ant-Browser) 的项目基础，以及 [fingerprint-chromium](https://github.com/adryfish/fingerprint-chromium)、[Wails](https://github.com/wailsapp/wails)、[Xray-core](https://github.com/XTLS/Xray-core)、[sing-box](https://github.com/SagerNet/sing-box) 和 [Mihomo](https://github.com/MetaCubeX/mihomo)。
 
-先检查浏览器内核路径是否有效，并确认目标目录下存在 `chrome.exe`。
-
-### 2. 实例启动了但代理没有生效怎么办？
-
-先检查代理节点本身是否可用，再确认该实例已经正确绑定代理。建议启动后访问 IP 检测网站复核当前出口。
-
-如果代理池里本地客户端可用节点很多，但 Latitude Browser 中“只展示可用”数量明显偏少，先确认当前 `default_connector_type` 是否与本地客户端一致。Latitude Browser 不会在 `xray` 组合栈和 `mihomo` 栈之间自动混用；切换连接栈后需要重新测速。
-
-### 3. 实例太多，怎么快速找到目标实例？
-
-可以在 `实例列表` 中按状态、代理、内核、分组、关键字筛选，也可以通过 `Ctrl + K` 使用实例 Code 或名称快速启动。
-
-### 4. 多个账号怎么避免串号？
-
-建议采用一账号一实例、一实例一稳定代理的方式，不要混用浏览器环境，也不要频繁切换同一实例的出口 IP。
-
-## Roadmap
-
-- 完善自动化模块能力
-- 持续补充使用文档和接口说明
-- 增强实例模板、批量管理和检索体验
-
-## 贡献
-
-欢迎通过 Issue 和 Pull Request 参与改进。
-
-- Bug 反馈：请附带版本号、系统版本、复现步骤和截图
-- 功能建议：请说明业务场景、预期行为和现有问题
-- 文档优化：欢迎直接提交 README、教程和截图说明相关改进
-
-如果是较大改动，建议先开 Issue 对齐需求再提交 PR。
-
-## 支持与反馈
-
-- Releases：<https://github.com/djblack1209-coder/Latitude-Browser/releases>
-- Issues：<https://github.com/djblack1209-coder/Latitude-Browser/issues>
-- 感谢以下社区的支持：<https://linux.do/>
-
-## License
-
-当前仓库暂未附带独立的 `LICENSE` 文件，后续会补充。
+截至 2026-09-14，本次核查仍未发现上游仓库的独立 LICENSE。本仓库未授予覆盖全部代码的 MIT / Apache 等开源许可；公开可见也不等于获得再分发或商业使用授权。上游授权状态与后续分发边界见 [来源记录](docs/plan/source-migration-and-license.md)，已记录的第三方归属见 [NOTICE](third_party/NOTICE.md)。

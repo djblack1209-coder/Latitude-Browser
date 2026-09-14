@@ -1,0 +1,18 @@
+name: Feature request / 功能建议
+description: 描述你要完成的工作流与遇到的限制。
+title: "[Feature]: "
+body:
+  - type: textarea
+    id: workflow
+    attributes:
+      label: 使用场景 / Workflow
+      description: 你想完成什么，当前在哪一步受阻？
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: 建议 / Proposal
+      description: 期望的行为，以及你考虑过的现有工具或替代方式。
+    validations:
+      required: true

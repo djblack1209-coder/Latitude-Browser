@@ -64,6 +64,8 @@ docs/*
 !docs/plan/
 !docs/plan/*.md
 !docs/proxy-connector-stacks.md
+!docs/showcase/
+!docs/showcase/*.md
 DEPLOYMENT_GUIDE.md
 plan.md
 pic/

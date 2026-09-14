@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="420" viewBox="0 0 1280 420" role="img" aria-labelledby="title desc">
+  <title id="title">Latitude Browser</title>
+  <desc id="desc">A local workspace for isolated browser environments. Mint latitude lines on a dark globe beside the wordmark.</desc>
+  <defs>
+    <linearGradient id="bg" x2="1" y2="1"><stop stop-color="#0c1715"/><stop offset="1" stop-color="#090d0e"/></linearGradient>
+    <radialGradient id="glow"><stop stop-color="#95e8b5" stop-opacity=".1"/><stop offset="1" stop-color="#95e8b5" stop-opacity="0"/></radialGradient>
+    <clipPath id="sphere"><circle cx="1030" cy="200" r="170"/></clipPath>
+  </defs>
+  <rect width="1280" height="420" rx="16" fill="url(#bg)"/>
+  <path d="M48 55h1184M48 365h1184" stroke="#253c34"/>
+  <g fill="#95e8b5" font-family="ui-monospace, SFMono-Regular, Consolas, monospace" font-size="12" letter-spacing="3">
+    <text x="52" y="38">LOCAL BY DESIGN</text><text x="1110" y="38">LAT / 01</text>
+  </g>
+  <circle cx="1030" cy="200" r="235" fill="url(#glow)"/>
+  <g clip-path="url(#sphere)" fill="none" stroke="#95e8b5" stroke-opacity=".25">
+    <circle cx="1030" cy="200" r="169"/>
+    <ellipse cx="1030" cy="200" rx="118" ry="170"/><ellipse cx="1030" cy="200" rx="56" ry="170"/>
+    <ellipse cx="1030" cy="200" rx="170" ry="36"/><ellipse cx="1030" cy="200" rx="170" ry="99"/>
+    <path d="M860 200h340M1030 30v340M875 130h310M875 270h310"/>
+    <path d="M888 272Q1020 45 1188 135" stroke-opacity=".85" stroke-width="1.5"/>
+  </g>
+  <circle cx="946" cy="185" r="5" fill="#95e8b5"/><circle cx="946" cy="185" r="13" fill="none" stroke="#95e8b5" stroke-opacity=".3"/>
+  <g font-family="Inter, -apple-system, BlinkMacSystemFont, Segoe UI, Arial, sans-serif">
+    <text x="52" y="157" fill="#f0f6f2" font-size="76" font-weight="600" letter-spacing="-3">Latitude Browser</text>
+    <text x="56" y="212" fill="#b1c3ba" font-size="23">Your browser environments. In one place.</text>
+  </g>
+  <g font-family="ui-monospace, SFMono-Regular, Consolas, monospace" font-size="13" letter-spacing="1.5" fill="#95e8b5">
+    <text x="56" y="290">PROFILES</text><text x="188" y="290" fill="#4e6b5e">/</text>
+    <text x="215" y="290">PROXY ROUTING</text><text x="407" y="290" fill="#4e6b5e">/</text>
+    <text x="434" y="290">AUTOMATION</text>
+    <text x="52" y="391" fill="#82998d" font-size="11">GO + WAILS / REACT + TYPESCRIPT / SQLITE</text>
+  </g>
+</svg>

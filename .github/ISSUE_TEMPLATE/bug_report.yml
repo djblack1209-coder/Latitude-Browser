@@ -1,0 +1,33 @@
+name: Bug report / 问题反馈
+description: 报告可复现的问题，帮助定位实际行为。
+title: "[Bug]: "
+body:
+  - type: markdown
+    attributes:
+      value: "请勿提交账号、Cookie、代理订阅、数据库或完整备份。敏感问题请先查看 SECURITY.md。"
+  - type: input
+    id: environment
+    attributes:
+      label: 环境 / Environment
+      description: 操作系统、CPU 架构、提交或版本，以及桌面应用或浏览器 UI 预览。
+      placeholder: macOS arm64 / commit abc1234 / desktop
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: 复现步骤 / Steps to reproduce
+      description: 使用不包含私人数据的最短步骤。
+    validations:
+      required: true
+  - type: textarea
+    id: behavior
+    attributes:
+      label: 预期与实际 / Expected and actual behavior
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: 补充证据 / Additional evidence
+      description: 可选，提供脱敏的错误信息或截图，并标明使用的连接栈。
