@@ -1,6 +1,6 @@
 Public release tools.
 
-- `publish-public.bat`: one-click publish to public `master`
+- `publish-public.bat`: one-click publish to public `main`
 - `publish-public.ps1`: manual entrypoint
 
 Release snapshot safety:
@@ -29,8 +29,9 @@ Or load a multi-line message from a file:
 
 Behavior:
 
-- public `master` keeps history and appends one aggregated commit per publish
+- the source ref and public target branch default to `main`; override them with `-SourceRef` and `-TargetBranch` when needed
+- public `main` keeps history and appends one aggregated commit per publish
 - interactive mode supports overriding the publish version before deciding whether to publish `release/<version>` and `v<version>`
-- the script shows console options for publish scope: `master` / `master+release` / `master+tag` / `master+release+tag`
+- the script shows console options for the selected target branch: `main` / `main+release` / `main+tag` / `main+release+tag` by default
 - running the script will publish directly; use `-DryRun` only when you explicitly want a no-push preview
 - command line switches are kept only for automation/manual override

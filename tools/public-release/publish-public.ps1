@@ -3,7 +3,7 @@
 Publish a sanitized snapshot to the public repository.
 
 .DESCRIPTION
-- Default mode: publish one single-commit sanitized snapshot to the public master branch.
+- Default mode: publish one single-commit sanitized snapshot to the public main branch.
 - Optional release branch and tag can be created for the same published commit.
 - Private development history is never pushed directly.
 
@@ -28,8 +28,8 @@ Publish a sanitized snapshot to the public repository.
 param(
     [string]$Version,
     [string]$PublicRemote,
-    [string]$SourceRef = "master",
-    [string]$TargetBranch = "master",
+    [string]$SourceRef = "main",
+    [string]$TargetBranch = "main",
     [string]$ReleasePrefix = "release/",
     [string]$TagPrefix = "v",
     [string[]]$ExcludePaths = @(
@@ -567,10 +567,10 @@ function Resolve-InteractivePublishScope {
     $choice = Read-NumberChoice `
         -Prompt "Select publish scope" `
         -Options @(
-            "Publish public master only",
-            "Publish public master + ${ReleaseBranch}",
-            "Publish public master + ${TagName}",
-            "Publish public master + ${ReleaseBranch} + ${TagName}"
+            "Publish public ${TargetBranch} only",
+            "Publish public ${TargetBranch} + ${ReleaseBranch}",
+            "Publish public ${TargetBranch} + ${TagName}",
+            "Publish public ${TargetBranch} + ${ReleaseBranch} + ${TagName}"
         ) `
         -Default 1
 
