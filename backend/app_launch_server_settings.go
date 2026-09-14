@@ -1,6 +1,7 @@
 package backend
 
 import (
+	"ant-chrome/backend/internal/config"
 	"fmt"
 	"net"
 	"strconv"
@@ -10,8 +11,16 @@ import (
 )
 
 func (a *App) SaveLaunchServerSettings(port int) (map[string]interface{}, error) {
+	releaseActivity, activityErr := a.dataActivity.begin()
+	if activityErr != nil {
+		return nil, activityErr
+	}
+	defer releaseActivity()
 	if a.config == nil {
 		return nil, fmt.Errorf("launch server config is not initialized")
+	}
+	if err := config.ValidateLaunchServerAuth(a.config.LaunchServer.Auth); err != nil {
+		return nil, err
 	}
 	if port < 1 || port > 65535 {
 		return nil, fmt.Errorf("端口必须在 1-65535 之间")
@@ -54,6 +63,9 @@ func ensureLaunchServerPortAvailable(port int) error {
 }
 
 func (a *App) restartLaunchServer(port int) error {
+	if err := config.ValidateLaunchServerAuth(a.config.LaunchServer.Auth); err != nil {
+		return err
+	}
 	log := logger.New("LaunchServer")
 	if a.launchServer != nil {
 		if err := a.launchServer.Stop(); err != nil {

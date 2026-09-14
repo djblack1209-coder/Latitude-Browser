@@ -62,15 +62,16 @@ flowchart TD
 | 统一产品品牌 | [922650f](https://github.com/djblack1209-coder/Latitude-Browser/commit/922650f) | 用户可见名称与兼容旧标识的边界 |
 | 控制工作台与代理流程 | [e90e35d](https://github.com/djblack1209-coder/Latitude-Browser/commit/e90e35d) | 结合 diff 阅读状态和代理流程；提交标题不等于验收结果 |
 
-## 本轮检查与限制
+## 后端修复与持续验证
 
-2026-09-14，在 macOS arm64 的隔离工作树上运行：
+[后端修复说明](HARDENING.md) 按触发条件、修改行为和回归代码记录本轮集成：事务保存、一致性备份、快照恢复、API/CDP 认证、下载校验、进程租约和前端桌面边界。未使用的 Mihomo Go 嵌入依赖已经移除，独立进程连接方式保留。
 
-- `npm ci` 后执行 `npm run build:clean`：TypeScript 和 Vite 生产构建通过。
-- `go test ./backend/...`：通过；Go 工具链为 1.26.0。
-- Gitleaks v8.24.3 扫描 `master` 历史：0 个规则命中。规则扫描不能证明不存在所有私人数据。
-- 当前浏览器 UI 页面使用演示数据进行截图；与本机用户数据隔离。
+[CI](../../.github/workflows/ci.yml) 使用 Node.js 22 和 `go.mod` 中的 Go 1.26.8，执行生产构建、JavaScript 回归、Go 测试与 race 检测、Python 工具测试，以及三种代理内核的本地进程验证。远程结果以 [Actions](https://github.com/djblack1209-coder/Latitude-Browser/actions/workflows/ci.yml) 对应提交为准，完整复现命令见[验证说明](HARDENING.md)。
 
-本轮没有重新构建、安装或验收原生应用，没有验证真实代理出口，没有执行 Windows/Linux 原生测试。已有本地修复、旧审计结果或历史安装物不计入本轮发布成果。CI 的远程状态以 [Actions](https://github.com/djblack1209-coder/Latitude-Browser/actions/workflows/ci.yml) 为准。
+2026-09-14 的首次展示截图来自隔离 Vite 服务与虚构数据。后端修复后的模拟模式需要显式开启；生产页面缺少桌面服务时不再进入业务流程。
 
-源码仍包含固定代理二进制，首次获取体积较大。上游许可尚未明确，签名、公证、可分发运行时、数据加密和跨机器恢复仍需推进。技术原型与可商业分发产品之间的工作见 [Roadmap](../../ROADMAP.md)。
+## 当前边界
+
+本轮没有重新构建、安装或验收原生应用，没有验证真实公网代理出口，没有执行 Windows/Linux 原生测试。源码测试、真实代理子进程测试和正式桌面安装物验收应分别说明。
+
+源码仍包含固定代理二进制，首次获取体积较大。维护者原创贡献采用非商业许可；上游授权和第三方权利另见[许可范围](../../LICENSE-SCOPE.md)。签名、公证、可分发运行时、数据加密和跨机器恢复的后续工作见 [Roadmap](../../ROADMAP.md)。

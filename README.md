@@ -3,7 +3,8 @@
 <p align="center"><strong>把独立浏览器环境、代理连接与自动化，放进一个本地工作台。</strong><br />A local desktop workspace for browser profiles, proxy routing, and automation.</p>
 
 <p align="center">
-  <a href="https://github.com/djblack1209-coder/Latitude-Browser/actions/workflows/ci.yml"><img src="https://img.shields.io/badge/CI-GitHub_Actions-485c50?style=flat-square" alt="View CI runs on GitHub Actions" /></a>
+  <a href="https://github.com/djblack1209-coder/Latitude-Browser/actions/workflows/ci.yml"><img src="https://github.com/djblack1209-coder/Latitude-Browser/actions/workflows/ci.yml/badge.svg" alt="CI status on GitHub Actions" /></a>
+  <a href="LICENSE-SCOPE.md"><img src="https://img.shields.io/badge/license-Noncommercial-DBC493?style=flat-square" alt="Noncommercial license; see scope and third-party exceptions" /></a>
   <img src="https://img.shields.io/badge/Go-Wails_v2-00ADD8?style=flat-square" alt="Go and Wails v2" />
   <img src="https://img.shields.io/badge/React-TypeScript-61DAFB?style=flat-square" alt="React and TypeScript" />
   <img src="https://img.shields.io/badge/storage-local_SQLite-95E8B5?style=flat-square" alt="Local SQLite storage" />
@@ -49,16 +50,16 @@
 
 ### 先看界面
 
-需要 Node.js 22 与 npm。在已获得源码使用权限的环境中：
+需要 Node.js 22 与 npm。请先阅读[许可范围](LICENSE-SCOPE.md)。
 
 ```bash
 git clone --depth 1 https://github.com/djblack1209-coder/Latitude-Browser.git
 cd Latitude-Browser/frontend
 npm ci
-npm run dev:raw
+npm run demo
 ```
 
-打开终端显示的本地地址（默认 `http://127.0.0.1:5218`）。浏览器预览使用演示状态，不会启动桌面浏览器进程；实际启动、代理和本地文件操作需要 Wails 桌面运行时。仓库包含固定版本的代理二进制，首次克隆体积较大。
+打开终端显示的本地地址（默认 `http://127.0.0.1:5218`）。`demo` 显式开启仅限开发环境的模拟状态，并显示提示；普通启动或生产构建缺少桌面服务时会停止业务操作。预览不会启动桌面浏览器进程；实际启动、代理和本地文件操作需要 Wails 桌面运行时。仓库包含固定版本的代理二进制，首次克隆体积较大。
 
 ### 开发与检查
 
@@ -66,11 +67,12 @@ npm run dev:raw
 
 ```bash
 npm --prefix frontend run build:clean
-go test ./backend/...
+npm --prefix frontend test
+go test ./...
 python3 tools/check-showcase.py
 ```
 
-CI 使用 Go 1.26.x。桌面开发还需要 Wails v2.12.0 和各系统的原生依赖，参见 [Wails 官方安装说明](https://wails.io/docs/gettingstarted/installation)。Windows 入口为 `bat\dev.bat`；[macOS 构建说明](publish/mac/README.md) 与 [Linux 构建说明](publish/linux/README.md) 单独维护。macOS 正式安装入口为 `/Applications/Latitude Browser.app`。
+Go 工具链固定为 `go.mod` 中的 1.26.8；CI 使用同一版本。桌面开发还需要 Wails v2.12.0 和各系统的原生依赖，参见 [Wails 官方安装说明](https://wails.io/docs/gettingstarted/installation)。Windows 入口为 `bat\dev.bat`；[macOS 构建说明](publish/mac/README.md) 与 [Linux 构建说明](publish/linux/README.md) 单独维护。macOS 正式安装入口为 `/Applications/Latitude Browser.app`。
 
 **目前没有本仓库发布的可下载 Release。** Windows/Linux/macOS 有相应实现与打包入口；这不表示各平台都完成了本轮原生验收。macOS 签名、公证及跨平台发布仍列在 [Roadmap](ROADMAP.md)。
 
@@ -86,7 +88,7 @@ backend/internal/database/   SQLite 持久化
 publish/                     平台打包与运行时版本清单
 ```
 
-[工程导览](docs/showcase/ENGINEERING.md) 包含架构图、请求路径、设计取舍和可复核的提交；[演示指南](docs/showcase/DEMO.md) 给出从界面到代码的讲解顺序。
+[工程导览](docs/showcase/ENGINEERING.md) 包含架构图、请求路径、设计取舍和可复核的提交；[后端修复说明](docs/showcase/HARDENING.md) 记录数据一致性、API/CDP 认证、下载校验和进程生命周期的回归依据；[演示指南](docs/showcase/DEMO.md) 给出从界面到代码的讲解顺序。
 
 ## 参与和支持
 
@@ -94,8 +96,10 @@ publish/                     平台打包与运行时版本清单
 
 如果这个工作台对你有帮助，欢迎点一颗 **Star**，或分享你的使用场景。具体反馈会帮助决定下一步优先完善什么。
 
-## 来源与许可状态
+## 免费使用与许可
 
 感谢 [Ant-Browser](https://github.com/black-ant/Ant-Browser) 的项目基础，以及 [fingerprint-chromium](https://github.com/adryfish/fingerprint-chromium)、[Wails](https://github.com/wailsapp/wails)、[Xray-core](https://github.com/XTLS/Xray-core)、[sing-box](https://github.com/SagerNet/sing-box) 和 [Mihomo](https://github.com/MetaCubeX/mihomo)。
 
-截至 2026-09-14，本次核查仍未发现上游仓库的独立 LICENSE。本仓库未授予覆盖全部代码的 MIT / Apache 等开源许可；公开可见也不等于获得再分发或商业使用授权。上游授权状态与后续分发边界见 [来源记录](docs/plan/source-migration-and-license.md)，已记录的第三方归属见 [NOTICE](third_party/NOTICE.md)。
+本仓库维护者有权许可的原创贡献采用 [PolyForm Noncommercial 1.0.0](LICENSE)：**非商业用途免费，不授予商业使用权**。带有禁止商用限制，因此准确称为“源码可见”，不宣称是 OSI 定义的开源软件。具体适用范围见 [LICENSE-SCOPE](LICENSE-SCOPE.md)。
+
+上游 Ant-Browser 仍未附独立 LICENSE，维护者的授权不能代替上游授权。Xray、sing-box、Mihomo 等第三方组件保留其原有许可证及权利，不受本仓库的非商业限制重新约束。来源记录见[迁移说明](docs/plan/source-migration-and-license.md)，第三方归属见 [NOTICE](third_party/NOTICE.md)。

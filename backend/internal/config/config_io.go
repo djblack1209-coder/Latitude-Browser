@@ -1,6 +1,7 @@
 package config
 
 import (
+	"ant-chrome/backend/internal/fsutil"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -38,6 +39,9 @@ func Load(configPath string) (*Config, error) {
 
 // Save 保存配置到文件
 func (c *Config) Save(configPath string) error {
+	if err := ValidateLaunchServerAuth(c.LaunchServer.Auth); err != nil {
+		return err
+	}
 	data, err := yaml.Marshal(c)
 	if err != nil {
 		return fmt.Errorf("序列化配置失败: %w", err)
@@ -46,7 +50,7 @@ func (c *Config) Save(configPath string) error {
 	if err := os.MkdirAll(filepath.Dir(configPath), 0o755); err != nil {
 		return fmt.Errorf("创建配置目录失败: %w", err)
 	}
-	if err := os.WriteFile(configPath, data, 0o644); err != nil {
+	if err := fsutil.AtomicWriteFile(configPath, data, 0o600); err != nil {
 		return fmt.Errorf("写入配置文件失败: %w", err)
 	}
 
@@ -84,7 +88,7 @@ func SaveProxies(path string, proxies []BrowserProxy) error {
 	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
 		return fmt.Errorf("创建代理目录失败: %w", err)
 	}
-	if err := os.WriteFile(path, data, 0o644); err != nil {
+	if err := fsutil.AtomicWriteFile(path, data, 0o600); err != nil {
 		return fmt.Errorf("写入代理文件失败: %w", err)
 	}
 	return nil

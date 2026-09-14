@@ -3,6 +3,7 @@ package backend
 import (
 	"os"
 	"path/filepath"
+	goruntime "runtime"
 	"testing"
 
 	"ant-chrome/backend/internal/config"
@@ -111,7 +112,7 @@ func TestBrowserProxyConnectorPreflightKeepsMihomoIndependent(t *testing.T) {
 
 func TestBrowserProxyConnectorPreflightFindsPackagedMihomoRuntime(t *testing.T) {
 	root := t.TempDir()
-	path := filepath.Join(root, "bin", "mihomo")
+	path := filepath.Join(root, "bin", proxyCoreBinaryName("mihomo", goruntime.GOOS))
 	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
 		t.Fatal(err)
 	}
@@ -122,8 +123,8 @@ func TestBrowserProxyConnectorPreflightFindsPackagedMihomoRuntime(t *testing.T) 
 
 	result := app.BrowserProxyConnectorPreflight(ProxyConnectorPreflightRequest{
 		ConnectorType: config.BrowserConnectorMihomo,
-		GOOS:          "darwin",
-		GOARCH:        "arm64",
+		GOOS:          goruntime.GOOS,
+		GOARCH:        goruntime.GOARCH,
 	})
 	if !result.Ready || result.State != ProxyCoreStateReady {
 		t.Fatalf("packaged Mihomo runtime should satisfy preflight: %+v", result)

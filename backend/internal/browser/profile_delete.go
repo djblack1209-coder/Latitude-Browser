@@ -17,6 +17,9 @@ func (m *Manager) Delete(profileId string) error {
 	m.InitData()
 	m.Mutex.Lock()
 	defer m.Mutex.Unlock()
+	if err := m.CheckDataMaintenanceLocked(); err != nil {
+		return err
+	}
 
 	profile, exists := m.Profiles[profileId]
 	if !exists {
@@ -92,6 +95,9 @@ func (m *Manager) Restore(profileId string) (*Profile, error) {
 	m.InitData()
 	m.Mutex.Lock()
 	defer m.Mutex.Unlock()
+	if err := m.CheckDataMaintenanceLocked(); err != nil {
+		return nil, err
+	}
 	if m.ProfileDAO == nil {
 		return nil, fmt.Errorf("当前环境不支持回收站恢复")
 	}
@@ -132,6 +138,9 @@ func (m *Manager) PermanentlyDelete(profileId string) error {
 	m.InitData()
 	m.Mutex.Lock()
 	defer m.Mutex.Unlock()
+	if err := m.CheckDataMaintenanceLocked(); err != nil {
+		return err
+	}
 	if m.ProfileDAO == nil {
 		return fmt.Errorf("当前环境不支持回收站物理删除")
 	}
@@ -199,6 +208,9 @@ func (m *Manager) CleanupExpiredTrash() error {
 }
 
 func (m *Manager) cleanupExpiredTrashLocked(log *logger.Logger) error {
+	if err := m.CheckDataMaintenanceLocked(); err != nil {
+		return err
+	}
 	if m.ProfileDAO == nil {
 		return nil
 	}

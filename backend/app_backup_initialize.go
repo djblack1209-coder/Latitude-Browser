@@ -11,9 +11,10 @@ import (
 // backupInitializeLocked serializes the full reset lifecycle with browser/Tor
 // starts and Tor runtime death handling. The lock is intentionally held from
 // runtime stop through config/data mutation and the optional reload.
-func (a *App) backupInitializeLocked(applyReload bool) (map[string]interface{}, error) {
+func (a *App) backupInitializeLocked(applyReload bool) (result map[string]interface{}, resultErr error) {
 	a.torLifecycleMu.Lock()
 	defer a.torLifecycleMu.Unlock()
+	defer a.backupFinishProxyMaintenance(&result, &resultErr, a.speedScheduler != nil)
 	return a.backupInitializeLockedNoLifecycle(applyReload)
 }
 
@@ -31,6 +32,8 @@ func (a *App) backupInitializeLockedNoLifecycle(applyReload bool) (map[string]in
 	if oldCfg == nil {
 		oldCfg = config.DefaultConfig()
 	}
+	// The open connection remains attached to this database during reset/import.
+	defaultCfg.Database = oldCfg.Database
 	activeDBPath := a.backupResolveDBPath(oldCfg)
 	keepFiles := map[string]struct{}{
 		backupNormalizePath(activeDBPath):          {},
@@ -42,7 +45,9 @@ func (a *App) backupInitializeLockedNoLifecycle(applyReload bool) (map[string]in
 		a.torConfigMu.Unlock()
 		return nil, fmt.Errorf("写入默认配置失败: %w", err)
 	}
+	a.proxyStateMu.Lock()
 	a.config = defaultCfg
+	a.proxyStateMu.Unlock()
 	if a.torMgr != nil {
 		a.torMgr.UpdateConfig(defaultCfg)
 	}

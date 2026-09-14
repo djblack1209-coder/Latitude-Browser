@@ -69,6 +69,11 @@ func (a *App) writeFingerprintCheckPageForExpectedArgs(profileId string, expecte
 }
 
 func (a *App) writeFingerprintCheckPageForExpectedArgsAndProfile(profileId string, expectedArgs []string, profile *BrowserProfile) (string, error) {
+	releaseActivity, activityErr := a.dataActivity.begin()
+	if activityErr != nil {
+		return "", activityErr
+	}
+	defer releaseActivity()
 	pageDir := a.resolveAppPath(filepath.ToSlash(filepath.Join("data", "fingerprint-check", safeFingerprintCheckProfilePath(profileId))))
 	if err := os.MkdirAll(pageDir, 0o755); err != nil {
 		return "", fmt.Errorf("创建指纹检测页目录失败: %w", err)

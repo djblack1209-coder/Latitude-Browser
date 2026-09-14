@@ -9,10 +9,16 @@ import (
 
 // Update 更新配置
 func (m *Manager) Update(profileId string, input ProfileInput) (*Profile, error) {
+	if err := validateCurrentMemoryLimit(input.MemoryLimitMB); err != nil {
+		return nil, err
+	}
 	log := logger.New("Browser")
 	m.InitData()
 	m.Mutex.Lock()
 	defer m.Mutex.Unlock()
+	if err := m.CheckDataMaintenanceLocked(); err != nil {
+		return nil, err
+	}
 
 	profile, exists := m.Profiles[profileId]
 	if !exists {

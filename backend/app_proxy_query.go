@@ -11,7 +11,9 @@ import (
 )
 
 func (a *App) BrowserProxyList() []BrowserProxy {
-	return browser.ListProxiesWithFallback(a.browserMgr.ProxyDAO, a.config.Browser.Proxies)
+	a.proxyStateMu.RLock()
+	defer a.proxyStateMu.RUnlock()
+	return browser.ListProxiesWithFallback(a.browserMgr.ProxyDAO, append([]BrowserProxy(nil), a.config.Browser.Proxies...))
 }
 
 // BrowserProxyListGroups 获取所有代理分组名称
@@ -21,7 +23,9 @@ func (a *App) BrowserProxyListGroups() []string {
 
 // BrowserProxyListByGroup 按分组名称查询代理
 func (a *App) BrowserProxyListByGroup(groupName string) []BrowserProxy {
-	return browser.ListProxiesByGroupWithFallback(a.browserMgr.ProxyDAO, groupName, a.config.Browser.Proxies)
+	a.proxyStateMu.RLock()
+	defer a.proxyStateMu.RUnlock()
+	return browser.ListProxiesByGroupWithFallback(a.browserMgr.ProxyDAO, groupName, append([]BrowserProxy(nil), a.config.Browser.Proxies...))
 }
 
 // BrowserProxyClearSpeedDiagnostic clears the persisted speed result and
@@ -64,6 +68,11 @@ func (a *App) TestProxyConnectivity(proxyId string, proxyConfig string) ProxyTes
 // TestProxyRealConnectivity 通过真实 HTTP 请求测试代理连通性（Wails 绑定）
 // 参考 Clash URLTest 策略：多 URL fallback + 复用桥接 + TCP ping 降级
 func (a *App) TestProxyRealConnectivity(proxyId string) ProxyTestResult {
+	releaseActivity, activityErr := a.dataActivity.begin()
+	if activityErr != nil {
+		return ProxyTestResult{ProxyId: proxyId, Error: activityErr.Error()}
+	}
+	defer releaseActivity()
 	proxies := a.getLatestProxies()
 	connectorType := config.NormalizeBrowserConnectorType(a.config.Browser.DefaultConnectorType)
 	result := proxy.TestRealConnectivityWithRuntimeConfig(proxyId, proxies, a.xrayMgr, a.singboxMgr, a.clashMgr, connectorType, a.proxySpeedTestConfig())
@@ -73,6 +82,11 @@ func (a *App) TestProxyRealConnectivity(proxyId string) ProxyTestResult {
 // TestProxyRealConnectivityWithConfig 使用调用方提供的代理配置执行真实 HTTP 测试。
 // proxyId 仅作为结果标识，不会覆盖 proxyConfig，也不会写入代理池。
 func (a *App) TestProxyRealConnectivityWithConfig(proxyId string, proxyConfig string) ProxyTestResult {
+	releaseActivity, activityErr := a.dataActivity.begin()
+	if activityErr != nil {
+		return ProxyTestResult{ProxyId: proxyId, Error: activityErr.Error()}
+	}
+	defer releaseActivity()
 	proxies := a.getLatestProxies()
 	connectorType := config.NormalizeBrowserConnectorType(a.config.Browser.DefaultConnectorType)
 	result := proxy.TestRealConnectivityWithRawConfig(proxyId, proxyConfig, proxies, a.xrayMgr, a.singboxMgr, a.clashMgr, connectorType, a.proxySpeedTestConfig())
@@ -129,6 +143,11 @@ func (a *App) BrowserProxyBatchWarmupBridge(proxyIds []string, concurrency int) 
 }
 
 func (a *App) warmupProxyBridge(proxyId string, proxyConfig string, proxies []BrowserProxy) ProxyBridgeWarmupResult {
+	releaseActivity, activityErr := a.dataActivity.begin()
+	if activityErr != nil {
+		return ProxyBridgeWarmupResult{ProxyId: proxyId, Available: true, Error: activityErr.Error()}
+	}
+	defer releaseActivity()
 	startedAt := time.Now()
 	proxyId = strings.TrimSpace(proxyId)
 	result := ProxyBridgeWarmupResult{
@@ -222,5 +241,7 @@ func resolveProxyConfigForApp(proxyConfig string, proxies []BrowserProxy, proxyI
 
 // getLatestProxies 获取最新的代理列表，优先从数据库读取
 func (a *App) getLatestProxies() []BrowserProxy {
-	return browser.LatestProxiesWithFallback(a.browserMgr.ProxyDAO, a.config.Browser.Proxies)
+	a.proxyStateMu.RLock()
+	defer a.proxyStateMu.RUnlock()
+	return browser.LatestProxiesWithFallback(a.browserMgr.ProxyDAO, append([]BrowserProxy(nil), a.config.Browser.Proxies...))
 }

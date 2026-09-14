@@ -97,6 +97,7 @@ __pycache__/
 # Test outputs / coverage
 output/playwright/
 output/native-tor/
+output/native-proxy/
 .playwright-cli/
 coverage/
 *.out

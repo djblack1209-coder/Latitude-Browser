@@ -40,6 +40,11 @@ func (a *App) BrowserProxyFetchClashByURLWithProxy(rawURL string, proxyID string
 }
 
 func (a *App) browserProxyFetchClashByURL(rawURL string, proxyID string) (map[string]interface{}, error) {
+	releaseActivity, activityErr := a.dataActivity.begin()
+	if activityErr != nil {
+		return nil, activityErr
+	}
+	defer releaseActivity()
 	rawURL = strings.TrimSpace(rawURL)
 	if rawURL == "" {
 		return nil, fmt.Errorf("订阅 URL 不能为空")

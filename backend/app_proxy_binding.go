@@ -14,10 +14,13 @@ func (a *App) reconcileProfileProxyBindings() {
 		return
 	}
 
-	log := logger.New("Browser")
 	a.browserMgr.Mutex.Lock()
 	defer a.browserMgr.Mutex.Unlock()
+	a.reconcileProfileProxyBindingsLocked()
+}
 
+func (a *App) reconcileProfileProxyBindingsLocked() {
+	log := logger.New("Browser")
 	changedCount := 0
 	reboundCount := 0
 	for _, profile := range a.browserMgr.Profiles {

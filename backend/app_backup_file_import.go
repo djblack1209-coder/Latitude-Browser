@@ -16,6 +16,11 @@ func (a *App) backupImportFileTrees(payloadRoot string, incomingCfg *config.Conf
 		}
 	}
 
+	if err := backupRejectExternalCorePayload(payloadRoot); err != nil {
+		report("browser_core_external", "外置浏览器内核", err)
+		return
+	}
+
 	appDataSrc := filepath.Join(payloadRoot, "app", "data")
 	appDataDst := a.resolveAppPath("data")
 	dbPath := a.backupResolveDBPath(a.config)
@@ -73,58 +78,6 @@ func (a *App) backupImportFileTrees(payloadRoot string, incomingCfg *config.Conf
 		}
 	}
 
-	externalSrcRoot := filepath.Join(payloadRoot, "browser", "cores", "external")
-	if backupPathExists(externalSrcRoot) {
-		sourceExternal := make([]string, 0)
-		entries, err := os.ReadDir(externalSrcRoot)
-		if err != nil {
-			report("browser_core_external", "额外内核目录（来自配置 cores）", err)
-			return
-		}
-		for _, entry := range entries {
-			if !entry.IsDir() {
-				continue
-			}
-			sourceExternal = append(sourceExternal, entry.Name())
-		}
-		sort.Strings(sourceExternal)
-
-		if incomingCfg == nil {
-			for _, folder := range sourceExternal {
-				componentID := "browser_core_external_" + folder
-				report(componentID, "额外内核目录（来自配置 cores）", fmt.Errorf("缺少可用配置，无法映射目标路径"))
-			}
-			return
-		}
-
-		targetExternal := a.backupCollectExternalCorePaths(incomingCfg)
-		for i, folder := range sourceExternal {
-			src := filepath.Join(externalSrcRoot, folder)
-			componentID := "browser_core_external_" + folder
-			if i >= len(targetExternal) {
-				stats.Skipped++
-				report(componentID, "额外内核目录（来自配置 cores）", fmt.Errorf("目标配置缺失，无法导入该外部内核目录"))
-				continue
-			}
-			dst := targetExternal[i]
-			if resetFirst {
-				_ = os.RemoveAll(dst)
-				if err := os.MkdirAll(dst, 0755); err != nil {
-					report(componentID, "额外内核目录（来自配置 cores）", err)
-					continue
-				}
-				if err := backupSyncDir(src, dst, true, stats, nil); err != nil {
-					report(componentID, "额外内核目录（来自配置 cores）", err)
-					continue
-				}
-			} else {
-				if err := backupSyncDir(src, dst, false, stats, nil); err != nil {
-					report(componentID, "额外内核目录（来自配置 cores）", err)
-					continue
-				}
-			}
-		}
-	}
 }
 
 func (a *App) backupCollectExternalCorePaths(cfg *config.Config) []string {
@@ -152,4 +105,18 @@ func (a *App) backupCollectExternalCorePaths(cfg *config.Config) []string {
 	}
 	sort.Strings(result)
 	return result
+}
+
+// Legacy packages encode external cores by sorted position and retain source
+// absolute paths. Reject before mutation until an explicit portable mapping is
+// implemented; package contents cannot authorize writes outside managed data.
+func backupRejectExternalCorePayload(payloadRoot string) error {
+	_, err := os.Lstat(filepath.Join(payloadRoot, "browser", "cores", "external"))
+	if os.IsNotExist(err) {
+		return nil
+	}
+	if err != nil {
+		return fmt.Errorf("无法检查外置内核归档: %w", err)
+	}
+	return fmt.Errorf("此备份包含旧格式外置浏览器内核，无法安全映射恢复路径；当前数据未修改，请使用不含外置内核的备份")
 }

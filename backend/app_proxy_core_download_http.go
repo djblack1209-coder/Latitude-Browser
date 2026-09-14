@@ -2,6 +2,8 @@ package backend
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -25,6 +27,9 @@ type githubReleaseAsset struct {
 	Name               string `json:"name"`
 	BrowserDownloadURL string `json:"browser_download_url"`
 	Size               int64  `json:"size"`
+	// GitHub's digest is over the release archive, not the extracted executable.
+	// This is an online integrity check, not a pinned or independently signed attestation.
+	Digest string `json:"digest"`
 }
 
 func proxyCoreHTTPClient(timeout time.Duration, proxyConfig string) (*http.Client, string, error) {
@@ -63,6 +68,35 @@ func proxyCoreHTTPClient(timeout time.Duration, proxyConfig string) (*http.Clien
 	}
 }
 
+// The transport factory is also used for Chrome extension downloads. Restrict
+// redirects only for official core releases, not for unrelated HTTPS clients.
+func proxyCoreReleaseHTTPClient(timeout time.Duration, proxyConfig string) (*http.Client, string, error) {
+	client, label, err := proxyCoreHTTPClient(timeout, proxyConfig)
+	if err != nil {
+		return nil, label, err
+	}
+	client.CheckRedirect = proxyCoreCheckRedirect
+	return client, label, nil
+}
+
+// Keep release redirects on GitHub's HTTPS delivery infrastructure even when
+// the user explicitly routes the request through a download proxy.
+func proxyCoreCheckRedirect(req *http.Request, via []*http.Request) error {
+	if len(via) >= 10 {
+		return fmt.Errorf("下载重定向次数过多")
+	}
+	u := req.URL
+	if u.Scheme != "https" || u.User != nil || (u.Port() != "" && u.Port() != "443") {
+		return fmt.Errorf("拒绝不安全的下载重定向")
+	}
+	switch strings.ToLower(u.Hostname()) {
+	case "github.com", "api.github.com", "release-assets.githubusercontent.com", "objects.githubusercontent.com":
+		return nil
+	default:
+		return fmt.Errorf("拒绝跳转到非官方 GitHub 下载主机")
+	}
+}
+
 func proxyCoreDirectTransport() *http.Transport {
 	dialer := &net.Dialer{Timeout: 30 * time.Second, KeepAlive: 30 * time.Second}
 	return &http.Transport{
@@ -91,7 +125,7 @@ func isLocalhostHost(host string) bool {
 func fetchGitHubRelease(ctx context.Context, client *http.Client, repo string, version string) (githubRelease, error) {
 	apiURL := "https://api.github.com/repos/" + repo + "/releases/latest"
 	if !strings.EqualFold(strings.TrimSpace(version), "latest") {
-		apiURL = "https://api.github.com/repos/" + repo + "/releases/tags/" + strings.TrimSpace(version)
+		apiURL = "https://api.github.com/repos/" + repo + "/releases/tags/" + url.PathEscape(strings.TrimSpace(version))
 	}
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, apiURL, nil)
 	if err != nil {
@@ -108,8 +142,11 @@ func fetchGitHubRelease(ctx context.Context, client *http.Client, repo string, v
 		return githubRelease{}, fmt.Errorf("GitHub API HTTP %d", resp.StatusCode)
 	}
 	var release githubRelease
-	if err := json.NewDecoder(resp.Body).Decode(&release); err != nil {
+	if err := json.NewDecoder(io.LimitReader(resp.Body, 4<<20)).Decode(&release); err != nil {
 		return githubRelease{}, err
+	}
+	if release.TagName == "" || (!strings.EqualFold(strings.TrimSpace(version), "latest") && release.TagName != strings.TrimSpace(version)) {
+		return githubRelease{}, fmt.Errorf("官方 Release 版本与请求不一致")
 	}
 	if len(release.Assets) == 0 {
 		return githubRelease{}, fmt.Errorf("Release 没有可下载资产")
@@ -151,8 +188,6 @@ func selectProxyCoreAsset(spec proxyCoreSpec, assets []githubReleaseAsset, goos 
 		candidates = append(candidates, asset)
 	}
 	if len(candidates) == 0 && spec.Core == "mihomo" {
-		fallbackSpec := spec
-		fallbackSpec.Core = "mihomo-fallback"
 		for _, asset := range assets {
 			name := strings.ToLower(asset.Name)
 			if hasAnySuffix(name, extTokens) && !containsAny(name, badTokens) && containsAny(name, osTokens[goos]) && matchesProxyAssetArch(name, goarch, archTokens[goarch]) {
@@ -209,8 +244,45 @@ func assetScore(spec proxyCoreSpec, name string) int {
 	return score
 }
 
-func downloadProxyCoreAsset(ctx context.Context, client *http.Client, url string, file *os.File, totalSize int64, send func(string, int, string)) error {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+func proxyCoreAssetSHA256(asset githubReleaseAsset) (string, error) {
+	parts := strings.SplitN(strings.TrimSpace(asset.Digest), ":", 2)
+	if len(parts) != 2 || !strings.EqualFold(parts[0], "sha256") {
+		return "", fmt.Errorf("官方资产缺少有效 SHA-256，已停止自动安装；请重试或手动核验官方文件")
+	}
+	digest, err := hex.DecodeString(parts[1])
+	if err != nil || len(digest) != sha256.Size {
+		return "", fmt.Errorf("官方资产 SHA-256 格式无效，已停止自动安装")
+	}
+	return strings.ToLower(parts[1]), nil
+}
+
+func validateProxyCoreReleaseAsset(spec proxyCoreSpec, release githubRelease, asset githubReleaseAsset) error {
+	if _, err := proxyCoreAssetSHA256(asset); err != nil {
+		return err
+	}
+	if asset.Size <= 0 {
+		return fmt.Errorf("官方资产大小无效，已停止自动安装")
+	}
+	u, err := url.Parse(asset.BrowserDownloadURL)
+	expectedPath := "/" + spec.Repo + "/releases/download/" + release.TagName + "/" + asset.Name
+	if err != nil || release.TagName == "" || release.TagName == "." || release.TagName == ".." || strings.ContainsAny(release.TagName, "/\\") ||
+		asset.Name == "" || asset.Name == "." || asset.Name == ".." || strings.ContainsAny(asset.Name, "/\\") ||
+		u.Scheme != "https" || !strings.EqualFold(u.Host, "github.com") || u.User != nil ||
+		u.RawQuery != "" || u.Fragment != "" || u.Path != expectedPath {
+		return fmt.Errorf("资产下载地址不属于所选官方 Release，已停止自动安装")
+	}
+	return nil
+}
+
+func downloadProxyCoreAsset(ctx context.Context, client *http.Client, asset githubReleaseAsset, file *os.File, send func(string, int, string)) error {
+	expected, err := proxyCoreAssetSHA256(asset)
+	if err != nil {
+		return err
+	}
+	if asset.Size <= 0 {
+		return fmt.Errorf("官方资产大小无效，已停止自动安装")
+	}
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, asset.BrowserDownloadURL, nil)
 	if err != nil {
 		return err
 	}
@@ -220,36 +292,52 @@ func downloadProxyCoreAsset(ctx context.Context, client *http.Client, url string
 		return err
 	}
 	defer resp.Body.Close()
-	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+	if resp.StatusCode != http.StatusOK {
 		return fmt.Errorf("HTTP %d", resp.StatusCode)
 	}
-	if totalSize <= 0 {
-		totalSize = resp.ContentLength
+	if resp.ContentLength >= 0 && resp.ContentLength != asset.Size {
+		return fmt.Errorf("下载长度与官方资产不符（响应 %d，预期 %d 字节）", resp.ContentLength, asset.Size)
 	}
+	hash := sha256.New()
+	writer := io.MultiWriter(file, hash)
 	buf := make([]byte, 1024*1024)
 	var downloaded int64
 	lastTick := time.Now()
 	for {
+		if err := ctx.Err(); err != nil {
+			return err
+		}
 		n, readErr := resp.Body.Read(buf)
 		if n > 0 {
-			if _, err := file.Write(buf[:n]); err != nil {
+			downloaded += int64(n)
+			if downloaded > asset.Size {
+				return fmt.Errorf("下载长度超过官方资产大小（预期 %d 字节）", asset.Size)
+			}
+			if _, err := writer.Write(buf[:n]); err != nil {
 				return err
 			}
-			downloaded += int64(n)
-			if totalSize > 0 && time.Since(lastTick) > 500*time.Millisecond {
-				progress := 5 + int(float64(downloaded)/float64(totalSize)*70)
-				if progress > 75 {
-					progress = 75
-				}
-				send("downloading", progress, fmt.Sprintf("下载中 %.1f MB / %.1f MB", float64(downloaded)/1024/1024, float64(totalSize)/1024/1024))
+			if time.Since(lastTick) > 500*time.Millisecond {
+				progress := 5 + int(float64(downloaded)/float64(asset.Size)*70)
+				send("downloading", progress, fmt.Sprintf("下载中 %.1f MB / %.1f MB", float64(downloaded)/1024/1024, float64(asset.Size)/1024/1024))
 				lastTick = time.Now()
 			}
 		}
 		if readErr == io.EOF {
-			return nil
+			break
 		}
 		if readErr != nil {
 			return readErr
 		}
 	}
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	if downloaded != asset.Size {
+		return fmt.Errorf("下载长度与官方资产不符（实际 %d，预期 %d 字节）", downloaded, asset.Size)
+	}
+	send("verifying", 76, "正在核对官方 SHA-256")
+	if hex.EncodeToString(hash.Sum(nil)) != expected {
+		return fmt.Errorf("SHA-256 校验失败，已停止安装；原内核未改动，请重试")
+	}
+	return file.Sync()
 }

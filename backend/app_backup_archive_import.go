@@ -3,6 +3,7 @@ package backend
 import (
 	"ant-chrome/backend/internal/backup"
 	"ant-chrome/backend/internal/config"
+	"ant-chrome/backend/internal/database"
 	"ant-chrome/backend/internal/snapshot"
 	"encoding/json"
 	"fmt"
@@ -44,6 +45,41 @@ func backupExtractAndValidate(zipPath string) (string, backup.Manifest, error) {
 		_ = os.RemoveAll(tmpDir)
 		return "", backup.Manifest{}, fmt.Errorf("备份包缺少 payload 目录")
 	}
+	if _, _, err := backupLoadIncomingConfig(filepath.Join(tmpDir, "payload")); err != nil {
+		_ = os.RemoveAll(tmpDir)
+		return "", backup.Manifest{}, fmt.Errorf("备份配置无效: %w", err)
+	}
+	for _, entry := range manifest.Entries {
+		clean := filepath.Clean(filepath.FromSlash(entry.ArchivePath))
+		if filepath.IsAbs(clean) || clean == ".." || strings.HasPrefix(clean, ".."+string(filepath.Separator)) || strings.Contains(entry.ArchivePath, "\\") {
+			os.RemoveAll(tmpDir)
+			return "", backup.Manifest{}, fmt.Errorf("invalid manifest path")
+		}
+		if entry.Required {
+			if _, err := os.Stat(filepath.Join(tmpDir, clean)); err != nil {
+				os.RemoveAll(tmpDir)
+				return "", backup.Manifest{}, fmt.Errorf("missing required entry: %s", entry.ID)
+			}
+		}
+	}
+	if sourceDB := backupFindDatabaseFile(filepath.Join(tmpDir, "payload")); sourceDB != "" {
+		if err := database.ValidateSnapshot(sourceDB); err != nil {
+			os.RemoveAll(tmpDir)
+			return "", backup.Manifest{}, fmt.Errorf("invalid backup database: %w", err)
+		}
+		db, err := database.NewDB(sourceDB)
+		if err == nil {
+			err = db.Migrate()
+			closeErr := db.Close()
+			if err == nil {
+				err = closeErr
+			}
+		}
+		if err != nil {
+			os.RemoveAll(tmpDir)
+			return "", backup.Manifest{}, fmt.Errorf("unsupported backup schema: %w", err)
+		}
+	}
 	return tmpDir, manifest, nil
 }
 
@@ -57,6 +93,9 @@ func backupLoadIncomingConfig(payloadRoot string) (*config.Config, bool, error) 
 	}
 	cfg, err := config.Load(cfgPath)
 	if err != nil {
+		return nil, false, err
+	}
+	if err := config.ValidateLaunchServerAuth(cfg.LaunchServer.Auth); err != nil {
 		return nil, false, err
 	}
 	return cfg, true, nil

@@ -233,6 +233,8 @@ func (a *App) scanChromeDir(chromeRoot string) []browser.Core {
 // loadProxies 启动时加载代理数据。
 // 优先从 ProxyDAO（SQLite）读取；若 DAO 未注入则降级到 proxies.yaml，最后降级到 config.yaml。
 func (a *App) loadProxies() {
+	a.proxyStateMu.Lock()
+	defer a.proxyStateMu.Unlock()
 	log := logger.New("Browser")
 
 	builtins := []browser.Proxy{

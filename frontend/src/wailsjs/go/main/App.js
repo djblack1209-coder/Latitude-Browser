@@ -294,6 +294,10 @@ export function BrowserInstanceStop(arg1) {
   return window['go']['main']['App']['BrowserInstanceStop'](arg1);
 }
 
+export function BrowserPlatformCapabilities() {
+  return window['go']['main']['App']['BrowserPlatformCapabilities']();
+}
+
 export function BrowserProfileBatchRemoveTags(arg1, arg2) {
   return window['go']['main']['App']['BrowserProfileBatchRemoveTags'](arg1, arg2);
 }

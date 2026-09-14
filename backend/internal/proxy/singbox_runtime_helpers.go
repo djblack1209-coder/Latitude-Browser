@@ -81,7 +81,7 @@ func (m *SingBoxManager) resolveBinary() (string, error) {
 
 func (m *SingBoxManager) buildConfig(key string, outbound map[string]interface{}, port int) (string, error) {
 	baseDir := m.resolveWorkdir(key)
-	if err := os.MkdirAll(baseDir, 0755); err != nil {
+	if err := preparePrivateRuntimeDir(baseDir); err != nil {
 		return "", err
 	}
 
@@ -128,7 +128,7 @@ func (m *SingBoxManager) buildConfig(key string, outbound map[string]interface{}
 	}
 
 	cfgPath := filepath.Join(baseDir, "singbox-config.json")
-	if err := os.WriteFile(cfgPath, data, 0644); err != nil {
+	if err := writePrivateRuntimeConfig(cfgPath, data); err != nil {
 		return "", err
 	}
 	return cfgPath, nil

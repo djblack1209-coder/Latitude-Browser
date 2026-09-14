@@ -6,23 +6,25 @@ import (
 	"path/filepath"
 )
 
-func (a *App) backupImportFromPathLocked(zipPath string, resetFirst bool) (map[string]interface{}, error) {
-	// Keep the lifecycle gate for the entire stop -> import/reset -> reload
-	// transaction. Otherwise a concurrent browser start could create a new Tor
-	// runtime after the initial stop and race the config/data mutation.
-	a.torLifecycleMu.Lock()
-	defer a.torLifecycleMu.Unlock()
-
-	if err := a.backupStopRuntimeForMaintenance(); err != nil {
-		return nil, fmt.Errorf("加载已取消：无法安全停止当前运行时: %w", err)
-	}
-	a.backupEmitImportProgress("preparing", 10, "正在解压并校验备份包...")
-
+func (a *App) backupImportFromPathLocked(zipPath string, resetFirst bool) (result map[string]interface{}, resultErr error) {
+	// Preflight before stopping services or mutating any current data.
 	extractRoot, manifest, err := backupExtractAndValidate(zipPath)
 	if err != nil {
 		return nil, err
 	}
 	defer os.RemoveAll(extractRoot)
+	if err := backupRejectExternalCorePayload(filepath.Join(extractRoot, "payload")); err != nil {
+		return nil, err
+	}
+	if err := a.backupPrepareProfileData(extractRoot, manifest); err != nil {
+		return nil, err
+	}
+	a.torLifecycleMu.Lock()
+	defer a.torLifecycleMu.Unlock()
+	defer a.backupFinishProxyMaintenance(&result, &resultErr, a.speedScheduler != nil)
+	if err := a.backupStopRuntimeForMaintenance(); err != nil {
+		return nil, fmt.Errorf("加载已取消：无法安全停止当前运行时: %w", err)
+	}
 	a.backupEmitImportProgress("preparing", 20, "备份包校验通过，开始加载数据...")
 
 	componentEntries := backupDetectPresentManifestEntries(extractRoot, manifest)
@@ -73,12 +75,18 @@ func (a *App) backupImportFromPathLocked(zipPath string, resetFirst bool) (map[s
 
 	a.backupEmitImportProgress("importing", 86, "正在同步文件数据...")
 	a.backupImportFileTrees(payloadRoot, incomingCfg, resetFirst, stats, issueTracker.RecordIssue)
+	if err := a.backupImportProfileData(extractRoot, manifest, resetFirst, stats); err != nil {
+		return nil, fmt.Errorf("实例数据恢复失败: %w", err)
+	}
 
 	a.backupEmitImportProgress("importing", 94, "正在刷新运行时配置...")
 	if err := a.backupReloadAfterMutation(); err != nil {
 		return nil, err
 	}
 
+	if err := a.backupResumeProxyRuntimes(); err != nil {
+		return nil, err
+	}
 	totalComponents, successCount, failedCount, partial := issueTracker.Summary()
 	message := "加载完成"
 	if partial {

@@ -49,12 +49,22 @@ func (d *SQLiteCoreDAO) List() ([]Core, error) {
 
 // Upsert 新增或更新内核配置
 func (d *SQLiteCoreDAO) Upsert(core Core) error {
+	tx, err := d.db.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+	if core.IsDefault {
+		if _, err := tx.Exec(`UPDATE browser_cores SET is_default = 0 WHERE core_id <> ?`, core.CoreId); err != nil {
+			return err
+		}
+	}
 	now := time.Now().Format(time.RFC3339)
 	isDefault := 0
 	if core.IsDefault {
 		isDefault = 1
 	}
-	_, err := d.db.Exec(`
+	_, err = tx.Exec(`
 		INSERT INTO browser_cores (core_id, core_name, core_path, is_default, created_at)
 		VALUES (?, ?, ?, ?, ?)
 		ON CONFLICT(core_id) DO UPDATE SET
@@ -66,7 +76,7 @@ func (d *SQLiteCoreDAO) Upsert(core Core) error {
 	if err != nil {
 		return fmt.Errorf("保存内核配置失败: %w", err)
 	}
-	return nil
+	return tx.Commit()
 }
 
 // Delete 删除内核配置

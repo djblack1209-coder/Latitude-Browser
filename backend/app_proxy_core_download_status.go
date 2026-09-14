@@ -1,6 +1,7 @@
 package backend
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -182,40 +183,41 @@ func proxyCoreInstalledMessage(active bool, configured bool) string {
 
 func findInstalledProxyCoreBinary(appRoot string, spec proxyCoreSpec, target proxyCoreTarget) (string, string, bool) {
 	platformDir := fmt.Sprintf("%s-%s", target.GOOS, target.GOARCH)
-	searchDirs := []struct {
-		path   string
-		source string
-	}{
-		{apppath.Resolve(appRoot, filepath.Join("bin", platformDir, spec.Core)), "downloaded"},
-		{apppath.Resolve(appRoot, filepath.Join("bin", platformDir)), "runtime"},
-		{apppath.Resolve(appRoot, "bin"), "runtime"},
+	native := target.GOOS == goruntime.GOOS && target.GOARCH == goruntime.GOARCH
+	type searchLocation struct {
+		path      string
+		source    string
+		recursive bool
 	}
-	if exePath, err := os.Executable(); err == nil {
-		exeDir := filepath.Dir(exePath)
-		searchDirs = append(searchDirs,
-			struct {
-				path   string
-				source string
-			}{filepath.Join(exeDir, "bin", platformDir, spec.Core), "downloaded"},
-			struct {
-				path   string
-				source string
-			}{filepath.Join(exeDir, "bin", platformDir), "runtime"},
-			struct {
-				path   string
-				source string
-			}{filepath.Join(exeDir, "bin"), "runtime"},
+	var locations []searchLocation
+	addRoot := func(binDir string) {
+		locations = append(locations,
+			searchLocation{filepath.Join(binDir, platformDir, spec.Core), "downloaded", true},
+			searchLocation{filepath.Join(binDir, platformDir), "runtime", true},
 		)
-	}
-	for _, dir := range searchDirs {
-		if strings.TrimSpace(dir.path) == "" {
-			continue
-		}
-		if path, err := findProxyCoreBinary(dir.path, spec.BinaryBase, target.GOOS); err == nil && proxyCoreBinaryUsable(path, target.GOOS) {
-			return path, dir.source, true
+		if native {
+			// Packaged flat binaries are native-only. Never scan all platform
+			// subdirectories and mistake a foreign download for a usable core.
+			locations = append(locations, searchLocation{binDir, "runtime", false})
 		}
 	}
-	if target.GOOS == goruntime.GOOS && target.GOARCH == goruntime.GOARCH {
+	addRoot(apppath.Resolve(appRoot, "bin"))
+	if exePath, err := os.Executable(); err == nil {
+		addRoot(filepath.Join(filepath.Dir(exePath), "bin"))
+	}
+	for _, location := range locations {
+		// A valid exact candidate must not be hidden by an unrelated unreadable
+		// child. Extraction still uses strict recursive validation; discovery
+		// checks known locations before the compatibility filename search.
+		candidate := filepath.Join(location.path, proxyCoreBinaryName(spec.BinaryBase, target.GOOS))
+		if info, err := os.Lstat(candidate); err == nil && info.Mode().IsRegular() && proxyCoreBinaryUsable(candidate, target.GOOS) {
+			return candidate, location.source, true
+		}
+		if path, err := findProxyCoreBinaryScoped(location.path, spec.BinaryBase, target.GOOS, location.recursive); err == nil && proxyCoreBinaryUsable(path, target.GOOS) {
+			return path, location.source, true
+		}
+	}
+	if native {
 		if path, err := exec.LookPath(proxyCoreBinaryName(spec.BinaryBase, target.GOOS)); err == nil {
 			return path, "path", true
 		}
@@ -271,11 +273,64 @@ func sameCleanPath(a string, b string) bool {
 	return strings.EqualFold(filepath.Clean(a), filepath.Clean(b))
 }
 
+// Called under maintenanceMu by the installer. Keep both the old on-disk
+// config and the live object unchanged if serialization/write/rename fails.
 func (a *App) saveProxyCoreBinaryPath(spec proxyCoreSpec, binaryPath string) error {
-	if a.config == nil {
+	if a == nil || a.config == nil {
 		return fmt.Errorf("config is nil")
 	}
 	clean := fsutil.NormalizePathInput(binaryPath)
+	candidate := *a.config
+	switch spec.ConfigKey {
+	case "xray":
+		candidate.Browser.XrayBinaryPath = clean
+	case "clash":
+		candidate.Browser.ClashBinaryPath = clean
+	case "sing-box":
+		candidate.Browser.SingBoxBinaryPath = clean
+	default:
+		return fmt.Errorf("未知配置键: %s", spec.ConfigKey)
+	}
+	configPath := a.resolveAppPath("config.yaml")
+	old, err := os.Lstat(configPath)
+	if err != nil && !os.IsNotExist(err) {
+		return err
+	}
+	if err == nil && !old.Mode().IsRegular() {
+		return fmt.Errorf("配置路径不是普通文件，原配置未改动")
+	}
+	if err := os.MkdirAll(filepath.Dir(configPath), 0o755); err != nil {
+		return err
+	}
+	tmp, err := os.CreateTemp(filepath.Dir(configPath), ".proxy-core-config-*")
+	if err != nil {
+		return err
+	}
+	defer os.Remove(tmp.Name())
+	if err := tmp.Close(); err != nil {
+		return err
+	}
+	if err := candidate.Save(tmp.Name()); err != nil {
+		return err
+	}
+	// Existing permissions are retained; a new config stays private (0600).
+	if old != nil {
+		if err := os.Chmod(tmp.Name(), old.Mode().Perm()); err != nil {
+			return err
+		}
+	}
+	written, err := os.OpenFile(tmp.Name(), os.O_RDWR, 0)
+	if err != nil {
+		return err
+	}
+	if err := errors.Join(written.Sync(), written.Close()); err != nil {
+		return err
+	}
+	if err := os.Rename(tmp.Name(), configPath); err != nil {
+		return err
+	}
+	// Publish only the selected path. Installing a core must never change the
+	// active connector or write a partially updated in-memory configuration.
 	switch spec.ConfigKey {
 	case "xray":
 		a.config.Browser.XrayBinaryPath = clean
@@ -283,8 +338,6 @@ func (a *App) saveProxyCoreBinaryPath(spec proxyCoreSpec, binaryPath string) err
 		a.config.Browser.ClashBinaryPath = clean
 	case "sing-box":
 		a.config.Browser.SingBoxBinaryPath = clean
-	default:
-		return fmt.Errorf("未知配置键: %s", spec.ConfigKey)
 	}
 	if a.xrayMgr != nil {
 		a.xrayMgr.Config = a.config
@@ -295,5 +348,5 @@ func (a *App) saveProxyCoreBinaryPath(spec proxyCoreSpec, binaryPath string) err
 	if a.singboxMgr != nil {
 		a.singboxMgr.Config = a.config
 	}
-	return a.config.Save(a.resolveAppPath("config.yaml"))
+	return nil
 }

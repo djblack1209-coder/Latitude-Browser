@@ -27,6 +27,10 @@ func (a *App) GetBrowserSettings() BrowserSettings {
 }
 
 func (a *App) SaveBrowserSettings(settings BrowserSettings) error {
+	a.maintenanceMu.Lock()
+	defer a.maintenanceMu.Unlock()
+	a.browserMgr.Mutex.Lock()
+	defer a.browserMgr.Mutex.Unlock()
 	log := logger.New("Browser")
 	a.config.Browser.UserDataRoot = strings.TrimSpace(settings.UserDataRoot)
 	a.config.Browser.DefaultFingerprintArgs = append([]string{}, settings.DefaultFingerprintArgs...)
@@ -62,14 +66,29 @@ func (a *App) BrowserCoreList() []BrowserCore {
 }
 
 func (a *App) BrowserCoreSave(input BrowserCoreInput) error {
+	releaseActivity, activityErr := a.dataActivity.begin()
+	if activityErr != nil {
+		return activityErr
+	}
+	defer releaseActivity()
 	return a.browserMgr.SaveCore(input)
 }
 
 func (a *App) BrowserCoreDelete(coreId string) error {
+	releaseActivity, activityErr := a.dataActivity.begin()
+	if activityErr != nil {
+		return activityErr
+	}
+	defer releaseActivity()
 	return a.browserMgr.DeleteCore(coreId)
 }
 
 func (a *App) BrowserCoreSetDefault(coreId string) error {
+	releaseActivity, activityErr := a.dataActivity.begin()
+	if activityErr != nil {
+		return activityErr
+	}
+	defer releaseActivity()
 	return a.browserMgr.SetDefaultCore(coreId)
 }
 
@@ -83,12 +102,22 @@ func (a *App) BrowserCoreExtendedInfo() []BrowserCoreExtendedInfo {
 
 // BrowserCoreScan 重新扫描 chrome 目录，自动注册新内核
 func (a *App) BrowserCoreScan() []BrowserCore {
+	releaseActivity, activityErr := a.dataActivity.begin()
+	if activityErr != nil {
+		return a.browserMgr.ListCores()
+	}
+	defer releaseActivity()
 	a.autoDetectCores()
 	return a.browserMgr.ListCores()
 }
 
 // BrowserCoreImportLocal 选择一个已解压内核目录或归档文件并注册。
 func (a *App) BrowserCoreImportLocal() (*BrowserCore, error) {
+	releaseActivity, activityErr := a.dataActivity.begin()
+	if activityErr != nil {
+		return nil, activityErr
+	}
+	defer releaseActivity()
 	if a.ctx == nil {
 		return nil, fmt.Errorf("app context is nil")
 	}
@@ -211,6 +240,11 @@ func coreNameFromArchiveName(name string) string {
 
 // BrowserCoreImportLocalDirectory 选择一个已解压内核目录并直接注册，不下载、不复制文件。
 func (a *App) BrowserCoreImportLocalDirectory() (*BrowserCore, error) {
+	releaseActivity, activityErr := a.dataActivity.begin()
+	if activityErr != nil {
+		return nil, activityErr
+	}
+	defer releaseActivity()
 	if a.ctx == nil {
 		return nil, fmt.Errorf("app context is nil")
 	}
@@ -289,7 +323,14 @@ func (a *App) BrowserCoreDownload(coreName, url, proxyConfig string) error {
 	if a.ctx == nil {
 		return fmt.Errorf("app context is nil")
 	}
-	go a.browserMgr.DownloadAndExtractCore(a.ctx, coreName, url, proxyConfig)
+	releaseActivity, activityErr := a.dataActivity.begin()
+	if activityErr != nil {
+		return activityErr
+	}
+	go func() {
+		defer releaseActivity()
+		a.browserMgr.DownloadAndExtractCore(a.ctx, coreName, url, proxyConfig)
+	}()
 	return nil
 }
 
@@ -298,6 +339,10 @@ func (a *App) BrowserCoreRedownload(coreId, url, proxyConfig string) error {
 	if a.ctx == nil {
 		return fmt.Errorf("app context is nil")
 	}
-	go a.browserMgr.RedownloadCore(a.ctx, coreId, url, proxyConfig)
+	releaseActivity, activityErr := a.dataActivity.begin()
+	if activityErr != nil {
+		return activityErr
+	}
+	go func() { defer releaseActivity(); a.browserMgr.RedownloadCore(a.ctx, coreId, url, proxyConfig) }()
 	return nil
 }

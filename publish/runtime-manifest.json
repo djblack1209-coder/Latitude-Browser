@@ -62,17 +62,25 @@
     },
     {
       "path": "bin/darwin-arm64/xray",
-      "sha256": "76fea3ec3610c2cc462ef39422ddc00e6d306b0c90223c983eaced6b12c8dee8",
+      "sha256": "5d9dd24c0aba4b6cfcc6a33a5d67f854816ee17f392bf932ec8176da46f7e404",
       "targets": [
         "darwin-arm64"
       ]
     },
     {
       "path": "bin/darwin-arm64/sing-box",
-      "sha256": "0b3e7947b53c798adadd282e45748117a7820b21bfb10a7e1a43b46f02fac97a",
+      "sha256": "973388c3f720e918fc64dff7fd75dde14b31cc1aa6fc15855e2f00c5291dd4f4",
       "targets": [
         "darwin-arm64"
       ]
+    },
+    {
+      "path": "bin/darwin-arm64/mihomo",
+      "sha256": "e80c6334b4e3aae53dfbc86cddd4434cec1565a61d4483931fac2ae12fec6d30",
+      "targets": [
+        "darwin-arm64"
+      ],
+      "note": "Upstream Mihomo v1.19.30 standard Darwin arm64 payload; hash before local packaging/signing."
     }
   ]
 }

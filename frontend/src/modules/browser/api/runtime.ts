@@ -1,23 +1,66 @@
 import type { BrowserCore, BrowserProfile, BrowserProxy, BrowserSettings } from '../types'
 
-export async function getBindings() {
-  // Wails' generated bindings assume the desktop bridge exists at import-call
-  // time. The same frontend is also used by Vite preview and browser-based QA,
-  // where `window.go` is intentionally absent; return the mock path early
-  // instead of letting a generated wrapper throw `reading 'main'`.
-  if (!(globalThis as any).go?.main?.App) {
-    return null
-  }
-
-  try {
-    return await import('../../../wailsjs/go/main/App')
-  } catch {
-    return null
+export class DesktopBridgeError extends Error {
+  constructor(public readonly code: string, message: string) {
+    super(message)
+    this.name = 'DesktopBridgeError'
   }
 }
 
+export function isDevelopmentMockEnabled(): boolean {
+  const env = (import.meta as ImportMeta & { env?: Record<string, unknown> }).env
+  return env?.DEV === true && env?.VITE_ENABLE_DEV_MOCK === 'true'
+}
+
+export function desktopBridgeAvailable(): boolean {
+  return !!(globalThis as any).go?.main?.App
+}
+
+function requireDesktopApp(): any {
+  const app = (globalThis as any).go?.main?.App
+  if (app) return app
+  if (isDevelopmentMockEnabled()) return null
+  throw new DesktopBridgeError('DESKTOP_BRIDGE_UNAVAILABLE', '桌面服务尚未就绪，操作未执行。请从 Latitude Browser 应用打开。')
+}
+
+function checkedMethods<T extends object>(methods: T): T {
+  // Rollup freezes binding namespaces. Wrap a mutable facade so returning a
+  // checked function cannot violate the source object's Proxy invariants.
+  return new Proxy({ ...methods }, {
+    get(_target, name) {
+      // Promise resolution probes then; it is not a backend operation.
+      if (typeof name !== 'string' || name === 'then') return Reflect.get(methods, name, methods)
+      const app = requireDesktopApp()
+      const method = Reflect.get(methods, name, methods)
+      if (typeof app?.[name] !== 'function' || typeof method !== 'function') {
+        throw new DesktopBridgeError('DESKTOP_METHOD_UNAVAILABLE', `当前桌面服务不支持此操作（${name}），请更新应用后重试。`)
+      }
+      return (...args: unknown[]) => {
+        // Validate again at invocation if the bridge changed since lookup.
+        if (typeof requireDesktopApp()?.[name] !== 'function') {
+          throw new DesktopBridgeError('DESKTOP_METHOD_UNAVAILABLE', '桌面服务已变化，操作未执行。请重新打开应用。')
+        }
+        return Reflect.apply(method, methods, args)
+      }
+    },
+  })
+}
+
+export async function getBindings() {
+  if (!requireDesktopApp()) return null
+
+  let bindings
+  try {
+    bindings = await import('../../../wailsjs/go/main/App')
+  } catch {
+    throw new DesktopBridgeError('DESKTOP_BINDINGS_LOAD_FAILED', '桌面接口加载失败，操作未执行。请重新打开应用。')
+  }
+  return checkedMethods(bindings)
+}
+
 export function getGoApp(): any {
-  return (globalThis as any).go?.main?.App ?? null
+  const app = requireDesktopApp()
+  return app ? checkedMethods(app) : null
 }
 
 export function nowISOString(): string {

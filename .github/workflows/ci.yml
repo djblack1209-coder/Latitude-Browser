@@ -29,16 +29,39 @@ jobs:
         working-directory: frontend
       - run: npm run build:clean
         working-directory: frontend
+      - run: npm test
+        working-directory: frontend
       - run: python3 tools/check-showcase.py
+      - run: python3 -m unittest discover -s tools/runtime -p 'test_*.py'
+      - run: python3 -m unittest discover -s publish/mac -p 'test_*.py'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: frontend-dist
+          path: frontend/dist
+          if-no-files-found: error
+          retention-days: 3
 
   backend:
-    name: Go backend (macOS)
+    name: Backend and proxy processes (macOS arm64)
+    needs: frontend
     runs-on: macos-15
-    timeout-minutes: 20
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: frontend-dist
+          path: frontend/dist
       - uses: actions/setup-go@v5
         with:
-          go-version: '1.26.x'
+          go-version-file: go.mod
           cache: true
-      - run: go test ./backend/...
+      - run: go test ./...
+      - run: go vet ./...
+      - run: go test -race ./backend/...
+      - name: Verify pinned runtime binaries
+        run: bash tools/runtime/verify-runtime.sh darwin-arm64
+      - name: Exercise real proxy processes against local fixtures
+        env:
+          LATITUDE_TEST_PROXY_RUNTIMES: ${{ github.workspace }}/bin/darwin-arm64
+        run: go test -race ./backend/internal/proxy -run '^TestBridgeLocalRuntime' -count=1 -timeout=3m

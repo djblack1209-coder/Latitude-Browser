@@ -119,6 +119,11 @@ PY
 )"
 fi
 
+python3 "$ROOT_DIR/publish/mac/artifact_contract.py" version "$VERSION"
+# Remove this architecture's previous contract before attempting a new build.
+# It is re-published only after the current package is assembled successfully.
+rm -f "$OUTPUT_DIR/manifest-macos-${ARCH}.json"
+
 TARGET="darwin-$ARCH"
 RUNTIME_DIR="$ROOT_DIR/bin/$TARGET"
 XRAY_SRC="$RUNTIME_DIR/xray"
@@ -148,6 +153,8 @@ if not candidates:
     sys.exit(0)
 
 candidates.sort(key=lambda p: p.stat().st_mtime, reverse=True)
+if len(candidates) != 1:
+    raise SystemExit("expected exactly one build bundle; remove stale build products first")
 print(candidates[0])
 PY
 }
@@ -260,6 +267,7 @@ fi
 # Ship third-party attribution with the distributable app instead of leaving
 # the notices only in the source tree.  Keep them under Resources so they are
 # visible to packagers without changing runtime path resolution.
+cp "$ROOT_DIR/LICENSE" "$ROOT_DIR/LICENSE-SCOPE.md" "$APP_STAGE/Contents/Resources/"
 if [[ -d "$THIRD_PARTY_SRC" ]]; then
   mkdir -p "$APP_STAGE/Contents/Resources/third_party"
   ditto "$THIRD_PARTY_SRC" "$APP_STAGE/Contents/Resources/third_party"
@@ -311,3 +319,5 @@ else
 fi
 
 echo "Done."
+python3 "$ROOT_DIR/publish/mac/artifact_contract.py" write \
+  --output "$OUTPUT_DIR" --arch "$ARCH" --version "$VERSION"

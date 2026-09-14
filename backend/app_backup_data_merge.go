@@ -2,6 +2,7 @@ package backend
 
 import (
 	"ant-chrome/backend/internal/config"
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -83,16 +84,20 @@ func (a *App) backupMergeDatabaseFromSource(srcDBPath string, resetFirst bool, s
 	if a.db == nil || a.db.GetConn() == nil {
 		return fmt.Errorf("数据库未初始化")
 	}
-	tx, err := a.db.GetConn().Begin()
+	conn, err := a.db.GetConn().Conn(context.Background())
+	if err != nil {
+		return err
+	}
+	defer conn.Close()
+	if _, err = conn.ExecContext(context.Background(), `ATTACH DATABASE ? AS src`, srcDBPath); err != nil {
+		return fmt.Errorf("挂载备份数据库失败: %w", err)
+	}
+	defer conn.ExecContext(context.Background(), `DETACH DATABASE src`)
+	tx, err := conn.BeginTx(context.Background(), nil)
 	if err != nil {
 		return err
 	}
 	defer tx.Rollback()
-
-	if _, err := tx.Exec(`ATTACH DATABASE ? AS src`, srcDBPath); err != nil {
-		return fmt.Errorf("挂载备份数据库失败: %w", err)
-	}
-	defer tx.Exec(`DETACH DATABASE src`)
 
 	mergeTables := []struct {
 		name       string
@@ -267,6 +272,31 @@ WHERE NOT EXISTS (
 )`
 				}
 			}
+		}
+		extras := map[string][]string{
+			"browser_proxies":    {"preferred_kernel", "last_test_engine", "last_test_stage", "last_test_code", "last_test_target_url", "last_test_error"},
+			"browser_profiles":   {"deleted_at", "memory_limit_mb", "network_mode", "proxy_bind_source_id", "proxy_bind_source_url", "proxy_bind_name", "proxy_bind_updated_at"},
+			"browser_extensions": {"icon_data_url"},
+		}
+		for _, column := range extras[item.name] {
+			exists, err := backupSrcColumnExists(tx, item.name, column)
+			if err != nil {
+				return err
+			}
+			if !exists {
+				continue
+			}
+			columnEnd := strings.Index(sqlText, ")\nSELECT")
+			from := strings.Index(sqlText, "FROM src.") - 1
+			if columnEnd < 0 || from < 0 {
+				return fmt.Errorf("invalid import statement")
+			}
+			selector := column
+			if !resetFirst {
+				selector = "s." + column
+			}
+			sqlText = sqlText[:from] + ", " + selector + sqlText[from:]
+			sqlText = sqlText[:columnEnd] + ", " + column + sqlText[columnEnd:]
 		}
 		res, err := tx.Exec(sqlText)
 		if err != nil {

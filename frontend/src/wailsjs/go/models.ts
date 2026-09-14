@@ -1192,6 +1192,20 @@ export namespace backend {
 
 export namespace backup {
 
+	export class ProfileDataMapping {
+	    profileId: string;
+	    archivePath: string;
+
+	    static createFrom(source: any = {}) {
+	        return new ProfileDataMapping(source);
+	    }
+
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.profileId = source["profileId"];
+	        this.archivePath = source["archivePath"];
+	    }
+	}
 	export class ManifestEntry {
 	    id: string;
 	    category: string;
@@ -1234,6 +1248,7 @@ export namespace backup {
 	    createdAt: string;
 	    app: ManifestAppInfo;
 	    entries: ManifestEntry[];
+	    profileData?: ProfileDataMapping[];
 
 	    static createFrom(source: any = {}) {
 	        return new Manifest(source);
@@ -1246,6 +1261,7 @@ export namespace backup {
 	        this.createdAt = source["createdAt"];
 	        this.app = this.convertValues(source["app"], ManifestAppInfo);
 	        this.entries = this.convertValues(source["entries"], ManifestEntry);
+	        this.profileData = this.convertValues(source["profileData"], ProfileDataMapping);
 	    }
 
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
@@ -1266,6 +1282,7 @@ export namespace backup {
 		    return a;
 		}
 	}
+
 
 
 	export class ScopeEntry {
@@ -1499,6 +1516,22 @@ export namespace browser {
 	        this.createdAt = source["createdAt"];
 	        this.updatedAt = source["updatedAt"];
 	        this.instanceCount = source["instanceCount"];
+	    }
+	}
+	export class PlatformCapabilities {
+	    platform: string;
+	    memoryHardLimit: boolean;
+	    memoryHardLimitReason: string;
+
+	    static createFrom(source: any = {}) {
+	        return new PlatformCapabilities(source);
+	    }
+
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.platform = source["platform"];
+	        this.memoryHardLimit = source["memoryHardLimit"];
+	        this.memoryHardLimitReason = source["memoryHardLimitReason"];
 	    }
 	}
 	export class Profile {

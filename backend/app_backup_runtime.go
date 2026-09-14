@@ -16,7 +16,9 @@ func (a *App) backupStopRuntimeForMaintenance() error {
 	}
 
 	if a.xrayMgr != nil {
-		a.xrayMgr.StopAll()
+		if err := a.xrayMgr.StopAll(); err != nil {
+			stopErrs = append(stopErrs, err)
+		}
 	}
 	var torErr error
 	if a.torMgr != nil {
@@ -27,14 +29,19 @@ func (a *App) backupStopRuntimeForMaintenance() error {
 	}
 	// Preserve ownership metadata whenever maintenance cannot prove that every
 	// browser and Tor runtime is gone. The caller aborts before mutating data.
-	if browsersStopped && torErr == nil {
-		a.clearProfileProxyBridges()
-	}
+
 	if a.singboxMgr != nil {
-		a.singboxMgr.StopAll()
+		if err := a.singboxMgr.StopAll(); err != nil {
+			stopErrs = append(stopErrs, err)
+		}
 	}
 	if a.clashMgr != nil {
-		a.clashMgr.StopAll()
+		if err := a.clashMgr.StopAll(); err != nil {
+			stopErrs = append(stopErrs, err)
+		}
+	}
+	if len(stopErrs) == 0 {
+		a.clearProfileProxyBridges()
 	}
 	if a.speedScheduler != nil {
 		a.speedScheduler.Stop()
@@ -44,7 +51,7 @@ func (a *App) backupStopRuntimeForMaintenance() error {
 }
 
 func (a *App) backupReloadAfterMutation() error {
-	if err := a.ReloadConfig(); err != nil {
+	if err := a.reloadConfigLocked(); err != nil {
 		return err
 	}
 
@@ -90,6 +97,7 @@ func (a *App) backupReloadAfterMutation() error {
 			browser.DefaultProxySpeedInterval,
 			browser.DefaultProxySpeedConcurrency,
 		)
+		a.speedScheduler.BeginActivity = a.dataActivity.begin
 		a.speedScheduler.Start()
 	}
 	return nil

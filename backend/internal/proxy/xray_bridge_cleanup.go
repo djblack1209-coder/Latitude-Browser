@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-func (m *XrayManager) cleanupLoop() {
+func (m *XrayManager) cleanupLoop(stop <-chan struct{}) {
 	ticker := time.NewTicker(xrayBridgeCleanupInterval)
 	defer ticker.Stop()
 
@@ -13,7 +13,7 @@ func (m *XrayManager) cleanupLoop() {
 		select {
 		case <-ticker.C:
 			m.recycleIdleBridges()
-		case <-m.stopCh:
+		case <-stop:
 			return
 		}
 	}
@@ -53,9 +53,11 @@ func (m *XrayManager) recycleIdleBridges() {
 	}
 }
 
-func (m *XrayManager) stopBridgeProcess(bridge *XrayBridge) {
+func (m *XrayManager) stopBridgeProcess(bridge *XrayBridge) error {
 	if bridge == nil || bridge.Cmd == nil || bridge.Cmd.Process == nil {
-		return
+		return nil
 	}
-	_ = bridge.Cmd.Process.Kill()
+	bridge.startExitWatcher()
+	m.lifecycle.track(bridge.Cmd, bridge.ExitDone)
+	return stopOwnedBridgeProcess(bridge.Cmd, bridge.ExitDone)
 }

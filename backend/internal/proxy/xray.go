@@ -15,14 +15,18 @@ const (
 
 // XrayManager Xray 桥接管理器
 type XrayManager struct {
-	Config       *config.Config
-	AppRoot      string // 应用根目录，所有相对路径基于此解析
-	Bridges      map[string]*XrayBridge
-	OnBridgeDied func(key string, err error) // 桥接进程意外退出回调
-	mu           sync.Mutex
-	launchLocks  map[string]*bridgeLaunchLock
-	stopCh       chan struct{}
-	stopOnce     sync.Once
+	Config             *config.Config
+	AppRoot            string // 应用根目录，所有相对路径基于此解析
+	Bridges            map[string]*XrayBridge
+	OnBridgeDied       func(key string, err error) // 桥接进程意外退出回调
+	mu                 sync.Mutex
+	launchLocks        map[string]*bridgeLaunchLock
+	stopCh             chan struct{}
+	stopOnce           sync.Once
+	restartMu          sync.Mutex
+	lifecycle          bridgeLifecycle
+	leases             bridgeLeaseBook[*XrayBridge]
+	afterBridgePublish func(*XrayBridge) // Test barrier; nil in production.
 }
 
 // NewXrayManager 创建 Xray 管理器
@@ -34,7 +38,7 @@ func NewXrayManager(cfg *config.Config, appRoot string) *XrayManager {
 		launchLocks: make(map[string]*bridgeLaunchLock),
 		stopCh:      make(chan struct{}),
 	}
-	go manager.cleanupLoop()
+	go manager.cleanupLoop(manager.stopCh)
 	return manager
 }
 
@@ -147,20 +151,33 @@ func (m *XrayManager) EnsureBridge(proxyConfig string, proxies []config.BrowserP
 
 // AcquireBridge 获取一个带引用计数的 Xray 桥接，用于浏览器实例等长生命周期场景。
 func (m *XrayManager) AcquireBridge(proxyConfig string, proxies []config.BrowserProxy, proxyId string) (string, string, error) {
-	return m.ensureBridge(proxyConfig, proxies, proxyId, true)
-}
-
-// ReleaseBridge 释放一个已占用的桥接引用；空闲桥接会由后台回收协程延迟清理。
-func (m *XrayManager) ReleaseBridge(key string) {
-	key = strings.TrimSpace(key)
-	if key == "" {
-		return
+	done, err := m.lifecycle.begin()
+	if err != nil {
+		return "", "", err
 	}
-
+	defer done()
+	endpoint, key, err := m.ensureBridge(proxyConfig, proxies, proxyId, false)
+	if err != nil || key == "" {
+		return endpoint, "", err
+	}
 	m.mu.Lock()
 	defer m.mu.Unlock()
+	bridge := m.Bridges[key]
+	if bridge == nil || !bridge.Running || bridge.Stopping || processExited(bridge.ExitDone) || endpoint != fmt.Sprintf("socks5://127.0.0.1:%d", bridge.Port) {
+		return "", "", fmt.Errorf("xray 桥接已退出，请重试")
+	}
+	bridge.RefCount++
+	bridge.LastUsedAt = time.Now()
+	return endpoint, m.leases.issue(key, bridge), nil
+}
 
-	bridge, ok := m.Bridges[key]
+func (m *XrayManager) ReleaseBridge(token string) {
+	if m == nil {
+		return
+	}
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	bridge, ok := m.leases.take(strings.TrimSpace(token))
 	if !ok || bridge == nil {
 		return
 	}
@@ -171,23 +188,41 @@ func (m *XrayManager) ReleaseBridge(key string) {
 }
 
 // StopAll 关闭所有 xray 桥接进程。
-func (m *XrayManager) StopAll() {
+func (m *XrayManager) StopAll() error {
+	m.restartMu.Lock()
+	defer m.restartMu.Unlock()
 	m.stopOnce.Do(func() {
-		close(m.stopCh)
-	})
-
-	m.mu.Lock()
-	bridges := make([]*XrayBridge, 0, len(m.Bridges))
-	for key, bridge := range m.Bridges {
-		if bridge != nil {
-			bridge.Stopping = true
-			bridges = append(bridges, bridge)
+		if m.stopCh != nil {
+			close(m.stopCh)
 		}
-		delete(m.Bridges, key)
+	})
+	err := m.lifecycle.stop()
+	m.mu.Lock()
+	if err == nil {
+		m.leases.items = nil
+	}
+	for key, b := range m.Bridges {
+		if b == nil || processExited(b.ExitDone) {
+			delete(m.Bridges, key)
+		}
 	}
 	m.mu.Unlock()
+	return err
+}
 
-	for _, bridge := range bridges {
-		m.stopBridgeProcess(bridge)
+// ResumeAfterMaintenance reopens only after every owned process has exited.
+func (m *XrayManager) ResumeAfterMaintenance(cfg *config.Config) error {
+	m.restartMu.Lock()
+	defer m.restartMu.Unlock()
+	if m.lifecycle.isStopped() && cfg != nil {
+		m.Config = cfg
 	}
+	resumed, err := m.lifecycle.resume()
+	if err != nil || !resumed {
+		return err
+	}
+	m.stopCh = make(chan struct{})
+	m.stopOnce = sync.Once{}
+	go m.cleanupLoop(m.stopCh)
+	return nil
 }

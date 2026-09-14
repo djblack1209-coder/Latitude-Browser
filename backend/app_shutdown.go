@@ -191,7 +191,9 @@ func (a *App) stopRuntimeServices() error {
 		stopErrs = append(stopErrs, fmt.Errorf("未能确认全部浏览器进程已停止"))
 	}
 	if a.xrayMgr != nil {
-		a.xrayMgr.StopAll()
+		if err := a.xrayMgr.StopAll(); err != nil {
+			stopErrs = append(stopErrs, err)
+		}
 	}
 	var torErr error
 	if a.torMgr != nil {
@@ -204,14 +206,19 @@ func (a *App) stopRuntimeServices() error {
 	// Keep bridge references when a browser or Tor runtime remains alive;
 	// clearing them would make a later bounded retry unable to release the
 	// still-owned transport.
-	if browsersStopped && torErr == nil {
-		a.clearProfileProxyBridges()
-	}
+
 	if a.clashMgr != nil {
-		a.clashMgr.StopAll()
+		if err := a.clashMgr.StopAll(); err != nil {
+			stopErrs = append(stopErrs, err)
+		}
 	}
 	if a.singboxMgr != nil {
-		a.singboxMgr.StopAll()
+		if err := a.singboxMgr.StopAll(); err != nil {
+			stopErrs = append(stopErrs, err)
+		}
+	}
+	if len(stopErrs) == 0 {
+		a.clearProfileProxyBridges()
 	}
 	return errors.Join(stopErrs...)
 }

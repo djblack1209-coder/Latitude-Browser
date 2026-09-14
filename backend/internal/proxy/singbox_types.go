@@ -42,6 +42,9 @@ type SingBoxManager struct {
 	launchLocks  map[string]*bridgeLaunchLock
 	stopCh       chan struct{}
 	stopOnce     sync.Once
+	restartMu    sync.Mutex
+	lifecycle    bridgeLifecycle
+	leases       bridgeLeaseBook[*SingBoxBridge]
 }
 
 // NewSingBoxManager 创建 sing-box 管理器
@@ -53,6 +56,6 @@ func NewSingBoxManager(cfg *config.Config, appRoot string) *SingBoxManager {
 		launchLocks: make(map[string]*bridgeLaunchLock),
 		stopCh:      make(chan struct{}),
 	}
-	go manager.cleanupLoop()
+	go manager.cleanupLoop(manager.stopCh)
 	return manager
 }

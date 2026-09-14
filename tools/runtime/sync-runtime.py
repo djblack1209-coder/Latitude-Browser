@@ -1,14 +1,17 @@
 #!/usr/bin/env python3
 import argparse
+import gzip
 import hashlib
 import http.client
 import json
 import os
 from pathlib import Path
+import re
 import shutil
 import subprocess
 import sys
 import tarfile
+import tempfile
 import time
 from urllib.parse import urlparse
 from urllib.request import Request, urlopen
@@ -80,6 +83,15 @@ def validate_source(item: dict) -> None:
     missing = [k for k in required if not str(item.get(k, "")).strip()]
     if missing:
         raise RuntimeError(f"source entry missing required fields: {', '.join(missing)}")
+    if item["archiveType"] not in ("zip", "tar.gz", "gz"):
+        raise RuntimeError(f"unsupported archiveType: {item['archiveType']}")
+    if not re.fullmatch(r"[0-9a-fA-F]{64}", str(item["archiveSha256"])):
+        raise RuntimeError(f"invalid archiveSha256 for {item['id']}")
+    # Existing ZIP/tar.gz locks remain valid; new locks can also pin exact size.
+    if "archiveSize" in item:
+        size = item["archiveSize"]
+        if isinstance(size, bool) or not isinstance(size, int) or size <= 0:
+            raise RuntimeError(f"invalid archiveSize for {item['id']}")
 
 
 def choose_archive_path(cache_dir: Path, url: str) -> Path:
@@ -98,7 +110,7 @@ def download_archive(url: str, dest: Path) -> None:
         try:
             if tmp.exists():
                 tmp.unlink()
-            req = Request(url, headers={"User-Agent": "latitude-browser-runtime-sync/1.0"})
+            req = Request(url, headers={"User-Agent": "Latitude Browser runtime-sync/1.0"})
             with urlopen(req, timeout=120) as resp:
                 if getattr(resp, "status", 200) >= 400:
                     raise RuntimeError(f"download failed ({resp.status}): {url}")
@@ -124,29 +136,49 @@ def download_archive(url: str, dest: Path) -> None:
 
 def extract_binary(archive: Path, archive_type: str, inner_path: str, dest: Path) -> None:
     dest.parent.mkdir(parents=True, exist_ok=True)
-
-    if archive_type == "zip":
-        with zipfile.ZipFile(archive, "r") as zf:
-            member = inner_path.replace("\\", "/")
-            try:
-                with zf.open(member, "r") as src, dest.open("wb") as out:
+    temporary_path = None
+    try:
+        # Stage beside the destination so a successful replace is atomic and
+        # decompression, CRC, write, or permission failures leave the old binary.
+        with tempfile.NamedTemporaryFile(
+            mode="wb", dir=dest.parent, prefix=f".{dest.name}.", suffix=".tmp", delete=False
+        ) as out:
+            temporary_path = Path(out.name)
+            if archive_type == "zip":
+                with zipfile.ZipFile(archive, "r") as zf:
+                    member = inner_path.replace("\\", "/")
+                    try:
+                        with zf.open(member, "r") as src:
+                            shutil.copyfileobj(src, out)
+                    except KeyError as exc:
+                        raise RuntimeError(f"file not found in zip archive: {member}") from exc
+            elif archive_type == "tar.gz":
+                with tarfile.open(archive, "r:gz") as tf:
+                    member = inner_path.replace("\\", "/")
+                    info = tf.getmember(member)
+                    fobj = tf.extractfile(info)
+                    if fobj is None:
+                        raise RuntimeError(f"file not found in tar.gz archive: {member}")
+                    with fobj:
+                        shutil.copyfileobj(fobj, out)
+            elif archive_type == "gz":
+                # A plain gzip has one payload, not tar members. Never use its
+                # optional filename header as an output path; read through EOF
+                # so gzip validates the trailer's CRC and uncompressed size.
+                with gzip.open(archive, "rb") as src:
                     shutil.copyfileobj(src, out)
-            except KeyError as exc:
-                raise RuntimeError(f"file not found in zip archive: {member}") from exc
-    elif archive_type == "tar.gz":
-        with tarfile.open(archive, "r:gz") as tf:
-            member = inner_path.replace("\\", "/")
-            info = tf.getmember(member)
-            fobj = tf.extractfile(info)
-            if fobj is None:
-                raise RuntimeError(f"file not found in tar.gz archive: {member}")
-            with fobj, dest.open("wb") as out:
-                shutil.copyfileobj(fobj, out)
-    else:
-        raise RuntimeError(f"unsupported archiveType: {archive_type}")
+            else:
+                raise RuntimeError(f"unsupported archiveType: {archive_type}")
+            out.flush()
+            os.fsync(out.fileno())
 
-    # Keep runtime binaries executable when used on Linux.
-    os.chmod(dest, 0o755)
+        if temporary_path.stat().st_size == 0:
+            raise RuntimeError("extracted runtime is empty")
+        os.chmod(temporary_path, 0o755)
+        os.replace(temporary_path, dest)
+    finally:
+        if temporary_path is not None:
+            temporary_path.unlink(missing_ok=True)
 
 
 def main() -> int:
@@ -182,6 +214,13 @@ def main() -> int:
         else:
             print(f"[INFO] using cached archive for {source_id}: {archive_path}", flush=True)
 
+        expected_size = src.get("archiveSize")
+        actual_size = archive_path.stat().st_size
+        if expected_size is not None and actual_size != expected_size:
+            raise RuntimeError(
+                f"archive size mismatch for {source_id}: "
+                f"expected {expected_size}, got {actual_size}"
+            )
         actual_sha = sha256_file(archive_path)
         if actual_sha != expected_sha:
             raise RuntimeError(

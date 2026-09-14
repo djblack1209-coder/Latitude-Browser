@@ -15,6 +15,11 @@ import (
 
 // BrowserProxyTestSpeed 手动触发单个代理测速并持久化结果
 func (a *App) BrowserProxyTestSpeed(proxyId string) ProxyTestResult {
+	releaseActivity, activityErr := a.dataActivity.begin()
+	if activityErr != nil {
+		return ProxyTestResult{ProxyId: proxyId, Error: activityErr.Error()}
+	}
+	defer releaseActivity()
 	proxies := a.getLatestProxies()
 	connectorType := a.defaultProxyConnectorType()
 	result := proxy.SpeedTestWithConnector(proxyId, proxies, a.xrayMgr, a.singboxMgr, a.clashMgr, connectorType, a.proxySpeedTestConfig())
@@ -29,6 +34,11 @@ const (
 
 // BrowserProxyBatchTestSpeed 批量并发测速，concurrency 控制并发数（默认 5，最高 10）。
 func (a *App) BrowserProxyBatchTestSpeed(proxyIds []string, concurrency int) []ProxyTestResult {
+	releaseActivity, activityErr := a.dataActivity.begin()
+	if activityErr != nil {
+		return blockedProxySpeeds(proxyIds, activityErr)
+	}
+	defer releaseActivity()
 	if len(proxyIds) == 0 {
 		return []ProxyTestResult{}
 	}
@@ -118,6 +128,11 @@ func (a *App) defaultProxyConnectorType() string {
 
 // BrowserProxyCheckIPHealth 检测单个代理的出口 IP 健康信息
 func (a *App) BrowserProxyCheckIPHealth(proxyId string) ProxyIPHealthResult {
+	releaseActivity, activityErr := a.dataActivity.begin()
+	if activityErr != nil {
+		return ProxyIPHealthResult{ProxyId: proxyId, Error: activityErr.Error()}
+	}
+	defer releaseActivity()
 	proxies := a.getLatestProxies()
 	connectorType := a.defaultProxyConnectorType()
 	data, err := proxy.FetchIPHealthInfo(proxyId, proxies, a.xrayMgr, a.singboxMgr, a.clashMgr, connectorType, a.proxyIPHealthConfig())
@@ -131,6 +146,11 @@ func (a *App) BrowserProxyCheckIPHealth(proxyId string) ProxyIPHealthResult {
 
 // BrowserProxyBatchCheckIPHealth 批量并发检测代理出口 IP 健康信息
 func (a *App) BrowserProxyBatchCheckIPHealth(proxyIds []string, concurrency int) []ProxyIPHealthResult {
+	releaseActivity, activityErr := a.dataActivity.begin()
+	if activityErr != nil {
+		return blockedProxyHealth(proxyIds, activityErr)
+	}
+	defer releaseActivity()
 	if len(proxyIds) == 0 {
 		return []ProxyIPHealthResult{}
 	}

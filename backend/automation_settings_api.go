@@ -9,6 +9,11 @@ import (
 )
 
 func (a *App) SaveAutomationSettings(enabled bool, headlessDefault bool) (map[string]interface{}, error) {
+	releaseActivity, activityErr := a.dataActivity.begin()
+	if activityErr != nil {
+		return nil, activityErr
+	}
+	defer releaseActivity()
 	if a.config == nil {
 		return nil, fmt.Errorf("automation config is not initialized")
 	}
@@ -34,6 +39,11 @@ func (a *App) SaveAutomationSettings(enabled bool, headlessDefault bool) (map[st
 }
 
 func (a *App) SaveAutomationRuntimeSettings(nodeSource string, systemNodePath string) (map[string]interface{}, error) {
+	releaseActivity, activityErr := a.dataActivity.begin()
+	if activityErr != nil {
+		return nil, activityErr
+	}
+	defer releaseActivity()
 	if a.config == nil {
 		return nil, fmt.Errorf("automation config is not initialized")
 	}
@@ -58,6 +68,11 @@ func (a *App) SaveAutomationRuntimeSettings(nodeSource string, systemNodePath st
 }
 
 func (a *App) SaveAutomationScriptPackageSettings(allowTypeScriptBuild bool) (map[string]interface{}, error) {
+	releaseActivity, activityErr := a.dataActivity.begin()
+	if activityErr != nil {
+		return nil, activityErr
+	}
+	defer releaseActivity()
 	if a.config == nil {
 		return nil, fmt.Errorf("automation config is not initialized")
 	}
@@ -78,6 +93,11 @@ func (a *App) SaveAutomationScriptPackageSettings(allowTypeScriptBuild bool) (ma
 }
 
 func (a *App) InstallAutomationRuntime() (map[string]interface{}, error) {
+	releaseActivity, activityErr := a.dataActivity.begin()
+	if activityErr != nil {
+		return nil, activityErr
+	}
+	defer releaseActivity()
 	if a.automationMgr == nil {
 		return nil, fmt.Errorf("automation runtime manager is not initialized")
 	}
@@ -108,6 +128,11 @@ func (a *App) AutomationProbeSystemNode(systemNodePath string) (map[string]inter
 }
 
 func (a *App) AutomationRuntimeSelfCheck() (map[string]interface{}, error) {
+	releaseActivity, activityErr := a.dataActivity.begin()
+	if activityErr != nil {
+		return nil, activityErr
+	}
+	defer releaseActivity()
 	if a.automationMgr == nil {
 		return nil, fmt.Errorf("automation runtime manager is not initialized")
 	}

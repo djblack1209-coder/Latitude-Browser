@@ -156,6 +156,8 @@ export function BrowserInstanceStatus(arg1:string):Promise<browser.Profile>;
 
 export function BrowserInstanceStop(arg1:string):Promise<browser.Profile>;
 
+export function BrowserPlatformCapabilities():Promise<browser.PlatformCapabilities>;
+
 export function BrowserProfileBatchRemoveTags(arg1:Array<string>,arg2:Array<string>):Promise<void>;
 
 export function BrowserProfileBatchSetTags(arg1:Array<string>,arg2:Array<string>,arg3:boolean):Promise<void>;

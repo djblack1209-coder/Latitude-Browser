@@ -4,12 +4,15 @@ import (
 	"archive/tar"
 	"archive/zip"
 	"compress/gzip"
+	"errors"
 	"fmt"
 	"io"
 	"os"
 	"path/filepath"
 	"sort"
 	"strings"
+
+	"ant-chrome/backend/internal/logger"
 )
 
 func extractProxyCoreArchive(archivePath string, targetDir string, binaryBase string, targetOS string) error {
@@ -44,9 +47,8 @@ func extractGzipBinary(archivePath string, targetPath string) error {
 	if err != nil {
 		return err
 	}
-	defer out.Close()
 	_, err = io.Copy(out, gz)
-	return err
+	return errors.Join(err, out.Close())
 }
 
 func extractZipArchive(archivePath string, targetDir string) error {
@@ -83,6 +85,9 @@ func extractTarGzArchive(archivePath string, targetDir string) error {
 		if err != nil {
 			return err
 		}
+		if header.Typeflag != tar.TypeReg && header.Typeflag != tar.TypeRegA && header.Typeflag != tar.TypeDir {
+			return fmt.Errorf("压缩包包含不支持的文件类型: %s", header.Name)
+		}
 		mode := os.FileMode(header.Mode)
 		isDir := header.FileInfo().IsDir()
 		if header.Typeflag == tar.TypeDir {
@@ -95,6 +100,9 @@ func extractTarGzArchive(archivePath string, targetDir string) error {
 }
 
 func writeArchiveFile(targetDir string, name string, mode os.FileMode, isDir bool, open func() (io.ReadCloser, error)) error {
+	if !isDir && !mode.IsRegular() {
+		return fmt.Errorf("压缩包包含非普通文件: %s", name)
+	}
 	cleanName := filepath.Clean(filepath.FromSlash(name))
 	if cleanName == "." || cleanName == ".." || strings.HasPrefix(cleanName, ".."+string(os.PathSeparator)) || filepath.IsAbs(cleanName) {
 		return fmt.Errorf("压缩包包含非法路径: %s", name)
@@ -111,20 +119,35 @@ func writeArchiveFile(targetDir string, name string, mode os.FileMode, isDir boo
 		return err
 	}
 	defer src.Close()
-	out, err := os.OpenFile(dest, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, mode|0o644)
+	out, err := os.OpenFile(dest, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, mode.Perm()|0o644)
 	if err != nil {
 		return err
 	}
-	defer out.Close()
 	_, err = io.Copy(out, src)
-	return err
+	return errors.Join(err, out.Close())
 }
 
 func findProxyCoreBinary(root string, binaryBase string, targetOS string) (string, error) {
+	return findProxyCoreBinaryScoped(root, binaryBase, targetOS, true)
+}
+
+func findProxyCoreBinaryScoped(root string, binaryBase string, targetOS string, recursive bool) (string, error) {
 	names := []string{proxyCoreBinaryName(binaryBase, targetOS), binaryBase}
 	var matches []string
-	_ = filepath.WalkDir(root, func(path string, entry os.DirEntry, err error) error {
-		if err != nil || entry.IsDir() {
+	err := filepath.WalkDir(root, func(path string, entry os.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if entry.IsDir() {
+			// A staging root is searchable during extraction, but ancestor lookups
+			// must never mistake an incomplete candidate or recovery backup for an install.
+			name := strings.ToLower(entry.Name())
+			if path != root && (!recursive || strings.HasPrefix(name, "extract-") || strings.HasPrefix(name, "proxy-core-") || strings.HasPrefix(name, ".proxy-core-")) {
+				return filepath.SkipDir
+			}
+			return nil
+		}
+		if !entry.Type().IsRegular() {
 			return nil
 		}
 		base := strings.ToLower(filepath.Base(path))
@@ -136,6 +159,9 @@ func findProxyCoreBinary(root string, binaryBase string, targetOS string) (strin
 		}
 		return nil
 	})
+	if err != nil {
+		return "", err
+	}
 	if len(matches) == 0 {
 		return "", fmt.Errorf("解压后未找到 %s 可执行文件", binaryBase)
 	}
@@ -177,53 +203,71 @@ func normalizeInstalledProxyCoreBinary(binaryPath string, installDir string, bin
 	return standardPath, nil
 }
 
-func replaceDirContents(srcDir string, dstDir string) error {
-	entries, err := os.ReadDir(dstDir)
+// replaceDirContents promotes a fully verified sibling staging directory. The
+// old directory remains recoverable until configuration has committed. This is
+// error rollback, not a claim of crash/power-loss atomicity across both paths.
+func replaceDirContents(srcDir string, dstDir string, commit func() error) error {
+	srcDir, dstDir = filepath.Clean(srcDir), filepath.Clean(dstDir)
+	info, err := os.Lstat(srcDir)
 	if err != nil {
 		return err
 	}
-	for _, entry := range entries {
-		if strings.HasPrefix(entry.Name(), "proxy-core-") || strings.HasPrefix(entry.Name(), "extract-") {
-			continue
-		}
-		if err := os.RemoveAll(filepath.Join(dstDir, entry.Name())); err != nil {
-			return err
-		}
+	if !info.IsDir() || info.Mode()&os.ModeSymlink != 0 {
+		return fmt.Errorf("安装候选不是普通目录")
 	}
-	return filepath.WalkDir(srcDir, func(path string, entry os.DirEntry, err error) error {
+	rel, err := filepath.Rel(dstDir, srcDir)
+	if err != nil || rel == "." || (rel != ".." && !strings.HasPrefix(rel, ".."+string(os.PathSeparator))) {
+		return fmt.Errorf("安装候选必须位于原内核目录之外")
+	}
+	old, err := os.Lstat(dstDir)
+	hadOld := err == nil
+	if err != nil && !os.IsNotExist(err) {
+		return err
+	}
+	if hadOld && (!old.IsDir() || old.Mode()&os.ModeSymlink != 0) {
+		return fmt.Errorf("安装目标不是普通目录，原文件未改动")
+	}
+	if err := os.MkdirAll(filepath.Dir(dstDir), 0o755); err != nil {
+		return err
+	}
+	backup := ""
+	if hadOld {
+		backup, err = os.MkdirTemp(filepath.Dir(dstDir), ".proxy-core-backup-")
 		if err != nil {
 			return err
 		}
-		rel, err := filepath.Rel(srcDir, path)
-		if err != nil || rel == "." {
+		if err := os.Remove(backup); err != nil {
 			return err
 		}
-		dest := filepath.Join(dstDir, rel)
-		if entry.IsDir() {
-			return os.MkdirAll(dest, 0o755)
-		}
-		info, err := entry.Info()
-		if err != nil {
+		if err := os.Rename(dstDir, backup); err != nil {
 			return err
 		}
-		if err := os.MkdirAll(filepath.Dir(dest), 0o755); err != nil {
-			return err
-		}
-		return copyFile(path, dest, info.Mode())
-	})
-}
-
-func copyFile(src string, dst string, mode os.FileMode) error {
-	in, err := os.Open(src)
-	if err != nil {
-		return err
 	}
-	defer in.Close()
-	out, err := os.OpenFile(dst, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, mode|0o644)
-	if err != nil {
-		return err
+	restore := func(cause error) error {
+		if backup != "" {
+			if err := os.Rename(backup, dstDir); err != nil {
+				return errors.Join(cause, fmt.Errorf("恢复原内核失败，备份保留在 %s: %w", backup, err))
+			}
+		}
+		return cause
 	}
-	defer out.Close()
-	_, err = io.Copy(out, in)
-	return err
+	if err := os.Rename(srcDir, dstDir); err != nil {
+		return restore(err)
+	}
+	if commit != nil {
+		if err := commit(); err != nil {
+			// Move the candidate back instead of deleting it before rollback; a
+			// failed rollback must never erase the only remaining good directory.
+			if moveErr := os.Rename(dstDir, srcDir); moveErr != nil {
+				return errors.Join(err, fmt.Errorf("撤回候选内核失败，原内核备份保留在 %s: %w", backup, moveErr))
+			}
+			return restore(err)
+		}
+	}
+	if backup != "" {
+		if err := os.RemoveAll(backup); err != nil {
+			logger.New("ProxyCore").Warn("新内核已安装，旧内核备份清理失败", logger.F("backup", backup), logger.F("error", err))
+		}
+	}
+	return nil
 }

@@ -12,7 +12,7 @@ func (m *XrayManager) tryReuseBridge(key string, pin bool) (string, bool) {
 
 	m.mu.Lock()
 	if bridge, ok := m.Bridges[key]; ok && bridge != nil {
-		alive := bridge.Running && bridge.Cmd != nil && bridge.Cmd.Process != nil && bridge.Cmd.ProcessState == nil
+		alive := bridge.Running && bridge.Cmd != nil && bridge.Cmd.Process != nil && !processExited(bridge.ExitDone)
 		if alive && waitSocks5Ready("127.0.0.1", bridge.Port, 800*time.Millisecond) == nil {
 			if pin {
 				bridge.RefCount++
@@ -45,7 +45,7 @@ func (m *XrayManager) registerBridge(key string, bridge *XrayBridge, pin bool) (
 			return "", false
 		}
 
-		alive := existing.Running && existing.Cmd != nil && existing.Cmd.Process != nil && existing.Cmd.ProcessState == nil
+		alive := existing.Running && existing.Cmd != nil && existing.Cmd.Process != nil && !processExited(existing.ExitDone)
 		if alive && waitSocks5Ready("127.0.0.1", existing.Port, 800*time.Millisecond) == nil {
 			if pin {
 				existing.RefCount++
@@ -70,6 +70,7 @@ func (m *XrayManager) registerBridge(key string, bridge *XrayBridge, pin bool) (
 		duplicate = existing
 		if transferredRefCount > 0 && !pin {
 			bridge.RefCount = transferredRefCount
+			m.leases.transfer(existing, bridge)
 		}
 	}
 
@@ -82,6 +83,9 @@ func (m *XrayManager) registerBridge(key string, bridge *XrayBridge, pin bool) (
 
 	if duplicate != nil {
 		m.stopBridgeProcess(duplicate)
+	}
+	if m.afterBridgePublish != nil {
+		m.afterBridgePublish(bridge)
 	}
 	return "", false
 }
@@ -97,7 +101,7 @@ func (m *XrayManager) watchBridge(bridge *XrayBridge, key string) {
 	m.mu.Lock()
 	if current, ok := m.Bridges[key]; ok && current == bridge {
 		refCount = bridge.RefCount
-		if !bridge.Stopping && refCount > 0 && !bridge.Restarting {
+		if !m.lifecycle.isStopped() && !bridge.Stopping && refCount > 0 && !bridge.Restarting {
 			bridge.Restarting = true
 			shouldRestart = true
 		} else {
@@ -124,7 +128,7 @@ func (m *XrayManager) watchBridge(bridge *XrayBridge, key string) {
 		}
 	}
 
-	if !stopping && m.OnBridgeDied != nil {
+	if !stopping && !m.lifecycle.isStopped() && m.OnBridgeDied != nil {
 		m.OnBridgeDied(key, fmt.Errorf("xray 桥接进程意外退出"))
 	}
 }

@@ -66,6 +66,9 @@ func (m *Manager) copyProfile(profileId string, newName string, fingerprintResol
 	m.InitData()
 	m.Mutex.Lock()
 	defer m.Mutex.Unlock()
+	if err := m.CheckDataMaintenanceLocked(); err != nil {
+		return nil, err
+	}
 
 	src, exists := m.Profiles[profileId]
 	if !exists {

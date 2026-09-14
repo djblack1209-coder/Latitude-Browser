@@ -58,6 +58,11 @@ func (a *App) getTorStatusLocked() TorRuntimeStatus {
 }
 
 func (a *App) SetTorRuntimePath(path string) (TorRuntimeStatus, error) {
+	releaseActivity, activityErr := a.dataActivity.begin()
+	if activityErr != nil {
+		return TorRuntimeStatus{}, activityErr
+	}
+	defer releaseActivity()
 	if a == nil {
 		return TorRuntimeStatus{Experimental: true, ProductionReady: false}, fmt.Errorf("Tor 运行时管理器尚未初始化")
 	}

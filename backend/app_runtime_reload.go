@@ -10,15 +10,26 @@ import (
 
 // ReloadConfig 开放给前端重新读取配置，用于应对手动修补后的配置重载
 func (a *App) ReloadConfig() error {
+	a.maintenanceMu.Lock()
+	defer a.maintenanceMu.Unlock()
+	return a.reloadConfigLocked()
+}
+
+func (a *App) reloadConfigLocked() error {
 	log := logger.New("App")
 	cfg, err := LoadConfig(a.resolveAppPath("config.yaml"))
 	if err != nil {
 		log.Error("重载配置文件失败", logger.F("error", err))
 		return fmt.Errorf("重载配置文件失败: %w", err)
 	}
+	if err := config.ValidateLaunchServerAuth(cfg.LaunchServer.Auth); err != nil {
+		return err
+	}
 
 	a.torConfigMu.Lock()
+	a.proxyStateMu.Lock()
 	a.config = cfg
+	a.proxyStateMu.Unlock()
 	if a.torMgr != nil {
 		a.torMgr.UpdateConfig(cfg)
 	}

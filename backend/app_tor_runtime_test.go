@@ -171,8 +171,9 @@ func TestQuitAppOnlyPromotesToFullShutdownForTorBrowser(t *testing.T) {
 
 func startTorBrowserTestProcess(t *testing.T) *exec.Cmd {
 	t.Helper()
-	cmd := exec.Command(os.Args[0], "-test.run=TestTorBrowserProcessHelper")
-	cmd.Env = append(os.Environ(), "GO_WANT_TOR_BROWSER_HELPER=1")
+	readyPath := filepath.Join(t.TempDir(), "browser-ready")
+	cmd := exec.Command(os.Args[0], "-test.run=^TestTorBrowserProcessHelper$")
+	cmd.Env = append(os.Environ(), "GO_WANT_TOR_BROWSER_HELPER=1", "GO_TOR_BROWSER_READY="+readyPath)
 	if err := cmd.Start(); err != nil {
 		t.Fatalf("start helper process: %v", err)
 	}
@@ -187,7 +188,22 @@ func startTorBrowserTestProcess(t *testing.T) *exec.Cmd {
 		}
 		<-waitDone
 	})
-	return cmd
+	deadline := time.NewTimer(5 * time.Second)
+	defer deadline.Stop()
+	poll := time.NewTicker(10 * time.Millisecond)
+	defer poll.Stop()
+	for {
+		select {
+		case <-waitDone:
+			t.Fatal("browser helper exited before readiness")
+		case <-deadline.C:
+			t.Fatal("browser helper did not signal readiness")
+		case <-poll.C:
+			if _, err := os.Stat(readyPath); err == nil {
+				return cmd
+			}
+		}
+	}
 }
 
 func TestBrowserInstanceStopKeepsRunningWithoutExitEvidence(t *testing.T) {
@@ -300,5 +316,12 @@ func TestTorBrowserProcessHelper(t *testing.T) {
 	if os.Getenv("GO_WANT_TOR_BROWSER_HELPER") != "1" {
 		return
 	}
-	select {}
+	if err := os.WriteFile(os.Getenv("GO_TOR_BROWSER_READY"), []byte("ready"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	// An empty select lets Go's deadlock detector terminate this process when
+	// no imported package happens to keep a background goroutine alive.
+	for {
+		time.Sleep(time.Hour)
+	}
 }

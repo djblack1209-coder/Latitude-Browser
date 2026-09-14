@@ -10,10 +10,16 @@ import (
 
 // Create 创建配置
 func (m *Manager) Create(input ProfileInput) (*Profile, error) {
+	if err := validateCurrentMemoryLimit(input.MemoryLimitMB); err != nil {
+		return nil, err
+	}
 	log := logger.New("Browser")
 	m.InitData()
 	m.Mutex.Lock()
 	defer m.Mutex.Unlock()
+	if err := m.CheckDataMaintenanceLocked(); err != nil {
+		return nil, err
+	}
 
 	now := time.Now().Format(time.RFC3339)
 	profileId := uuid.NewString()

@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-func (m *SingBoxManager) cleanupLoop() {
+func (m *SingBoxManager) cleanupLoop(stop <-chan struct{}) {
 	ticker := time.NewTicker(singBoxBridgeCleanupInterval)
 	defer ticker.Stop()
 
@@ -13,7 +13,7 @@ func (m *SingBoxManager) cleanupLoop() {
 		select {
 		case <-ticker.C:
 			m.recycleIdleBridges()
-		case <-m.stopCh:
+		case <-stop:
 			return
 		}
 	}

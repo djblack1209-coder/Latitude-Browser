@@ -205,6 +205,11 @@ Section "Latitude Browser (required)" SecMain
   Call CloseInstalledProcesses
   SetOutPath "$INSTDIR"
   File "${STAGINGDIR}\${PRODUCT_EXE}"
+  File "${STAGINGDIR}\LICENSE"
+  File "${STAGINGDIR}\LICENSE-SCOPE.md"
+  SetOutPath "$INSTDIR\third_party"
+  File /r "${STAGINGDIR}\third_party\*"
+  SetOutPath "$INSTDIR"
   File /oname=${PRODUCT_ICON} "..\build\windows\icon.ico"
 !if /FileExists "${STAGINGDIR}\config.yaml"
   IfFileExists "$INSTDIR\config.yaml" +2 0
@@ -263,6 +268,9 @@ Section "Uninstall"
   Call un.CloseInstalledProcesses
 
   Delete /REBOOTOK "$INSTDIR\${PRODUCT_EXE}"
+  Delete /REBOOTOK "$INSTDIR\LICENSE"
+  Delete /REBOOTOK "$INSTDIR\LICENSE-SCOPE.md"
+  RMDir /r /REBOOTOK "$INSTDIR\third_party"
   Delete /REBOOTOK "$INSTDIR\${PRODUCT_ICON}"
   Delete /REBOOTOK "$INSTDIR\config.yaml"
   Delete /REBOOTOK "$INSTDIR\proxies.yaml"

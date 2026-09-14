@@ -1,6 +1,7 @@
 package launchcode
 
 import (
+	"ant-chrome/backend/internal/config"
 	"crypto/subtle"
 	"net/http"
 	"strings"
@@ -10,7 +11,7 @@ import (
 // It is not a user-facing product identifier.
 const DefaultAPIKeyHeader = "X-Ant-Api-Key"
 
-// APIAuthConfig 定义 LaunchServer 对 /api/* 请求的可选认证配置。
+// APIAuthConfig protects the control entry point, including CDP and WebSockets.
 type APIAuthConfig struct {
 	Enabled bool
 	APIKey  string
@@ -36,6 +37,10 @@ func (cfg APIAuthConfig) Configured() bool {
 
 func (cfg APIAuthConfig) Active() bool {
 	return cfg.Requested() && cfg.Configured()
+}
+
+func (cfg APIAuthConfig) Validate() error {
+	return config.ValidateLaunchServerAuth(config.LaunchServerAuthConfig{Enabled: cfg.Enabled, APIKey: cfg.APIKey, Header: cfg.Header})
 }
 
 func (s *LaunchServer) SetAPIAuthConfig(cfg APIAuthConfig) {
@@ -68,15 +73,29 @@ func (s *LaunchServer) APIAuthEnabled() bool {
 }
 
 func (s *LaunchServer) apiAuthMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if !strings.HasPrefix(r.URL.Path, "/api/") {
-			next.ServeHTTP(w, r)
+	control := next
+	next = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if s.browserMgr != nil && s.browserMgr.DataMaintenanceActive() && r.URL.Path != "/api/health" {
+			writeJSON(w, http.StatusServiceUnavailable, map[string]interface{}{"ok": false, "error": "browser data maintenance in progress"})
 			return
 		}
-
+		control.ServeHTTP(w, r)
+	})
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		cfg := s.apiAuthConfig()
-		if !cfg.Active() {
-			next.ServeHTTP(w, r)
+		forward := func() {
+			// Use the configuration that authenticated this request, even if a
+			// concurrent reload changes the configured header before CDP forwarding.
+			clean := r.Clone(r.Context())
+			clean.Header.Del(cfg.Header)
+			next.ServeHTTP(w, clean)
+		}
+		if !cfg.Requested() {
+			forward()
+			return
+		}
+		if err := cfg.Validate(); err != nil {
+			writeJSON(w, http.StatusServiceUnavailable, map[string]interface{}{"ok": false, "error": "control authentication is not configured"})
 			return
 		}
 
@@ -90,6 +109,6 @@ func (s *LaunchServer) apiAuthMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		next.ServeHTTP(w, r)
+		forward()
 	})
 }

@@ -1,7 +1,6 @@
 package backend
 
 import (
-	"ant-chrome/backend/internal/backup"
 	"fmt"
 	"strings"
 	"time"
@@ -19,8 +18,6 @@ func (a *App) BackupInitializeSystem() (map[string]interface{}, error) {
 
 // BackupExportPackage 导出全量配置与数据到 ZIP。
 func (a *App) BackupExportPackage() (map[string]interface{}, error) {
-	a.maintenanceMu.Lock()
-	defer a.maintenanceMu.Unlock()
 
 	if a.ctx == nil {
 		return nil, fmt.Errorf("应用上下文未初始化")
@@ -46,30 +43,11 @@ func (a *App) BackupExportPackage() (map[string]interface{}, error) {
 		}, nil
 	}
 	savePath = backupEnsureZipSuffix(savePath)
-	a.backupEmitExportProgress("preparing", 8, "正在收集导出范围...")
-
-	scope, err := backup.BuildScope(backup.BuildOptions{AppRoot: a.appRoot, Config: a.config})
+	result, err := a.backupExportToPath(savePath)
 	if err != nil {
 		a.backupEmitExportProgress("error", 100, fmt.Sprintf("导出失败: %v", err))
-		return nil, err
 	}
-	manifest := backup.BuildManifest(scope, a.appName(), a.appVersion(), time.Now())
-	a.backupEmitExportProgress("preparing", 15, "开始写入备份包...")
-
-	includedEntries, skippedEntries, fileCount, err := backupWritePackageZip(savePath, scope, manifest, a.backupEmitExportProgressMeta)
-	if err != nil {
-		a.backupEmitExportProgress("error", 100, fmt.Sprintf("导出失败: %v", err))
-		return nil, err
-	}
-
-	return map[string]interface{}{
-		"cancelled":       false,
-		"zipPath":         savePath,
-		"includedEntries": includedEntries,
-		"skippedEntries":  skippedEntries,
-		"fileCount":       fileCount,
-		"message":         "导出完成",
-	}, nil
+	return result, err
 }
 
 // BackupImportPackage 从 ZIP 加载配置与数据。

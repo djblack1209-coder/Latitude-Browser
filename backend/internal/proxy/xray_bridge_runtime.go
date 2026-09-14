@@ -4,7 +4,6 @@ import (
 	"ant-chrome/backend/internal/logger"
 	"errors"
 	"fmt"
-	"time"
 )
 
 var errXrayBridgeRestartNotNeeded = errors.New("xray 桥接已无须恢复")
@@ -19,6 +18,11 @@ func cloneInterfaceSlice(items []interface{}) []interface{} {
 }
 
 func (m *XrayManager) restartPinnedBridge(log *logger.Logger, key string, bridge *XrayBridge, refCount int) error {
+	done, admissionErr := m.lifecycle.begin()
+	if admissionErr != nil {
+		return errXrayBridgeRestartNotNeeded
+	}
+	defer done()
 	if bridge == nil {
 		return fmt.Errorf("xray 桥接不存在")
 	}
@@ -67,7 +71,6 @@ func (m *XrayManager) restartPinnedBridge(log *logger.Logger, key string, bridge
 	if restarted == nil {
 		return fmt.Errorf("xray 桥接恢复异常: 未返回新进程")
 	}
-	restarted.LastUsedAt = time.Now()
 	log.Info("xray 桥接已同端口恢复",
 		logger.F("key", key),
 		logger.F("port", restarted.Port),

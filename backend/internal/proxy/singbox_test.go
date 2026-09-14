@@ -71,7 +71,8 @@ func TestSingBoxRegisterBridgePinsLongLivedBridge(t *testing.T) {
 		t.Fatalf("pinned bridge refcount = %d, want 1", bridge.RefCount)
 	}
 
-	manager.ReleaseBridge("node-a")
+	token := manager.leases.issue("node-a", bridge)
+	manager.ReleaseBridge(token)
 	if bridge.RefCount != 0 {
 		t.Fatalf("released bridge refcount = %d, want 0", bridge.RefCount)
 	}
@@ -149,7 +150,7 @@ func TestSingBoxRestartBridgeRequiresContext(t *testing.T) {
 	t.Parallel()
 
 	manager := &SingBoxManager{Bridges: make(map[string]*SingBoxBridge)}
-	bridge := &SingBoxBridge{NodeKey: "node-a", Port: 21001}
+	bridge := &SingBoxBridge{NodeKey: "node-a", Port: 21001, RefCount: 1}
 	manager.Bridges["node-a"] = bridge
 
 	err := manager.restartBridgeOnSamePort(nil, "node-a", bridge, bridge.RefCount)

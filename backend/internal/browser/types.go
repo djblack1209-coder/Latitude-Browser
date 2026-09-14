@@ -148,6 +148,9 @@ type Manager struct {
 	AppRoot          string // 应用根目录，所有相对路径基于此解析（生产=exe目录，dev=项目根目录）
 	Profiles         map[string]*Profile
 	Mutex            sync.Mutex
+	coreInstallMu    sync.Mutex   // serializes download/install tasks
+	coreStoreMu      sync.RWMutex // guards the in-memory core catalog
+	dataMaintenance  bool         // guarded by Mutex; excludes profile filesystem mutations
 	BrowserProcesses map[string]*exec.Cmd
 	XrayBridges      map[string]*XrayBridge
 	CodeProvider     CodeProvider

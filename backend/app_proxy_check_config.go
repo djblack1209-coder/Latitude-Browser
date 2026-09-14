@@ -18,6 +18,11 @@ func (a *App) GetProxyCheckSettings() ProxyCheckSettings {
 }
 
 func (a *App) SaveProxyCheckSettings(settings ProxyCheckSettings) error {
+	releaseActivity, activityErr := a.dataActivity.begin()
+	if activityErr != nil {
+		return activityErr
+	}
+	defer releaseActivity()
 	if a.config == nil {
 		return nil
 	}

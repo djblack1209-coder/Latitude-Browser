@@ -137,6 +137,9 @@ func NewLaunchServer(service *LaunchCodeService, starter BrowserStarter, mgr *br
 //   - port <= 0：自动分配随机可用端口（仅内部测试/显式传 0 时）
 //   - port > 0：绑定指定固定端口；若被占用则直接返回错误
 func (s *LaunchServer) Start() error {
+	if err := s.apiAuthConfig().Validate(); err != nil {
+		return err
+	}
 	handler := s.buildHandler(true)
 
 	preferredPort := s.port

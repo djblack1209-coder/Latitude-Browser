@@ -10,14 +10,15 @@ type SpeedTestFunc func(proxyId string) (ok bool, latencyMs int64, err string)
 
 // ProxySpeedScheduler 代理测速定时调度器
 type ProxySpeedScheduler struct {
-	dao       ProxyDAO
-	testFn    SpeedTestFunc
-	interval  time.Duration
-	concLimit int
-	stopCh    chan struct{}
-	mu        sync.Mutex
-	running   bool
-	testing   bool
+	BeginActivity func() (func(), error) // Set before Start; nil for standalone use.
+	dao           ProxyDAO
+	testFn        SpeedTestFunc
+	interval      time.Duration
+	concLimit     int
+	stopCh        chan struct{}
+	mu            sync.Mutex
+	running       bool
+	testing       bool
 }
 
 const (
@@ -92,6 +93,13 @@ func (s *ProxySpeedScheduler) loop() {
 }
 
 func (s *ProxySpeedScheduler) runAll() {
+	if s.BeginActivity != nil {
+		release, err := s.BeginActivity()
+		if err != nil {
+			return
+		}
+		defer release()
+	}
 	if !s.beginRun() {
 		return
 	}

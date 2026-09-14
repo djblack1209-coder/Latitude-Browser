@@ -3,6 +3,7 @@ package backend
 import (
 	"ant-chrome/backend/internal/browser"
 	"ant-chrome/backend/internal/logger"
+	"ant-chrome/backend/internal/snapshot"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -266,6 +267,9 @@ func (a *App) prepareBrowserLaunchContext(input browserStartInput, profile *Brow
 	}
 
 	userDataDir := a.browserMgr.ResolveUserDataDir(profile)
+	if err := snapshot.RecoverRestore(userDataDir); err != nil {
+		return nil, nil, nil, "", "", fmt.Errorf("实例数据恢复未完成，已拒绝启动: %w", err)
+	}
 	if err := os.MkdirAll(userDataDir, 0o755); err != nil {
 		startErr := fmt.Errorf("实例启动失败：无法创建用户数据目录 %s。原因：%w。请检查目录权限或路径配置。", userDataDir, err)
 		log.Error("用户数据目录创建失败",

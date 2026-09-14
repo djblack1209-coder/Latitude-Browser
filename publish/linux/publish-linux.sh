@@ -217,6 +217,8 @@ rm -rf "$APP_STAGE" "$DEB_STAGE"
 mkdir -p "$APP_STAGE/bin" "$APP_STAGE/data" "$DEB_STAGE"
 
 cp "$APP_BIN" "$APP_STAGE/latitude-browser"
+cp "$ROOT_DIR/LICENSE" "$ROOT_DIR/LICENSE-SCOPE.md" "$APP_STAGE/"
+cp -R "$ROOT_DIR/third_party" "$APP_STAGE/third_party"
 cp "$ROOT_DIR/publish/config.init.linux.yaml" "$APP_STAGE/config.yaml"
 cp "$XRAY_SRC" "$APP_STAGE/bin/xray"
 cp "$SINGBOX_SRC" "$APP_STAGE/bin/sing-box"

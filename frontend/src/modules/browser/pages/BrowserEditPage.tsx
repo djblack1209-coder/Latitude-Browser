@@ -11,6 +11,7 @@ import { TagInput } from '../components/TagInput'
 import { GroupSelector } from '../components/GroupSelector'
 import { ProxyPickerModal } from '../components/ProxyPickerModal'
 import { TorModeNotice } from './TorModeNotice'
+import { fetchBrowserPlatformCapabilities, type BrowserPlatformCapabilities } from '../api/platform'
 
 const fallbackLowLaunchArgs = ['--disable-sync', '--no-first-run']
 const directProxyID = '__direct__'
@@ -263,6 +264,14 @@ export function BrowserEditPage() {
   const [launchArgsText, setLaunchArgsText] = useState('')
   const [allTags, setAllTags] = useState<string[]>([])
   const [saving, setSaving] = useState(false)
+  const [platformCapabilities, setPlatformCapabilities] = useState<BrowserPlatformCapabilities | null>(null)
+  useEffect(() => {
+    let cancelled = false
+    fetchBrowserPlatformCapabilities()
+      .then(value => { if (!cancelled) setPlatformCapabilities(value) })
+      .catch(error => { if (!cancelled) toast.error(String(error)) })
+    return () => { cancelled = true }
+  }, [])
   const [proxyPickerOpen, setProxyPickerOpen] = useState(false)
   const [proxyMode, setProxyMode] = useState<ProxySourceMode>('pool')
   const [profileRunning, setProfileRunning] = useState(false)
@@ -425,6 +434,10 @@ export function BrowserEditPage() {
   }
 
   const handleSave = async () => {
+    if (!platformCapabilities) { toast.error('平台能力尚未就绪，请重新打开页面后重试'); return }
+    if (!platformCapabilities.memoryHardLimit && (formData.memoryLimitMb || 0) > 0) {
+      toast.error('当前系统不支持实例内存硬限制，请先显式设为不限制'); return
+    }
     const resolvedProxyId = isTorMode ? '' : proxyMode === 'pool' ? (formData.proxyId || '').trim() : ''
     const resolvedProxyConfig = isTorMode ? '' : proxyMode === 'local' ? (formData.proxyConfig || '').trim() : ''
     if (!isTorMode && proxyMode === 'local' && !resolvedProxyConfig) {
@@ -597,7 +610,7 @@ export function BrowserEditPage() {
         actions={(
           <>
             <Button variant="secondary" size="sm" onClick={handleBack}>返回列表</Button>
-            <Button size="sm" onClick={handleSave} loading={saving}>保存配置</Button>
+            <Button size="sm" onClick={handleSave} loading={saving} disabled={!platformCapabilities || (!platformCapabilities.memoryHardLimit && (formData.memoryLimitMb || 0) > 0)}>保存配置</Button>
           </>
         )}
       />
@@ -649,7 +662,15 @@ export function BrowserEditPage() {
               value={String(formData.memoryLimitMb || 0)}
               onChange={e => handleChange('memoryLimitMb', Math.max(0, Math.floor(Number(e.target.value) || 0)))}
               placeholder="0 表示不限制"
+              disabled={!platformCapabilities?.memoryHardLimit}
             />
+            {!platformCapabilities?.memoryHardLimit && <p className="mt-1 text-xs text-[var(--color-text-muted)]">{platformCapabilities?.memoryHardLimitReason || '正在读取平台能力…'}</p>}
+            {platformCapabilities && !platformCapabilities.memoryHardLimit && (formData.memoryLimitMb || 0) > 0 && (
+              <div className="mt-2 text-sm text-[var(--color-warning)]">
+                <p>原配置的 {formData.memoryLimitMb} MB 已保留。此限制在当前系统不可用，需清零后才能保存。</p>
+                <Button size="sm" variant="secondary" onClick={() => handleChange('memoryLimitMb', 0)}>设为不限制</Button>
+              </div>
+            )}
           </FormItem>
           <FormItem label="标签">
             <TagInput

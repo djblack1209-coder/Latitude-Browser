@@ -36,7 +36,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: '22'
           cache: npm
           cache-dependency-path: frontend/package-lock.json
 
@@ -47,6 +47,7 @@ jobs:
         run: echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
 
       - name: Build unsigned macOS package
+        id: package
         env:
           VERSION: ${{ inputs.version }}
         run: |
@@ -58,23 +59,19 @@ jobs:
           bash publish/mac/publish-mac.sh "${args[@]}"
 
       - name: Validate app bundle
+        env:
+          PACKAGE_MANIFEST: ${{ steps.package.outputs.manifest }}
         run: |
           set -euo pipefail
-          app_path="$(ls -1d publish/output/LatitudeBrowser-*-macos-${{ matrix.arch }}.app | head -n 1)"
-          zip_path="$(ls -1 publish/output/LatitudeBrowser-*-macos-${{ matrix.arch }}.zip | head -n 1)"
-          echo "Validating: $app_path"
-          test -x "$app_path/Contents/MacOS/latitude-browser"
-          test -x "$app_path/Contents/MacOS/bin/xray"
-          test -x "$app_path/Contents/MacOS/bin/sing-box"
-          plutil -lint "$app_path/Contents/Info.plist"
-          ditto -x -k "$zip_path" /tmp/latitude-browser-macos-validate
-          test -x "/tmp/latitude-browser-macos-validate/$(basename "$app_path")/Contents/MacOS/latitude-browser"
+          test -n "$PACKAGE_MANIFEST"
+          python3 publish/mac/artifact_contract.py validate \
+            --manifest "$PACKAGE_MANIFEST" --arch "${{ matrix.arch }}"
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: latitude-browser-macos-${{ matrix.arch }}
           path: |
-            publish/output/LatitudeBrowser-*-macos-${{ matrix.arch }}.app
-            publish/output/LatitudeBrowser-*-macos-${{ matrix.arch }}.zip
+            ${{ steps.package.outputs.zip }}
+            ${{ steps.package.outputs.manifest }}
           if-no-files-found: error

@@ -497,6 +497,10 @@ function New-WindowsStaging {
     New-Item -ItemType Directory -Path $stagingDir -Force | Out-Null
 
     Copy-Item -LiteralPath $binaryPath -Destination (Join-Path $stagingDir "latitude-browser.exe") -Force
+    foreach ($notice in @("LICENSE", "LICENSE-SCOPE.md")) {
+        Copy-Item -LiteralPath (Join-Path $repoRoot $notice) -Destination (Join-Path $stagingDir $notice) -Force -ErrorAction Stop
+    }
+    Copy-Item -LiteralPath (Join-Path $repoRoot "third_party") -Destination (Join-Path $stagingDir "third_party") -Recurse -Force -ErrorAction Stop
     if (-not (Test-Path -LiteralPath (Join-Path $stagingDir "latitude-browser.exe") -PathType Leaf)) {
         throw "staging 中缺少 latitude-browser.exe"
     }

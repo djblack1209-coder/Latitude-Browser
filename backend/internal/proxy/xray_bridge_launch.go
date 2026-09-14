@@ -3,6 +3,7 @@ package proxy
 import (
 	"ant-chrome/backend/internal/config"
 	"ant-chrome/backend/internal/logger"
+	"context"
 	"errors"
 	"fmt"
 	"os"
@@ -13,6 +14,11 @@ import (
 )
 
 func (m *XrayManager) ensureBridge(proxyConfig string, proxies []config.BrowserProxy, proxyId string, pin bool) (string, string, error) {
+	done, err := m.lifecycle.begin()
+	if err != nil {
+		return "", "", err
+	}
+	defer done()
 	log := logger.New("Xray")
 	src := resolveProxyConfig(proxyConfig, proxies, proxyId)
 	dnsServers := ""
@@ -92,10 +98,6 @@ func (m *XrayManager) ensureBridge(proxyConfig string, proxies []config.BrowserP
 	}
 	key := computeNodeKey(src + "\x00" + dnsServers)
 
-	if socksURL, reused := m.tryReuseBridge(key, pin); reused {
-		log.Info("复用 xray 桥接进程", logger.F("engine", "xray"), logger.F("key", key), logger.F("socks_url", socksURL))
-		return socksURL, key, nil
-	}
 	unlockLaunch := m.lockLaunchForKey(key)
 	defer unlockLaunch()
 	if socksURL, reused := m.tryReuseBridge(key, pin); reused {
@@ -116,9 +118,15 @@ func (m *XrayManager) ensureBridge(proxyConfig string, proxies []config.BrowserP
 	var lastErr error
 	attemptsUsed := 0
 	for attempt := 1; attempt <= maxLaunchRetries; attempt++ {
+		if err := m.lifecycle.context().Err(); err != nil {
+			return "", "", err
+		}
 		attemptsUsed = attempt
 		socksURL, bridge, err := m.launchBridgeAttempt(log, key, binaryPath, outbounds, routes, preferredPort, dnsServers, pin, attempt)
 		if err == nil {
+			if bridge != nil {
+				go m.watchBridge(bridge, key)
+			}
 			return socksURL, key, nil
 		}
 		if bridge != nil && bridge.Running {
@@ -185,11 +193,11 @@ func (m *XrayManager) launchBridgeAttempt(log *logger.Logger, key string, binary
 		log.Error("xray 配置预检失败", logger.F("error", err), logger.F("attempt", attempt), logger.F("config", cfgPath))
 		return "", nil, err
 	}
-	cmd := exec.Command(binaryPath, "run", "-c", cfgPath)
+	cmd := exec.CommandContext(m.lifecycle.context(), binaryPath, "run", "-c", cfgPath)
 	hideWindow(cmd)
 	cmd.Dir = filepath.Dir(cfgPath)
 
-	stderrFile, _ := os.Create(stderrPath)
+	stderrFile, _ := openPrivateRuntimeLog(stderrPath)
 	if stderrFile != nil {
 		cmd.Stderr = stderrFile
 	}
@@ -215,6 +223,7 @@ func (m *XrayManager) launchBridgeAttempt(log *logger.Logger, key string, binary
 		DNSServers: dnsServers,
 	}
 	bridge.startExitWatcher()
+	m.lifecycle.track(bridge.Cmd, bridge.ExitDone)
 	log.Info("xray 内核进程已启动", logger.F("engine", "xray"), logger.F("key", key), logger.F("pid", bridge.Pid), logger.F("port", bridge.Port), logger.F("attempt", attempt))
 
 	if err := m.waitBridgeReady(log, bridge, cfgPath, stderrPath, stderrFile, attempt); err != nil {
@@ -356,10 +365,12 @@ func (m *XrayManager) isRetryableBridgeReadyError(err error, cfgPath string, std
 }
 
 func (m *XrayManager) testRuntimeConfig(binaryPath string, cfgPath string, stderrPath string) error {
-	cmd := exec.Command(binaryPath, "run", "-test", "-c", cfgPath)
+	ctx, cancel := context.WithTimeout(m.lifecycle.context(), 10*time.Second)
+	defer cancel()
+	cmd := exec.CommandContext(ctx, binaryPath, "run", "-test", "-c", cfgPath)
 	hideWindow(cmd)
 	cmd.Dir = filepath.Dir(cfgPath)
-	stderrFile, _ := os.Create(stderrPath)
+	stderrFile, _ := openPrivateRuntimeLog(stderrPath)
 	if stderrFile != nil {
 		defer stderrFile.Close()
 		cmd.Stderr = stderrFile
@@ -379,25 +390,11 @@ func (m *XrayManager) testRuntimeConfig(binaryPath string, cfgPath string, stder
 
 func (m *XrayManager) waitBridgeSocksReady(bridge *XrayBridge, timeout time.Duration) error {
 	if bridge == nil {
-		return fmt.Errorf("xray 桥接进程不存在")
+		return fmt.Errorf("代理桥接进程不存在")
 	}
-	deadline := time.NewTimer(timeout)
-	defer deadline.Stop()
-	ready := make(chan error, 1)
-	go func() {
-		ready <- waitSocks5Ready("127.0.0.1", bridge.Port, timeout)
-	}()
-	select {
-	case err := <-ready:
-		return err
-	case <-bridge.ExitDone:
-		if err := bridge.exitErr(); err != nil {
-			return fmt.Errorf("xray 进程提前退出: %w", err)
-		}
-		return fmt.Errorf("xray 进程提前退出")
-	case <-deadline.C:
-		return fmt.Errorf("xray socks5 端口 %d 启动超时", bridge.Port)
-	}
+	return waitOwnedBridgeReady(m.lifecycle.context(), bridge.ExitDone, timeout, func() error {
+		return checkSocks5Handshake(fmt.Sprintf("127.0.0.1:%d", bridge.Port), 300*time.Millisecond)
+	})
 }
 
 func (m *XrayManager) bridgeStartTimeout() time.Duration {

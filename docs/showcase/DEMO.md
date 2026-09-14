@@ -16,19 +16,19 @@
 
 ## 两种演示环境
 
-**浏览器 UI 预览：** 按 README 启动 Vite。可讲解页面与配置结构；画面保留 `UI PREVIEW` 提示。不要把模拟启动、测速或状态变化说成实际浏览器运行。
+**浏览器 UI 预览：** 按 README 用 `npm run demo` 启动 Vite。可讲解页面与配置结构；画面保留 `UI PREVIEW` 和开发模拟模式提示。不要把模拟启动、测速或状态变化说成实际浏览器运行。
 
 **原生应用演示：** 仅在你已经完成自己的实机验证后使用。先准备空白演示实例和可信本地测试页，依次完成创建、启动、查看出口、停止与清理。macOS 使用 `/Applications/Latitude Browser.app`；不要使用工作资料、登录会话或私人代理作为演示素材。
 
 ## 这一组 README 截图
 
-- 源码基线：`e90e35d`。
+- 截图源码基线：`e90e35d`（2026-09-14 首次展示）；当前版本另有开发模拟模式提示。
 - 渲染：独立 Vite 服务与独立 Chromium 浏览器会话。
 - 页面：`/browser/list`、`/browser/auto-config`、`/settings?section=connectors`。
 - 数据：四个虚构且停止的测试环境，来自 [截图用演示数据](../../frontend/scripts/showcase-fixtures.mjs)。
 - 画面未做 UI 拼接，保留 UI 预览说明；不使用私人账号、订阅或真实代理出口。
 
-开发者如需重建演示数据，可以在 Vite 预览的浏览器控制台调用：
+开发者如需重建演示数据，先运行 `npm run demo`，再在该开发预览的浏览器控制台调用：
 
 ```js
 const { seedShowcase } = await import('/scripts/showcase-fixtures.mjs')
@@ -36,6 +36,10 @@ await seedShowcase()
 ```
 
 然后点击实例页的“刷新”。数据只写入预览模块的内存；刷新整个页面即可恢复默认值。该脚本遇到桌面桥接会拒绝执行。
+
+## 可以讲解的后端例子
+
+[后端修复说明](HARDENING.md) 按触发条件、修改行为与回归测试组织。可以选一个例子深入讲解：保存失败时为什么不能先改内存；为什么 CDP WebSocket 和 HTTP API 必须共用认证；为什么停止进程要等退出、为什么重复释放不能影响新进程。用代码和失败路径回答追问。
 
 ## 准备一个可被追问的例子
 

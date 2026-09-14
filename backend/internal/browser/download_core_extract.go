@@ -5,6 +5,7 @@ import (
 	"archive/zip"
 	"compress/bzip2"
 	"compress/gzip"
+	"context"
 	"fmt"
 	"io"
 	"os"
@@ -13,10 +14,6 @@ import (
 
 	"github.com/ulikunitz/xz"
 )
-
-type archiveEntryMeta struct {
-	Name string
-}
 
 type archiveProgress struct {
 	index int
@@ -51,17 +48,24 @@ func filepathFromURLPath(raw string) (string, error) {
 }
 
 func extractCoreArchiveAndStripRoot(archivePath, dest string, progressCb func(int, string)) error {
+	return extractCoreArchiveAndStripRootContext(context.Background(), archivePath, dest, progressCb)
+}
+
+func extractCoreArchiveAndStripRootContext(ctx context.Context, archivePath, dest string, progressCb func(int, string)) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
 	lower := strings.ToLower(archivePath)
 	if strings.HasSuffix(lower, ".zip") {
-		return extractZipArchiveAndStripRoot(archivePath, dest, progressCb)
+		return extractZipArchiveAndStripRootContext(ctx, archivePath, dest, progressCb)
 	}
 	if isTarArchivePath(lower) {
-		return extractTarArchiveAndStripRoot(archivePath, dest, progressCb)
+		return extractTarArchiveAndStripRootContext(ctx, archivePath, dest, progressCb)
 	}
-	if err := extractZipArchiveAndStripRoot(archivePath, dest, progressCb); err == nil {
+	if err := extractZipArchiveAndStripRootContext(ctx, archivePath, dest, progressCb); err == nil {
 		return nil
 	}
-	return extractTarArchiveAndStripRoot(archivePath, dest, progressCb)
+	return extractTarArchiveAndStripRootContext(ctx, archivePath, dest, progressCb)
 }
 
 func ExtractCoreArchiveAndStripRootForImport(archivePath, dest string, progressCb func(int, string)) error {
@@ -69,61 +73,85 @@ func ExtractCoreArchiveAndStripRootForImport(archivePath, dest string, progressC
 }
 
 func extractZipArchiveAndStripRoot(archivePath, dest string, progressCb func(int, string)) error {
+	return extractZipArchiveAndStripRootContext(context.Background(), archivePath, dest, progressCb)
+}
+
+func extractZipArchiveAndStripRootContext(ctx context.Context, archivePath, dest string, progressCb func(int, string)) error {
 	reader, err := zip.OpenReader(archivePath)
 	if err != nil {
 		return err
 	}
 	defer reader.Close()
-
 	if len(reader.File) == 0 {
 		return fmt.Errorf("空的压缩包")
 	}
-	metas := make([]archiveEntryMeta, 0, len(reader.File))
-	for _, file := range reader.File {
-		metas = append(metas, archiveEntryMeta{Name: file.Name})
-	}
-	rootPrefix, hasCommonRoot := detectCommonArchiveRoot(metas)
-	if err := os.MkdirAll(dest, 0o755); err != nil {
+	target, err := openCoreArchiveRoot(dest)
+	if err != nil {
 		return err
 	}
-
+	defer target.root.Close()
 	progress := archiveProgress{total: len(reader.File)}
 	for _, file := range reader.File {
 		progress.report(progressCb)
-		cleanName := strippedArchiveName(file.Name, rootPrefix, hasCommonRoot)
-		if cleanName == "" {
-			continue
+		if err := ctx.Err(); err != nil {
+			return err
 		}
-		targetPath, err := safeArchiveTargetPath(dest, cleanName)
+		mode := file.Mode()
+		if !mode.IsRegular() && !mode.IsDir() && mode&os.ModeSymlink == 0 {
+			return fmt.Errorf("不支持的内核归档条目: %s", file.Name)
+		}
+		name, err := target.add(file.Name, mode, file.UncompressedSize64)
 		if err != nil {
 			return err
 		}
-		if file.FileInfo().IsDir() {
-			if err := os.MkdirAll(targetPath, file.Mode().Perm()); err != nil {
+		if name == "" {
+			continue
+		}
+		if mode.IsDir() {
+			if err := target.directory(name); err != nil {
 				return err
 			}
 			continue
 		}
-		if err := os.MkdirAll(filepath.Dir(targetPath), 0o755); err != nil {
-			return err
-		}
 		rc, err := file.Open()
 		if err != nil {
-			return fmt.Errorf("读取压缩包文件失败 %s: %w", file.Name, err)
-		}
-		if err := writeReaderToFile(targetPath, rc, file.Mode().Perm()); err != nil {
 			return err
 		}
+		var copyErr error
+		if mode&os.ModeSymlink != 0 {
+			var data []byte
+			data, copyErr = io.ReadAll(io.LimitReader(coreContextReader{ctx, rc}, 4097))
+			if copyErr == nil {
+				copyErr = target.link(name, string(data))
+			}
+		} else {
+			copyErr = target.file(ctx, name, rc, mode, file.UncompressedSize64)
+		}
+		closeErr := rc.Close()
+		if copyErr != nil {
+			return copyErr
+		}
+		if closeErr != nil {
+			return closeErr
+		}
+	}
+	if err := target.finish(ctx); err != nil {
+		return err
 	}
 	progressCb(100, "解压完成！")
 	return nil
 }
 
 func extractTarArchiveAndStripRoot(archivePath, dest string, progressCb func(int, string)) error {
-	if err := os.MkdirAll(dest, 0o755); err != nil {
+	return extractTarArchiveAndStripRootContext(context.Background(), archivePath, dest, progressCb)
+}
+
+func extractTarArchiveAndStripRootContext(ctx context.Context, archivePath, dest string, progressCb func(int, string)) error {
+	target, err := openCoreArchiveRoot(dest)
+	if err != nil {
 		return err
 	}
-
+	defer target.root.Close()
 	file, err := os.Open(archivePath)
 	if err != nil {
 		return err
@@ -134,11 +162,12 @@ func extractTarArchiveAndStripRoot(archivePath, dest string, progressCb func(int
 		return err
 	}
 	defer closeStream()
-
-	reader := tar.NewReader(stream)
-	entryCount := 0
-	topLevels := make(map[string]struct{})
+	reader := tar.NewReader(coreContextReader{ctx, stream})
+	count := 0
 	for {
+		if err := ctx.Err(); err != nil {
+			return err
+		}
 		header, err := reader.Next()
 		if err == io.EOF {
 			break
@@ -146,47 +175,38 @@ func extractTarArchiveAndStripRoot(archivePath, dest string, progressCb func(int
 		if err != nil {
 			return err
 		}
-		entryCount++
-		if entryCount == 1 || entryCount%50 == 0 {
-			progressCb(0, fmt.Sprintf("正在解压文件 %d...", entryCount))
+		count++
+		if count == 1 || count%50 == 0 {
+			progressCb(0, fmt.Sprintf("正在解压文件 %d...", count))
 		}
-		cleanName := strippedArchiveName(header.Name, "", false)
-		if cleanName == "" {
-			continue
+		if header.Size < 0 {
+			return fmt.Errorf("非法内核归档长度")
 		}
-		if top := topLevelArchiveName(cleanName); top != "" {
-			topLevels[top] = struct{}{}
-		}
-		targetPath, err := safeArchiveTargetPath(dest, cleanName)
+		name, err := target.add(header.Name, header.FileInfo().Mode(), uint64(header.Size))
 		if err != nil {
 			return err
 		}
+		if name == "" {
+			continue
+		}
 		switch header.Typeflag {
 		case tar.TypeDir:
-			if err := os.MkdirAll(targetPath, header.FileInfo().Mode().Perm()); err != nil {
-				return err
-			}
+			err = target.directory(name)
 		case tar.TypeSymlink:
-			if err := os.MkdirAll(filepath.Dir(targetPath), 0o755); err != nil {
-				return err
-			}
-			_ = os.Remove(targetPath)
-			if err := os.Symlink(header.Linkname, targetPath); err != nil {
-				return fmt.Errorf("创建符号链接失败 %s: %w", cleanName, err)
-			}
+			err = target.link(name, header.Linkname)
 		case tar.TypeReg, tar.TypeRegA:
-			if err := os.MkdirAll(filepath.Dir(targetPath), 0o755); err != nil {
-				return err
-			}
-			if err := writeReaderToFile(targetPath, reader, header.FileInfo().Mode().Perm()); err != nil {
-				return err
-			}
+			err = target.file(ctx, name, reader, header.FileInfo().Mode(), uint64(header.Size))
+		default:
+			err = fmt.Errorf("不支持的内核归档条目: %s", header.Name)
+		}
+		if err != nil {
+			return err
 		}
 	}
-	if entryCount == 0 {
+	if count == 0 {
 		return fmt.Errorf("空的压缩包")
 	}
-	if err := stripSingleExtractedRoot(dest, topLevels); err != nil {
+	if err := target.finish(ctx); err != nil {
 		return err
 	}
 	progressCb(100, "解压完成！")
@@ -230,118 +250,6 @@ func coreArchiveSuffixes() []string {
 	return []string{".tar.gz", ".tar.xz", ".tar.bz2", ".tgz", ".txz", ".tbz2", ".zip", ".tar"}
 }
 
-func detectCommonArchiveRoot(entries []archiveEntryMeta) (string, bool) {
-	var rootPrefix string
-	for _, entry := range entries {
-		cleanName := normalizeArchiveEntryName(entry.Name)
-		parts := strings.SplitN(cleanName, "/", 2)
-		if len(parts) == 0 || parts[0] == "" {
-			continue
-		}
-		if rootPrefix == "" {
-			rootPrefix = parts[0] + "/"
-			continue
-		}
-		if !strings.HasPrefix(cleanName, rootPrefix) && cleanName != strings.TrimSuffix(rootPrefix, "/") {
-			return "", false
-		}
-	}
-	return rootPrefix, rootPrefix != ""
-}
-
-func strippedArchiveName(name string, rootPrefix string, hasCommonRoot bool) string {
-	cleanName := normalizeArchiveEntryName(name)
-	if hasCommonRoot {
-		if cleanName == rootPrefix || cleanName == strings.TrimSuffix(rootPrefix, "/") {
-			return ""
-		}
-		cleanName = strings.TrimPrefix(cleanName, rootPrefix)
-	}
-	if cleanName == "" || cleanName == "." || cleanName == "/" {
-		return ""
-	}
-	return cleanName
-}
-
-func topLevelArchiveName(name string) string {
-	cleanName := normalizeArchiveEntryName(name)
-	if cleanName == "" || cleanName == "." {
-		return ""
-	}
-	parts := strings.SplitN(cleanName, "/", 2)
-	if len(parts) == 0 {
-		return ""
-	}
-	return parts[0]
-}
-
-func stripSingleExtractedRoot(dest string, topLevels map[string]struct{}) error {
-	if len(topLevels) != 1 {
-		return nil
-	}
-	var rootName string
-	for name := range topLevels {
-		rootName = name
-	}
-	rootPath, err := safeArchiveTargetPath(dest, rootName)
-	if err != nil {
-		return err
-	}
-	info, err := os.Stat(rootPath)
-	if err != nil || !info.IsDir() {
-		return nil
-	}
-	entries, err := os.ReadDir(rootPath)
-	if err != nil {
-		return err
-	}
-	for _, entry := range entries {
-		source := filepath.Join(rootPath, entry.Name())
-		target := filepath.Join(dest, entry.Name())
-		if _, err := os.Stat(target); err == nil {
-			return fmt.Errorf("剥离顶层目录失败，目标已存在: %s", target)
-		} else if err != nil && !os.IsNotExist(err) {
-			return err
-		}
-		if err := os.Rename(source, target); err != nil {
-			return err
-		}
-	}
-	return os.Remove(rootPath)
-}
-
-func normalizeArchiveEntryName(name string) string {
-	cleanName := filepath.ToSlash(strings.TrimSpace(name))
-	cleanName = strings.TrimPrefix(cleanName, "/")
-	return filepath.ToSlash(filepath.Clean(cleanName))
-}
-
-func safeArchiveTargetPath(dest, cleanName string) (string, error) {
-	if cleanName == "." || strings.HasPrefix(cleanName, "../") || cleanName == ".." || filepath.IsAbs(cleanName) {
-		return "", fmt.Errorf("非法文件路径: %s", cleanName)
-	}
-	targetPath := filepath.Join(dest, filepath.FromSlash(cleanName))
-	destClean := filepath.Clean(dest)
-	targetClean := filepath.Clean(targetPath)
-	if targetClean != destClean && !strings.HasPrefix(targetClean, destClean+string(os.PathSeparator)) {
-		return "", fmt.Errorf("非法文件路径: %s", cleanName)
-	}
-	return targetPath, nil
-}
-
-func writeReaderToFile(targetPath string, reader io.Reader, mode os.FileMode) error {
-	outFile, err := os.OpenFile(targetPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, mode)
-	if err != nil {
-		return fmt.Errorf("打开解压文件写入失败 %s: %w", targetPath, err)
-	}
-	_, copyErr := io.Copy(outFile, reader)
-	closeErr := outFile.Close()
-	if copyErr != nil {
-		return fmt.Errorf("写入文件流失败 %s: %w", targetPath, copyErr)
-	}
-	return closeErr
-}
-
 func (p *archiveProgress) report(progressCb func(int, string)) {
 	p.index++
 	if p.total <= 0 {
@@ -353,3 +261,26 @@ func (p *archiveProgress) report(progressCb func(int, string)) {
 		progressCb(percent, fmt.Sprintf("正在解压文件 %d / %d...", p.index, p.total))
 	}
 }
+
+// Context readers keep cancellation effective while copying a large archive entry.
+type coreContextReader struct {
+	ctx    context.Context
+	reader io.Reader
+}
+
+func (r coreContextReader) Read(p []byte) (int, error) {
+	if err := r.ctx.Err(); err != nil {
+		return 0, err
+	}
+	return r.reader.Read(p)
+}
+
+type coreContextReadCloser struct {
+	ctx    context.Context
+	reader io.ReadCloser
+}
+
+func (r coreContextReadCloser) Read(p []byte) (int, error) {
+	return (coreContextReader{r.ctx, r.reader}).Read(p)
+}
+func (r coreContextReadCloser) Close() error { return r.reader.Close() }

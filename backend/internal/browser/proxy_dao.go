@@ -12,6 +12,7 @@ type ProxyDAO interface {
 	ListByGroup(groupName string) ([]Proxy, error)
 	ListGroups() ([]string, error)
 	Upsert(proxy Proxy) error
+	ReplaceAll(proxies []Proxy) error
 	Delete(proxyId string) error
 	DeleteAll() error
 	UpdateSpeedResult(proxyId string, ok bool, latencyMs int64, testedAt string) error
@@ -90,12 +91,20 @@ func (d *SQLiteProxyDAO) ListGroups() ([]string, error) {
 
 // Upsert 新增或更新代理
 func (d *SQLiteProxyDAO) Upsert(proxy Proxy) error {
+	return upsertProxy(d.db, proxy)
+}
+
+type proxyExecutor interface {
+	Exec(string, ...any) (sql.Result, error)
+}
+
+func upsertProxy(exec proxyExecutor, proxy Proxy) error {
 	now := time.Now().Format(time.RFC3339)
 	autoRefreshInt := 0
 	if proxy.SourceAutoRefresh {
 		autoRefreshInt = 1
 	}
-	_, err := d.db.Exec(`
+	_, err := exec.Exec(`
 		INSERT INTO browser_proxies (
 		  proxy_id, proxy_name, proxy_config, preferred_kernel, dns_servers, group_name,
 		  source_id, source_url, source_name_prefix, source_auto_refresh, source_refresh_interval_m, source_last_refresh_at,
@@ -121,6 +130,55 @@ func (d *SQLiteProxyDAO) Upsert(proxy Proxy) error {
 	)
 	if err != nil {
 		return fmt.Errorf("保存代理失败: %w", err)
+	}
+	return nil
+}
+
+// ReplaceAll publishes a complete catalog in one transaction. Upserting before
+// pruning preserves diagnostic results and creation times for retained nodes.
+func (d *SQLiteProxyDAO) ReplaceAll(proxies []Proxy) error {
+	tx, err := d.db.Begin()
+	if err != nil {
+		return fmt.Errorf("开启代理保存事务失败: %w", err)
+	}
+	defer tx.Rollback()
+	rows, err := tx.Query(`SELECT proxy_id FROM browser_proxies`)
+	if err != nil {
+		return err
+	}
+	var oldIDs []string
+	for rows.Next() {
+		var id string
+		if err := rows.Scan(&id); err != nil {
+			rows.Close()
+			return err
+		}
+		oldIDs = append(oldIDs, id)
+	}
+	readErr := rows.Err()
+	closeErr := rows.Close()
+	if readErr != nil {
+		return readErr
+	}
+	if closeErr != nil {
+		return closeErr
+	}
+	keep := make(map[string]bool, len(proxies))
+	for _, item := range proxies {
+		if err := upsertProxy(tx, item); err != nil {
+			return err
+		}
+		keep[item.ProxyId] = true
+	}
+	for _, id := range oldIDs {
+		if !keep[id] {
+			if _, err := tx.Exec(`DELETE FROM browser_proxies WHERE proxy_id = ?`, id); err != nil {
+				return err
+			}
+		}
+	}
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("提交代理列表失败: %w", err)
 	}
 	return nil
 }

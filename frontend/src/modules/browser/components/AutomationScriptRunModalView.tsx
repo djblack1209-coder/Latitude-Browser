@@ -148,6 +148,7 @@ export function AutomationScriptRunModalView({
       }
     >
       <div className="space-y-3">
+        <p className="text-sm text-[var(--color-text-secondary)]">脚本以当前用户权限运行，可读取本机文件、访问网络并执行系统命令。超时限制不会隔离这些权限，请确认已检查并信任脚本。</p>
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--color-border-muted)] pb-3">
           <div className="min-w-0">
             <div className="flex min-w-0 flex-wrap items-center gap-2">

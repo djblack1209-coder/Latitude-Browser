@@ -8,7 +8,7 @@ from urllib.parse import unquote, urlsplit
 import xml.etree.ElementTree as ET
 
 ROOT = Path(__file__).resolve().parents[1]
-DOCS = [ROOT / p for p in ('README.md', 'README.en.md', 'CONTRIBUTING.md', 'SECURITY.md', 'ROADMAP.md')]
+DOCS = [ROOT / p for p in ('README.md', 'README.en.md', 'CONTRIBUTING.md', 'SECURITY.md', 'ROADMAP.md', 'LICENSE-SCOPE.md')]
 DOCS += sorted((ROOT / 'docs/showcase').glob('*.md'))
 
 

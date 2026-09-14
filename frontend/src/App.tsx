@@ -9,6 +9,7 @@ import { lazyNamed } from "./routes/lazyNamed";
 import { useNotificationStore } from "./store/notificationStore";
 import { useBackupStore } from "./store/backupStore";
 import { installWailsOperationLogger } from "./utils/wailsOperationLogger";
+import { DesktopServiceBoundary } from "./shared/components/DesktopServiceBoundary";
 import {
   ForceQuit as ForceQuitApp,
   QuitAppOnly as QuitAppOnlyApp,
@@ -339,6 +340,7 @@ function App() {
 
   return (
     <ThemeProvider>
+      <DesktopServiceBoundary>
       <Router>
         <Layout>
           <Suspense fallback={routeFallback}>
@@ -356,6 +358,7 @@ function App() {
           ) : null}
         </Suspense>
       </Router>
+      </DesktopServiceBoundary>
     </ThemeProvider>
   );
 }

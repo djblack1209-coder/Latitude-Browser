@@ -3,12 +3,14 @@ package proxy
 import (
 	"ant-chrome/backend/internal/config"
 	"ant-chrome/backend/internal/logger"
+	"context"
 	"errors"
 	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -20,20 +22,33 @@ func (m *SingBoxManager) EnsureBridge(proxyConfig string, proxies []config.Brows
 
 // AcquireBridge 获取一个带引用计数的 sing-box 桥接，用于浏览器实例等长生命周期场景。
 func (m *SingBoxManager) AcquireBridge(proxyConfig string, proxies []config.BrowserProxy, proxyId string) (string, string, error) {
-	return m.ensureBridge(proxyConfig, proxies, proxyId, true)
-}
-
-// ReleaseBridge 释放一个已占用的桥接引用；空闲桥接会由后台回收协程延迟清理。
-func (m *SingBoxManager) ReleaseBridge(key string) {
-	key = strings.TrimSpace(key)
-	if key == "" {
-		return
+	done, err := m.lifecycle.begin()
+	if err != nil {
+		return "", "", err
 	}
-
+	defer done()
+	endpoint, key, err := m.ensureBridge(proxyConfig, proxies, proxyId, false)
+	if err != nil || key == "" {
+		return endpoint, "", err
+	}
 	m.mu.Lock()
 	defer m.mu.Unlock()
+	bridge := m.Bridges[key]
+	if bridge == nil || !bridge.Running || bridge.Stopping || processExited(bridge.ExitDone) || endpoint != fmt.Sprintf("socks5://127.0.0.1:%d", bridge.Port) {
+		return "", "", fmt.Errorf("sing-box 桥接已退出，请重试")
+	}
+	bridge.RefCount++
+	bridge.LastUsedAt = time.Now()
+	return endpoint, m.leases.issue(key, bridge), nil
+}
 
-	bridge, ok := m.Bridges[key]
+func (m *SingBoxManager) ReleaseBridge(token string) {
+	if m == nil {
+		return
+	}
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	bridge, ok := m.leases.take(strings.TrimSpace(token))
 	if !ok || bridge == nil {
 		return
 	}
@@ -44,6 +59,11 @@ func (m *SingBoxManager) ReleaseBridge(key string) {
 }
 
 func (m *SingBoxManager) ensureBridge(proxyConfig string, proxies []config.BrowserProxy, proxyId string, pin bool) (string, string, error) {
+	done, err := m.lifecycle.begin()
+	if err != nil {
+		return "", "", err
+	}
+	defer done()
 	log := logger.New("SingBox")
 	src := resolveProxyConfig(proxyConfig, proxies, proxyId)
 	if src == "" {
@@ -59,10 +79,6 @@ func (m *SingBoxManager) ensureBridge(proxyConfig string, proxies []config.Brows
 
 	key := computeNodeKey(src)
 
-	if socksURL, reused := m.tryReuseBridge(key, pin); reused {
-		log.Info("复用 sing-box 桥接", logger.F("engine", "sing-box"), logger.F("key", key[:8]), logger.F("socks_url", socksURL))
-		return socksURL, key, nil
-	}
 	unlockLaunch := m.lockLaunchForKey(key)
 	defer unlockLaunch()
 	if socksURL, reused := m.tryReuseBridge(key, pin); reused {
@@ -81,6 +97,9 @@ func (m *SingBoxManager) ensureBridge(proxyConfig string, proxies []config.Brows
 	var lastErr error
 	attemptsUsed := 0
 	for attempt := 1; attempt <= maxRetries; attempt++ {
+		if err := m.lifecycle.context().Err(); err != nil {
+			return "", "", err
+		}
 		attemptsUsed = attempt
 		port, err := nextAvailablePort()
 		if err != nil {
@@ -122,10 +141,10 @@ func (m *SingBoxManager) launchBridgeOnPort(log *logger.Logger, key string, bina
 		return nil, err
 	}
 
-	cmd := exec.Command(binaryPath, "run", "-c", cfgPath)
+	cmd := exec.CommandContext(m.lifecycle.context(), binaryPath, "run", "-c", cfgPath)
 	hideWindow(cmd)
 	cmd.Dir = filepath.Dir(cfgPath)
-	stderrFile, _ := os.Create(stderrPath)
+	stderrFile, _ := openPrivateRuntimeLog(stderrPath)
 	if stderrFile != nil {
 		cmd.Stderr = stderrFile
 	}
@@ -148,6 +167,7 @@ func (m *SingBoxManager) launchBridgeOnPort(log *logger.Logger, key string, bina
 		LastUsedAt: time.Now(),
 	}
 	bridge.startExitWatcher()
+	m.lifecycle.track(bridge.Cmd, bridge.ExitDone)
 	log.Info("sing-box 内核进程已启动", logger.F("engine", "sing-box"), logger.F("key", key[:8]), logger.F("pid", bridge.Pid), logger.F("port", port))
 
 	if err := m.waitBridgeSocksReady(bridge, m.bridgeStartTimeout()); err != nil {
@@ -214,10 +234,12 @@ func isRetryableSingBoxLaunchError(err error) bool {
 }
 
 func (m *SingBoxManager) testRuntimeConfig(binaryPath string, cfgPath string, stderrPath string) error {
-	cmd := exec.Command(binaryPath, "check", "-c", cfgPath)
+	ctx, cancel := context.WithTimeout(m.lifecycle.context(), 10*time.Second)
+	defer cancel()
+	cmd := exec.CommandContext(ctx, binaryPath, "check", "-c", cfgPath)
 	hideWindow(cmd)
 	cmd.Dir = filepath.Dir(cfgPath)
-	stderrFile, _ := os.Create(stderrPath)
+	stderrFile, _ := openPrivateRuntimeLog(stderrPath)
 	if stderrFile != nil {
 		defer stderrFile.Close()
 		cmd.Stderr = stderrFile
@@ -237,25 +259,11 @@ func (m *SingBoxManager) testRuntimeConfig(binaryPath string, cfgPath string, st
 
 func (m *SingBoxManager) waitBridgeSocksReady(bridge *SingBoxBridge, timeout time.Duration) error {
 	if bridge == nil {
-		return fmt.Errorf("sing-box 桥接进程不存在")
+		return fmt.Errorf("代理桥接进程不存在")
 	}
-	deadline := time.NewTimer(timeout)
-	defer deadline.Stop()
-	ready := make(chan error, 1)
-	go func() {
-		ready <- waitSocks5Ready("127.0.0.1", bridge.Port, timeout)
-	}()
-	select {
-	case err := <-ready:
-		return err
-	case <-bridge.ExitDone:
-		if err := bridge.exitErr(); err != nil {
-			return fmt.Errorf("sing-box 进程提前退出: %w", err)
-		}
-		return fmt.Errorf("sing-box 进程提前退出")
-	case <-deadline.C:
-		return fmt.Errorf("sing-box socks5 端口 %d 启动超时", bridge.Port)
-	}
+	return waitOwnedBridgeReady(m.lifecycle.context(), bridge.ExitDone, timeout, func() error {
+		return checkSocks5Handshake(fmt.Sprintf("127.0.0.1:%d", bridge.Port), 300*time.Millisecond)
+	})
 }
 
 func (m *SingBoxManager) isRetryableBridgeReadyError(err error, cfgPath string, stderrPath string) bool {
@@ -294,25 +302,26 @@ func (m *SingBoxManager) logBridgeStartupError(log *logger.Logger, cfgPath strin
 }
 
 // StopAll 关闭所有 sing-box 桥接进程
-func (m *SingBoxManager) StopAll() {
+func (m *SingBoxManager) StopAll() error {
+	m.restartMu.Lock()
+	defer m.restartMu.Unlock()
 	m.stopOnce.Do(func() {
-		close(m.stopCh)
-	})
-
-	m.mu.Lock()
-	bridges := make([]*SingBoxBridge, 0, len(m.Bridges))
-	for key, bridge := range m.Bridges {
-		if bridge != nil {
-			bridge.Stopping = true
-			bridges = append(bridges, bridge)
+		if m.stopCh != nil {
+			close(m.stopCh)
 		}
-		delete(m.Bridges, key)
+	})
+	err := m.lifecycle.stop()
+	m.mu.Lock()
+	if err == nil {
+		m.leases.items = nil
+	}
+	for key, b := range m.Bridges {
+		if b == nil || processExited(b.ExitDone) {
+			delete(m.Bridges, key)
+		}
 	}
 	m.mu.Unlock()
-
-	for _, bridge := range bridges {
-		m.stopBridgeProcess(bridge)
-	}
+	return err
 }
 
 func (m *SingBoxManager) tryReuseBridge(key string, pin bool) (string, bool) {
@@ -320,7 +329,7 @@ func (m *SingBoxManager) tryReuseBridge(key string, pin bool) (string, bool) {
 
 	m.mu.Lock()
 	if bridge, ok := m.Bridges[key]; ok && bridge != nil {
-		alive := bridge.Running && bridge.Cmd != nil && bridge.Cmd.Process != nil && bridge.Cmd.ProcessState == nil
+		alive := bridge.Running && bridge.Cmd != nil && bridge.Cmd.Process != nil && !processExited(bridge.ExitDone)
 		if alive && waitSocks5Ready("127.0.0.1", bridge.Port, 800*time.Millisecond) == nil {
 			if pin {
 				bridge.RefCount++
@@ -353,7 +362,7 @@ func (m *SingBoxManager) registerBridge(key string, bridge *SingBoxBridge, pin b
 			return "", false
 		}
 
-		alive := existing.Running && existing.Cmd != nil && existing.Cmd.Process != nil && existing.Cmd.ProcessState == nil
+		alive := existing.Running && existing.Cmd != nil && existing.Cmd.Process != nil && !processExited(existing.ExitDone)
 		if alive && waitSocks5Ready("127.0.0.1", existing.Port, 800*time.Millisecond) == nil {
 			if pin {
 				existing.RefCount++
@@ -378,6 +387,7 @@ func (m *SingBoxManager) registerBridge(key string, bridge *SingBoxBridge, pin b
 		duplicate = existing
 		if transferredRefCount > 0 && !pin {
 			bridge.RefCount = transferredRefCount
+			m.leases.transfer(existing, bridge)
 		}
 	}
 	if pin {
@@ -404,7 +414,7 @@ func (m *SingBoxManager) watchBridge(bridge *SingBoxBridge, key string) {
 	m.mu.Lock()
 	if current, ok := m.Bridges[key]; ok && current == bridge {
 		refCount = bridge.RefCount
-		if !bridge.Stopping && refCount > 0 && !bridge.Restarting {
+		if !m.lifecycle.isStopped() && !bridge.Stopping && refCount > 0 && !bridge.Restarting {
 			bridge.Restarting = true
 			shouldRestart = true
 		} else {
@@ -431,14 +441,33 @@ func (m *SingBoxManager) watchBridge(bridge *SingBoxBridge, key string) {
 		}
 	}
 
-	if !stopping && m.OnBridgeDied != nil {
+	if !stopping && !m.lifecycle.isStopped() && m.OnBridgeDied != nil {
 		m.OnBridgeDied(key, fmt.Errorf("sing-box 桥接进程意外退出"))
 	}
 }
 
-func (m *SingBoxManager) stopBridgeProcess(bridge *SingBoxBridge) {
+func (m *SingBoxManager) stopBridgeProcess(bridge *SingBoxBridge) error {
 	if bridge == nil || bridge.Cmd == nil || bridge.Cmd.Process == nil {
-		return
+		return nil
 	}
-	_ = bridge.Cmd.Process.Kill()
+	bridge.startExitWatcher()
+	m.lifecycle.track(bridge.Cmd, bridge.ExitDone)
+	return stopOwnedBridgeProcess(bridge.Cmd, bridge.ExitDone)
+}
+
+// ResumeAfterMaintenance reopens only after every owned process has exited.
+func (m *SingBoxManager) ResumeAfterMaintenance(cfg *config.Config) error {
+	m.restartMu.Lock()
+	defer m.restartMu.Unlock()
+	if m.lifecycle.isStopped() && cfg != nil {
+		m.Config = cfg
+	}
+	resumed, err := m.lifecycle.resume()
+	if err != nil || !resumed {
+		return err
+	}
+	m.stopCh = make(chan struct{})
+	m.stopOnce = sync.Once{}
+	go m.cleanupLoop(m.stopCh)
+	return nil
 }

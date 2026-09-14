@@ -49,11 +49,20 @@ type Scope struct {
 
 // Manifest 用于写入 zip 根目录下的 manifest.json。
 type Manifest struct {
-	Format          string          `json:"format"`
-	ManifestVersion int             `json:"manifestVersion"`
-	CreatedAt       string          `json:"createdAt"`
-	App             ManifestAppInfo `json:"app"`
-	Entries         []ManifestEntry `json:"entries"`
+	Format          string               `json:"format"`
+	ManifestVersion int                  `json:"manifestVersion"`
+	CreatedAt       string               `json:"createdAt"`
+	App             ManifestAppInfo      `json:"app"`
+	Entries         []ManifestEntry      `json:"entries"`
+	ProfileData     []ProfileDataMapping `json:"profileData,omitempty"`
+}
+
+// ProfileDataMapping locates nonportable profile directories in the package.
+// Import derives a destination under its own state directory, never a source
+// computer's absolute path.
+type ProfileDataMapping struct {
+	ProfileID   string `json:"profileId"`
+	ArchivePath string `json:"archivePath"`
 }
 
 type ManifestAppInfo struct {

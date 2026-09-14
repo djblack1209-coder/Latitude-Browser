@@ -129,6 +129,7 @@ export function ImportAutomationScriptModal({
         }
       >
         <div className="space-y-4">
+          <p className="text-sm text-[var(--color-text-secondary)]">仅导入你信任并检查过的脚本。脚本可读取本机文件、访问网络并执行系统命令；TypeScript 导入构建也会运行本地构建工具。</p>
           <div className="flex flex-wrap gap-2">
             {[
               { value: "local", label: "本地", disabled: false },

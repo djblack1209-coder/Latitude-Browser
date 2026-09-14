@@ -68,6 +68,13 @@ func (a *App) backupApplyIncomingConfig(incoming *config.Config, resetFirst bool
 		target = backupMergeConfig(current, incoming)
 	}
 	target.Database = current.Database
+	// Source-machine absolute roots are not restoration destinations.
+	if strings.TrimSpace(target.Browser.UserDataRoot) == "" {
+		target.Browser.UserDataRoot = "data"
+	}
+	if !backupPortableRelativePath(target.Browser.UserDataRoot) {
+		target.Browser.UserDataRoot = "data/restored-user-data"
+	}
 	// A backup is not an authority to select a local executable. Preserve the
 	// path the user explicitly trusted through SetTorRuntimePath.
 	target.Browser.TorBinaryPath = current.Browser.TorBinaryPath
@@ -75,7 +82,9 @@ func (a *App) backupApplyIncomingConfig(incoming *config.Config, resetFirst bool
 	if err := target.Save(a.resolveAppPath("config.yaml")); err != nil {
 		return fmt.Errorf("保存导入配置失败: %w", err)
 	}
+	a.proxyStateMu.Lock()
 	a.config = target
+	a.proxyStateMu.Unlock()
 	if a.torMgr != nil {
 		a.torMgr.UpdateConfig(target)
 	}

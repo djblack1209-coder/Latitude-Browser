@@ -48,16 +48,19 @@ func (m *Manager) RedownloadCore(ctx context.Context, coreId string, targetUrl s
 }
 
 func (m *Manager) downloadAndExtractCore(ctx context.Context, coreInput CoreInput, targetUrl string, proxyConfig string, replaceExisting bool) {
+	m.downloadAndExtractCoreWithProgress(ctx, coreInput, targetUrl, proxyConfig, replaceExisting, func(phase string, progress int, msg string) {
+		runtime.EventsEmit(ctx, "download:progress", DownloadProgress{Phase: phase, Progress: progress, Message: msg})
+	})
+}
+
+func (m *Manager) downloadAndExtractCoreWithProgress(ctx context.Context, coreInput CoreInput, targetUrl, proxyConfig string, replaceExisting bool, sendEvent func(string, int, string)) {
+	if !m.coreInstallMu.TryLock() {
+		sendEvent("error", 0, "已有内核安装正在进行，请稍后重试")
+		return
+	}
+	defer m.coreInstallMu.Unlock()
 	log := logger.New("Browser")
 	t := time.Now()
-
-	sendEvent := func(phase string, progress int, msg string) {
-		runtime.EventsEmit(ctx, "download:progress", DownloadProgress{
-			Phase:    phase,
-			Progress: progress,
-			Message:  msg,
-		})
-	}
 
 	sendEvent("downloading", 0, "开始解析地址并创建下载请求: "+targetUrl)
 
@@ -123,6 +126,7 @@ func (m *Manager) downloadAndExtractCore(ctx context.Context, coreInput CoreInpu
 		}
 	}
 
+	defer transport.CloseIdleConnections()
 	client := &http.Client{
 		Timeout:   0, // 取消全局超时，依靠 context 和分片连接维持
 		Transport: transport,
@@ -141,13 +145,12 @@ func (m *Manager) downloadAndExtractCore(ctx context.Context, coreInput CoreInpu
 
 	sendEvent("downloading", 0, "开始分析下载链接(检测多线程支持)...")
 
-	err = doConcurrentDownload(ctx, client, targetUrl, tempFile, sendEvent)
+	err = finishCoreDownload(tempFile, func() error { return doConcurrentDownload(ctx, client, targetUrl, tempFile, sendEvent) })
 	if err != nil {
 		sendEvent("error", 0, "下载失败: "+err.Error())
 		return
 	}
 
-	tempFile.Close() // 解压前先关闭写句柄
 	sendEvent("extracting", 0, "下载完成，正在准备解压文件...")
 	log.Info("内核下载完成", logger.F("url", targetUrl), logger.F("temp", tempFilePath), logger.F("cost", time.Since(t).String()))
 
@@ -164,7 +167,7 @@ func (m *Manager) downloadAndExtractCore(ctx context.Context, coreInput CoreInpu
 	}()
 
 	// 3. 执行解压，并剥离顶层文件夹
-	if err := extractCoreArchiveAndStripRoot(tempFilePath, tempExtractDir, func(p int, msg string) {
+	if err := extractCoreArchiveAndStripRootContext(ctx, tempFilePath, tempExtractDir, func(p int, msg string) {
 		sendEvent("extracting", p, msg)
 	}); err != nil {
 		sendEvent("error", 0, "解压失败: "+err.Error())
@@ -176,12 +179,6 @@ func (m *Manager) downloadAndExtractCore(ctx context.Context, coreInput CoreInpu
 		return
 	}
 
-	if err := replaceCoreDirectory(targetDir, tempExtractDir, replaceExisting); err != nil {
-		sendEvent("error", 0, "替换内核目录失败: "+err.Error())
-		return
-	}
-	cleanupTempExtract = false
-
 	coreToSave := CoreInput{
 		CoreId:    strings.TrimSpace(coreInput.CoreId),
 		CoreName:  coreName,
@@ -192,10 +189,11 @@ func (m *Manager) downloadAndExtractCore(ctx context.Context, coreInput CoreInpu
 		coreToSave.CoreId = uuid.NewString()
 		coreToSave.IsDefault = len(m.ListCores()) == 0
 	}
-	if err := m.SaveCore(coreToSave); err != nil {
-		sendEvent("error", 0, "保存配置入库失败: "+err.Error())
+	if err := installCoreDirectory(ctx, targetDir, tempExtractDir, replaceExisting, func() error { return m.SaveCore(coreToSave) }, os.Rename); err != nil {
+		sendEvent("error", 0, "安装失败: "+err.Error())
 		return
 	}
+	cleanupTempExtract = false
 
 	if replaceExisting && strings.TrimSpace(coreInput.CoreId) != "" {
 		sendEvent("done", 100, "内核重新下载成功！")
@@ -206,29 +204,19 @@ func (m *Manager) downloadAndExtractCore(ctx context.Context, coreInput CoreInpu
 	}
 }
 
-func replaceCoreDirectory(targetDir string, tempExtractDir string, replaceExisting bool) error {
-	if !replaceExisting {
-		return os.Rename(tempExtractDir, targetDir)
-	}
-
-	backupDir := targetDir + ".backup_" + time.Now().Format("20060102150405")
-	if _, err := os.Stat(targetDir); err == nil {
-		if err := os.Rename(targetDir, backupDir); err != nil {
-			return err
-		}
-	} else if err != nil && !os.IsNotExist(err) {
+// No extraction or install may begin until the write handle has safely closed.
+func finishCoreDownload(file interface {
+	Sync() error
+	Close() error
+}, transfer func() error) error {
+	if err := transfer(); err != nil {
 		return err
 	}
-
-	if err := os.Rename(tempExtractDir, targetDir); err != nil {
-		if backupDir != "" {
-			_ = os.Rename(backupDir, targetDir)
-		}
-		return err
+	if err := file.Sync(); err != nil {
+		return fmt.Errorf("同步下载文件失败: %w", err)
 	}
-
-	if backupDir != "" {
-		_ = os.RemoveAll(backupDir)
+	if err := file.Close(); err != nil {
+		return fmt.Errorf("关闭下载文件失败: %w", err)
 	}
 	return nil
 }

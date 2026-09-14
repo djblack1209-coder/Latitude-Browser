@@ -189,8 +189,8 @@ func main() {
 	configPath := backend.ResolveRuntimePath(appRoot, "config.yaml")
 	cfg, err := backend.LoadConfig(configPath)
 	if err != nil {
-		log.Printf("加载配置失败，使用默认配置: %v", err)
-		cfg = backend.DefaultConfig()
+		log.Printf("配置无效，启动已停止；原配置保留: %v", err)
+		return
 	}
 	if cfg.App.Name != backend.ProductDisplayName {
 		cfg.App.Name = backend.ProductDisplayName

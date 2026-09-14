@@ -33,6 +33,11 @@ func (a *App) AutomationScriptRun(scriptID string) (*automation.ScriptRunRecord,
 }
 
 func (a *App) AutomationScriptRunWithOptions(input automation.ScriptRunRequest) (*automation.ScriptRunRecord, error) {
+	releaseActivity, activityErr := a.dataActivity.begin()
+	if activityErr != nil {
+		return nil, activityErr
+	}
+	defer releaseActivity()
 	startedAt := time.Now()
 	run := automation.ScriptRunRecord{
 		ScriptID:  strings.TrimSpace(input.ScriptID),

@@ -142,6 +142,11 @@ func (a *App) AutomationScriptRefresh(scriptID string) (*automation.ScriptRecord
 }
 
 func (a *App) saveImportedAutomationBundle(bundle automation.ImportedBundle) (*automation.ScriptRecord, error) {
+	releaseActivity, activityErr := a.dataActivity.begin()
+	if activityErr != nil {
+		return nil, activityErr
+	}
+	defer releaseActivity()
 	record, err := a.automationScriptStore().ImportBundle(bundle)
 	if err != nil {
 		return nil, err
@@ -150,6 +155,11 @@ func (a *App) saveImportedAutomationBundle(bundle automation.ImportedBundle) (*a
 }
 
 func (a *App) importAutomationLocalLibrary(rootDir string) (*AutomationScriptBatchImportResult, error) {
+	releaseActivity, activityErr := a.dataActivity.begin()
+	if activityErr != nil {
+		return nil, activityErr
+	}
+	defer releaseActivity()
 	directories, err := automation.DiscoverImportableScriptDirectoriesWithOptions(rootDir)
 	if err != nil {
 		return nil, err

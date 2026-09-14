@@ -11,6 +11,9 @@ import (
 func (m *Manager) InitData() {
 	m.Mutex.Lock()
 	defer m.Mutex.Unlock()
+	if m.dataMaintenance {
+		return
+	}
 	if m.Profiles == nil {
 		m.Profiles = make(map[string]*Profile)
 	}

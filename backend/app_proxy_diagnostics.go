@@ -19,6 +19,11 @@ func (a *App) BrowserProxyBuildDiagnostic(proxyId string, proxyConfig string) Pr
 
 // BrowserProxyProbeBrowserPage 运行浏览器式并发探测，用于诊断真实页面并发访问效果。
 func (a *App) BrowserProxyProbeBrowserPage(request ProxyBrowserProbeRequest) ProxyBrowserProbeResult {
+	releaseActivity, activityErr := a.dataActivity.begin()
+	if activityErr != nil {
+		return ProxyBrowserProbeResult{ProxyId: request.ProxyId, Error: activityErr.Error()}
+	}
+	defer releaseActivity()
 	request.ProxyId = strings.TrimSpace(request.ProxyId)
 	proxies := a.getLatestProxies()
 	cfg := buildProxyBrowserProbeConfig(request, a.defaultProxyConnectorType())

@@ -8,7 +8,6 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"net"
-	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -38,7 +37,7 @@ func (m *XrayManager) buildRuntimeConfig(key string, outbound map[string]interfa
 
 func (m *XrayManager) buildRuntimeConfigWithRoute(key string, outbounds []interface{}, rules []interface{}, port int, dnsServers string) (string, error) {
 	baseDir := m.resolveWorkdir(key)
-	if err := os.MkdirAll(baseDir, 0o755); err != nil {
+	if err := preparePrivateRuntimeDir(baseDir); err != nil {
 		return "", err
 	}
 	outbounds = sanitizeXrayOutbounds(outbounds)
@@ -84,7 +83,7 @@ func (m *XrayManager) buildRuntimeConfigWithRoute(key string, outbounds []interf
 	if err != nil {
 		return "", err
 	}
-	if err := os.WriteFile(cfgPath, data, 0o644); err != nil {
+	if err := writePrivateRuntimeConfig(cfgPath, data); err != nil {
 		return "", err
 	}
 	return cfgPath, nil

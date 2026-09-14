@@ -6,13 +6,8 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"strconv"
 	"strings"
 	"time"
-
-	"github.com/metacubex/mihomo/adapter"
-	"github.com/metacubex/mihomo/common/utils"
-	C "github.com/metacubex/mihomo/constant"
 
 	"ant-chrome/backend/internal/config"
 	"ant-chrome/backend/internal/logger"
@@ -470,48 +465,4 @@ func speedTestStatusOKForTarget(statusCode int, expected []int) bool {
 		return false
 	}
 	return isSpeedTestSuccessStatus(statusCode)
-}
-
-func mihomoURLTest(proxyId string, proxyInstance C.Proxy, testURL string, cfg *SpeedTestConfig) TestResult {
-	timeout := DefaultSpeedTestConfig.Timeout
-	if cfg != nil && cfg.Timeout > 0 {
-		timeout = cfg.Timeout
-	}
-
-	expectedStatus, err := speedTestExpectedStatus(cfg)
-	if err != nil {
-		return TestResult{ProxyId: proxyId, Ok: false, Engine: "mihomo", Error: err.Error()}
-	}
-
-	adapter.UnifiedDelay.Store(true)
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-
-	delay, err := proxyInstance.URLTest(ctx, testURL, expectedStatus)
-	latency := int64(delay)
-	if ctx.Err() != nil {
-		return TestResult{ProxyId: proxyId, Ok: false, LatencyMs: latency, Engine: "mihomo", Error: "测速超时"}
-	}
-	if err != nil || delay == 0 {
-		if err != nil {
-			return TestResult{ProxyId: proxyId, Ok: false, LatencyMs: latency, Engine: "mihomo", Error: err.Error()}
-		}
-		return TestResult{ProxyId: proxyId, Ok: false, LatencyMs: latency, Engine: "mihomo", Error: "mihomo 延迟测试无结果"}
-	}
-
-	return TestResult{ProxyId: proxyId, Ok: true, LatencyMs: latency, Engine: "mihomo"}
-}
-
-func speedTestExpectedStatus(cfg *SpeedTestConfig) (utils.IntRanges[uint16], error) {
-	if cfg == nil || len(cfg.ExpectedStatus) == 0 {
-		return nil, nil
-	}
-	items := make([]string, 0, len(cfg.ExpectedStatus))
-	for _, status := range cfg.ExpectedStatus {
-		if status <= 0 || status > 65535 {
-			return nil, fmt.Errorf("无效测速状态码: %d", status)
-		}
-		items = append(items, strconv.Itoa(status))
-	}
-	return utils.NewUnsignedRangesFromList[uint16](items)
 }

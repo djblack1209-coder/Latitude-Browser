@@ -69,27 +69,24 @@ function normalizeEndpointCandidate(value) {
 }
 
 function buildConnectEndpoints(payload, session) {
-  const candidates = [];
-  const seen = new Set();
-
-  const pushCandidate = (value) => {
-    const endpoint = normalizeEndpointCandidate(value);
-    if (!endpoint || seen.has(endpoint)) {
-      return;
-    }
-    seen.add(endpoint);
-    candidates.push(endpoint);
-  };
-
-  pushCandidate(session && session.cdpUrl);
-
-  const debugPort = Number(session && session.debugPort);
-  if (Number.isFinite(debugPort) && debugPort > 0) {
-    pushCandidate(`http://127.0.0.1:${Math.round(debugPort)}`);
+  const baseValue = normalizeEndpointCandidate(payload && payload.launchBaseUrl);
+  if (!baseValue) throw new Error('controlled launch endpoint is required');
+  const base = new URL(baseValue);
+  if (!['http:', 'https:'].includes(base.protocol) || base.username || base.password || base.search || base.hash) {
+    throw new Error('invalid controlled launch endpoint');
   }
-
-  pushCandidate(payload && payload.launchBaseUrl);
-  return candidates;
+  const candidate = String((session && session.cdpUrl) || '').trim();
+  if (!candidate) return [baseValue];
+  const normalized = normalizeEndpointCandidate(candidate);
+  if (!normalized) throw new Error('invalid controlled CDP endpoint');
+  const target = new URL(normalized);
+  const targetProtocol = target.protocol.replace('ws:', 'http:').replace('wss:', 'https:');
+  const basePort = base.port || (base.protocol === 'https:' ? '443' : '80');
+  const targetPort = target.port || (targetProtocol === 'https:' ? '443' : '80');
+  if (targetProtocol !== base.protocol || target.hostname !== base.hostname || targetPort !== basePort || target.username || target.password || target.search || target.hash) {
+    throw new Error('CDP endpoint must use the controlled launch origin');
+  }
+  return [normalized];
 }
 
 function normalizePathUnderRoot(rootDir, targetName) {

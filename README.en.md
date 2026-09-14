@@ -26,32 +26,35 @@ Profile separation is not a security sandbox or a guarantee of anonymity. Automa
 
 ## Explore the interface
 
-Requires Node.js 22 and npm. Use this in an environment where you have permission to access and use the source:
+Requires Node.js 22 and npm. Read the [license scope](LICENSE-SCOPE.md) first:
 
 ```bash
 git clone --depth 1 https://github.com/djblack1209-coder/Latitude-Browser.git
 cd Latitude-Browser/frontend
 npm ci
-npm run dev:raw
+npm run demo
 ```
 
-Open the local URL printed in the terminal, normally `http://127.0.0.1:5218`. The browser preview uses demonstration state; desktop processes, actual proxy operations, and local file operations require the Wails runtime. Pinned proxy binaries make the initial clone relatively large.
+Open the local URL printed in the terminal, normally `http://127.0.0.1:5218`. `demo` explicitly enables development-only demonstration state with a visible notice. Normal startup and production builds stop business operations when the desktop bridge is unavailable; desktop processes, actual proxy operations, and local file operations require the Wails runtime. Pinned proxy binaries make the initial clone relatively large.
 
 From the repository root:
 
 ```bash
 npm --prefix frontend run build:clean
-go test ./backend/...
+npm --prefix frontend test
+go test ./...
 python3 tools/check-showcase.py
 ```
 
-CI uses Go 1.26.x. Desktop development requires Wails v2.12.0 and [platform-specific native dependencies](https://wails.io/docs/gettingstarted/installation). See the [macOS](publish/mac/README.md) and [Linux](publish/linux/README.md) build guides; Windows uses `bat\dev.bat`. The formal macOS installation path is `/Applications/Latitude Browser.app`.
+The Go toolchain is pinned to 1.26.8 in `go.mod`; CI uses that version. Desktop development requires Wails v2.12.0 and [platform-specific native dependencies](https://wails.io/docs/gettingstarted/installation). See the [macOS](publish/mac/README.md) and [Linux](publish/linux/README.md) build guides; Windows uses `bat\dev.bat`. The formal macOS installation path is `/Applications/Latitude Browser.app`.
 
 **There is no downloadable Release from this repository yet.** Platform build scripts do not establish that every platform has been tested. Signing, notarization, runtime distribution, and cross-platform verification remain release work; see the [Roadmap](ROADMAP.md).
 
 ## Read the architecture
 
 The React/TypeScript frontend calls a Go application through Wails bindings. The backend coordinates profile storage, browser processes, proxy bridges, and local scripts. A Chromium process and its proxy runtime remain separate processes from the desktop shell.
+
+The [backend hardening notes](docs/showcase/HARDENING.md) connect persistence, authenticated API/CDP, verified downloads, and process lifecycle changes to regression tests.
 
 Start with the [engineering guide](docs/showcase/ENGINEERING.md), [connector contract](docs/proxy-connector-stacks.md), and [five-minute demo](docs/showcase/DEMO.md).
 
@@ -63,4 +66,6 @@ Reproducible bug reports and concrete workflow feedback are welcome. Read [CONTR
 
 Thanks to [Ant-Browser](https://github.com/black-ant/Ant-Browser) for the application foundation, and to [fingerprint-chromium](https://github.com/adryfish/fingerprint-chromium), [Wails](https://github.com/wailsapp/wails), [Xray-core](https://github.com/XTLS/Xray-core), [sing-box](https://github.com/SagerNet/sing-box), and [Mihomo](https://github.com/MetaCubeX/mihomo).
 
-The upstream repository still had no standalone LICENSE when checked on September 14, 2026. No project-wide MIT, Apache, or equivalent license is granted here. Visibility does not grant redistribution or commercial-use rights. See the [source record](docs/plan/source-migration-and-license.md) and [third-party notices](third_party/NOTICE.md); authorization and distribution obligations remain to be resolved.
+Maintainer-owned original contributions use [PolyForm Noncommercial 1.0.0](LICENSE): **free for noncommercial use; commercial use is not licensed**. This is source-available software, not OSI-defined open source. Read [LICENSE-SCOPE](LICENSE-SCOPE.md) for the exact scope.
+
+Ant-Browser still has no standalone upstream LICENSE. The maintainer cannot grant rights owned by upstream authors. Third-party components, including Xray, sing-box, and Mihomo, retain their own licenses and rights; the noncommercial policy does not relicense them. See the [source record](docs/plan/source-migration-and-license.md) and [third-party notices](third_party/NOTICE.md).

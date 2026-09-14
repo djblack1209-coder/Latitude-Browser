@@ -1,6 +1,6 @@
 # Contributing to Latitude Browser
 
-感谢你帮助改进 Latitude Browser。请先阅读 README 中的来源与许可状态；提交 PR 不会替上游代码建立新的许可证。
+感谢你帮助改进 Latitude Browser。请先阅读 [LICENSE-SCOPE](LICENSE-SCOPE.md)。提交原创贡献时，请确认你有权按本仓库的 PolyForm Noncommercial 1.0.0 提供该贡献；第三方代码必须注明来源和原有许可证。提交 PR 不会替上游代码建立新的授权。
 
 ## 提交问题
 
@@ -17,11 +17,12 @@
 ```bash
 npm --prefix frontend ci
 npm --prefix frontend run build:clean
-go test ./backend/...
+npm --prefix frontend test
+go test ./...
 python3 tools/check-showcase.py
 ```
 
-CI 使用 Node.js 22 与 Go 1.26.x。更改代理栈时，阅读 [连接栈规则](docs/proxy-connector-stacks.md)，为相关协议、失败和清理路径运行针对性测试。构建成功不代表真实代理出口或已安装桌面程序验证成功。
+CI 使用 Node.js 22 与 `go.mod` 固定的 Go 版本，并执行 Go race、前端桥接回归、运行时完整性和本地进程测试。完整命令见[后端修复说明](docs/showcase/HARDENING.md)。更改代理栈时，阅读 [连接栈规则](docs/proxy-connector-stacks.md)，为相关协议、失败和清理路径运行针对性测试。构建成功不代表真实代理出口或已安装桌面程序验证成功。
 
 ## Pull Request
 

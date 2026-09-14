@@ -39,6 +39,11 @@ func (a *App) AutomationScriptGet(scriptID string) (*automation.ScriptRecord, er
 }
 
 func (a *App) AutomationScriptSave(input automation.ScriptRecord) (*automation.ScriptRecord, error) {
+	releaseActivity, activityErr := a.dataActivity.begin()
+	if activityErr != nil {
+		return nil, activityErr
+	}
+	defer releaseActivity()
 	record, err := a.automationScriptStore().Save(a.enrichAutomationScriptRecord(input))
 	if err != nil {
 		return nil, err
@@ -47,6 +52,11 @@ func (a *App) AutomationScriptSave(input automation.ScriptRecord) (*automation.S
 }
 
 func (a *App) AutomationScriptDelete(scriptID string) error {
+	releaseActivity, activityErr := a.dataActivity.begin()
+	if activityErr != nil {
+		return activityErr
+	}
+	defer releaseActivity()
 	return a.automationScriptStore().Delete(scriptID)
 }
 

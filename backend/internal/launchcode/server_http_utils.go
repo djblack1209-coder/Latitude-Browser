@@ -21,8 +21,45 @@ func (s *LaunchServer) localhostMiddleware(next http.Handler) http.Handler {
 			})
 			return
 		}
+		if !s.allowedControlHost(r.Host) || !s.allowedControlOrigin(r.Header.Get("Origin")) {
+			writeJSON(w, http.StatusForbidden, map[string]interface{}{"ok": false, "error": "forbidden: invalid local Host or Origin"})
+			return
+		}
 		next.ServeHTTP(w, r)
 	})
+}
+
+func (s *LaunchServer) allowedControlHost(authority string) bool {
+	u, err := url.Parse("http://" + authority)
+	if err != nil || u.User != nil || u.Host != authority || u.Path != "" || u.RawQuery != "" || u.Fragment != "" {
+		return false
+	}
+	host := strings.ToLower(u.Hostname())
+	if host != "localhost" && host != "127.0.0.1" && host != "::1" {
+		return false
+	}
+	port := u.Port()
+	actual := s.Port()
+	if actual > 0 {
+		if port == "" {
+			return actual == 80
+		}
+		return port == fmt.Sprint(actual)
+	}
+	// Test handlers have no listener port. Production always sets the port
+	// before serving, and therefore uses the exact comparison above.
+	return true
+}
+
+func (s *LaunchServer) allowedControlOrigin(origin string) bool {
+	if origin == "" {
+		return true
+	}
+	u, err := url.Parse(origin)
+	if err != nil || u.Scheme != "http" || u.User != nil || u.Path != "" || u.RawQuery != "" || u.Fragment != "" {
+		return false
+	}
+	return s.allowedControlHost(u.Host)
 }
 
 // handleCDPProxy 将统一端口上的非 /api 请求转发到当前活动实例的 CDP 端口。
@@ -45,6 +82,17 @@ func (s *LaunchServer) handleCDPProxy(w http.ResponseWriter, r *http.Request) {
 	}
 
 	proxy := httputil.NewSingleHostReverseProxy(target)
+	director := proxy.Director
+	proxy.Director = func(req *http.Request) {
+		director(req)
+		req.Host = target.Host
+		if isCDPDiscoveryPath(r.URL.Path) {
+			req.Header.Del("Accept-Encoding")
+		}
+	}
+	if isCDPDiscoveryPath(r.URL.Path) {
+		proxy.ModifyResponse = func(resp *http.Response) error { return rewriteCDPDiscovery(resp, r.Host, target.Host) }
+	}
 	proxy.ErrorHandler = func(w http.ResponseWriter, _ *http.Request, proxyErr error) {
 		http.Error(w, fmt.Sprintf("cdp proxy error: %v", proxyErr), http.StatusBadGateway)
 	}

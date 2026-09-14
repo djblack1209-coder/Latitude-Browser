@@ -24,7 +24,11 @@ func (a *App) startup(ctx context.Context) {
 		return
 	}
 
-	cfg := a.startupLoadConfig()
+	cfg, err := a.startupLoadConfig()
+	if err != nil {
+		runtime.LogFatal(ctx, fmt.Sprintf("配置无效，启动已停止: %v", err))
+		return
+	}
 	a.config = cfg
 	a.applyRuntimeConfig(cfg.Runtime)
 
@@ -35,36 +39,38 @@ func (a *App) startup(ctx context.Context) {
 		log.Error("创建 data 目录失败", logger.F("error", err))
 	}
 
-	a.ensureDefaultCores()
 	a.startupInitInterceptor(log, cfg)
-
-	db, err := a.startupInitDatabase(cfg)
-	if err != nil {
+	if err := a.startupWithDatabase(cfg, func(db *database.DB) {
+		a.ensureDefaultCores()
+		a.startupInitManagers(cfg, db)
+		a.startupInitLaunchCode(log)
+		a.startupInitLaunchServer(log)
+		a.startupInitAutomation()
+		a.startupInitBridgeHooks()
+		a.startupInitSpeedScheduler()
+	}); err != nil {
 		log.Error("初始化数据库失败", logger.F("error", err))
 		runtime.LogFatal(ctx, fmt.Sprintf("初始化数据库失败: %v", err))
 		return
 	}
-	a.db = db
-	if err := db.Migrate(); err != nil {
-		log.Error("数据库迁移失败", logger.F("error", err))
-	}
-
-	a.startupInitManagers(cfg, db)
-	a.startupInitLaunchCode(log)
-	a.startupInitLaunchServer(log)
-	a.startupInitAutomation()
-	a.startupInitBridgeHooks()
-	a.startupInitSpeedScheduler()
 
 	log.Info("应用启动成功")
 }
 
-func (a *App) startupLoadConfig() *config.Config {
-	cfg, err := LoadConfig(a.resolveAppPath("config.yaml"))
+// startupWithDatabase is the only gate to normal service initialization.
+// Failed opening/migration never publishes DB or invokes any consumer.
+func (a *App) startupWithDatabase(cfg *config.Config, initialize func(*database.DB)) error {
+	db, err := a.startupInitDatabase(cfg)
 	if err != nil {
-		return config.DefaultConfig()
+		return err
 	}
-	return cfg
+	a.db = db
+	initialize(db)
+	return nil
+}
+
+func (a *App) startupLoadConfig() (*config.Config, error) {
+	return LoadConfig(a.resolveAppPath("config.yaml"))
 }
 
 func (a *App) startupInitLogger(ctx context.Context, cfg *config.Config) *logger.Logger {
@@ -116,7 +122,15 @@ func (a *App) startupInitInterceptor(log *logger.Logger, cfg *config.Config) {
 }
 
 func (a *App) startupInitDatabase(cfg *config.Config) (*database.DB, error) {
-	return database.NewDB(a.resolveAppPath(cfg.Database.SQLite.Path))
+	db, err := database.NewDB(a.resolveAppPath(cfg.Database.SQLite.Path))
+	if err != nil {
+		return nil, err
+	}
+	if err := db.Migrate(); err != nil {
+		_ = db.Close()
+		return nil, fmt.Errorf("数据库迁移失败，已停止启动并保留原数据库: %w", err)
+	}
+	return db, nil
 }
 
 func (a *App) startupInitManagers(cfg *config.Config, db *database.DB) {
@@ -216,5 +230,6 @@ func (a *App) startupInitSpeedScheduler() {
 		browser.DefaultProxySpeedInterval,
 		browser.DefaultProxySpeedConcurrency,
 	)
+	a.speedScheduler.BeginActivity = a.dataActivity.begin
 	a.speedScheduler.Start()
 }

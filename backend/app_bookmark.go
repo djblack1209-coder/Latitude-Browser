@@ -57,6 +57,11 @@ func (a *App) BookmarkList() []BrowserBookmark {
 
 // BookmarkSave 保存默认书签列表（优先 SQLite，降级 config.yaml）
 func (a *App) BookmarkSave(items []BrowserBookmark) error {
+	releaseActivity, activityErr := a.dataActivity.begin()
+	if activityErr != nil {
+		return activityErr
+	}
+	defer releaseActivity()
 	log := logger.New("Bookmark")
 	valid := make([]BrowserBookmark, 0, len(items))
 	for _, item := range items {
@@ -154,6 +159,11 @@ func normalizeBookmarkList(items []BrowserBookmark) []BrowserBookmark {
 
 // BookmarkSyncToProfiles 将当前默认书签增量同步到已有未运行实例。
 func (a *App) BookmarkSyncToProfiles() BookmarkSyncResult {
+	releaseActivity, activityErr := a.dataActivity.begin()
+	if activityErr != nil {
+		return BookmarkSyncResult{Failed: 1, FailedList: []string{activityErr.Error()}}
+	}
+	defer releaseActivity()
 	result := BookmarkSyncResult{}
 	log := logger.New("Bookmark")
 	bookmarks := a.BookmarkList()

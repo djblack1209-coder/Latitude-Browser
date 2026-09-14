@@ -10,19 +10,21 @@ import (
 
 // ListCores 获取所有内核配置
 func (m *Manager) ListCores() []Core {
+	m.coreStoreMu.RLock()
+	defer m.coreStoreMu.RUnlock()
 	if m.CoreDAO != nil {
 		cores, err := m.CoreDAO.List()
 		if err == nil {
-			// 同步到内存 config，供其他逻辑使用
-			m.Config.Browser.Cores = cores
 			return cores
 		}
 	}
-	return m.Config.Browser.Cores
+	return append([]Core(nil), m.Config.Browser.Cores...)
 }
 
 // SaveCore 保存内核配置（新增或更新）
 func (m *Manager) SaveCore(input CoreInput) error {
+	m.coreStoreMu.Lock()
+	defer m.coreStoreMu.Unlock()
 	log := logger.New("Browser")
 	coreId := strings.TrimSpace(input.CoreId)
 	coreName := strings.TrimSpace(input.CoreName)
@@ -39,12 +41,6 @@ func (m *Manager) SaveCore(input CoreInput) error {
 		if coreId == "" {
 			coreId = uuid.NewString()
 		}
-		if input.IsDefault {
-			if err := m.CoreDAO.SetDefault(""); err != nil {
-				// SetDefault 空串只清除，忽略错误
-				_ = err
-			}
-		}
 		core := Core{CoreId: coreId, CoreName: coreName, CorePath: corePath, IsDefault: input.IsDefault}
 		if err := m.CoreDAO.Upsert(core); err != nil {
 			return err
@@ -55,20 +51,27 @@ func (m *Manager) SaveCore(input CoreInput) error {
 		return nil
 	}
 
-	// 降级：写 config.yaml
+	// Persist a candidate catalog before publishing it to readers.
+	candidate := *m.Config
+	candidate.Browser.Cores = append([]Core(nil), m.Config.Browser.Cores...)
+	clearDefault := func() {
+		for i := range candidate.Browser.Cores {
+			candidate.Browser.Cores[i].IsDefault = false
+		}
+	}
 	existingIndex := -1
-	for i, core := range m.Config.Browser.Cores {
+	for i, core := range candidate.Browser.Cores {
 		if coreId != "" && strings.EqualFold(core.CoreId, coreId) {
 			existingIndex = i
 			break
 		}
 	}
 	if existingIndex >= 0 {
-		m.Config.Browser.Cores[existingIndex].CoreName = coreName
-		m.Config.Browser.Cores[existingIndex].CorePath = corePath
+		candidate.Browser.Cores[existingIndex].CoreName = coreName
+		candidate.Browser.Cores[existingIndex].CorePath = corePath
 		if input.IsDefault {
-			m.clearDefaultCore()
-			m.Config.Browser.Cores[existingIndex].IsDefault = true
+			clearDefault()
+			candidate.Browser.Cores[existingIndex].IsDefault = true
 		}
 	} else {
 		if coreId == "" {
@@ -78,19 +81,25 @@ func (m *Manager) SaveCore(input CoreInput) error {
 			CoreId:    coreId,
 			CoreName:  coreName,
 			CorePath:  corePath,
-			IsDefault: input.IsDefault || len(m.Config.Browser.Cores) == 0,
+			IsDefault: input.IsDefault || len(candidate.Browser.Cores) == 0,
 		}
 		if newCore.IsDefault {
-			m.clearDefaultCore()
+			clearDefault()
 		}
-		m.Config.Browser.Cores = append(m.Config.Browser.Cores, newCore)
+		candidate.Browser.Cores = append(candidate.Browser.Cores, newCore)
 	}
 	log.Info("内核配置保存（文件）", logger.F("core_id", coreId))
-	return m.Config.Save(m.ResolveRelativePath("config.yaml"))
+	if err := candidate.Save(m.ResolveRelativePath("config.yaml")); err != nil {
+		return err
+	}
+	m.Config.Browser.Cores = candidate.Browser.Cores
+	return nil
 }
 
 // DeleteCore 删除内核配置
 func (m *Manager) DeleteCore(coreId string) error {
+	m.coreStoreMu.Lock()
+	defer m.coreStoreMu.Unlock()
 	log := logger.New("Browser")
 	coreId = strings.TrimSpace(coreId)
 	if coreId == "" {
@@ -128,6 +137,8 @@ func (m *Manager) DeleteCore(coreId string) error {
 
 // SetDefaultCore 设置默认内核
 func (m *Manager) SetDefaultCore(coreId string) error {
+	m.coreStoreMu.Lock()
+	defer m.coreStoreMu.Unlock()
 	log := logger.New("Browser")
 	coreId = strings.TrimSpace(coreId)
 	if coreId == "" {

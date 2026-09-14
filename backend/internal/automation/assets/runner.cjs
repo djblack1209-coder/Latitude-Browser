@@ -140,6 +140,7 @@ async function runScriptTask(payload, chromium) {
   };
 
   const launchHeaders = {};
+  if (Boolean(payload.launchAuthHeader) !== Boolean(payload.launchAuthValue)) throw new Error("incomplete control authentication configuration");
   if (payload.launchAuthHeader && payload.launchAuthValue) {
     launchHeaders[payload.launchAuthHeader] = payload.launchAuthValue;
   }
@@ -189,6 +190,7 @@ async function runScriptTask(payload, chromium) {
 
         try {
           const browser = await chromium.connectOverCDP(endpoint, {
+            headers: { ...launchHeaders },
             timeout: Math.max(1000, Math.min(remaining, connectTimeout)),
           });
           connectedBrowsers.add(browser);
@@ -205,6 +207,7 @@ async function runScriptTask(payload, chromium) {
           };
         } catch (error) {
           lastError = error;
+          if (/\b(?:401|403)\b/.test(String(error && error.message))) throw new Error("CDP authentication rejected");
         }
       }
 

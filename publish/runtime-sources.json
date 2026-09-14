@@ -61,12 +61,13 @@
       "id": "xray-darwin-arm64",
       "target": "darwin-arm64",
       "runtime": "xray",
-      "version": "26.2.6",
+      "version": "26.3.27",
       "archiveType": "zip",
-      "url": "https://github.com/XTLS/Xray-core/releases/download/v26.2.6/Xray-macos-arm64-v8a.zip",
-      "archiveSha256": "adec4685084a7481c8acad93bb2024abe6db46535aec3a7bd6903d462961861d",
+      "url": "https://github.com/XTLS/Xray-core/releases/download/v26.3.27/Xray-macos-arm64-v8a.zip",
+      "archiveSha256": "2e93a67e8aa1936ecefb307e120830fcbd4c643ab9b1c46a2d0838d5f8409eaf",
       "archiveBinaryPath": "xray",
-      "destPath": "bin/darwin-arm64/xray"
+      "destPath": "bin/darwin-arm64/xray",
+      "archiveSize": 19674387
     },
     {
       "id": "sing-box-darwin-amd64",
@@ -83,12 +84,25 @@
       "id": "sing-box-darwin-arm64",
       "target": "darwin-arm64",
       "runtime": "sing-box",
-      "version": "1.12.17",
+      "version": "1.14.0",
       "archiveType": "tar.gz",
-      "url": "https://github.com/SagerNet/sing-box/releases/download/v1.12.17/sing-box-1.12.17-darwin-arm64.tar.gz",
-      "archiveSha256": "6dd10bb5bb100c3e9db17b0b88abd2eff00b9c1daea29fffda9142b67f169d9d",
-      "archiveBinaryPath": "sing-box-1.12.17-darwin-arm64/sing-box",
-      "destPath": "bin/darwin-arm64/sing-box"
+      "url": "https://github.com/SagerNet/sing-box/releases/download/v1.14.0/sing-box-1.14.0-darwin-arm64.tar.gz",
+      "archiveSha256": "a150c94012ff768b7261939cd236b9c8554127f45137230295d23a5660225cc9",
+      "archiveBinaryPath": "sing-box-1.14.0-darwin-arm64/sing-box",
+      "destPath": "bin/darwin-arm64/sing-box",
+      "archiveSize": 29123654
+    },
+    {
+      "id": "mihomo-darwin-arm64",
+      "target": "darwin-arm64",
+      "runtime": "mihomo",
+      "version": "1.19.30",
+      "archiveType": "gz",
+      "url": "https://github.com/MetaCubeX/mihomo/releases/download/v1.19.30/mihomo-darwin-arm64-v1.19.30.gz",
+      "archiveSha256": "2c7f3a7904fa1cee291e124123e630e7b1ebd13765dd9bf26c0a28432004d9f4",
+      "archiveSize": 16805556,
+      "archiveBinaryPath": "mihomo",
+      "destPath": "bin/darwin-arm64/mihomo"
     }
   ]
 }

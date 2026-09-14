@@ -93,37 +93,35 @@ func buildProxyHTTPClient(
 			log.Warn("Mihomo 管理器未初始化", logger.F("proxy_id", proxyId))
 			return nil, fmt.Errorf("Mihomo 管理器未初始化")
 		}
-		proxyAddr, err := clashMgr.EnsureNodeBridge(src, proxies, proxyId)
-		if err != nil {
-			log.Warn("Mihomo 桥接启动失败", logger.F("proxy_id", proxyId), logger.F("error", err.Error()))
-			return nil, fmt.Errorf("Mihomo 桥接启动失败: %w", err)
-		}
-		log.Info("Mihomo 桥接已就绪", logger.F("proxy_id", proxyId), logger.F("proxy_addr", proxyAddr))
-		return buildHTTPProxyClient(proxyAddr, timeout)
+		return &http.Client{Timeout: timeout, Transport: &bridgeHTTPTransport{
+			acquire: func() (string, string, error) { return clashMgr.AcquireNodeBridge(src, proxies, proxyId) },
+			release: clashMgr.ReleaseNodeBridge,
+			build:   func(endpoint string) (*http.Client, error) { return buildHTTPProxyClient(endpoint, timeout) },
+		}}, nil
 	case ProxyKernelSingBox:
 		if singboxMgr == nil {
 			log.Warn("sing-box 管理器未初始化", logger.F("proxy_id", proxyId))
 			return nil, fmt.Errorf("sing-box 管理器未初始化")
 		}
-		socks5Addr, err := singboxMgr.EnsureBridge(src, proxies, proxyId)
-		if err != nil {
-			log.Warn("sing-box 桥接启动失败", logger.F("proxy_id", proxyId), logger.F("error", err.Error()))
-			return nil, fmt.Errorf("sing-box 桥接启动失败: %w", err)
-		}
-		log.Info("sing-box 桥接已就绪", logger.F("proxy_id", proxyId), logger.F("socks5_addr", socks5Addr))
-		return buildSocks5HTTPClient(strings.TrimPrefix(socks5Addr, "socks5://"), timeout)
+		return &http.Client{Timeout: timeout, Transport: &bridgeHTTPTransport{
+			acquire: func() (string, string, error) { return singboxMgr.AcquireBridge(src, proxies, proxyId) },
+			release: singboxMgr.ReleaseBridge,
+			build: func(endpoint string) (*http.Client, error) {
+				return buildSocks5HTTPClient(strings.TrimPrefix(endpoint, "socks5://"), timeout)
+			},
+		}}, nil
 	case ProxyKernelXray:
 		if xrayMgr == nil {
 			log.Warn("xray 管理器未初始化", logger.F("proxy_id", proxyId))
 			return nil, fmt.Errorf("xray 管理器未初始化")
 		}
-		socks5Addr, err := xrayMgr.EnsureBridge(src, proxies, proxyId)
-		if err != nil {
-			log.Warn("xray 桥接启动失败", logger.F("proxy_id", proxyId), logger.F("error", err.Error()))
-			return nil, fmt.Errorf("xray 桥接启动失败: %w", err)
-		}
-		log.Info("xray 桥接已就绪", logger.F("proxy_id", proxyId), logger.F("socks5_addr", socks5Addr))
-		return buildSocks5HTTPClient(strings.TrimPrefix(socks5Addr, "socks5://"), timeout)
+		return &http.Client{Timeout: timeout, Transport: &bridgeHTTPTransport{
+			acquire: func() (string, string, error) { return xrayMgr.AcquireBridge(src, proxies, proxyId) },
+			release: xrayMgr.ReleaseBridge,
+			build: func(endpoint string) (*http.Client, error) {
+				return buildSocks5HTTPClient(strings.TrimPrefix(endpoint, "socks5://"), timeout)
+			},
+		}}, nil
 	default:
 		return nil, fmt.Errorf("无法为协议 %s 选择代理内核", resolution.Protocol)
 	}
