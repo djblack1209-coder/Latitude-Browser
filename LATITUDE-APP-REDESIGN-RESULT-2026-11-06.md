@@ -5,7 +5,7 @@
 - App：2.1.0 Fieldwork 已构建并安装到 `/Applications/Latitude Browser.app`，Bundle ID `com.latitude.browser.desktop`。最终包已实际重新启动，显示新界面与 v2.1.0，并直接退出。
 - 已验证：中英文、主要页面、实际 Chrome 157 浏览器流程、真实标签页读回、App 内打开地址、快捷启动、无确认退出及受管进程清理。
 - 待办：四份完整设计提示词和现有 Chrome 148 的 CDP 就绪验收，详见下文。未把待办写为通过。
-- 仓库：双语首页、原生截图、设计说明、工程/演示导览与更新日志已更新。提交/推送记录将在实际执行后补齐。
+- 仓库：双语首页、原生截图、设计说明、工程/演示导览与更新日志已更新。已提交本地；GitHub 简介/topics 已更新，README/源码推送遇到 HTTP 408，远端 main 未更新。
 
 ## 1. 实际取得的参考
 
@@ -90,14 +90,22 @@ Fieldwork：黑色画布、荧光绿主要操作、淡紫定位图、清晰的�
 
 GitHub 仓库简介已更新为 Fieldwork 工作区说明，新增 macos、browser-management、local-automation topics；default 分支读回为 main。没有改动网站主页或部署。
 
-提交与推送：待实际执行后补齐。
+提交与推送：
+
+- 本地发布提交：`bf7cc17ea4e7bc07e9d6a801fb59b33cc4b69eb4`，`feat: ship Fieldwork UI and Latitude Browser 2.1`，326 个文件；包含必要的既有 2.0 基础改动与本轮重设计/展示更新。
+- 执行 `git push user HEAD:main`，退出码 1：`RPC failed; HTTP 408 curl 22`，随后为 sideband 连接中断。客户端尾部的 `Everything up-to-date` 未作为成功证据。
+- 直接读回远端 main：仍为 `ee4a162f1cb9640df0ace2a1e31694ed809b145e`，未包含本轮发布提交；本次更新没有触发远端新 CI，不能把旧 CI 成功算成本轮通过。
+- 按任务文件“push is blocked, stop that step and record it”的要求停止推送；未更换 remote、猜测其他分支、强制推送或重写历史。所有源码、截图与结果保留在本地提交中，供后续重试。
+- 本结果的验证/清理/阻断说明另以本地 docs 提交保存，不再次尝试已受阻的推送。
 
 ## 6. 待办
 
 1. 完整参考提示词：登录门槛未解除；用户已授权按公开预览继续，本轮未获得原词。
 2. Chrome 148：现有 148.0.7778.215 核心在 QA 中拉起进程但 CDP 一直未就绪。保留默认选择，157 仍为可选，不自动回退或跨连接栈。
-3. Developer ID、公证、GitHub Release 与其他平台实机验证不在本轮已完成记录中。
+3. GitHub 源码推送：HTTP 408 导致请求失败，远端 main 保持旧提交；已按任务约定停止该步骤。
+
+范围说明：Developer ID、公证、另建 GitHub Release 与其他平台实机验证不是本轮已完成事项。
 
 ## 7. 资源与恢复
 
-已复用前端依赖、Wails CLI、已有内核与代理运行时。仅关闭本轮 App、浏览器、见证 HTTP 服务和 Vite/自动化页面；其他客户端、连接器与并行任务保留。旧版安装备份 `.local-backup/latitude-2.0.0-before-2.1.0.zip` 已进行 CRC、实际展开、签名及可执行文件/Info.plist 比对，作为回滚基线保留。具体临时文件回收数量在收尾后补齐。
+已复用前端依赖、Wails CLI、已有内核与代理运行时。仅关闭本轮 App、浏览器、见证 HTTP 服务和 Vite/自动化页面；其他客户端、连接器与并行任务保留。旧版安装备份 `.local-backup/latitude-2.0.0-before-2.1.0.zip` 已进行 CRC、实际展开、签名及可执行文件/Info.plist 比对，作为回滚基线保留。已回收本轮临时目录中的 718 个常规文件，合计 318,651,762 字节（约 303.9 MiB，逻辑文件大小，不等同于实时磁盘可用空间）；另清理 2 个经 socket/cookie 归属和无活跃引用核验的 Chrome 临时目录，以及 5 个已知自动化浏览器中间产物。保留最终安装包/清单、4 张正式截图、验收输出、已核验的旧版安装与源文件回滚备份。既有备份未证明被覆盖，保留未删。
