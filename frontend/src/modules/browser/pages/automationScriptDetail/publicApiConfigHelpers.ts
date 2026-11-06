@@ -1,3 +1,4 @@
+import { tr } from '../../../../shared/i18n'
 import {
   applyAutomationScriptPublicAPIVariables,
   collectAutomationScriptPublicAPIVariableValues,
@@ -43,14 +44,14 @@ export function validatePublicAPIConfig(
     return "";
   }
   if (!config.path.trim()) {
-    return "已启用对外接口时，Path 不能为空";
+    return tr("browser.pages.automationScriptDetail.publicApiConfigHelpers.validatePublicAPIConfig.9e50f01");
   }
 
   const invalidVariableNames = config.variables
     .filter((variable) => !isAutomationScriptPublicAPIVariableName(variable.name))
     .map((variable) => variable.name);
   if (invalidVariableNames.length) {
-    return `变量名不合法：${invalidVariableNames.join(", ")}`;
+    return tr("browser.pages.automationScriptDetail.publicApiConfigHelpers.validatePublicAPIConfig.0c25042", [invalidVariableNames.join(", ")]);
   }
 
   const resolvedBody = applyAutomationScriptPublicAPIVariables(
@@ -59,13 +60,13 @@ export function validatePublicAPIConfig(
     collectAutomationScriptPublicAPIVariableValues(config),
   );
   if (resolvedBody.missingRequired.length) {
-    return `必填变量缺少默认值：${resolvedBody.missingRequired.join(", ")}`;
+    return tr("browser.components.AutomationScriptPublicApiModal.AutomationScriptPublicApiModal.8744859", [resolvedBody.missingRequired.join(", ")]);
   }
   if (!isJSONObjectText(resolvedBody.bodyText)) {
-    return "替换变量后的请求 Body 必须是 JSON 对象";
+    return tr("browser.components.AutomationScriptPublicApiModal.AutomationScriptPublicApiModal.a948274");
   }
   if (!isJSONText(config.responseBodyText)) {
-    return "响应示例必须是合法 JSON";
+    return tr("browser.pages.automationScriptDetail.publicApiConfigHelpers.validatePublicAPIConfig.c8be9c6");
   }
   return "";
 }

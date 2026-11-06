@@ -1,3 +1,5 @@
+import { getLocale } from '../../../shared/i18n'
+import { tr, useLocale } from '../../../shared/i18n'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Plus, Search, Wifi, X } from 'lucide-react'
@@ -21,7 +23,9 @@ interface ProxyPickerModalProps {
   onProxyTested?: (proxyId: string, result: SpeedResult) => void
 }
 
-export function ProxyPickerModal({ open, currentProxyId, title = '从代理池选择', onSelect, onClose, onProxyListUpdated, onProxyDeleted, onProxyTested }: ProxyPickerModalProps) {
+export function ProxyPickerModal({ open, currentProxyId, title = tr("browser.components.ProxyPickerModal.ProxyPickerModal.4af3fca"), onSelect, onClose, onProxyListUpdated, onProxyDeleted, onProxyTested }: ProxyPickerModalProps) {
+  const uiLocale = useLocale()
+
   const [groups, setGroups] = useState<string[]>([])
   const [allProxies, setAllProxies] = useState<BrowserProxy[]>([])
   const [selectedGroup, setSelectedGroup] = useState<string>(ALL_GROUP)
@@ -119,13 +123,13 @@ export function ProxyPickerModal({ open, currentProxyId, title = '从代理池�
         const [rankB, latencyB, nameB] = getSortTuple(b)
         if (rankA !== rankB) return rankA - rankB
         if (latencyA !== latencyB) return latencyA - latencyB
-        return nameA.localeCompare(nameB, 'zh-CN')
+        return nameA.localeCompare(nameB, getLocale())
       })
       .map(proxy => ({
         proxy,
         displayConfig: formatProxyConfigForDisplay(proxy.proxyConfig),
       }))
-  }, [selectedGroup, search, allProxies, speedMap])
+  }, [selectedGroup, search, allProxies, speedMap, uiLocale])
 
   const groupCounts = useMemo(() => {
     const counts = new Map<string, number>()
@@ -134,7 +138,7 @@ export function ProxyPickerModal({ open, currentProxyId, title = '从代理池�
       counts.set(key, (counts.get(key) || 0) + 1)
     })
     return counts
-  }, [allProxies])
+  }, [allProxies, uiLocale])
 
   const testOne = async (proxyId: string, e: React.MouseEvent) => {
     e.stopPropagation()
@@ -264,7 +268,7 @@ export function ProxyPickerModal({ open, currentProxyId, title = '从代理池�
     if (!editingProxy) return
     const nextName = chainEditMode ? chainEditForm.proxyName.trim() : editName.trim()
     if (!nextName) {
-      toast.error('请输入代理名称')
+      toast.error(tr("browser.components.ProxyPickerModal.ProxyPickerModal.7fe2ac0"))
       return
     }
 
@@ -273,7 +277,7 @@ export function ProxyPickerModal({ open, currentProxyId, title = '从代理池�
       try {
         nextConfig = buildChainProxyConfig(chainEditForm)
       } catch (error: any) {
-        toast.error(error?.message || '链式代理配置无效')
+        toast.error(error?.message || tr("browser.components.ProxyPickerModal.ProxyPickerModal.73c8469"))
         return
       }
     }
@@ -299,10 +303,10 @@ export function ProxyPickerModal({ open, currentProxyId, title = '从代理池�
         const updated = nextProxies.find(item => item.proxyId === currentProxyId)
         if (updated) onSelect(updated)
       }
-      toast.success('代理已更新')
+      toast.success(tr("browser.components.ProxyPickerModal.ProxyPickerModal.0134754"))
       closeEditModal()
     } catch (error: any) {
-      toast.error(error?.message || '保存失败')
+      toast.error(error?.message || tr("browser.components.BrowserSettingsModal.BrowserSettingsModal.40525a7"))
     } finally {
       setSavingEdit(false)
     }
@@ -322,10 +326,10 @@ export function ProxyPickerModal({ open, currentProxyId, title = '从代理池�
       setAllProxies(nextProxies)
       onProxyListUpdated?.(nextProxies)
       onProxyDeleted?.(deleteCandidate.proxyId, nextProxies)
-      toast.success('代理已删除')
+      toast.success(tr("browser.components.ProxyPickerModal.ProxyPickerModal.fafd8a6"))
       setDeleteCandidate(null)
     } catch (error: any) {
-      toast.error(error?.message || '删除失败')
+      toast.error(error?.message || tr("browser.components.ProxyPickerModal.ProxyPickerModal.72250c5"))
     }
   }
 
@@ -333,7 +337,7 @@ export function ProxyPickerModal({ open, currentProxyId, title = '从代理池�
 
   return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center" onClick={onClose}>
-      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
+      <div className="absolute inset-0 bg-black/50 " />
       <div
         className="relative bg-[var(--color-bg-elevated)] border border-[var(--color-border)] rounded-xl shadow-2xl w-[720px] max-h-[580px] flex flex-col"
         onClick={e => e.stopPropagation()}
@@ -347,7 +351,7 @@ export function ProxyPickerModal({ open, currentProxyId, title = '从代理池�
 
         <div className="flex flex-1 min-h-0">
           <div className="w-44 border-r border-[var(--color-border)] flex flex-col py-2 overflow-y-auto shrink-0 bg-[var(--color-bg-muted)]">
-            <GroupItem label="全部" active={selectedGroup === ALL_GROUP} count={allProxies.length} onClick={() => setSelectedGroup(ALL_GROUP)} />
+            <GroupItem label={tr("browser.components.GroupTreeNav.text.778fc8f")} active={selectedGroup === ALL_GROUP} count={allProxies.length} onClick={() => setSelectedGroup(ALL_GROUP)} />
             {groups.map(groupName => (
               <GroupItem
                 key={groupName}
@@ -357,7 +361,7 @@ export function ProxyPickerModal({ open, currentProxyId, title = '从代理池�
                 onClick={() => setSelectedGroup(groupName)}
               />
             ))}
-            {groups.length === 0 && <p className="text-xs text-[var(--color-text-muted)] px-3 py-2">暂无分组</p>}
+            {groups.length === 0 && <p className="text-xs text-[var(--color-text-muted)] px-3 py-2">{tr("browser.components.ProxyPickerModal.text.72d12d4")}</p>}
           </div>
 
           <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
@@ -368,7 +372,7 @@ export function ProxyPickerModal({ open, currentProxyId, title = '从代理池�
                   type="text"
                   value={search}
                   onChange={e => setSearch(e.target.value)}
-                  placeholder="搜索代理名称或配置..."
+                  placeholder={tr("browser.components.ProxyPickerModal.placeholder.f96b8c2")}
                   className="w-full pl-8 pr-3 py-1.5 text-sm bg-[var(--color-bg-input)] border border-[var(--color-border)] rounded-lg text-[var(--color-text-primary)] placeholder-[var(--color-text-muted)] focus:outline-none focus:border-[var(--color-primary)]"
                 />
               </div>
@@ -376,24 +380,20 @@ export function ProxyPickerModal({ open, currentProxyId, title = '从代理池�
                 onClick={() => setImportOpen(true)}
                 className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg border border-[var(--color-border)] text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] hover:border-[var(--color-primary)] transition-colors"
               >
-                <Plus className="w-3.5 h-3.5" />
-                导入代理
-              </button>
+                <Plus className="w-3.5 h-3.5" />{tr("browser.components.ProxyPickerModal.text.3d5c1ee")}</button>
               <button
                 onClick={testAll}
                 disabled={testingIds.size > 0 || displayProxies.length === 0}
                 className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg border border-[var(--color-border)] text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] hover:border-[var(--color-primary)] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
               >
-                <Wifi className="w-3.5 h-3.5" />
-                全部测速
-              </button>
+                <Wifi className="w-3.5 h-3.5" />{tr("browser.components.ProxyPickerModal.text.5413b89")}</button>
             </div>
 
             <div className="flex-1 overflow-y-auto">
               {loading ? (
-                <div className="flex items-center justify-center h-24 text-sm text-[var(--color-text-muted)]">加载中...</div>
+                <div className="flex items-center justify-center h-24 text-sm text-[var(--color-text-muted)]">{tr("ui.components.Table.text.514c33a")}</div>
               ) : displayProxies.length === 0 ? (
-                <div className="flex items-center justify-center h-24 text-sm text-[var(--color-text-muted)]">暂无代理</div>
+                <div className="flex items-center justify-center h-24 text-sm text-[var(--color-text-muted)]">{tr("browser.components.ProxyPickerModal.text.801323a")}</div>
               ) : (
                 displayProxies.map(item => (
                   <ProxyRow
@@ -414,9 +414,7 @@ export function ProxyPickerModal({ open, currentProxyId, title = '从代理池�
           </div>
         </div>
 
-        <div className="px-5 py-3 border-t border-[var(--color-border)] text-xs text-[var(--color-text-muted)]">
-          共 {displayProxies.length} 条，点击行即选中
-        </div>
+        <div className="px-5 py-3 border-t border-[var(--color-border)] text-xs text-[var(--color-text-muted)]">{tr("browser.components.ProxyPickerModal.text.497064b")}{displayProxies.length}{tr("browser.components.ProxyPickerModal.text.050730d")}</div>
       </div>
 
       <ProxyImportModal
@@ -449,10 +447,10 @@ export function ProxyPickerModal({ open, currentProxyId, title = '从代理池�
         open={!!deleteCandidate}
         onClose={() => setDeleteCandidate(null)}
         onConfirm={handleDeleteConfirm}
-        title="删除代理"
-        content={`确认删除代理「${deleteCandidate?.proxyName || ''}」？`}
-        confirmText="确认删除"
-        cancelText="取消"
+        title={tr("browser.components.ProxyPickerModal.rows.ProxyRow.498aa45")}
+        content={tr("browser.components.ProxyPickerModal.ProxyPickerModal.a1256d4", [deleteCandidate?.proxyName || ''])}
+        confirmText={tr("browser.components.ProxyPickerModal.confirmText.3c06abe")}
+        cancelText={tr("App.CloseConfirmModal.4d0b468")}
         danger
       />
     </div>,

@@ -171,7 +171,7 @@ export interface BrowserTab {
   tabId: string
   title: string
   url: string
-  active: boolean
+  active?: boolean
 }
 
 export interface BrowserSettings {
@@ -206,6 +206,7 @@ export interface ProxyCheckSettings {
 
 export interface BrowserCore {
   coreId: string
+  chromeVersion?: string
   coreName: string
   corePath: string
   isDefault: boolean
@@ -324,7 +325,7 @@ export interface ProxyCoreStatusResult {
   goarch: string
   installed: boolean
   configured: boolean
-  active: boolean
+  active?: boolean
   state?: ProxyCoreState
   binaryPath: string
   source: string

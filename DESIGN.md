@@ -1,76 +1,53 @@
-# Latitude Browser design and implementation boundaries
+# Latitude Browser · Fieldwork 2.1
 
-## Product direction
+Fieldwork is a local browser control room. The interface keeps the current instance, its browser core and its network route recognizable as the user moves from a list to configuration, runtime details or automation.
 
-Latitude Browser is a focused desktop operations tool, not a decorative dashboard. The interface uses graphite surfaces, restrained terminal-green signals, thin borders, compact typography, and predictable page actions.
+## Visual system
 
-Core rules:
+The single token source is `backend/internal/uistyle/tokens.css`; the desktop imports it through `frontend/src/shared/theme/tokens.css`, and browser-facing pages use the same semantic colors.
 
-- One page has one primary responsibility and one obvious next action.
-- Operational tables and complex creation forms do not share the same primary surface.
-- Accent color communicates focus, progress, or verified state; it is not ambient decoration.
-- Metrics, routes, latency, progress, security status, and connection success must come from real application data. Unknown values stay unknown.
-- Short, low-risk edits may use a modal or drawer; complex workflows use a dedicated page or wizard.
-- Continuous motion respects `prefers-reduced-motion` and pauses when its code-defined visibility gate is false.
+| Role | Value |
+| --- | --- |
+| Canvas / surface / raised | `#080a09` / `#101311` / `#191d1a` |
+| Main / secondary / muted text | `#edf1e9` / `#adb5aa` / `#889482` |
+| Primary action / identity | Lime `#d2fa69` / lilac `#bcacee` |
+| Success / warning / error | `#8edda4` / `#f3c77b` / `#ff8084` |
+| Borders | `#2a302b`, strong `#3d473e` |
+| Body / metadata | System sans with Chinese fallbacks / local JetBrains Mono |
+| Type | 11 / 12 / 13 / 16 / 26 / 32 px |
+| Controls / surfaces | 6 px / 10 px radius; dialogs 14 px |
+| Main controls / navigation | 36 px / 42 px |
+| Sidebar / titlebar / statusbar | 216 px / 56 px / 28 px |
+| Compact sidebar | 64 px below 1100 px or on user collapse |
 
-The canonical semantic tokens live under `frontend/src/shared/theme/themes/`. Shared Signal UI rules extend them without adding a second styling runtime.
+Lime indicates an action or selection, lilac identifies the workspace, and status colors retain their operational meaning. The dot graticule is a static illustration, not a network topology or security measurement.
 
-## Implemented Signal primitives
+## Layout and components
 
-### `NetworkGlobe`
+- The titlebar gives the current location and quick launch. Native macOS controls retain reserved space.
+- The sidebar separates operational navigation from documentation and settings. A selected item has both shape and color cues.
+- Instances have a visible heading, real counts, a dedicated search/action surface and a table/card switch. Creation stays on its own page; defaults, import, backup and trash retain their existing handlers.
+- Shared headers, panels, tables, buttons, fields, tabs, empty states and dialogs use the same tokens. Settings use a secondary navigation column and bounded forms.
+- Text and state remain readable in Chinese and English. Metadata uses tabular numbers; long paths wrap or truncate without displacing actions.
+- The startup layer uses a small dot field, a short word reveal and one progress line. Keyboard, pointer or wheel input skips it; reduced motion removes its animations. There are no idle particle loops, videos or WebGL scenes in the workspace.
 
-`frontend/src/shared/components/NetworkGlobe.tsx` is a contextual network illustration, not a route map or live topology.
+## Behavior and verification
 
-- It adapts lifecycle ideas from `wayjam/komari-theme-commander` commit `e7191c1a775027f74c2fcff96bc9d71ff4ac7ac2`.
-- It loads pinned `cobe@2.0.1` with dynamic `import('cobe')` and renders through WebGL when available.
-- It contains no marker, arc, node, IP, traffic, or threat data.
-- It stops its loop when paused, inactive, outside the intersection gate, the document is hidden, or reduced motion is requested.
-- It retains a local SVG globe when COBE has not loaded or cannot render.
-- Because COBE v2 uploads its embedded texture asynchronously without a redraw callback, initialization includes one same-camera paint after 200 ms, before revealing the canvas. Inactive/reduced-motion globes do not need a continuing animation loop to display the texture.
-- It makes no remote texture, CDN, IP lookup, or analytics request.
+Native quit starts full managed cleanup without opening a confirmation dialog. A real cleanup failure keeps ownership and offers a nonmodal error; it never bypasses the shutdown gate. The settings-page browser-unload guard applies only to web previews. Navigation away from unsaved settings still retains its existing draft protection.
 
-COBE is a packaged dependency but an optional runtime enhancement: failure to initialize it must not remove the static explanatory illustration.
+A missing fingerprint argument slice is treated as no reusable fingerprint configuration. A top-level rendering boundary provides retry and optional diagnostic details instead of an empty native window; failures are recorded through the existing frontend-operation logger.
 
-### `RadarSpinner`
+The 2026-11-06 pass checked 15 routes in both languages, table/card switching, search, quick launch and desktop/compact widths. Native checks used the canonical installed application, independent QA state and real Chrome 157. See [the result](LATITUDE-APP-REDESIGN-RESULT-2026-11-06.md) for the Chrome 148 limitation and the precise build/install evidence.
 
-`RadarSpinner` is a loading/status primitive adapted from commander `HudSpinner.tsx` at the same verified commit.
+## References and authorship
 
-- API: `size?: 'sm' | 'md' | 'lg'`, `label?: string`, `className?: string`.
-- The root has `role="status"`; its label remains readable to assistive technology.
-- SVG shapes are decorative and hidden from the accessibility tree.
-- Animation changes transform only. Reduced-motion mode disables the rotor/sweep completely.
-- It does not display scanning targets, frame counters, percentages, or other fake telemetry.
+The four exact entries were found at [十两 /news](https://wangshiliang.cn/news). Public preview frames were obtained; copying their complete prompts required login. The owner chose to continue from previews and record the full prompts as pending.
 
-### `AsciiMeter`
+| Reference | Observed visual decision | Adaptation to Latitude |
+| --- | --- | --- |
+| AXON | Particle object with compact peripheral information | One clear workspace, restrained peripheral controls |
+| Particle Self | Quiet shell around a focused identity object | Small lilac identity motif with a calm task surface |
+| ASCII Studio | Monochrome character texture and lime commands | Monospace metadata, lime primary actions, static dot graticule |
+| Cyber Layer | Black stage and explicit structural layers | Layered surfaces and separators; red reserved for errors |
 
-`AsciiMeter` adapts `facl/komari-ascii/src/components/ascii/AsciiProgress.tsx` at commit `d502b45a5797c276849e601e2b601dc1dfe8b8e4`.
-
-- It renders only the caller-provided measurement.
-- Finite values are clamped to 0–100; missing values remain explicitly unknown.
-- The segmented visual is decorative while the root exposes progress semantics.
-- It does not generate random samples or infer completion.
-
-## Source and license boundary
-
-Exact reuse records are maintained in:
-
-- `docs/plan/latitude-signal-ui-sources.md`
-- `third_party/NOTICE.md`
-- `third_party/licenses/`
-
-`seenaburns/dex-ui` commit `04371c6844c027627f32b45f15909f35b6e17a58` is a visual reference only. No dex-ui C++, openFrameworks, OpenGL, mesh, camera, or shader code is part of the Signal components. Its repository license file is BSD-3-Clause; it must not be described as the implementation source for `NetworkGlobe`.
-
-## Network connector boundary
-
-The UI must not merge the two supported connector stacks:
-
-- `browser.default_connector_type=xray`: Xray plus sing-box combination stack.
-- `browser.default_connector_type=mihomo`: independent Mihomo stack.
-
-Startup, tests, connectivity, IP health, warming, and proxy downloads follow the selected stack. Signal visuals do not override or infer connector state.
-
-## Experimental Tor boundary
-
-Latitude Browser does not distribute or automatically download Tor. The experimental runtime uses a user-selected absolute path to a manually trusted executable. Saving the path does not start Tor and does not prove provenance, signature validity, connectivity, leak resistance, or anonymity.
-
-The currently identified official candidate is Expert Bundle 15.0.21 with Tor 0.4.9.11. It is a compiled, multi-component artifact, so bundle notices and source licenses are distinct review surfaces. No Tor binary belongs in the Latitude repository or application package under the current design.
+These are preview-derived observations, not quotations or claims about unread prompt requirements. The SVG graticule and interface implementation are original project code. No reference video, thumbnail, template source or full prompt is distributed. The React Bits Pro catalog was inspected; no component code was copied or added. Existing component and font notices remain in [third-party notices](third_party/NOTICE.md).

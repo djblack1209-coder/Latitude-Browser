@@ -1,3 +1,4 @@
+import { tr } from '../../../shared/i18n'
 import type { AutomationScriptType } from './definitions'
 import { normalizeAutomationScriptTargetSelector } from './targets'
 
@@ -57,91 +58,15 @@ export function buildScriptTemplate(type: AutomationScriptType): string {
 }`;
   }
 
-  return `module.exports.run = async ({ useBrowser, browserFetch, selector, params, log, artifact }) => {
-  const targetUrl =
-    typeof params.url === 'string' && params.url.trim()
-      ? params.url.trim()
-      : 'https://www.baidu.com'
-  const keyword =
-    typeof params.keyword === 'string' && params.keyword.trim()
-      ? params.keyword.trim()
-      : 'OpenAI'
-  const timeout =
-    Number.isFinite(Number(params.timeoutMs)) && Number(params.timeoutMs) > 0
-      ? Math.round(Number(params.timeoutMs))
-      : 30000
-  const waitAfterSearchMs =
-    Number.isFinite(Number(params.waitAfterSearchMs)) && Number(params.waitAfterSearchMs) >= 0
-      ? Math.round(Number(params.waitAfterSearchMs))
-      : 1500
-
-  const runtime = await useBrowser({
-    selector,
-    startUrls: params.startUrls || [targetUrl],
-    skipDefaultStartUrls: true,
-    url: targetUrl,
-    timeoutMs: timeout,
-    reuseCurrentPage: true,
-  })
-  const page = runtime.page
-
-  const searchInput = page.locator('textarea[name="wd"], input[name="wd"]').first()
-  await searchInput.waitFor({
-    state: 'visible',
-    timeout,
-  })
-  await searchInput.fill(keyword)
-  await searchInput.press('Enter').catch(async () => {
-    const submitButton = page.locator('#su, input[type="submit"]').first()
-    await submitButton.click({ timeout })
-  })
-  await page.waitForURL(/wd=/, { timeout }).catch(() => {})
-
-  if (waitAfterSearchMs > 0) {
-    await page.waitForTimeout(waitAfterSearchMs)
-  }
-
-  if (params.captureScreenshot !== false) {
-    await page.screenshot({
-      path: artifact('baidu-search.png'),
-      fullPage: true,
-    })
-  }
-
-  const title = await page.title()
-  let apiResult = null
-  const apiUrl = typeof params.apiUrl === 'string' ? params.apiUrl.trim() : ''
-  if (apiUrl) {
-    const apiRequest = {
-      url: apiUrl,
-      method: params.apiBody === undefined ? 'GET' : 'POST',
-      timeoutMs: timeout,
-    }
-    if (params.apiBody !== undefined) {
-      apiRequest.json = params.apiBody
-    }
-    apiResult = await browserFetch(page, apiRequest)
-  }
-  log('keyword', keyword)
-  log('title', title)
-
-  return {
-    ok: true,
-    summary: \`已在百度搜索 \${keyword}\`,
-    keyword,
-    url: page.url(),
-    title,
-    apiResult,
-  }
-}`;
+  return tr("browser.automationScripts.builtinsTemplates.buildScriptTemplate.536f779");
 }
 
 export function buildNotesTemplate(type: AutomationScriptType): string {
   if (type === "launch-api") {
-    return "适合外部调度器或 HTTP 中台。脚本负责组装 selector 和 launch 参数，不直接接管页面。";
+    return tr("browser.automationScripts.builtinsTemplates.buildNotesTemplate.bceced7");
   }
 
-  return "默认示例使用 useBrowser 启动并接管页面；需要调用站内接口时传 apiUrl/apiBody，会通过 browserFetch 在浏览器上下文发起请求。";
+  return tr("browser.automationScripts.builtinsTemplates.buildNotesTemplate.8c06552");
 }
 
 export function buildDualInstanceRuntimeParamsText(
@@ -165,123 +90,7 @@ export function buildDualInstanceRuntimeParamsText(
 }
 
 export function buildDualInstanceRuntimeScriptText(): string {
-  return `export async function run({ baseUrl, apiKey, params, log }) {
-  const normalizeCode = (value, fallback) =>
-    String(value || fallback || "").trim().toUpperCase()
-  const normalizeStringArray = (value) =>
-    Array.isArray(value)
-      ? value
-          .map((item) => String(item || "").trim())
-          .filter(Boolean)
-      : []
-  const normalizeBrowserInput = (value, fallbackCode, fallbackStartUrls, defaultSkip) => {
-    const raw = value && typeof value === "object" ? value : {}
-    const code = normalizeCode(raw.code || raw.launchCode, fallbackCode)
-    if (!code) {
-      return null
-    }
-    const startUrls = normalizeStringArray(raw.startUrls)
-    const fallbackUrls = normalizeStringArray(fallbackStartUrls)
-    const launchArgs = normalizeStringArray(raw.launchArgs)
-
-    return {
-      code,
-      skipDefaultStartUrls:
-        raw.skipDefaultStartUrls !== undefined
-          ? raw.skipDefaultStartUrls !== false
-          : defaultSkip,
-      startUrls: startUrls.length > 0 ? startUrls : fallbackUrls,
-      launchArgs,
-    }
-  }
-
-  const timeoutMs = Number.isFinite(Number(params.timeoutMs))
-    ? Math.max(1000, Math.round(Number(params.timeoutMs)))
-    : 45000
-  const defaultSkipDefaultStartUrls = params.skipDefaultStartUrls !== false
-
-  let browsers = Array.isArray(params.browsers)
-    ? params.browsers
-        .map((item, index) =>
-          normalizeBrowserInput(
-            item,
-            ${JSON.stringify([...DUAL_INSTANCE_DEFAULT_CODES])}[index] || "",
-            ${JSON.stringify([...DUAL_INSTANCE_DEFAULT_START_URLS])}[index] || [],
-            defaultSkipDefaultStartUrls,
-          ),
-        )
-        .filter(Boolean)
-    : []
-
-  if (browsers.length === 0) {
-    browsers = [
-      normalizeBrowserInput(
-        { code: params.primaryCode, skipDefaultStartUrls: params.skipDefaultStartUrls },
-        ${JSON.stringify(DUAL_INSTANCE_DEFAULT_CODES[0])},
-        ${JSON.stringify([DUAL_INSTANCE_DEFAULT_START_URLS[0]])},
-        defaultSkipDefaultStartUrls,
-      ),
-      normalizeBrowserInput(
-        { code: params.secondaryCode, skipDefaultStartUrls: params.skipDefaultStartUrls },
-        ${JSON.stringify(DUAL_INSTANCE_DEFAULT_CODES[1])},
-        ${JSON.stringify([DUAL_INSTANCE_DEFAULT_START_URLS[1]])},
-        defaultSkipDefaultStartUrls,
-      ),
-    ].filter(Boolean)
-  }
-
-  if (browsers.length === 0) {
-    throw new Error("params.browsers 不能为空")
-  }
-
-  const headers = {
-    "Content-Type": "application/json",
-    ...(apiKey ? { "X-Ant-Api-Key": apiKey } : {}),
-  }
-
-  const post = async (path, payload) => {
-    const response = await fetch(\`\${baseUrl}\${path}\`, {
-      method: "POST",
-      headers,
-      body: JSON.stringify(payload),
-    })
-    const text = await response.text()
-    let body = text
-    try {
-      body = text ? JSON.parse(text) : null
-    } catch {
-      body = text
-    }
-    if (!response.ok) {
-      throw new Error(\`\${path} failed: \${response.status} \${text}\`)
-    }
-    return body
-  }
-
-  const sessions = []
-
-  for (const browser of browsers) {
-    const sessionResult = await post("/api/runtime/session", {
-      selector: { code: browser.code, matchMode: "unique" },
-      skipDefaultStartUrls: browser.skipDefaultStartUrls,
-      ...(browser.startUrls.length > 0 ? { startUrls: browser.startUrls } : {}),
-      ...(browser.launchArgs.length > 0 ? { launchArgs: browser.launchArgs } : {}),
-      timeoutMs,
-    })
-
-    sessions.push(sessionResult)
-  }
-
-  const browserCodes = browsers.map((item) => item.code)
-  log("browserCodes", browserCodes)
-
-  return {
-    ok: true,
-    summary: \`\${browserCodes.length} 个浏览器已就绪：\${browserCodes.join(" / ")}\`,
-    browserCodes,
-    sessions,
-  }
-}`;
+  return tr("browser.automationScripts.builtinsTemplates.buildDualInstanceRuntimeScriptText.dbb0f18", [JSON.stringify([...DUAL_INSTANCE_DEFAULT_CODES]), JSON.stringify([...DUAL_INSTANCE_DEFAULT_START_URLS]), JSON.stringify(DUAL_INSTANCE_DEFAULT_CODES[0]), JSON.stringify([DUAL_INSTANCE_DEFAULT_START_URLS[0]]), JSON.stringify(DUAL_INSTANCE_DEFAULT_CODES[1]), JSON.stringify([DUAL_INSTANCE_DEFAULT_START_URLS[1]])]);
 }
 
 export function normalizeDualInstanceRuntimeParamsText(text: string): string {

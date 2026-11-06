@@ -1,3 +1,4 @@
+import { tr, useLocale } from '../../../../shared/i18n'
 import { Button, Modal } from "../../../../shared/components";
 import type { ScriptParamsHelpContent } from "./paramsHelp";
 
@@ -12,6 +13,8 @@ export function AutomationScriptDetailModals({
   paramsHelpOpen,
   onCloseParamsHelp,
 }: AutomationScriptDetailModalsProps) {
+  useLocale()
+
   return (
     <>
       {paramsHelp ? (
@@ -21,9 +24,7 @@ export function AutomationScriptDetailModals({
           title={paramsHelp.title}
           width="960px"
           footer={
-            <Button variant="secondary" onClick={onCloseParamsHelp}>
-              关闭
-            </Button>
+            <Button variant="secondary" onClick={onCloseParamsHelp}>{tr("ui.components.Modal.aria_label.6c14bd7")}</Button>
           }
         >
           <div className="space-y-4">
@@ -42,8 +43,7 @@ export function AutomationScriptDetailModals({
                       {doc.name}
                     </code>
                     {doc.defaultValue ? (
-                      <span className="text-xs text-[var(--color-text-muted)]">
-                        默认 {doc.defaultValue}
+                      <span className="text-xs text-[var(--color-text-muted)]">{tr("browser.pages.automationScriptDetail.AutomationScriptDetailModals.text.551fde7")}{doc.defaultValue}
                       </span>
                     ) : null}
                   </div>

@@ -1,3 +1,4 @@
+import { tr, useLocale } from '../../../../../shared/i18n'
 import { Play, Trash2 } from 'lucide-react'
 import { Badge, Button, Card } from '../../../../../shared/components'
 import type { AutomationDemoActionKey, AutomationDemoSession } from '../../../demoSession'
@@ -26,22 +27,21 @@ export function LaunchDemoPanel({
   onLaunch,
   onDelete,
 }: LaunchDemoPanelProps) {
+  useLocale()
+
   return (
     <Card
       title={config.title}
-      subtitle={config.subtitle}
+
       className="bg-[var(--color-bg-elevated)] shadow-[var(--shadow-sm)]"
     >
       <div className="space-y-4">
         <div className="flex flex-wrap items-center gap-2">
-          <Badge variant={launchServerReady ? 'success' : 'warning'} size="sm" dot>
-            Launch API {launchServerReady ? '已就绪' : '待就绪'}
+          <Badge variant={launchServerReady ? "success" : "warning"} size="sm" dot>{tr("ui.modules.browser.pages.launchApiDocs.panels.LaunchDemoPanel.label.6c42827")}{launchServerReady ? tr("browser.automationRuntime.getAutomationRuntimeBadgeText.f2afde8") : tr("browser.components.LaunchServerStatusBlock.LaunchServerStatusBlock.a4a7017")}
           </Badge>
-          <Badge variant={demoSession.profileId ? 'success' : 'default'} size="sm">
-            Profile {demoSession.profileId || '-'}
+          <Badge variant={demoSession.profileId ? "success" : "default"} size="sm">{tr("ui.modules.browser.pages.launchApiDocs.panels.LaunchDemoPanel.label.ff4fc02")}{demoSession.profileId || '-'}
           </Badge>
-          <Badge variant={demoSession.launchCode ? 'info' : 'default'} size="sm">
-            Launch Code {demoSession.launchCode || '-'}
+          <Badge variant={demoSession.launchCode ? "info" : "default"} size="sm">{tr("ui.modules.browser.pages.launchApiDocs.panels.LaunchDemoPanel.label.92f7d06")}{demoSession.launchCode || '-'}
           </Badge>
         </div>
 
@@ -53,9 +53,7 @@ export function LaunchDemoPanel({
               loading={demoBusyAction === 'health'}
               disabled={demoBusy}
             >
-              <Play className="w-4 h-4" />
-              运行健康检查
-            </Button>
+              <Play className="w-4 h-4" />{tr("browser.pages.launchApiDocs.panels.LaunchDemoPanel.text.9c58842")}</Button>
           )}
           {config.actionKeys.includes('create') && (
             <Button
@@ -64,9 +62,7 @@ export function LaunchDemoPanel({
               loading={demoBusyAction === 'create'}
               disabled={demoBusy}
             >
-              <Play className="w-4 h-4" />
-              创建演示实例
-            </Button>
+              <Play className="w-4 h-4" />{tr("browser.pages.launchApiDocs.panels.LaunchDemoPanel.text.64093f7")}</Button>
           )}
           {config.actionKeys.includes('launch') && (
             <Button
@@ -75,9 +71,7 @@ export function LaunchDemoPanel({
               loading={demoBusyAction === 'launch'}
               disabled={demoBusy || !demoSession.launchCode}
             >
-              <Play className="w-4 h-4" />
-              按 Code 唤起
-            </Button>
+              <Play className="w-4 h-4" />{tr("browser.pages.launchApiDocs.panels.LaunchDemoPanel.text.2f3fe76")}</Button>
           )}
           <Button
             size="sm"
@@ -86,18 +80,16 @@ export function LaunchDemoPanel({
             loading={demoBusyAction === 'delete'}
             disabled={demoBusy || !demoSession.profileId}
           >
-            <Trash2 className="w-4 h-4" />
-            清理演示实例
-          </Button>
+            <Trash2 className="w-4 h-4" />{tr("browser.pages.launchApiDocs.panels.LaunchDemoPanel.text.1019ebd")}</Button>
         </div>
 
         <div className="rounded-xl border border-[var(--color-border-default)] bg-[var(--color-bg-subtle)] px-4 py-3 space-y-2 text-sm text-[var(--color-text-secondary)]">
-          <div className="text-[var(--color-text-primary)] font-medium">当前文档联动状态</div>
-          <div>文档节点：<code>{config.primaryDocLabel}</code></div>
-          <div>最近动作：<code>{demoSession.lastAction || '-'}</code></div>
-          <div>Profile ID：<code>{demoSession.profileId || '-'}</code></div>
-          <div>Launch Code：<code>{demoSession.launchCode || '-'}</code></div>
-          <div className="break-all">CDP URL：<code>{demoSession.cdpUrl || '-'}</code></div>
+          <div className="text-[var(--color-text-primary)] font-medium">{tr("browser.pages.launchApiDocs.panels.LaunchDemoPanel.text.ca7e376")}</div>
+          <div>{tr("browser.pages.launchApiDocs.panels.LaunchDemoPanel.text.472abb7")}<code>{config.primaryDocLabel}</code></div>
+          <div>{tr("browser.pages.launchApiDocs.panels.LaunchDemoPanel.text.fe16099")}<code>{demoSession.lastAction || '-'}</code></div>
+          <div>{tr("ui.modules.browser.pages.launchApiDocs.panels.LaunchDemoPanel.label.59a3988")}<code>{demoSession.profileId || '-'}</code></div>
+          <div>{tr("ui.modules.browser.pages.launchApiDocs.panels.LaunchDemoPanel.label.51869ac")}<code>{demoSession.launchCode || '-'}</code></div>
+          <div className="break-all">{tr("ui.modules.browser.pages.launchApiDocs.panels.LaunchDemoPanel.label.1183cd9")}<code>{demoSession.cdpUrl || '-'}</code></div>
         </div>
       </div>
     </Card>

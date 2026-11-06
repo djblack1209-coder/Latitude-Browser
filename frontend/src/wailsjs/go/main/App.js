@@ -566,8 +566,16 @@ export function GetRunningInstances() {
   return window['go']['main']['App']['GetRunningInstances']();
 }
 
+export function GetSystemLocale() {
+  return window['go']['main']['App']['GetSystemLocale']();
+}
+
 export function GetTorStatus() {
   return window['go']['main']['App']['GetTorStatus']();
+}
+
+export function GetUILanguage() {
+  return window['go']['main']['App']['GetUILanguage']();
 }
 
 export function InstallAutomationRuntime() {
@@ -640,6 +648,10 @@ export function SetLogLevel(arg1) {
 
 export function SetTorRuntimePath(arg1) {
   return window['go']['main']['App']['SetTorRuntimePath'](arg1);
+}
+
+export function SetUILanguage(arg1) {
+  return window['go']['main']['App']['SetUILanguage'](arg1);
 }
 
 export function StartInstance(arg1) {

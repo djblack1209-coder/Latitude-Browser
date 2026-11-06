@@ -1,18 +1,22 @@
+import { translateMessage } from '../../../shared/i18n'
+import { tr, useLocale } from '../../../shared/i18n'
 import { Download, ExternalLink, FolderOpen, History, Power, Puzzle, RefreshCw, RotateCw, Search, Settings, Trash2, Users } from 'lucide-react'
 import { Badge, Button, Input } from '../../../shared/components'
-import { SignalEmptyState, TelemetryStrip, TerminalPanel, WorkspaceHeader } from '../../../shared/components/SignalPrimitives'
+import { SignalEmptyState, TerminalPanel, WorkspaceHeader } from '../../../shared/components/SignalPrimitives'
 import type { BrowserExtension, BrowserExtensionLookupResult, BrowserProxy } from '../types'
 import { extensionStoreURL, formatExtensionSource, formatExtensionTime, getExtensionManifestMeta, getProxySpeedState } from './extensionManagementUtils'
 
 export function ProxyStatePill({ useProxy, proxy }: { useProxy: boolean; proxy?: BrowserProxy }) {
+  useLocale()
+
   if (!useProxy) {
-    return <span className="inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.12em] text-[var(--color-text-muted)]"><span className="h-1.5 w-1.5 rounded-full bg-[var(--color-text-muted)]" aria-hidden="true" />Direct</span>
+    return <span className="inline-flex items-center gap-1.5 font-mono text-[10px]   text-[var(--color-text-muted)]"><span className="h-1.5 w-1.5 rounded-full bg-[var(--color-text-muted)]" aria-hidden="true" />{tr("ui.modules.browser.pages.ExtensionManagementCards.label.bc81524")}</span>
   }
   if (!proxy) {
-    return <span className="inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.12em] text-[var(--color-error)]"><span className="h-1.5 w-1.5 rounded-full bg-[var(--color-error)]" aria-hidden="true" />Proxy missing</span>
+    return <span className="inline-flex items-center gap-1.5 font-mono text-[10px]   text-[var(--color-error)]"><span className="h-1.5 w-1.5 rounded-full bg-[var(--color-error)]" aria-hidden="true" />{tr("ui.modules.browser.pages.ExtensionManagementCards.label.acc2e18")}</span>
   }
   const state = getProxySpeedState(proxy)
-  const status = state?.ok ? `${state.latencyMs}ms` : state ? 'unavailable' : 'untested'
+  const status = state?.ok ? `${state.latencyMs}ms` : state ? tr('common.unavailable') : tr('common.untested')
   const toneClass = state?.ok
     ? 'text-[var(--color-success)]'
     : state
@@ -24,9 +28,8 @@ export function ProxyStatePill({ useProxy, proxy }: { useProxy: boolean; proxy?:
       ? 'bg-[var(--color-error)]'
       : 'bg-[var(--color-text-muted)]'
   return (
-    <span className={`inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.12em] ${toneClass}`} title={proxy.proxyName || proxy.proxyId}>
-      <span className={`h-1.5 w-1.5 rounded-full ${dotClass}`} aria-hidden="true" />
-      Proxy · {status}
+    <span className={`inline-flex items-center gap-1.5 font-mono text-[10px]   ${toneClass}`} title={proxy.proxyName || proxy.proxyId}>
+      <span className={`h-1.5 w-1.5 rounded-full ${dotClass}`} aria-hidden="true" />{tr("ui.modules.browser.pages.ExtensionManagementCards.label.9ba7ae1")}{status}
     </span>
   )
 }
@@ -47,6 +50,7 @@ export interface ExtensionManagementHeaderProps {
   onImportDirectory: () => void
   onOpenDownloadDirectory: () => void
   onRefresh: () => void
+  onOpenInstall: () => void
 }
 
 export function ExtensionManagementHeader({
@@ -54,68 +58,42 @@ export function ExtensionManagementHeader({
   loading,
   importing,
   downloadDirectoryLoading,
-  installedCount,
-  enabledCount,
-  historyCount,
-  useProxy,
-  selectedProxy,
   onOpenProxy,
   onOpenHistory,
   onImportFile,
   onImportDirectory,
   onOpenDownloadDirectory,
   onRefresh,
+  onOpenInstall,
 }: ExtensionManagementHeaderProps) {
-  const proxyState = useProxy ? (selectedProxy ? '代理下载' : '待选择') : '直连下载'
+  useLocale()
+
 
   return (
     <div className="space-y-4">
       <WorkspaceHeader
-        eyebrow="FINGERPRINT / EXTENSIONS"
-        title="插件包"
-        description="安装并维护共享 Chrome 扩展。"
+
+        title={tr("config.navigation.config.name.09440f1")}
+
         actions={(
           <>
             <Button size="sm" variant="secondary" onClick={onOpenProxy} title={proxyButtonText}>
-              <Settings className="h-4 w-4" aria-hidden="true" />
-              下载代理
-            </Button>
+              <Settings className="h-4 w-4" aria-hidden="true" />{tr("browser.pages.ExtensionManagementCards.text.22eff2b")}</Button>
             <Button size="sm" variant="secondary" onClick={onOpenHistory}>
-              <History className="h-4 w-4" aria-hidden="true" />
-              查询历史
-            </Button>
+              <History className="h-4 w-4" aria-hidden="true" />{tr("browser.pages.ExtensionManagementCards.text.6079f66")}</Button>
             <Button size="sm" variant="secondary" onClick={onImportFile} loading={importing === 'file'}>
-              <Download className="h-4 w-4" aria-hidden="true" />
-              导入包
-            </Button>
+              <Download className="h-4 w-4" aria-hidden="true" />{tr("browser.pages.ExtensionManagementCards.text.f1ebcb7")}</Button>
             <Button size="sm" variant="secondary" onClick={onImportDirectory} loading={importing === 'directory'}>
-              <Download className="h-4 w-4" aria-hidden="true" />
-              导入目录
-            </Button>
+              <Download className="h-4 w-4" aria-hidden="true" />{tr("browser.pages.ExtensionManagementCards.text.6dd6ef4")}</Button>
             <Button size="sm" variant="secondary" onClick={onOpenDownloadDirectory} loading={downloadDirectoryLoading}>
-              <FolderOpen className="h-4 w-4" aria-hidden="true" />
-              下载目录
-            </Button>
-            <Button size="sm" onClick={onRefresh} loading={loading}>
-              <RefreshCw className="h-4 w-4" aria-hidden="true" />
-              刷新
-            </Button>
+              <FolderOpen className="h-4 w-4" aria-hidden="true" />{tr("browser.pages.ExtensionManagementCards.text.4cd5da4")}</Button>
+            <Button size="sm" variant="secondary" onClick={onRefresh} loading={loading}>
+              <RefreshCw className="h-4 w-4" aria-hidden="true" />{tr("browser.components.AutomationRuntimeSnapshot.text.38108ea")}</Button>
+            <Button size="sm" onClick={onOpenInstall}><Puzzle className="h-4 w-4" />{tr("extensions.install")}</Button>
           </>
         )}
       />
-      <TelemetryStrip
-        items={[
-          { label: '已安装', value: installedCount, detail: '共享插件包' },
-          {
-            label: '已启用',
-            value: `${enabledCount}/${installedCount}`,
-            detail: '全局可加载',
-            tone: enabledCount > 0 ? 'success' : 'neutral',
-          },
-          { label: '下载链路', value: proxyState, detail: useProxy && selectedProxy ? selectedProxy.proxyName || selectedProxy.proxyId : '未经过节点', tone: useProxy && !selectedProxy ? 'warning' : 'accent' },
-          { label: '历史记录', value: historyCount, detail: '查询与安装事件' },
-        ]}
-      />
+
     </div>
   )
 }
@@ -153,14 +131,16 @@ export function ExtensionInstallCard({
   onOpenProxy,
   onInstall,
 }: ExtensionInstallCardProps) {
+  useLocale()
+
   return (
     <TerminalPanel
-      title="PACKAGE RESOLVER"
+      title={tr("ui.modules.browser.pages.ExtensionManagementCards.label.4d5a92e")}
       meta={<ProxyStatePill useProxy={useProxy} proxy={selectedProxy} />}
     >
       <div className="p-4">
         <div className="flex flex-col gap-2 md:flex-row">
-          <label htmlFor="extension-query" className="sr-only">Chrome Web Store 链接或插件 ID</label>
+          <label htmlFor="extension-query" className="sr-only">{tr("browser.pages.ExtensionManagementCards.text.242508c")}</label>
           <Input
             id="extension-query"
             value={query}
@@ -168,29 +148,21 @@ export function ExtensionInstallCard({
             onKeyDown={(event) => {
               if (event.key === 'Enter') onLookup()
             }}
-            placeholder="Chrome Web Store 链接或 32 位插件 ID"
+            placeholder={tr("browser.pages.ExtensionManagementCards.placeholder.8929015")}
             className="min-w-0 flex-1 font-mono"
             spellCheck={false}
           />
           <Button type="button" onClick={onLookup} loading={querying}>
-            <Search className="h-4 w-4" aria-hidden="true" />
-            解析插件
-          </Button>
+            <Search className="h-4 w-4" aria-hidden="true" />{tr("browser.pages.ExtensionManagementCards.text.6e99c9a")}</Button>
           <Button type="button" variant="secondary" onClick={onOpenWebStoreQuery}>
-            <ExternalLink className="h-4 w-4" aria-hidden="true" />
-            打开商店
-          </Button>
+            <ExternalLink className="h-4 w-4" aria-hidden="true" />{tr("browser.pages.ExtensionManagementCards.text.1f11e2b")}</Button>
           <Button type="button" variant="secondary" onClick={onOpenManualInstall}>
-            <Download className="h-4 w-4" aria-hidden="true" />
-            手动安装
-          </Button>
+            <Download className="h-4 w-4" aria-hidden="true" />{tr("browser.pages.ExtensionManagementCards.text.a5c438a")}</Button>
         </div>
 
         <div className="mt-3 flex items-center gap-3 text-xs text-[var(--color-text-muted)]">
-          <span>查询与下载使用当前链路</span>
-          <button type="button" className="font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-accent)]" onClick={onOpenProxy}>
-            切换代理
-          </button>
+          <span>{tr("browser.pages.ExtensionManagementCards.text.994f65f")}</span>
+          <button type="button" className="font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-accent)]" onClick={onOpenProxy}>{tr("browser.components.BrowserProfilesPanel.ProxyInlineActions.a466de9")}</button>
         </div>
 
         {lookup ? (
@@ -200,19 +172,17 @@ export function ExtensionInstallCard({
                 <div className="flex flex-wrap items-center gap-2 font-medium text-[var(--color-text-primary)]">
                   <span>{lookup.name || lookup.extensionId}</span>
                   {lookup.version ? <span className="font-mono text-[10px] text-[var(--color-text-muted)]">v{lookup.version}</span> : null}
-                  <Badge variant={lookup.installable ? 'success' : 'error'} size="sm">{lookup.installable ? '可安装' : '不可安装'}</Badge>
+                  <Badge variant={lookup.installable ? "success" : "error"} size="sm">{lookup.installable ? tr("browser.pages.ExtensionManagementCards.ExtensionInstallCard.cee8815") : tr("browser.pages.ExtensionManagementCards.ExtensionInstallCard.19a3734")}</Badge>
                 </div>
                 <div className="mt-1 break-all font-mono text-xs text-[var(--color-text-secondary)]">{lookup.extensionId}</div>
-                {lastLookupProxyLabel ? <div className="mt-1 text-xs text-[var(--color-text-muted)]">本次查询：{lastLookupProxyLabel}</div> : null}
+                {lastLookupProxyLabel ? <div className="mt-1 text-xs text-[var(--color-text-muted)]">{tr("browser.pages.ExtensionManagementCards.text.d16d406")}{lastLookupProxyLabel}</div> : null}
                 {lookup.description ? <div className="mt-2 max-w-3xl text-sm leading-6 text-[var(--color-text-secondary)]">{lookup.description}</div> : null}
-                {lookup.message ? <div className="mt-2 text-xs text-[var(--color-text-muted)]">{lookup.message}</div> : null}
+                {lookup.message ? <div className="mt-2 text-xs text-[var(--color-text-muted)]">{translateMessage(lookup.message)}</div> : null}
               </div>
               <div className="flex shrink-0 flex-wrap gap-2">
                 {lookup.storeUrl ? (
                   <Button type="button" size="sm" variant="secondary" onClick={() => window.open(lookup.storeUrl, '_blank', 'noopener,noreferrer')}>
-                    <ExternalLink className="h-4 w-4" aria-hidden="true" />
-                    商店详情
-                  </Button>
+                    <ExternalLink className="h-4 w-4" aria-hidden="true" />{tr("browser.pages.ExtensionManagementCards.text.614ead8")}</Button>
                 ) : null}
                 <Button
                   type="button"
@@ -222,7 +192,7 @@ export function ExtensionInstallCard({
                   disabled={!lookup.installable || installedIds.has(lookup.extensionId)}
                 >
                   <Download className="h-4 w-4" aria-hidden="true" />
-                  {installedIds.has(lookup.extensionId) ? '已安装' : '安装插件'}
+                  {installedIds.has(lookup.extensionId) ? tr("browser.automationRuntime.getAutomationRuntimeBadgeText.eb88ff5") : tr("browser.pages.ExtensionManagementCards.ExtensionInstallCard.76a38f0")}
                 </Button>
               </div>
             </div>
@@ -245,17 +215,19 @@ export interface InstalledExtensionsListProps {
 }
 
 export function InstalledExtensionsList({ items, busyId, busyAction, updatingId, onRestrictProfiles, onUpdate, onToggle, onDelete }: InstalledExtensionsListProps) {
+  useLocale()
+
   const enabledCount = items.filter((item) => item.enabled).length
   return (
     <TerminalPanel
-      title="EXTENSION REGISTRY"
-      meta={<span className="font-mono tabular-nums">{enabledCount} ENABLED / {items.length} TOTAL</span>}
+      title={tr("ui.modules.browser.pages.ExtensionManagementCards.label.ed311e8")}
+      meta={<span className="font-mono tabular-nums">{enabledCount} / {items.length}</span>}
     >
       {items.length === 0 ? (
         <SignalEmptyState
           symbol="files"
-          title="尚未安装插件"
-          description="在上方输入 Chrome Web Store 链接或插件 ID，解析后即可安装。"
+          title={tr("browser.pages.ExtensionManagementCards.title.591c7ea")}
+
         />
       ) : (
         <div className="divide-y divide-[var(--color-border-muted)]">
@@ -290,6 +262,8 @@ export interface InstalledExtensionCardProps {
 }
 
 export function InstalledExtensionCard({ item, busy, busyAction, updating, onRestrictProfiles, onUpdate, onToggle, onDelete }: InstalledExtensionCardProps) {
+  useLocale()
+
   const meta = getExtensionManifestMeta(item)
   const storeUrl = extensionStoreURL(item)
   const label = item.name || item.extensionId
@@ -300,7 +274,7 @@ export function InstalledExtensionCard({ item, busy, busyAction, updating, onRes
         <div className="flex min-w-0 gap-3">
           <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-md border border-[var(--color-border-default)] bg-[var(--color-bg-muted)]">
             {item.iconDataUrl ? (
-              <img src={item.iconDataUrl} alt={`${label} 图标`} className="h-9 w-9 object-contain" />
+              <img src={item.iconDataUrl} alt={tr("browser.pages.ExtensionManagementCards.InstalledExtensionCard.ae4a56b", [label])} className="h-9 w-9 object-contain" />
             ) : (
               <Puzzle className="h-5 w-5 text-[var(--color-text-muted)]" aria-hidden="true" />
             )}
@@ -308,52 +282,44 @@ export function InstalledExtensionCard({ item, busy, busyAction, updating, onRes
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
               <h3 className="font-medium text-[var(--color-text-primary)]">{label}</h3>
-              <Badge variant={item.enabled ? 'success' : 'error'} size="sm" dot>
-                {item.enabled ? '已启用' : '已停用'}
+              <Badge variant={item.enabled ? "success" : "error"} size="sm" dot>
+                {item.enabled ? tr("browser.components.AutomationScriptPublicApiModalView.AutomationScriptPublicApiModalView.25d2843") : tr("browser.pages.ExtensionManagementCards.InstalledExtensionCard.6c7dcbb")}
               </Badge>
               {item.version ? <span className="font-mono text-[10px] text-[var(--color-text-muted)]">v{item.version}</span> : null}
               {meta.manifestVersion ? <span className="font-mono text-[10px] text-[var(--color-text-muted)]">MV{meta.manifestVersion}</span> : null}
             </div>
             {item.description ? <p className="mt-1 max-w-3xl text-sm leading-6 text-[var(--color-text-secondary)]">{item.description}</p> : null}
-            <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 font-mono text-[10px] uppercase tracking-[0.08em] text-[var(--color-text-muted)]">
+            <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 font-mono text-[10px]   text-[var(--color-text-muted)]">
               <span className="break-all normal-case tracking-normal">{item.extensionId}</span>
               <span>{formatExtensionSource(item.sourceUrl)}</span>
-              <span>Installed {formatExtensionTime(item.installedAt)}</span>
-              {item.updatedAt ? <span>Updated {formatExtensionTime(item.updatedAt)}</span> : null}
+              <span>{tr("ui.modules.browser.pages.ExtensionManagementCards.label.7bb4405")}{formatExtensionTime(item.installedAt)}</span>
+              {item.updatedAt ? <span>{tr("ui.modules.browser.pages.ExtensionManagementCards.label.f2f8570")}{formatExtensionTime(item.updatedAt)}</span> : null}
             </div>
             {meta.permissions.length > 0 || meta.hostPermissionCount > 0 ? (
               <div className="mt-2 flex flex-wrap gap-1.5">
                 {meta.permissions.map((permission) => (
                   <span key={permission} className="rounded-sm border border-[var(--color-border-muted)] px-2 py-0.5 font-mono text-[10px] text-[var(--color-text-muted)]">{permission}</span>
                 ))}
-                {meta.hostPermissionCount > 0 ? <span className="rounded-sm border border-[var(--color-border-muted)] px-2 py-0.5 font-mono text-[10px] text-[var(--color-text-muted)]">hosts:{meta.hostPermissionCount}</span> : null}
+                {meta.hostPermissionCount > 0 ? <span className="rounded-sm border border-[var(--color-border-muted)] px-2 py-0.5 font-mono text-[10px] text-[var(--color-text-muted)]">{tr("ui.modules.browser.pages.ExtensionManagementCards.label.48f322d")}{meta.hostPermissionCount}</span> : null}
               </div>
             ) : null}
           </div>
         </div>
         <div className="flex shrink-0 flex-wrap gap-2">
           {storeUrl ? (
-            <Button type="button" size="sm" variant="ghost" onClick={() => window.open(storeUrl, '_blank', 'noopener,noreferrer')} title={`打开 ${label} 的商店页面`}>
-              <ExternalLink className="h-4 w-4" aria-hidden="true" />
-              商店
-            </Button>
+            <Button type="button" size="sm" variant="ghost" onClick={() => window.open(storeUrl, '_blank', 'noopener,noreferrer')} title={tr("browser.pages.ExtensionManagementCards.InstalledExtensionCard.9c84db3", [label])}>
+              <ExternalLink className="h-4 w-4" aria-hidden="true" />{tr("browser.pages.ExtensionManagementCards.text.83eff41")}</Button>
           ) : null}
-          <Button type="button" size="sm" variant="secondary" onClick={() => onRestrictProfiles(item)} title={`设置 ${label} 可用实例`}>
-            <Users className="h-4 w-4" aria-hidden="true" />
-            限制实例
-          </Button>
-          <Button type="button" size="sm" variant="secondary" onClick={() => onUpdate(item)} disabled={updating} title={`重新下载并更新 ${label}`}>
-            <RotateCw className={`h-4 w-4 ${updating ? 'animate-spin' : ''}`} aria-hidden="true" />
-            更新
-          </Button>
-          <Button type="button" size="sm" variant="secondary" onClick={() => onToggle(item)} disabled={busy} title={`${item.enabled ? '停用' : '启用'} ${label}`}>
+          <Button type="button" size="sm" variant="secondary" onClick={() => onRestrictProfiles(item)} title={tr("browser.pages.ExtensionManagementCards.InstalledExtensionCard.e9f5c3c", [label])}>
+            <Users className="h-4 w-4" aria-hidden="true" />{tr("browser.pages.ExtensionManagementCards.text.ebf4c12")}</Button>
+          <Button type="button" size="sm" variant="secondary" onClick={() => onUpdate(item)} disabled={updating} title={tr("browser.pages.ExtensionManagementCards.InstalledExtensionCard.cdda991", [label])}>
+            <RotateCw className={`h-4 w-4 ${updating ? 'animate-spin' : ''}`} aria-hidden="true" />{tr("browser.pages.ExtensionManagementCards.text.d9db02d")}</Button>
+          <Button type="button" size="sm" variant="secondary" onClick={() => onToggle(item)} disabled={busy} title={`${item.enabled ? tr("browser.automationScripts.definitions.label.d989e55") : tr("browser.pages.ExtensionManagementCards.InstalledExtensionCard.d4e9ca3")} ${label}`}>
             <Power className={`h-4 w-4 ${busy && busyAction === 'toggle' ? 'animate-pulse' : ''}`} aria-hidden="true" />
-            {item.enabled ? '停用' : '启用'}
+            {item.enabled ? tr("browser.automationScripts.definitions.label.d989e55") : tr("browser.pages.ExtensionManagementCards.InstalledExtensionCard.d4e9ca3")}
           </Button>
-          <Button type="button" size="sm" variant="ghost" onClick={() => onDelete(item)} disabled={busy} className="text-[var(--color-error)]" title={`删除 ${label}`}>
-            <Trash2 className={`h-4 w-4 ${busy && busyAction === 'delete' ? 'animate-pulse' : ''}`} aria-hidden="true" />
-            删除
-          </Button>
+          <Button type="button" size="sm" variant="ghost" onClick={() => onDelete(item)} disabled={busy} className="text-[var(--color-error)]" title={tr("browser.pages.ExtensionManagementCards.InstalledExtensionCard.a9de734", [label])}>
+            <Trash2 className={`h-4 w-4 ${busy && busyAction === 'delete' ? 'animate-pulse' : ''}`} aria-hidden="true" />{tr("browser.components.BrowserListLayout.title.3755f56")}</Button>
         </div>
       </div>
     </article>

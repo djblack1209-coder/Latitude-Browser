@@ -1,3 +1,5 @@
+import { translateMessage } from '../../../../shared/i18n'
+import { tr, useLocale } from '../../../../shared/i18n'
 import { ChevronDown, ChevronRight, Copy, Play, Settings } from "lucide-react";
 import {
   Badge,
@@ -50,13 +52,13 @@ interface AutomationScriptDetailBodyPanelsProps {
 function formatManualSelectorSummary(selectorText: string): string {
   const normalized = selectorText.trim();
   if (!normalized) {
-    return "未选择实例";
+    return tr("browser.pages.automationScriptDetail.AutomationScriptDetailBodyPanels.formatManualSelectorSummary.fb8810a");
   }
 
   try {
     const parsed = JSON.parse(normalized);
     if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
-      return "已设置自定义目标";
+      return tr("browser.pages.automationScriptDetail.AutomationScriptDetailBodyPanels.formatManualSelectorSummary.455a4c6");
     }
     const selector = parsed as Record<string, unknown>;
     const code = String(selector.code || "").trim();
@@ -65,15 +67,15 @@ function formatManualSelectorSummary(selectorText: string): string {
     }
     const profileName = String(selector.profileName || "").trim();
     if (profileName) {
-      return `实例：${profileName}`;
+      return tr("browser.pages.automationScriptDetail.AutomationScriptDetailBodyPanels.formatManualSelectorSummary.aa2fe30", [profileName]);
     }
     const profileId = String(selector.profileId || "").trim();
     if (profileId) {
-      return `实例 ID：${profileId}`;
+      return tr("browser.pages.automationScriptDetail.AutomationScriptDetailBodyPanels.formatManualSelectorSummary.fb6e878", [profileId]);
     }
-    return "已设置自定义目标";
+    return tr("browser.pages.automationScriptDetail.AutomationScriptDetailBodyPanels.formatManualSelectorSummary.455a4c6");
   } catch {
-    return "已设置自定义目标";
+    return tr("browser.pages.automationScriptDetail.AutomationScriptDetailBodyPanels.formatManualSelectorSummary.455a4c6");
   }
 }
 
@@ -103,17 +105,19 @@ export function AutomationScriptDetailBodyPanels({
   onCopyOpenClawCommand,
   onOpenParamsHelp,
 }: AutomationScriptDetailBodyPanelsProps) {
+  useLocale()
+
   return (
     <>
       <DetailPanel
-        title="对外接口"
+        title={tr("browser.pages.automationScriptDetail.AutomationScriptDetailBodyPanels.title.11594ed")}
         actions={
           <>
             <Badge
               variant={resolvedPublicAPI.enabled ? "success" : "default"}
               size="sm"
             >
-              {resolvedPublicAPI.enabled ? "已启用" : "未启用"}
+              {resolvedPublicAPI.enabled ? tr("browser.components.AutomationScriptPublicApiModalView.AutomationScriptPublicApiModalView.25d2843") : tr("browser.automationRuntime.getAutomationRuntimeBadgeText.8bb38ef")}
             </Badge>
             <Button
               type="button"
@@ -127,7 +131,7 @@ export function AutomationScriptDetailBodyPanels({
               ) : (
                 <ChevronRight className="h-4 w-4" />
               )}
-              {publicApiExpanded ? "收起详情" : "展开详情"}
+              {publicApiExpanded ? tr("browser.pages.automationScriptDetail.AutomationScriptDetailBodyPanels.AutomationScriptDetailBodyPanels.a86af73") : tr("browser.pages.automationScriptDetail.AutomationScriptDetailBodyPanels.AutomationScriptDetailBodyPanels.1f43c28")}
             </Button>
             <Button
               type="button"
@@ -136,9 +140,7 @@ export function AutomationScriptDetailBodyPanels({
               onClick={onCopyPublicApiUrl}
               disabled={busy}
             >
-              <Copy className="h-4 w-4" />
-              复制 URL
-            </Button>
+              <Copy className="h-4 w-4" />{tr("browser.pages.automationScriptDetail.AutomationScriptDetailBodyPanels.text.8b9c9ed")}</Button>
             <Button
               type="button"
               size="sm"
@@ -146,25 +148,19 @@ export function AutomationScriptDetailBodyPanels({
               onClick={onOpenPublicApiTester}
               disabled={busy}
             >
-              <Play className="h-4 w-4" />
-              测试接口
-            </Button>
+              <Play className="h-4 w-4" />{tr("browser.components.AutomationScriptPublicApiModalView.text.0152e9c")}</Button>
             <Button
               type="button"
               size="sm"
               variant="secondary"
               onClick={onOpenPublicApiManager}
               disabled={busy}
-            >
-              管理
-            </Button>
+            >{tr("browser.pages.automationScriptDetail.AutomationScriptDetailBodyPanels.text.4989b5c")}</Button>
           </>
         }
       >
         <div className="rounded-xl border border-[var(--color-border-muted)] bg-[var(--color-bg-secondary)] px-3 py-3">
-          <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--color-text-muted)]">
-            URL
-          </div>
+          <div className="text-[11px] font-semibold   text-[var(--color-text-muted)]">{tr("ui.modules.browser.pages.automationScriptDetail.AutomationScriptDetailBodyPanels.label.0e2d9b0")}</div>
           <div className="mt-2 break-all text-sm font-medium text-[var(--color-text-primary)]">
             {publicAPIURL}
           </div>
@@ -173,20 +169,20 @@ export function AutomationScriptDetailBodyPanels({
         {publicApiExpanded ? (
           <>
             <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-              <CompactMetaField label="Method" value={resolvedPublicAPI.method} />
-              <CompactMetaField label="Path" value={<code>{publicAPIPath}</code>} />
+              <CompactMetaField label={tr("ui.modules.browser.pages.automationScriptDetail.AutomationScriptDetailBodyPanels.label.8830694")} value={resolvedPublicAPI.method} />
+              <CompactMetaField label={tr("ui.modules.browser.pages.automationScriptDetail.AutomationScriptDetailBodyPanels.label.519e391")} value={<code>{publicAPIPath}</code>} />
             </div>
             <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
               <CompactMetaField
-                label="入参"
+                label={tr("browser.pages.automationScriptDetail.AutomationScriptDetailBodyPanels.label.3b7ddba")}
                 value={<code>{"instance / params / timeoutMs"}</code>}
               />
               <CompactMetaField
-                label="出参"
+                label={tr("browser.pages.automationScriptDetail.AutomationScriptDetailBodyPanels.label.31f4220")}
                 value={<code>{"ok / status / message / data"}</code>}
               />
               <CompactMetaField
-                label="Timeout"
+                label={tr("ui.modules.browser.pages.automationScriptDetail.AutomationScriptDetailBodyPanels.label.d4c45de")}
                 value={`${resolvedPublicAPI.timeoutMs} ms`}
               />
             </div>
@@ -195,41 +191,38 @@ export function AutomationScriptDetailBodyPanels({
       </DetailPanel>
 
       {isDualInstanceRuntimeScript ? (
-        <DetailPanel title="启动配置">
+        <DetailPanel title={tr("browser.components.AutomationScriptRunModal.AutomationScriptRunModal.46155bb")}>
           <div className="space-y-4">
             <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
-              <CompactMetaField label="Method" value="POST" />
-              <CompactMetaField label="Path" value={<code>/api/runtime/session</code>} />
+              <CompactMetaField label={tr("ui.modules.browser.pages.automationScriptDetail.AutomationScriptDetailBodyPanels.label.8830694")} value={tr("ui.modules.browser.pages.automationScriptDetail.AutomationScriptDetailBodyPanels.label.61ff81c")} />
+              <CompactMetaField label={tr("ui.modules.browser.pages.automationScriptDetail.AutomationScriptDetailBodyPanels.label.519e391")} value={<code>/api/runtime/session</code>} />
               <CompactMetaField
-                label="Base URL"
+                label={tr("ui.modules.browser.pages.automationScriptDetail.AutomationScriptDetailBodyPanels.label.1dbd61f")}
                 value={<span className="break-all">{launchBaseUrl}</span>}
               />
               <CompactMetaField
-                label="调用次数"
-                value={`${dualRuntimePreview.requests.length || 0} 次`}
+                label={tr("browser.pages.automationScriptDetail.AutomationScriptDetailBodyPanels.label.15a52fa")}
+                value={tr("browser.pages.automationScriptDetail.AutomationScriptDetailBodyPanels.AutomationScriptDetailBodyPanels.78d0ccd", [dualRuntimePreview.requests.length || 0])}
               />
             </div>
 
             {dualRuntimePreview.error ? (
-              <div className="rounded-xl border border-[var(--color-warning)]/30 bg-[var(--color-warning)]/10 px-3 py-3 text-sm text-[var(--color-text-secondary)]">
-                当前启动配置 JSON 无法解析，暂时不能展开接口示例：{" "}
-                <code>{dualRuntimePreview.error}</code>
+              <div className="rounded-xl border border-[var(--color-warning)]/30 bg-[var(--color-warning)]/10 px-3 py-3 text-sm text-[var(--color-text-secondary)]">{tr("browser.pages.automationScriptDetail.AutomationScriptDetailBodyPanels.text.7efb012")}{" "}
+                <code>{translateMessage(dualRuntimePreview.error)}</code>
               </div>
             ) : null}
 
             {dualRuntimePreview.requests.length > 0 ? (
               <div className="rounded-xl border border-[var(--color-border-muted)] bg-[var(--color-bg-secondary)] px-3 py-3">
                 <div className="flex flex-wrap items-center justify-between gap-2">
-                  <div className="text-sm font-medium text-[var(--color-text-primary)]">
-                    已生成 {dualRuntimePreview.requests.length} 次接口调用示例
-                  </div>
+                  <div className="text-sm font-medium text-[var(--color-text-primary)]">{tr("browser.pages.automationScriptDetail.AutomationScriptDetailBodyPanels.text.a96d8f4")}{dualRuntimePreview.requests.length}{tr("browser.pages.automationScriptDetail.AutomationScriptDetailBodyPanels.text.d0f4afc")}</div>
                   <Button
                     type="button"
                     variant="secondary"
                     size="sm"
                     onClick={onToggleDualRuntimeRequests}
                   >
-                    {showDualRuntimeRequests ? "收起请求示例" : "展开请求示例"}
+                    {showDualRuntimeRequests ? tr("browser.pages.automationScriptDetail.AutomationScriptDetailBodyPanels.AutomationScriptDetailBodyPanels.2e4830d") : tr("browser.pages.automationScriptDetail.AutomationScriptDetailBodyPanels.AutomationScriptDetailBodyPanels.a8b345f")}
                   </Button>
                 </div>
                 {showDualRuntimeRequests ? (
@@ -239,8 +232,7 @@ export function AutomationScriptDetailBodyPanels({
                         key={`${request.code}-${index}`}
                         className="rounded-xl border border-[var(--color-border-muted)] bg-[var(--color-bg-surface)] px-3 py-3"
                       >
-                        <div className="mb-2 text-sm font-medium text-[var(--color-text-primary)]">
-                          第 {index + 1} 次接口调用 · <code>{request.code}</code>
+                        <div className="mb-2 text-sm font-medium text-[var(--color-text-primary)]">{tr("browser.pages.automationScriptDetail.AutomationScriptDetailBodyPanels.text.f495347")}{index + 1}{tr("browser.pages.automationScriptDetail.AutomationScriptDetailBodyPanels.text.a1f87da")}<code>{request.code}</code>
                         </div>
                         <pre className="overflow-x-auto rounded-lg border border-[var(--color-border-muted)] bg-[var(--color-bg-secondary)] p-3 text-xs leading-6 text-[var(--color-text-secondary)]">
                           <code>
@@ -260,25 +252,21 @@ export function AutomationScriptDetailBodyPanels({
 
             <div className="rounded-xl border border-[var(--color-border-muted)] bg-[var(--color-bg-secondary)] px-3 py-3">
               <div className="flex flex-wrap items-center justify-between gap-2">
-                <div className="text-sm font-medium text-[var(--color-text-primary)]">
-                  OpenClaw 指令模板
-                </div>
+                <div className="text-sm font-medium text-[var(--color-text-primary)]">{tr("browser.pages.automationScriptDetail.AutomationScriptDetailBodyPanels.text.9560c4c")}</div>
                 <Button
                   type="button"
                   variant="secondary"
                   size="sm"
                   onClick={onCopyOpenClawCommand}
                 >
-                  <Copy className="h-4 w-4" />
-                  复制指令
-                </Button>
+                  <Copy className="h-4 w-4" />{tr("browser.pages.automationScriptDetail.AutomationScriptDetailBodyPanels.text.5aadf3a")}</Button>
               </div>
               <pre className="mt-3 overflow-x-auto rounded-lg border border-[var(--color-border-muted)] bg-[var(--color-bg-surface)] p-3 text-xs leading-6 text-[var(--color-text-secondary)]">
                 <code>{openClawDualSiteCommand}</code>
               </pre>
             </div>
 
-            <FormItem label="接口请求源配置 JSON">
+            <FormItem label={tr("browser.pages.automationScriptDetail.AutomationScriptDetailBodyPanels.label.17eaaaa")}>
               <Textarea
                 rows={12}
                 value={draft.paramsText}
@@ -302,7 +290,7 @@ export function AutomationScriptDetailBodyPanels({
         <>
           {usesManualSelector ? (
             <DetailPanel
-              title="目标选择器"
+              title={tr("browser.components.AutomationScriptRunModal.AutomationScriptRunModal.53327e5")}
               actions={
                 <Button
                   type="button"
@@ -311,15 +299,11 @@ export function AutomationScriptDetailBodyPanels({
                   onClick={onOpenTargetConfig}
                   disabled={busy}
                 >
-                  <Settings className="h-4 w-4" />
-                  选择实例
-                </Button>
+                  <Settings className="h-4 w-4" />{tr("browser.components.AutomationInstanceSelector.AutomationInstanceSelector.1e75bfe")}</Button>
               }
             >
               <div className="rounded-xl border border-[var(--color-border-muted)] bg-[var(--color-bg-secondary)] px-3 py-3">
-                <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--color-text-muted)]">
-                  当前目标
-                </div>
+                <div className="text-[11px] font-semibold   text-[var(--color-text-muted)]">{tr("browser.pages.automationScriptDetail.AutomationScriptDetailBodyPanels.text.eeb54b8")}</div>
                 <div className="mt-2 text-sm font-medium text-[var(--color-text-primary)]">
                   {formatManualSelectorSummary(draft.selectorText)}
                 </div>
@@ -327,13 +311,13 @@ export function AutomationScriptDetailBodyPanels({
             </DetailPanel>
           ) : null}
 
-          <DetailPanel title={resolvedPublicAPI.enabled ? "接口参数" : "运行参数"}>
+          <DetailPanel title={resolvedPublicAPI.enabled ? tr("browser.pages.automationScriptDetail.AutomationScriptDetailBodyPanels.AutomationScriptDetailBodyPanels.ac90131") : tr("browser.components.AutomationScriptRunModal.AutomationScriptRunModal.b215c99")}>
             <FormItem
               label={
                 paramsHelp ? (
-                  <FieldLabelWithHelp label="JSON" onOpen={onOpenParamsHelp} />
+                  <FieldLabelWithHelp label={tr("ui.modules.browser.pages.automationScriptDetail.AutomationScriptDetailBodyPanels.label.031a4e7")} onOpen={onOpenParamsHelp} />
                 ) : (
-                  "JSON"
+                  tr("ui.modules.browser.pages.automationScriptDetail.AutomationScriptDetailBodyPanels.label.031a4e7")
                 )
               }
             >
@@ -353,24 +337,22 @@ export function AutomationScriptDetailBodyPanels({
       )}
 
       {isLaunchApiScript ? (
-        <DetailPanel title="固定模板">
+        <DetailPanel title={tr("browser.pages.automationScriptDetail.AutomationScriptDetailBodyPanels.title.1d693ac")}>
           <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
-            <CompactMetaField label="类型" value="接口模式" />
-            <CompactMetaField label="执行方式" value="系统固定" />
+            <CompactMetaField label={tr("browser.components.AutomationScriptHistoryModal.text.e4e46c7")} value={tr("browser.pages.AutomationPage.helpers.getAutomationModeLabel.b65f076")} />
+            <CompactMetaField label={tr("browser.pages.automationScriptDetail.AutomationScriptDetailBodyPanels.label.9e3eff7")} value={tr("browser.pages.automationScriptDetail.AutomationScriptDetailBodyPanels.value.2072850")} />
             <CompactMetaField
-              label="可编辑项"
+              label={tr("browser.pages.automationScriptDetail.AutomationScriptDetailBodyPanels.label.507520d")}
               value={
-                isDualInstanceRuntimeScript ? "启动配置" : "目标策略 / 运行参数"
+                isDualInstanceRuntimeScript ? tr("browser.components.AutomationScriptRunModal.AutomationScriptRunModal.46155bb") : tr("browser.pages.automationScriptDetail.AutomationScriptDetailBodyPanels.AutomationScriptDetailBodyPanels.f3cfd1a")
               }
             />
           </div>
-          <div className="rounded-xl border border-[var(--color-border-muted)] bg-[var(--color-bg-secondary)] px-3 py-3 text-sm text-[var(--color-text-secondary)]">
-            固定接口模板由系统维护。
-          </div>
+          <div className="rounded-xl border border-[var(--color-border-muted)] bg-[var(--color-bg-secondary)] px-3 py-3 text-sm text-[var(--color-text-secondary)]">{tr("browser.pages.automationScriptDetail.AutomationScriptDetailBodyPanels.text.9484679")}</div>
         </DetailPanel>
       ) : (
-        <DetailPanel title="脚本">
-          <FormItem label="脚本内容">
+        <DetailPanel title={tr("browser.components.AutomationScriptHistoryModal.text.7fbccbe")}>
+          <FormItem label={tr("browser.pages.automationScriptDetail.AutomationScriptDetailBodyPanels.label.2a33eaa")}>
             <Textarea
               rows={24}
               value={draft.scriptText}
@@ -378,7 +360,7 @@ export function AutomationScriptDetailBodyPanels({
                 onUpdateDraft({ scriptText: event.target.value })
               }
               className="min-h-[520px] font-mono leading-6"
-              placeholder="module.exports.run = async () => {}"
+              placeholder={tr("ui.modules.browser.pages.automationScriptDetail.AutomationScriptDetailBodyPanels.label.40db77a")}
             />
           </FormItem>
         </DetailPanel>

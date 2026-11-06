@@ -1,3 +1,4 @@
+import { tr, localized } from '../../shared/i18n'
 import type {
   BrowserProfileAutomationTarget,
   BrowserProfileCopyMode,
@@ -10,14 +11,14 @@ export interface BrowserProfileAutomationTargetOption {
   detail: string
 }
 
-export const BROWSER_PROFILE_AUTOMATION_TARGET_OPTIONS: BrowserProfileAutomationTargetOption[] = [
-  { value: 'seed', label: '指纹种子', detail: '生成新种子' },
-  { value: 'identity', label: '浏览器身份', detail: '品牌 / 平台' },
-  { value: 'locale', label: '语言与时区', detail: '语言 / 时区' },
-  { value: 'screen', label: '窗口大小', detail: '浏览器窗口' },
-  { value: 'hardware', label: '硬件参数', detail: 'CPU 核心数' },
-  { value: 'network', label: '网络与伪装', detail: 'WebRTC / 排除伪装' },
-]
+export const BROWSER_PROFILE_AUTOMATION_TARGET_OPTIONS: BrowserProfileAutomationTargetOption[] = localized(() => ([
+  { value: 'seed', label: tr("browser.copyOptions.label.8e9fa06"), detail: tr("browser.copyOptions.detail.f9b27b2") },
+  { value: 'identity', label: tr("browser.copyOptions.label.6419965"), detail: tr("browser.copyOptions.detail.316f096") },
+  { value: 'locale', label: tr("browser.copyOptions.label.fec658f"), detail: tr("browser.copyOptions.detail.85653bc") },
+  { value: 'screen', label: tr("browser.copyOptions.label.a599946"), detail: tr("browser.copyOptions.detail.6cfbda6") },
+  { value: 'hardware', label: tr("browser.copyOptions.label.70fe83e"), detail: tr("browser.copyOptions.detail.27bf340") },
+  { value: 'network', label: tr("browser.copyOptions.label.d16c9ed"), detail: tr("browser.copyOptions.detail.4e042ee") },
+]))
 
 export const BROWSER_PROFILE_AUTOMATION_TARGET_PREFIXES: Record<BrowserProfileAutomationTarget, string[]> = {
   seed: ['--fingerprint'],

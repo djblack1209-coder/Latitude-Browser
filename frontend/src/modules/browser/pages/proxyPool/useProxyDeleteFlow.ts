@@ -1,3 +1,4 @@
+import { tr } from '../../../../shared/i18n'
 ﻿import { useState } from 'react'
 import { toast } from '../../../../shared/components'
 import type { BrowserProxy } from '../../types'
@@ -23,9 +24,9 @@ export function useProxyDeleteFlow({ proxies, saveProxies, removeSelectedId }: U
       const newProxies = proxies.filter(p => p.proxyId !== deletingId)
       await saveProxies(newProxies)
       removeSelectedId(deletingId)
-      toast.success('代理已删除')
+      toast.success(tr("browser.components.ProxyPickerModal.ProxyPickerModal.fafd8a6"))
     } catch (error: any) {
-      toast.error(error?.message || '删除失败')
+      toast.error(error?.message || tr("browser.components.ProxyPickerModal.ProxyPickerModal.72250c5"))
     }
     setDeletingId(null)
   }

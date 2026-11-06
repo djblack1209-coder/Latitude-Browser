@@ -1,3 +1,4 @@
+import { tr } from '../../../shared/i18n'
 import type {
   BrowserFingerprintCheckResult,
   BrowserFingerprintExpectedInfo,
@@ -273,7 +274,7 @@ const addObservationRow = (
   label: string,
   expected: unknown,
   actual: unknown,
-  note = '观察项，不作为自动配置失败依据',
+  note = tr("browser.utils.fingerprintCheck.message.0a3d18d"),
 ) => {
   if (isBlank(expected)) return
   addRow(rows, {
@@ -309,53 +310,53 @@ export function evaluateFingerprintCheck(result: BrowserFingerprintCheckResult):
   const expected = result?.expected || ({} as BrowserFingerprintExpectedInfo)
   const rows: FingerprintCheckRow[] = []
 
-  addConfiguredRow(rows, 'language', '语言', expected.language, runtime.language, 'exact')
+  addConfiguredRow(rows, 'language', tr("browser.components.FingerprintPanel.label.cd99b22"), expected.language, runtime.language, 'exact')
   addConfiguredRow(
     rows,
     'acceptLanguage',
-    '语言列表',
+    tr("browser.components.FingerprintPanel.label.0778870"),
     expected.acceptLanguage,
     runtime.languages?.length ? runtime.languages : runtime.language,
     'accept-language',
   )
-  addConfiguredRow(rows, 'timezone', '时区', expected.timezone, runtime.timezone, 'exact')
-  addConfiguredRow(rows, 'hardwareConcurrency', 'CPU 并发数', expected.hardwareConcurrency, runtime.hardwareConcurrency, 'exact')
-  addConfiguredRow(rows, 'windowSize', '窗口尺寸', expected.windowSize, formatWindowRuntimeSize(runtime), 'exact',
-    runtime.innerWidth > 0 && runtime.innerHeight > 0 ? undefined : '窗口内尺寸不可读时会回退检查 outerWidth / outerHeight')
+  addConfiguredRow(rows, 'timezone', tr("browser.components.FingerprintPanel.label.fb2a23d"), expected.timezone, runtime.timezone, 'exact')
+  addConfiguredRow(rows, 'hardwareConcurrency', tr("browser.utils.fingerprintCheck.evaluateFingerprintCheck.de0d65d"), expected.hardwareConcurrency, runtime.hardwareConcurrency, 'exact')
+  addConfiguredRow(rows, 'windowSize', tr("browser.utils.fingerprintCheck.evaluateFingerprintCheck.3b932f3"), expected.windowSize, formatWindowRuntimeSize(runtime), 'exact',
+    runtime.innerWidth > 0 && runtime.innerHeight > 0 ? undefined : tr("browser.utils.fingerprintCheck.evaluateFingerprintCheck.04b7be0"))
   rows[rows.length - 1].status = compareWindowSize(expected.windowSize, runtime)
-  addConfiguredRow(rows, 'brand', '浏览器品牌', expected.brand, `${runtime.userAgent} ${runtime.userAgentData}`, 'contains')
+  addConfiguredRow(rows, 'brand', tr("browser.components.FingerprintPanel.label.363116d"), expected.brand, `${runtime.userAgent} ${runtime.userAgentData}`, 'contains')
   rows[rows.length - 1].status = compareBrand(expected.brand, runtime)
-  addConfiguredRow(rows, 'brandVersion', '浏览器版本', expected.brandVersion, matchingRuntimeBrand(expected.brand || '', runtime)?.version, 'browser-version')
-  addConfiguredRow(rows, 'platform', '系统平台', expected.platform, runtime.platform || runtime.userAgent, 'platform')
-  addConfiguredRow(rows, 'platformVersion', '系统版本', expected.platformVersion, `${runtime.platform} ${runtime.userAgent} ${runtime.userAgentData}`, 'platform-version')
+  addConfiguredRow(rows, 'brandVersion', tr("browser.utils.fingerprintCheck.evaluateFingerprintCheck.38456f7"), expected.brandVersion, matchingRuntimeBrand(expected.brand || '', runtime)?.version, 'browser-version')
+  addConfiguredRow(rows, 'platform', tr("browser.utils.fingerprintCheck.evaluateFingerprintCheck.c5f9c5c"), expected.platform, runtime.platform || runtime.userAgent, 'platform')
+  addConfiguredRow(rows, 'platformVersion', tr("browser.components.FingerprintPanel.label.735f889"), expected.platformVersion, `${runtime.platform} ${runtime.userAgent} ${runtime.userAgentData}`, 'platform-version')
 
   // webdriver is an invariant rather than an expected launch argument. A
   // true value is always a blocking failure, while false does not make an
   // otherwise unconfigured snapshot look like a successful comparison.
   addRow(rows, {
     key: 'webdriver',
-    label: '自动化标记',
+    label: tr("browser.utils.fingerprintCheck.label.3e11b3a"),
     expected: 'false',
     actual: typeof runtime.webdriver === 'boolean' ? String(runtime.webdriver) : '',
     status: runtime.webdriver === true ? 'mismatch' : runtime.webdriver === false ? 'match' : 'unreadable',
     blocking: true,
-    note: runtime.webdriver ? '运行时暴露 webdriver=true，需要进入实例详情复核' : undefined,
+    note: runtime.webdriver ? tr("browser.utils.fingerprintCheck.evaluateFingerprintCheck.622e736") : undefined,
   })
 
-  addObservationRow(rows, 'deviceMemory', '设备内存', expected.deviceMemory, runtime.deviceMemory)
-  addObservationRow(rows, 'colorDepth', '色深', expected.colorDepth, runtime.colorDepth)
-  addObservationRow(rows, 'touchPoints', '触摸点数量', expected.touchPoints, runtime.maxTouchPoints)
+  addObservationRow(rows, 'deviceMemory', tr("browser.pages.AutoConfigPage.label.063c974"), expected.deviceMemory, runtime.deviceMemory)
+  addObservationRow(rows, 'colorDepth', tr("browser.pages.AutoConfigPage.label.f79e991"), expected.colorDepth, runtime.colorDepth)
+  addObservationRow(rows, 'touchPoints', tr("browser.utils.fingerprintCheck.evaluateFingerprintCheck.8486dd4"), expected.touchPoints, runtime.maxTouchPoints)
   addObservationRow(rows, 'doNotTrack', 'Do Not Track', expected.doNotTrack, runtime.doNotTrack)
-  addObservationRow(rows, 'mediaDevices', '媒体设备数量', expected.mediaDevices, runtime.mediaDeviceCount)
-  addObservationRow(rows, 'canvasNoise', 'Canvas 噪声', expected.canvasNoise, runtime.canvasHash)
-  addObservationRow(rows, 'audioNoise', 'Audio 噪声', expected.audioNoise, runtime.audioHash)
-  addObservationRow(rows, 'clientRectsNoise', 'ClientRects 噪声', expected.clientRectsNoise, runtime.clientRectsHash)
-  addObservationRow(rows, 'fontList', '字体列表', expected.fontList, '', '当前快速自测未采集字体列表，不能使用插件列表代替')
-  addObservationRow(rows, 'webglVendor', 'WebGL 厂商', expected.webglVendor, runtime.webglVendor)
-  addObservationRow(rows, 'webglRenderer', 'WebGL 渲染器', expected.webglRenderer, runtime.webglRenderer)
-  addObservationRow(rows, 'seed', '指纹种子', expected.seed, '', '种子只用于生成噪声，当前运行时不会直接回传')
-  addObservationRow(rows, 'webrtcPolicy', 'WebRTC 策略', expected.webrtcPolicy, '', '当前快速自测未直接暴露 WebRTC 策略；请在实例详情复核')
-  addObservationRow(rows, 'disableSpoofing', '禁用伪装项', expected.disableSpoofing, '', '当前快速自测未直接回传伪装开关；请在实例详情复核')
+  addObservationRow(rows, 'mediaDevices', tr("browser.pages.BrowserEditPage.label.6a9c87c"), expected.mediaDevices, runtime.mediaDeviceCount)
+  addObservationRow(rows, 'canvasNoise', tr("browser.components.FingerprintPanel.label.cc178ca"), expected.canvasNoise, runtime.canvasHash)
+  addObservationRow(rows, 'audioNoise', tr("browser.pages.BrowserEditPage.label.5201834"), expected.audioNoise, runtime.audioHash)
+  addObservationRow(rows, 'clientRectsNoise', tr("browser.components.FingerprintPanel.label.df61775"), expected.clientRectsNoise, runtime.clientRectsHash)
+  addObservationRow(rows, 'fontList', tr("browser.pages.BrowserEditPage.label.96ff7b7"), expected.fontList, '', tr("browser.utils.fingerprintCheck.evaluateFingerprintCheck.10d009c"))
+  addObservationRow(rows, 'webglVendor', tr("browser.utils.fingerprintCheck.evaluateFingerprintCheck.5a2619d"), expected.webglVendor, runtime.webglVendor)
+  addObservationRow(rows, 'webglRenderer', tr("browser.utils.fingerprintCheck.evaluateFingerprintCheck.af1680a"), expected.webglRenderer, runtime.webglRenderer)
+  addObservationRow(rows, 'seed', tr("browser.copyOptions.label.8e9fa06"), expected.seed, '', tr("browser.utils.fingerprintCheck.evaluateFingerprintCheck.49cdd4f"))
+  addObservationRow(rows, 'webrtcPolicy', tr("browser.components.FingerprintPanel.label.caac8ad"), expected.webrtcPolicy, '', tr("browser.utils.fingerprintCheck.evaluateFingerprintCheck.024e871"))
+  addObservationRow(rows, 'disableSpoofing', tr("browser.utils.fingerprintCheck.evaluateFingerprintCheck.fb82afe"), expected.disableSpoofing, '', tr("browser.utils.fingerprintCheck.evaluateFingerprintCheck.ad7893e"))
 
   const explicitRows = rows.filter((row) => row.blocking && row.key !== 'webdriver' && configuredExpectedKeys.includes(row.key as keyof BrowserFingerprintExpectedInfo) && row.expected !== '')
   const comparableRows = explicitRows.filter((row) => row.status === 'match' || row.status === 'compatible' || row.status === 'mismatch')

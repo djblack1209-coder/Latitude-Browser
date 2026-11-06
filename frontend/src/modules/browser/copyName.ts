@@ -1,3 +1,4 @@
+import { tr } from '../../shared/i18n'
 const browserProfileCopySuffixPattern = /\s*(?:\(\s*副本\s*\)|（副本）)\s*(?:\d{12})?$/u
 
 function formatBrowserProfileCopyTimestamp(date: Date): string {
@@ -35,6 +36,6 @@ function normalizeBrowserProfileCopyBaseName(sourceName: string): string {
 }
 
 export function buildBrowserProfileCopyName(sourceName: string, now: Date = new Date()): string {
-  const baseName = normalizeBrowserProfileCopyBaseName(sourceName) || '未命名实例'
-  return `${baseName}（副本）${formatBrowserProfileCopyTimestamp(now)}`
+  const baseName = normalizeBrowserProfileCopyBaseName(sourceName) || tr("browser.copyName.buildBrowserProfileCopyName.11a8063")
+  return tr("browser.copyName.buildBrowserProfileCopyName.b359273", [baseName, formatBrowserProfileCopyTimestamp(now)])
 }

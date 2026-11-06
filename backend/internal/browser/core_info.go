@@ -2,6 +2,7 @@ package browser
 
 import (
 	"encoding/json"
+	"encoding/xml"
 	"os"
 	"path/filepath"
 	"strings"
@@ -30,7 +31,7 @@ func (m *Manager) GetChromeVersion(corePath string) string {
 				return version
 			}
 		}
-		return ""
+		return macBundleVersion(baseDir)
 	}
 
 	// 解析 JSON
@@ -42,6 +43,51 @@ func (m *Manager) GetChromeVersion(corePath string) string {
 	}
 
 	return manifest.Version
+}
+
+// Official macOS Chromium distributions store their version in the app plist.
+func macBundleVersion(baseDir string) string {
+	for _, candidate := range CoreExecutableCandidates() {
+		bundle, _, ok := strings.Cut(candidate, ".app/")
+		if !ok {
+			continue
+		}
+		file, err := os.Open(filepath.Join(baseDir, bundle+".app", "Contents", "Info.plist"))
+		if err != nil {
+			continue
+		}
+		decoder := xml.NewDecoder(file)
+		for {
+			token, err := decoder.Token()
+			if err != nil {
+				break
+			}
+			start, ok := token.(xml.StartElement)
+			if !ok || start.Name.Local != "key" {
+				continue
+			}
+			var key string
+			if decoder.DecodeElement(&key, &start) != nil || key != "CFBundleShortVersionString" {
+				continue
+			}
+			for {
+				next, err := decoder.Token()
+				if err != nil {
+					break
+				}
+				if element, ok := next.(xml.StartElement); ok {
+					var version string
+					if element.Name.Local == "string" && decoder.DecodeElement(&version, &element) == nil {
+						file.Close()
+						return strings.TrimSpace(version)
+					}
+					break
+				}
+			}
+		}
+		file.Close()
+	}
+	return ""
 }
 
 // CountInstancesByCore 统计使用指定内核的实例数量

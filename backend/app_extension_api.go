@@ -3,6 +3,7 @@ package backend
 import (
 	"ant-chrome/backend/internal/browser"
 	"ant-chrome/backend/internal/config"
+	"ant-chrome/backend/internal/locale"
 	"ant-chrome/backend/internal/logger"
 	"ant-chrome/backend/internal/proxy"
 	"fmt"
@@ -228,9 +229,9 @@ func (a *App) BrowserExtensionInstallLocalFile() (BrowserExtension, error) {
 		return BrowserExtension{}, fmt.Errorf("浏览器管理器未初始化")
 	}
 	path, err := wailsruntime.OpenFileDialog(a.ctx, wailsruntime.OpenDialogOptions{
-		Title: "选择 Chrome 插件包",
+		Title: locale.Text("error.backend.message.c89ac86b35"),
 		Filters: []wailsruntime.FileFilter{
-			{DisplayName: "Chrome 插件包 (*.crx;*.zip)", Pattern: "*.crx;*.zip"},
+			{DisplayName: locale.Text("error.backend.message.17c8951d49"), Pattern: "*.crx;*.zip"},
 		},
 	})
 	if err != nil {
@@ -252,7 +253,7 @@ func (a *App) BrowserExtensionInstallLocalDirectory() (BrowserExtension, error) 
 	if a.browserMgr == nil {
 		return BrowserExtension{}, fmt.Errorf("浏览器管理器未初始化")
 	}
-	path, err := wailsruntime.OpenDirectoryDialog(a.ctx, wailsruntime.OpenDialogOptions{Title: "选择已解压插件目录"})
+	path, err := wailsruntime.OpenDirectoryDialog(a.ctx, wailsruntime.OpenDialogOptions{Title: locale.Text("error.backend.message.665f2c6b71")})
 	if err != nil {
 		return BrowserExtension{}, fmt.Errorf("打开目录选择框失败: %w", err)
 	}

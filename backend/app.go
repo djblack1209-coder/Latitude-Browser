@@ -45,6 +45,7 @@ type App struct {
 	quitMode               quitMode
 	quitRequested          bool
 	maintenanceMu          sync.Mutex
+	preferenceMu           sync.Mutex
 	dataActivity           dataActivityGate
 	proxyStateMu           sync.RWMutex
 	torConfigMu            sync.RWMutex

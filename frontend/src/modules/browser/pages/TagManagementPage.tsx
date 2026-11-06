@@ -1,7 +1,8 @@
+import { tr, useLocale } from '../../../shared/i18n'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Plus, Tag, Trash2, X } from 'lucide-react'
 import { Badge, Button, toast } from '../../../shared/components'
-import { SignalEmptyState, TelemetryStrip, TerminalPanel, WorkspaceHeader } from '../../../shared/components/SignalPrimitives'
+import { SignalEmptyState, TerminalPanel, WorkspaceHeader } from '../../../shared/components/SignalPrimitives'
 import type { BrowserProfile } from '../types'
 import { batchRemoveProfileTags, batchSetProfileTags, fetchBrowserProfiles, renameBrowserTag } from '../api'
 import { AssetScopeTabs } from './AssetScopeTabs'
@@ -17,6 +18,8 @@ interface TagPanelProps {
 }
 
 function TagPanel({ tags, selected, profilesByTag, totalCount, onSelect, onCreateTag, onRenameTag }: TagPanelProps) {
+  useLocale()
+
   const [creating, setCreating] = useState(false)
   const [newTag, setNewTag] = useState('')
   const inputRef = useRef<HTMLInputElement>(null)
@@ -55,17 +58,17 @@ function TagPanel({ tags, selected, profilesByTag, totalCount, onSelect, onCreat
   }
 
   return (
-    <aside className="flex w-56 shrink-0 flex-col border-r border-[var(--color-border)] bg-[var(--color-bg-surface)]" aria-label="实例标签列表">
+    <aside className="flex w-56 shrink-0 flex-col border-r border-[var(--color-border)] bg-[var(--color-bg-surface)]" aria-label={tr("browser.pages.TagManagementPage.aria_label.5496292")}>
       <div className="flex items-center justify-between border-b border-[var(--color-border)] px-3 py-2.5">
-        <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">TAG INDEX</span>
+        <span className="font-mono text-[10px] font-semibold   text-[var(--color-text-muted)]">{tr("ui.modules.browser.pages.TagManagementPage.label.8e56d81")}</span>
         <button
           type="button"
           onClick={() => {
             setCreating(true)
             setTimeout(() => inputRef.current?.focus(), 50)
           }}
-          title="新建标签"
-          aria-label="新建标签"
+          title={tr("browser.pages.TagManagementPage.title.616054b")}
+          aria-label={tr("browser.pages.TagManagementPage.title.616054b")}
           className="rounded-sm p-1 text-[var(--color-text-muted)] transition-colors hover:bg-[var(--color-accent-muted)] hover:text-[var(--color-accent)] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--color-accent)]"
         >
           <Plus className="h-3.5 w-3.5" aria-hidden="true" />
@@ -82,7 +85,7 @@ function TagPanel({ tags, selected, profilesByTag, totalCount, onSelect, onCreat
             : 'border-transparent text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)]'
             }`}
         >
-          <span>全部实例</span>
+          <span>{tr("browser.pages.TagManagementPage.text.9d2dba1")}</span>
           <span className="font-mono text-xs text-[var(--color-text-muted)]">{totalCount}</span>
         </button>
 
@@ -90,7 +93,7 @@ function TagPanel({ tags, selected, profilesByTag, totalCount, onSelect, onCreat
           <div key={tag} className="min-w-0">
             {editingTag === tag ? (
               <div className="px-3 py-1.5">
-                <label htmlFor={`rename-tag-${tag}`} className="sr-only">重命名标签 {tag}</label>
+                <label htmlFor={`rename-tag-${tag}`} className="sr-only">{tr("browser.pages.TagManagementPage.text.82b3fec")}{tag}</label>
                 <input
                   id={`rename-tag-${tag}`}
                   autoFocus
@@ -117,7 +120,7 @@ function TagPanel({ tags, selected, profilesByTag, totalCount, onSelect, onCreat
                   ? 'border-[var(--color-accent)] bg-[var(--color-accent-muted)] text-[var(--color-text-primary)]'
                   : 'border-transparent text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)]'
                   }`}
-                title="选择标签，右键重命名"
+                title={tr("browser.pages.TagManagementPage.title.0358495")}
               >
                 <span className="flex min-w-0 items-center gap-1.5">
                   <Tag className="h-3.5 w-3.5 shrink-0 text-[var(--color-text-muted)]" aria-hidden="true" />
@@ -130,12 +133,12 @@ function TagPanel({ tags, selected, profilesByTag, totalCount, onSelect, onCreat
         ))}
 
         {tags.length === 0 && !creating ? (
-          <p className="px-3 py-3 text-xs leading-5 text-[var(--color-text-muted)]">暂无标签。使用上方 + 创建标签。</p>
+          <p className="px-3 py-3 text-xs leading-5 text-[var(--color-text-muted)]">{tr("browser.pages.TagManagementPage.text.fffc9e7")}</p>
         ) : null}
 
         {creating ? (
           <div className="px-3 py-2">
-            <label htmlFor="new-profile-tag" className="sr-only">新标签名称</label>
+            <label htmlFor="new-profile-tag" className="sr-only">{tr("browser.pages.TagManagementPage.text.b4240a6")}</label>
             <input
               id="new-profile-tag"
               ref={inputRef}
@@ -143,7 +146,7 @@ function TagPanel({ tags, selected, profilesByTag, totalCount, onSelect, onCreat
               onChange={(event) => setNewTag(event.target.value)}
               onKeyDown={handleKeyDown}
               onBlur={commit}
-              placeholder="标签名称"
+              placeholder={tr("browser.pages.TagManagementPage.placeholder.182295d")}
               className="w-full min-w-0 rounded-sm border border-[var(--color-accent)] bg-[var(--color-bg-input)] px-2 py-1.5 text-xs text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] focus:outline-none"
             />
           </div>
@@ -162,6 +165,8 @@ interface ActionBarProps {
 }
 
 function ActionBar({ selectedCount, allTags, onAddTags, onRemoveTags, onClear }: ActionBarProps) {
+  useLocale()
+
   const [addInput, setAddInput] = useState('')
   const [removeTag, setRemoveTag] = useState('')
 
@@ -176,33 +181,32 @@ function ActionBar({ selectedCount, allTags, onAddTags, onRemoveTags, onClear }:
 
   return (
     <div className="flex flex-wrap items-center gap-2 border-b border-[var(--color-border-default)] bg-[var(--color-accent-muted)] px-3 py-2 text-sm">
-      <span className="shrink-0 font-mono text-xs text-[var(--color-accent)]">SELECTED {selectedCount}</span>
+      <span className="shrink-0 font-mono text-xs text-[var(--color-accent)]">{tr("ui.modules.browser.pages.TagManagementPage.label.9106ca2")}{selectedCount}</span>
       <div className="flex flex-1 flex-wrap items-center gap-2">
         <div className="flex items-center gap-1">
-          <label htmlFor="batch-add-tags" className="sr-only">批量添加标签</label>
+          <label htmlFor="batch-add-tags" className="sr-only">{tr("browser.pages.TagManagementPage.text.3b50994")}</label>
           <input
             id="batch-add-tags"
             value={addInput}
             onChange={(event) => setAddInput(event.target.value)}
             onKeyDown={(event) => event.key === 'Enter' && handleAdd()}
-            placeholder="标签，逗号分隔"
+            placeholder={tr("browser.pages.TagManagementPage.placeholder.ddc19cc")}
             className="w-40 rounded-sm border border-[var(--color-border)] bg-[var(--color-bg-input)] px-2 py-1 text-xs text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] focus:border-[var(--color-accent)] focus:outline-none"
           />
-          <Button size="sm" onClick={handleAdd} disabled={!addInput.trim()} title="为所选实例添加标签">
-            <Plus className="h-3.5 w-3.5" aria-hidden="true" />添加
-          </Button>
+          <Button size="sm" onClick={handleAdd} disabled={!addInput.trim()} title={tr("browser.pages.TagManagementPage.title.1762711")}>
+            <Plus className="h-3.5 w-3.5" aria-hidden="true" />{tr("browser.pages.TagManagementPage.text.94191ce")}</Button>
         </div>
 
         {allTags.length > 0 ? (
           <div className="flex items-center gap-1">
-            <label htmlFor="batch-remove-tag" className="sr-only">选择要批量移除的标签</label>
+            <label htmlFor="batch-remove-tag" className="sr-only">{tr("browser.pages.TagManagementPage.text.68486da")}</label>
             <select
               id="batch-remove-tag"
               value={removeTag}
               onChange={(event) => setRemoveTag(event.target.value)}
               className="rounded-sm border border-[var(--color-border)] bg-[var(--color-bg-input)] px-2 py-1 text-xs text-[var(--color-text-primary)] focus:border-[var(--color-accent)] focus:outline-none"
             >
-              <option value="">移除标签...</option>
+              <option value="">{tr("browser.pages.TagManagementPage.text.cc409a2")}</option>
               {allTags.map((tag) => <option key={tag} value={tag}>{tag}</option>)}
             </select>
             <Button
@@ -215,18 +219,17 @@ function ActionBar({ selectedCount, allTags, onAddTags, onRemoveTags, onClear }:
                 }
               }}
               disabled={!removeTag}
-              title="从所选实例移除标签"
+              title={tr("browser.pages.TagManagementPage.title.c7612de")}
             >
-              <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />移除
-            </Button>
+              <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />{tr("browser.pages.TagManagementPage.text.2f752c0")}</Button>
           </div>
         ) : null}
       </div>
       <button
         type="button"
         onClick={onClear}
-        aria-label="清除所选实例"
-        title="清除选择"
+        aria-label={tr("browser.pages.TagManagementPage.aria_label.43db622")}
+        title={tr("browser.pages.TagManagementPage.title.1955f6f")}
         className="shrink-0 rounded-sm p-1 text-[var(--color-text-muted)] hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)]"
       >
         <X className="h-4 w-4" aria-hidden="true" />
@@ -236,6 +239,8 @@ function ActionBar({ selectedCount, allTags, onAddTags, onRemoveTags, onClear }:
 }
 
 export function TagManagementPage() {
+  const uiLocale = useLocale()
+
   const [profiles, setProfiles] = useState<BrowserProfile[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedTag, setSelectedTag] = useState<string | null>(null)
@@ -248,7 +253,7 @@ export function TagManagementPage() {
     profiles.forEach((profile) => profile.tags?.forEach((tag) => tags.add(tag)))
     pendingTags.forEach((tag) => tags.add(tag))
     return Array.from(tags).sort()
-  }, [profiles, pendingTags])
+  }, [profiles, pendingTags, uiLocale])
 
   const handleCreateTag = (tag: string) => {
     if (!allTagsWithPending.includes(tag)) {
@@ -277,12 +282,12 @@ export function TagManagementPage() {
     const map: Record<string, number> = {}
     profiles.forEach((profile) => profile.tags?.forEach((tag) => { map[tag] = (map[tag] || 0) + 1 }))
     return map
-  }, [profiles])
+  }, [profiles, uiLocale])
 
   const displayProfiles = useMemo(() => {
     if (selectedTag === null) return profiles
     return profiles.filter((profile) => profile.tags?.includes(selectedTag))
-  }, [profiles, selectedTag])
+  }, [profiles, selectedTag, uiLocale])
 
   const isAllSelected = displayProfiles.length > 0 && displayProfiles.every((profile) => selectedIds.has(profile.profileId))
   const isIndeterminate = !isAllSelected && displayProfiles.some((profile) => selectedIds.has(profile.profileId))
@@ -302,10 +307,10 @@ export function TagManagementPage() {
     setSaving(true)
     try {
       await batchSetProfileTags(ids, tags, false)
-      toast.success(`已为 ${ids.length} 个实例添加标签`)
+      toast.success(tr("browser.pages.TagManagementPage.TagManagementPage.bf8743b", [ids.length]))
       await load()
     } catch (error: any) {
-      toast.error(error?.message || '操作失败')
+      toast.error(error?.message || tr("browser.pages.TagManagementPage.TagManagementPage.09e424b"))
     } finally {
       setSaving(false)
     }
@@ -316,10 +321,10 @@ export function TagManagementPage() {
     setSaving(true)
     try {
       await batchRemoveProfileTags(ids, tags)
-      toast.success(`已从 ${ids.length} 个实例移除标签`)
+      toast.success(tr("browser.pages.TagManagementPage.TagManagementPage.350dc2c", [ids.length]))
       await load()
     } catch (error: any) {
-      toast.error(error?.message || '操作失败')
+      toast.error(error?.message || tr("browser.pages.TagManagementPage.TagManagementPage.09e424b"))
     } finally {
       setSaving(false)
     }
@@ -328,13 +333,13 @@ export function TagManagementPage() {
   const handleRenameTag = async (oldName: string, newName: string) => {
     if (oldName === newName || !newName.trim()) return
     if (allTags.includes(newName.trim())) {
-      toast.error('标签名称已存在')
+      toast.error(tr("browser.pages.TagManagementPage.TagManagementPage.3151bfe"))
       return
     }
     setSaving(true)
     try {
       await renameBrowserTag(oldName, newName.trim())
-      toast.success('标签重命名成功')
+      toast.success(tr("browser.pages.TagManagementPage.TagManagementPage.0add426"))
       if (pendingTags.includes(oldName)) {
         setPendingTags((previous) => previous.map((tag) => tag === oldName ? newName.trim() : tag))
       }
@@ -343,34 +348,28 @@ export function TagManagementPage() {
       }
       await load()
     } catch (error: any) {
-      toast.error(error?.message || '重命名失败')
+      toast.error(error?.message || tr("browser.pages.TagManagementPage.TagManagementPage.1664ff6"))
     } finally {
       setSaving(false)
     }
   }
 
-  const runningCount = profiles.filter((profile) => profile.running).length
 
   return (
     <div className="apple-page flex h-full min-h-0 flex-col gap-4 animate-fade-in">
       <WorkspaceHeader
-        eyebrow="FINGERPRINT / TAGS"
-        title="实例标签"
-        description="筛选实例并批量添加或移除标签。"
+
+        title={tr("browser.pages.AssetScopeTabs.label.d620218")}
+
       />
 
       <AssetScopeTabs />
 
-      <TelemetryStrip items={[
-        { label: '标签', value: allTags.length, detail: `${pendingTags.length} 个待首次分配`, tone: pendingTags.length ? 'warning' : 'neutral' },
-        { label: '实例', value: profiles.length, detail: `${runningCount} 个运行中`, tone: runningCount ? 'success' : 'neutral' },
-        { label: '当前视图', value: displayProfiles.length, detail: selectedTag ? `标签: ${selectedTag}` : '全部实例', tone: selectedTag ? 'accent' : 'neutral' },
-        { label: '已选择', value: selectedIds.size, detail: '可批量更新标签', tone: selectedIds.size ? 'accent' : 'neutral' },
-      ]} />
+
 
       <TerminalPanel
-        title="INSTANCE TAG MAP"
-        meta={<span className="font-mono text-[10px] uppercase tracking-[0.14em]">{selectedTag ?? 'ALL PROFILES'}</span>}
+        title={tr("ui.modules.browser.pages.TagManagementPage.label.63d9a00")}
+        meta={<span className="font-mono text-[10px]  ">{selectedTag ?? tr("browser.components.GroupTreeNav.text.778fc8f")}</span>}
         className="flex min-h-0 flex-1 flex-col overflow-hidden"
       >
         <div className="flex min-h-0 flex-1 overflow-hidden">
@@ -394,15 +393,13 @@ export function TagManagementPage() {
             />
 
             {loading ? (
-              <div className="flex flex-1 items-center justify-center font-mono text-xs uppercase tracking-[0.14em] text-[var(--color-text-muted)]" role="status" aria-live="polite">
-                Loading profile registry...
-              </div>
+              <div className="flex flex-1 items-center justify-center font-mono text-xs   text-[var(--color-text-muted)]" role="status" aria-live="polite">{tr("ui.modules.browser.pages.TagManagementPage.label.80a1cfe")}</div>
             ) : displayProfiles.length === 0 ? (
               <div className="flex flex-1 items-center justify-center p-6">
                 <SignalEmptyState
                   symbol="fingerprint"
-                  title={selectedTag ? '此标签还没有关联实例' : '暂无浏览器实例'}
-                  description={selectedTag ? '先在全部实例中分配此标签。' : '创建实例后即可维护标签。'}
+                  title={selectedTag ? tr("browser.pages.TagManagementPage.TagManagementPage.f59b331") : tr("browser.pages.TagManagementPage.TagManagementPage.a566cb1")}
+
                 />
               </div>
             ) : (
@@ -417,12 +414,12 @@ export function TagManagementPage() {
                           checked={isAllSelected}
                           ref={(element) => { if (element) element.indeterminate = isIndeterminate }}
                           onChange={toggleAll}
-                          aria-label="选择当前视图中的全部实例"
+                          aria-label={tr("browser.pages.TagManagementPage.aria_label.b4eebd6")}
                         />
                       </th>
-                      <th className="bg-[var(--color-bg-muted)] px-4 py-2.5 text-left font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--color-text-muted)]">实例名称</th>
-                      <th className="bg-[var(--color-bg-muted)] px-4 py-2.5 text-left font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--color-text-muted)]">当前标签</th>
-                      <th className="bg-[var(--color-bg-muted)] px-4 py-2.5 text-left font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--color-text-muted)]">状态</th>
+                      <th className="bg-[var(--color-bg-muted)] px-4 py-2.5 text-left font-mono text-[10px] font-semibold   text-[var(--color-text-muted)]">{tr("browser.components.AutomationInstanceSelector.AutomationInstanceSelector.9c0531d")}</th>
+                      <th className="bg-[var(--color-bg-muted)] px-4 py-2.5 text-left font-mono text-[10px] font-semibold   text-[var(--color-text-muted)]">{tr("browser.pages.TagManagementPage.text.7f0e5a8")}</th>
+                      <th className="bg-[var(--color-bg-muted)] px-4 py-2.5 text-left font-mono text-[10px] font-semibold   text-[var(--color-text-muted)]">{tr("browser.components.AutomationScriptHistoryModal.text.62e951a")}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-[var(--color-border-muted)] bg-[var(--color-bg-surface)]">
@@ -434,7 +431,7 @@ export function TagManagementPage() {
                           tabIndex={0}
                           role="checkbox"
                           aria-checked={isSelected}
-                          aria-label={`选择实例 ${profile.profileName}`}
+                          aria-label={tr("browser.pages.TagManagementPage.TagManagementPage.8756384", [profile.profileName])}
                           className={`cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-[var(--color-accent)] ${isSelected ? 'bg-[var(--color-accent-muted)]' : 'hover:bg-[var(--color-bg-muted)]/50'}`}
                           onClick={() => toggleOne(profile.profileId)}
                           onKeyDown={(event) => {
@@ -450,19 +447,19 @@ export function TagManagementPage() {
                               className="h-4 w-4 cursor-pointer accent-[var(--color-accent)]"
                               checked={isSelected}
                               onChange={() => toggleOne(profile.profileId)}
-                              aria-label={`选择 ${profile.profileName}`}
+                              aria-label={tr("browser.pages.AutomationScriptSummaryCard.AutomationScriptSummaryCard.f49303a", [profile.profileName])}
                             />
                           </td>
                           <td className="px-4 py-3 text-sm font-medium text-[var(--color-text-primary)]">{profile.profileName}</td>
                           <td className="px-4 py-3">
                             <div className="flex flex-wrap gap-1">
                               {profile.tags?.length
-                                ? profile.tags.map((tag) => <Badge key={tag} variant={tag === selectedTag ? 'info' : 'default'}>{tag}</Badge>)
-                                : <span className="text-xs text-[var(--color-text-muted)]">无标签</span>}
+                                ? profile.tags.map((tag) => <Badge key={tag} variant={tag === selectedTag ? "info" : "default"}>{tag}</Badge>)
+                                : <span className="text-xs text-[var(--color-text-muted)]">{tr("browser.pages.TagManagementPage.text.3a8bc2a")}</span>}
                             </div>
                           </td>
                           <td className="px-4 py-3">
-                            <Badge variant={profile.running ? 'success' : 'warning'} dot>{profile.running ? '运行中' : '已停止'}</Badge>
+                            <Badge variant={profile.running ? "success" : "warning"} dot>{profile.running ? tr("browser.components.AutomationScriptHistoryModal.getRunStatusLabel.5942497") : tr("browser.components.InstanceFilterBar.label.75dddf5")}</Badge>
                           </td>
                         </tr>
                       )
@@ -476,10 +473,8 @@ export function TagManagementPage() {
       </TerminalPanel>
 
       {saving ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20" role="status" aria-live="assertive" aria-label="正在保存标签变更">
-          <div className="rounded-sm border border-[var(--color-border-default)] bg-[var(--color-bg-elevated)] px-5 py-3 font-mono text-xs uppercase tracking-[0.14em] text-[var(--color-text-primary)] shadow-lg">
-            Writing tag changes...
-          </div>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20" role="status" aria-live="assertive" aria-label={tr("browser.pages.TagManagementPage.aria_label.ca77669")}>
+          <div className="rounded-sm border border-[var(--color-border-default)] bg-[var(--color-bg-elevated)] px-5 py-3 font-mono text-xs   text-[var(--color-text-primary)] shadow-lg">{tr("ui.modules.browser.pages.TagManagementPage.label.4fa8509")}</div>
         </div>
       ) : null}
     </div>

@@ -1,3 +1,4 @@
+import { tr, useLocale } from '../../../shared/i18n'
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "../../../shared/components";
@@ -37,6 +38,8 @@ import {
   type ImportMode,
 } from "./AutomationPage.helpers";
 export function AutomationPage() {
+  useLocale()
+
   const navigate = useNavigate();
   const { launchBaseUrl, apiAuth } = useLaunchContext();
   const { scripts, setScripts, profiles, loading, refreshing, handleRefresh } = useAutomationPageData();
@@ -82,7 +85,7 @@ export function AutomationPage() {
       scripts.some((script) => script.id === scriptId),
     );
     if (exportScriptIds.length === 0) {
-      toast.warning("请先勾选要导出的脚本");
+      toast.warning(tr("browser.automationScriptApi.exports.exportAutomationScriptsBatchZip.d53e924"));
       return;
     }
 
@@ -90,13 +93,13 @@ export function AutomationPage() {
     try {
       const result = await exportAutomationScriptsBatchZip(exportScriptIds);
       if (!result.cancelled) {
-        toast.success(`已导出 ${exportScriptIds.length} 个脚本`);
+        toast.success(tr("browser.pages.AutomationPage.AutomationPage.be159ea", [exportScriptIds.length]));
         setSelectedScriptIds([]);
       } else {
-        toast.warning("已取消导出");
+        toast.warning(tr("settings.SettingsPage.GeneralSettingsPage.c8feb7b"));
       }
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : "脚本导出失败";
+      const message = error instanceof Error ? error.message : tr("browser.pages.AutomationPage.AutomationPage.ad0c1d4");
       toast.error(message);
     } finally {
       setBusyAction("none");
@@ -152,12 +155,12 @@ export function AutomationPage() {
       );
       setActivePublicApiScript(saved);
       if (!options?.silentSuccess) {
-        toast.success("接口配置已保存");
+        toast.success(tr("browser.pages.AutomationPage.AutomationPage.17f4655"));
       }
       return saved;
     } catch (error: unknown) {
       const message =
-        error instanceof Error ? error.message : "接口配置保存失败";
+        error instanceof Error ? error.message : tr("browser.pages.AutomationPage.AutomationPage.88d7f2b");
       toast.error(message);
       return null;
     } finally {
@@ -227,10 +230,10 @@ export function AutomationPage() {
       ]);
       setCreateOpen(false);
       resetCreateModal();
-      toast.success("脚本已创建");
+      toast.success(tr("browser.pages.AutomationPage.AutomationPage.7bbf3fd"));
       openScript(saved.id);
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : "脚本创建失败";
+      const message = error instanceof Error ? error.message : tr("browser.pages.AutomationPage.AutomationPage.12f5738");
       toast.error(message);
     } finally {
       setBusyAction("none");
@@ -239,7 +242,7 @@ export function AutomationPage() {
 
   const finishImport = (imported: AutomationScriptRecord[], failedCount = 0) => {
     if (imported.length === 0) {
-      throw new Error("未导入任何脚本");
+      throw new Error(tr("browser.pages.AutomationPage.AutomationPage.064b507"));
     }
 
     const importTimestamp = new Date().toISOString();
@@ -256,14 +259,14 @@ export function AutomationPage() {
     setImportOpen(false);
     resetImportModal();
     if (nextImported.length === 1 && failedCount === 0) {
-      toast.success("脚本已导入");
+      toast.success(tr("browser.pages.AutomationPage.AutomationPage.72fee83"));
       openScript(nextImported[0].id);
       return;
     }
 
-    toast.success(`已导入 ${nextImported.length} 个脚本`);
+    toast.success(tr("browser.pages.AutomationPage.AutomationPage.d9ac904", [nextImported.length]));
     if (failedCount > 0) {
-      toast.warning(`${failedCount} 个脚本包导入失败`);
+      toast.warning(tr("browser.pages.AutomationPage.AutomationPage.9293143", [failedCount]));
     }
   };
 
@@ -275,7 +278,7 @@ export function AutomationPage() {
         : await importAutomationScriptFromLocalFile();
       finishImport([imported]);
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : "脚本导入失败";
+      const message = error instanceof Error ? error.message : tr("browser.pages.AutomationPage.AutomationPage.6e86a1a");
       toast.error(message);
     } finally {
       setBusyAction("none");
@@ -292,10 +295,10 @@ export function AutomationPage() {
           ]);
           break;
         default:
-          throw new Error("请选择要导入的文件或文件夹");
+          throw new Error(tr("browser.pages.AutomationPage.AutomationPage.a4f594e"));
       }
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : "脚本导入失败";
+      const message = error instanceof Error ? error.message : tr("browser.pages.AutomationPage.AutomationPage.6e86a1a");
       toast.error(message);
     } finally {
       setBusyAction("none");

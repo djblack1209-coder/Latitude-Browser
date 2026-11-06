@@ -1,3 +1,6 @@
+import { useLocale } from '../../../../shared/i18n'
+import { getLocale } from '../../../../shared/i18n'
+import { tr } from '../../../../shared/i18n'
 ﻿import { useEffect, useMemo, useState } from 'react'
 import type { BrowserCore, BrowserProfile } from '../../types'
 import { EMPTY_FILTERS, type InstanceFilters } from '../../components/InstanceFilterBar'
@@ -5,24 +8,22 @@ import type { BrowserViewMode } from '../../components/BrowserListLayout'
 
 export const resolveProfileStatus = (running: boolean, debugReady: boolean, starting: boolean, stopping: boolean) => {
   if (starting) {
-    return { variant: 'info' as const, label: '启动中' }
+    return { variant: 'info' as const, label: tr("browser.components.AutomationScriptRunModal.helpers.formatSelectableProfileStatus.7e0798c") }
   }
   if (stopping) {
-    return { variant: 'default' as const, label: '停止中' }
+    return { variant: 'default' as const, label: tr("browser.components.BrowserProfilesPanel.BrowserProfileCard.434eb8e") }
   }
   if (running && !debugReady) {
-    return { variant: 'info' as const, label: '运行中（待就绪）' }
+    return { variant: 'info' as const, label: tr("browser.pages.BrowserDetailPage.label.ba3cd6f") }
   }
   if (running) {
-    return { variant: 'success' as const, label: '运行中' }
+    return { variant: 'success' as const, label: tr("browser.components.AutomationScriptHistoryModal.getRunStatusLabel.5942497") }
   }
-  return { variant: 'warning' as const, label: '已停止' }
+  return { variant: 'default' as const, label: tr("browser.components.InstanceFilterBar.label.75dddf5") }
 }
 
 export function useBrowserListViewState() {
-  const [viewMode, setViewMode] = useState<BrowserViewMode>(() => {
-    return (localStorage.getItem('browser:viewMode') as BrowserViewMode) || 'table'
-  })
+  const [viewMode, setViewMode] = useState<BrowserViewMode>('table')
   const [filters, setFilters] = useState<InstanceFilters>(() => {
     try {
       const saved = localStorage.getItem('browser:filters')
@@ -33,10 +34,7 @@ export function useBrowserListViewState() {
     } catch { /* ignore */ }
     return EMPTY_FILTERS
   })
-  const [headerCollapsed, setHeaderCollapsed] = useState(() => {
-    const saved = localStorage.getItem('browser:headerCollapsed')
-    return saved === null ? true : saved === 'true'
-  })
+  const [headerCollapsed, setHeaderCollapsed] = useState(true)
 
   useEffect(() => {
     const serializable = { ...filters, tags: Array.from(filters.tags) }
@@ -68,16 +66,18 @@ export function useBrowserListDerived(
   startingIds: Set<string>,
   stoppingIds: Set<string>
 ) {
-  const runningCount = useMemo(() => profiles.filter(profile => profile.running).length, [profiles])
+  const uiLocale = useLocale()
+
+  const runningCount = useMemo(() => profiles.filter(profile => profile.running).length, [profiles, uiLocale])
   const allTags = useMemo(() => {
     const set = new Set<string>()
     profiles.forEach(profile => profile.tags?.forEach(tag => set.add(tag)))
     return Array.from(set).sort()
-  }, [profiles])
+  }, [profiles, uiLocale])
 
   const defaultCore = useMemo(() => {
     return cores.find(core => core.isDefault) || cores[0] || null
-  }, [cores])
+  }, [cores, uiLocale])
 
   const resolveProfileCore = (profile: BrowserProfile) => {
     const coreId = (profile.coreId || '').trim()
@@ -95,7 +95,7 @@ export function useBrowserListDerived(
 
     const coreId = (profile.coreId || '').trim()
     if (!coreId || /^default$/i.test(coreId)) {
-      return '使用默认内核'
+      return tr("browser.pages.BrowserEditPage.BrowserEditPage.4aa12fc")
     }
     return coreId
   }
@@ -125,7 +125,7 @@ export function useBrowserListDerived(
       if (filters.tags.size > 0 && !profile.tags?.some(tag => filters.tags.has(tag))) return false
       return true
     }).sort((a, b) => naturalCompare(a.profileName, b.profileName))
-  }, [profiles, filters, defaultCore, cores])
+  }, [profiles, filters, defaultCore, cores, uiLocale])
 
   return {
     runningCount,
@@ -187,7 +187,7 @@ function naturalCompare(a: string, b: string): number {
     if (!Number.isNaN(numberA) && !Number.isNaN(numberB)) {
       if (numberA !== numberB) return numberA - numberB
     } else {
-      const compared = partA.localeCompare(partB, 'zh-CN')
+      const compared = partA.localeCompare(partB, getLocale())
       if (compared !== 0) return compared
     }
   }

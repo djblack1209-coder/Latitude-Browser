@@ -1,3 +1,5 @@
+import { translateMessage } from '../../../shared/i18n'
+import { tr, useLocale } from '../../../shared/i18n'
 ﻿import { useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { toast } from '../../../shared/components'
@@ -46,6 +48,8 @@ type BackupLoadingMode = 'none' | 'export' | 'import-merge' | 'import-reset'
 const directProxyID = '__direct__'
 
 export function BrowserListPage() {
+  const uiLocale = useLocale()
+
   const [searchParams] = useSearchParams()
   const workspaceMode = resolveBrowserWorkspaceMode(searchParams)
   const {
@@ -221,7 +225,7 @@ export function BrowserListPage() {
         mergeProfileState(startedProfile)
         success++
       } catch (error: any) {
-        const feedback = resolveActionFeedback(error, '实例启动失败')
+        const feedback = resolveActionFeedback(error, tr("browser.pages.AutoConfigPage.AutoConfigPage.176529e"))
         if (feedback.pendingAttach) {
           pending++
           pendingMessages.push(`${profile.profileName}：${feedback.message}`)
@@ -234,19 +238,19 @@ export function BrowserListPage() {
       }
     }
     setBatchLoading(false)
-    const summary = [`成功 ${success}`]
-    if (pending > 0) summary.push(`待接管 ${pending}`)
-    if (failed > 0) summary.push(`失败 ${failed}`)
-    toast.success(`批量启动完成：${summary.join('，')}`)
+    const summary = [tr("browser.pages.BrowserListPage.BrowserListPage.1b8ffa0", [success])]
+    if (pending > 0) summary.push(tr("browser.pages.BrowserListPage.BrowserListPage.681d67d", [pending]))
+    if (failed > 0) summary.push(tr("browser.pages.BrowserListPage.BrowserListPage.d67dcc0", [failed]))
+    toast.success(tr("browser.pages.BrowserListPage.BrowserListPage.b5bdd5a", [summary.join('，')]))
     if (pendingMessages.length > 0) {
       const preview = pendingMessages.slice(0, 3)
-      const more = pendingMessages.length > preview.length ? `\n另有 ${pendingMessages.length - preview.length} 个实例已打开窗口，仍在后台接管。` : ''
-      toast.warning(`以下实例已打开窗口，仍在后台接管：\n${preview.join('\n')}${more}`)
+      const more = pendingMessages.length > preview.length ? tr("browser.pages.BrowserListPage.BrowserListPage.ddda70f", [pendingMessages.length - preview.length]) : ''
+      toast.warning(tr("browser.pages.BrowserListPage.BrowserListPage.c7edbe2", [preview.join('\n'), more]))
     }
     if (failureMessages.length > 0) {
       const preview = failureMessages.slice(0, 3)
-      const more = failureMessages.length > preview.length ? `\n另有 ${failureMessages.length - preview.length} 个实例启动失败，请逐个检查。` : ''
-      toast.error(`以下实例启动失败：\n${preview.join('\n')}${more}`)
+      const more = failureMessages.length > preview.length ? tr("browser.pages.BrowserListPage.BrowserListPage.21e281a", [failureMessages.length - preview.length]) : ''
+      toast.error(tr("browser.pages.BrowserListPage.BrowserListPage.71ba33a", [preview.join('\n'), more]))
     }
     loadProfiles()
   }
@@ -271,7 +275,7 @@ export function BrowserListPage() {
       }
     }
     setBatchLoading(false)
-    toast.success(`批量停止完成：成功 ${success}${failed > 0 ? `，失败 ${failed}` : ''}`)
+    toast.success(tr("browser.pages.BrowserListPage.BrowserListPage.fef7fd9", [success, failed > 0 ? tr("browser.pages.BrowserListPage.BrowserListPage.a40fdfb", [failed]) : '']))
     loadProfiles()
   }
 
@@ -282,16 +286,16 @@ export function BrowserListPage() {
       .filter(profile => ids.includes(profile.profileId) && profile.running)
       .map(profile => profile.profileName)
     if (runningNames.length > 0) {
-      toast.error(`请先停止实例再导出：${runningNames.slice(0, 3).join('、')}${runningNames.length > 3 ? ' 等' : ''}`)
+      toast.error(tr("browser.pages.BrowserListPage.BrowserListPage.39bd913", [runningNames.slice(0, 3).join('、'), runningNames.length > 3 ? tr("browser.pages.BrowserListPage.BrowserListPage.93ac7be") : '']))
       return
     }
     setProfilePackageBusy(true)
     try {
       const result = await exportBrowserProfilePackage(ids)
       if (result.cancelled) return
-      toast.success(`已导出 ${result.profileCount} 个实例`)
+      toast.success(tr("browser.pages.BrowserListPage.BrowserListPage.cffe067", [result.profileCount]))
     } catch (error: any) {
-      toast.error(error?.message || '导出实例失败')
+      toast.error(error?.message || tr("browser.pages.BrowserListPage.BrowserListPage.5e62c2a"))
     } finally {
       setProfilePackageBusy(false)
     }
@@ -300,16 +304,16 @@ export function BrowserListPage() {
   const handleExportProfile = async (profile: BrowserProfile) => {
     if (profilePackageBusy) return
     if (profile.running) {
-      toast.error(`请先停止实例再导出：${profile.profileName}`)
+      toast.error(tr("browser.pages.BrowserListPage.BrowserListPage.1ec6c93", [profile.profileName]))
       return
     }
     setProfilePackageBusy(true)
     try {
       const result = await exportBrowserProfilePackage([profile.profileId])
       if (result.cancelled) return
-      toast.success(`已导出：${profile.profileName}`)
+      toast.success(tr("browser.pages.BrowserListPage.BrowserListPage.7c25866", [profile.profileName]))
     } catch (error: any) {
-      toast.error(error?.message || '导出实例失败')
+      toast.error(error?.message || tr("browser.pages.BrowserListPage.BrowserListPage.5e62c2a"))
     } finally {
       setProfilePackageBusy(false)
     }
@@ -318,15 +322,15 @@ export function BrowserListPage() {
   const handleOpenUserDataDir = async (profile: BrowserProfile) => {
     try {
       if (!profile.userDataDir.trim()) {
-        toast.warning('该实例没有用户数据目录')
+        toast.warning(tr("browser.pages.BrowserListPage.BrowserListPage.5eec764"))
         return
       }
       const opened = await openUserDataDir(profile.userDataDir)
       if (!opened) {
-        toast.warning('当前环境不支持打开数据目录')
+        toast.warning(tr("browser.pages.BrowserListPage.BrowserListPage.a27e0b4"))
       }
     } catch (error: any) {
-      toast.error(error?.message || '打开数据目录失败')
+      toast.error(error?.message || tr("browser.pages.BrowserListPage.BrowserListPage.ec82ab3"))
     }
   }
 
@@ -338,14 +342,14 @@ export function BrowserListPage() {
       if (result.cancelled) return
       const warnings = result.warnings || []
       if (warnings.length > 0) {
-        toast.warning(`已导入 ${result.importedCount} 个实例，${warnings.length} 条提示：${warnings[0]}`)
+        toast.warning(tr("browser.pages.BrowserListPage.BrowserListPage.9b133a5", [result.importedCount, warnings.length, warnings[0]]))
       } else {
-        toast.success(`已导入 ${result.importedCount} 个实例`)
+        toast.success(tr("browser.pages.BrowserListPage.BrowserListPage.bd1d7c2", [result.importedCount]))
       }
       setSelectedIds(new Set())
       await loadProfiles()
     } catch (error: any) {
-      toast.error(error?.message || '导入实例失败')
+      toast.error(error?.message || tr("browser.pages.BrowserListPage.BrowserListPage.b7f2bec"))
     } finally {
       setProfilePackageBusy(false)
     }
@@ -354,15 +358,15 @@ export function BrowserListPage() {
   const handleExportFullBackup = async () => {
     if (backupLoadingMode !== 'none') return
     if (runningCount > 0) {
-      toast.warning(`建议先停止 ${runningCount} 个运行中实例后再备份`)
+      toast.warning(tr("browser.pages.BrowserListPage.BrowserListPage.1a87e5e", [runningCount]))
     }
     setBackupLoadingMode('export')
     try {
       const result = await exportFullBrowserBackup()
       if (result.cancelled) return
-      toast.success(result.zipPath ? `备份已导出：${result.zipPath}` : (result.message || '备份已导出'))
+      toast.success(result.zipPath ? tr("browser.pages.BrowserListPage.BrowserListPage.3b0236c", [result.zipPath]) : (result.message || tr("browser.pages.BrowserListPage.BrowserListPage.ce3605f")))
     } catch (error: any) {
-      toast.error(error?.message || '全量备份失败')
+      toast.error(error?.message || tr("browser.pages.BrowserListPage.BrowserListPage.dee1541"))
     } finally {
       setBackupLoadingMode('none')
     }
@@ -375,12 +379,12 @@ export function BrowserListPage() {
     try {
       const result = await importFullBrowserBackup(resetFirst)
       if (result.cancelled) return
-      toast.success(result.message || (resetFirst ? '备份已恢复' : '备份已合并'))
+      toast.success(result.message || (resetFirst ? tr("browser.pages.BrowserListPage.BrowserListPage.8e990e6") : tr("browser.pages.BrowserListPage.BrowserListPage.eaabd0a")))
       setSelectedIds(new Set())
       setBackupModalOpen(false)
       await loadProfiles()
     } catch (error: any) {
-      toast.error(error?.message || '导入备份失败')
+      toast.error(error?.message || tr("browser.pages.BrowserListPage.BrowserListPage.58a6a06"))
     } finally {
       setBackupLoadingMode('none')
     }
@@ -402,7 +406,7 @@ export function BrowserListPage() {
     try {
       setTrashProfiles(await fetchBrowserProfileTrash())
     } catch (error: any) {
-      toast.error(error?.message || '加载回收站失败')
+      toast.error(error?.message || tr("browser.pages.BrowserListPage.BrowserListPage.9233e57"))
     } finally {
       setTrashLoading(false)
     }
@@ -417,11 +421,11 @@ export function BrowserListPage() {
     setRestoringId(profileId)
     try {
       await restoreBrowserProfile(profileId)
-      toast.success('实例已恢复')
+      toast.success(tr("browser.pages.BrowserListPage.BrowserListPage.6c38243"))
       await loadTrashProfiles()
       await loadProfiles()
     } catch (error: any) {
-      toast.error(error?.message || '恢复失败')
+      toast.error(error?.message || tr("browser.pages.BrowserListPage.BrowserListPage.76842a0"))
     } finally {
       setRestoringId('')
     }
@@ -433,11 +437,11 @@ export function BrowserListPage() {
     setPermanentlyDeletingId(profile.profileId)
     try {
       await permanentlyDeleteBrowserProfile(profile.profileId)
-      toast.success('实例已彻底删除')
+      toast.success(tr("browser.pages.BrowserListPage.BrowserListPage.b4a10f2"))
       setPermanentDeleteConfirm({ open: false, profile: null })
       await loadTrashProfiles()
     } catch (error: any) {
-      toast.error(error?.message || '彻底删除失败')
+      toast.error(error?.message || tr("browser.pages.BrowserListPage.BrowserListPage.6a92447"))
     } finally {
       setPermanentlyDeletingId('')
     }
@@ -469,11 +473,11 @@ export function BrowserListPage() {
         ids.forEach(id => next.delete(id))
         return next
       })
-      toast.success(ids.length > 1 ? `已删除 ${ids.length} 个实例` : '配置已删除')
+      toast.success(ids.length > 1 ? tr("browser.pages.BrowserListPage.BrowserListPage.fc78416", [ids.length]) : tr("browser.pages.BrowserListPage.BrowserListPage.f9c34f0"))
       setDeleteConfirm({ open: false, mode: 'single', count: 0 })
       loadProfiles()
     } catch (error: any) {
-      toast.error(error?.message || '删除失败')
+      toast.error(error?.message || tr("browser.components.ProxyPickerModal.ProxyPickerModal.72250c5"))
     } finally {
       setBatchLoading(false)
     }
@@ -484,11 +488,11 @@ export function BrowserListPage() {
     setCopying(true)
     try {
       await copyBrowserProfile(profileId, copyName.trim(), copyOptions)
-      toast.success('实例已复制')
+      toast.success(tr("browser.pages.BrowserListPage.BrowserListPage.bbaf4de"))
       closeCopyModal()
       loadProfiles()
     } catch (error: any) {
-      setOpError(typeof error === 'string' ? error : error?.message || '复制失败')
+      setOpError(typeof error === 'string' ? error : error?.message || tr("browser.components.AutomationScriptPublicApiModal.helpers.copyText.f2c6b51"))
     } finally {
       setCopying(false)
     }
@@ -501,15 +505,15 @@ export function BrowserListPage() {
     () => profiles.filter((profile) => (
       getBrowserProfileAttentionReasons(profile, Boolean(resolveProfileCore(profile))).length > 0
     )),
-    [profiles, cores],
+    [profiles, cores, uiLocale],
   )
   const fingerprintSourceProfiles = useMemo(
     () => profiles.filter(hasReusableFingerprintConfig),
-    [profiles],
+    [profiles, uiLocale],
   )
   const recentRecordedCount = useMemo(
     () => profiles.filter((profile) => getBrowserProfileActivity(profile) !== null).length,
-    [profiles],
+    [profiles, uiLocale],
   )
   const workspaceProfiles = useMemo(() => {
     if (workspaceMode === 'recent') {
@@ -524,7 +528,7 @@ export function BrowserListPage() {
       return filteredProfiles.filter((profile) => sourceIds.has(profile.profileId))
     }
     return filteredProfiles
-  }, [attentionProfiles, filteredProfiles, fingerprintSourceProfiles, workspaceMode])
+  }, [attentionProfiles, filteredProfiles, fingerprintSourceProfiles, workspaceMode, uiLocale])
 
   useEffect(() => {
     setSelectedIds(new Set())
@@ -549,9 +553,9 @@ export function BrowserListPage() {
         groupId: profile.groupId || '',
       })
       mergeProfileState(updated || { ...profile, proxyId: proxy.proxyId, proxyConfig: '' })
-      toast.success('代理已切换')
+      toast.success(tr("browser.pages.BrowserListPage.BrowserListPage.7f57dda"))
     } catch (error: any) {
-      toast.error(error?.message || '切换代理失败')
+      toast.error(error?.message || tr("browser.pages.BrowserListPage.BrowserListPage.676bcaa"))
     }
   }
 
@@ -657,7 +661,7 @@ export function BrowserListPage() {
       <ProxyPickerModal
         open={!!proxyPickerProfile}
         currentProxyId={proxyPickerProfile?.proxyId || directProxyID}
-        title={proxyPickerProfile ? `切换代理：${proxyPickerProfile.profileName}` : '切换代理'}
+        title={proxyPickerProfile ? tr("browser.components.BrowserProfilesPanel.ProxyInlineActions.8dfa43b", [proxyPickerProfile.profileName]) : tr("browser.components.BrowserProfilesPanel.ProxyInlineActions.a466de9")}
         onSelect={(proxy) => {
           if (proxyPickerProfile) {
             void saveProfileProxy(proxyPickerProfile, proxy)
@@ -755,7 +759,7 @@ export function BrowserListPage() {
         onOpenPermanentDelete={(profile) => setPermanentDeleteConfirm({ open: true, profile })}
         onClosePermanentDelete={() => setPermanentDeleteConfirm({ open: false, profile: null })}
         onConfirmPermanentDelete={() => { void handleConfirmPermanentDelete() }}
-        opError={opError}
+        opError={translateMessage(opError)}
         onCloseOpError={() => setOpError('')}
       />
     </div>

@@ -1,3 +1,4 @@
+import { tr } from '../../../shared/i18n'
 ﻿import { useEffect, useState, type RefObject } from 'react'
 import { toast } from '../../../shared/components'
 import { fetchBrowserProfiles, fetchGroups } from '../api'
@@ -22,7 +23,7 @@ export function useQuickLaunchData(open: boolean, inputRef: RefObject<HTMLInputE
         if (profilesResult.status === 'fulfilled') {
           setProfiles((profilesResult.value || []).slice().sort(sortProfiles))
         } else {
-          toast.error('加载实例列表失败')
+          toast.error(tr("browser.components.useQuickLaunchData.useQuickLaunchData.e443df5"))
           setProfiles([])
         }
 

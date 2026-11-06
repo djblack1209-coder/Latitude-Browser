@@ -1,3 +1,4 @@
+import { tr } from '../../../shared/i18n'
 import type { BrowserProfileInput, BrowserSettings } from '../types'
 import {
   applyLocaleToFingerprintArgs,
@@ -111,7 +112,7 @@ export function buildAutoConfigProfileInput({
     proxyConfig: resolvedProxyConfig,
     memoryLimitMb: 0,
     launchArgs: configuredLaunchArgs.length ? configuredLaunchArgs : fallbackLaunchArgs,
-    tags: ['自动配置', fingerprintMode === 'fixed' ? '固定指纹' : '约束随机指纹'],
+    tags: [tr("config.navigation.config.name.716e01f"), fingerprintMode === 'fixed' ? tr("browser.pages.AutoConfigPage.fixed.0467103") : tr("browser.utils.autoConfig.buildAutoConfigProfileInput.7e6b88d")],
     keywords: [],
     groupId: '',
   }

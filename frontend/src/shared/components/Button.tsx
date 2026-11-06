@@ -1,3 +1,5 @@
+import { TextSpinner } from './TextSpinner'
+import { useLocale } from '../i18n'
 import { ButtonHTMLAttributes, ReactNode } from 'react'
 import clsx from 'clsx'
 
@@ -17,19 +19,21 @@ export function Button({
   children,
   ...props
 }: ButtonProps) {
-  const baseStyles = 'signal-press signal-button inline-flex shrink-0 items-center justify-center font-medium rounded-md transition-[background-color,color,border-color,box-shadow,transform] duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-bg-base)]'
-  
+  useLocale()
+
+  const baseStyles = 'signal-press signal-button relative inline-flex shrink-0 items-center justify-center whitespace-nowrap font-medium rounded-full border select-none transition-[background-color,color,border-color,box-shadow,transform] duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-bg-base)]'
+
   const variants = {
-    primary: 'bg-[var(--color-accent)] text-[var(--color-text-inverse)] hover:bg-[var(--color-accent-hover)] focus-visible:ring-[var(--color-accent)]',
-    secondary: 'bg-[var(--color-bg-surface)] text-[var(--color-text-secondary)] border border-[var(--color-border-default)] hover:bg-[var(--color-bg-muted)] hover:border-[var(--color-border-strong)] focus-visible:ring-[var(--color-border-strong)]',
-    danger: 'bg-[var(--color-error)] text-white hover:bg-[var(--color-error-hover)] focus-visible:ring-[var(--color-error)]',
-    ghost: 'text-[var(--color-text-secondary)] hover:bg-[var(--color-accent-muted)] hover:text-[var(--color-text-primary)]',
+    primary: 'signal-button--primary border-[var(--color-accent-border)] bg-[var(--color-accent-muted)] text-[var(--color-accent)] hover:border-[var(--color-accent)] hover:bg-[var(--color-accent-muted)]',
+    secondary: 'signal-button--secondary bg-transparent text-[var(--color-text-secondary)] border-[var(--color-border-strong)] hover:bg-[var(--color-bg-muted)] hover:text-[var(--color-text-primary)]',
+    danger: 'signal-button--danger border-[var(--color-error)]/40 bg-[var(--color-error)]/10 text-[var(--color-error)] hover:bg-[var(--color-error)]/15 focus-visible:ring-[var(--color-error)]',
+    ghost: 'signal-button--ghost border-transparent text-[var(--color-text-secondary)] hover:bg-[var(--color-accent-muted)] hover:text-[var(--color-text-primary)]',
   }
 
   const sizes = {
-    sm: 'h-8 px-3 text-xs gap-1.5 tracking-[0.01em]',
-    md: 'h-9 px-4 text-sm gap-2 tracking-[0.005em]',
-    lg: 'h-10 px-5 text-sm gap-2 tracking-[0.005em]',
+    sm: 'h-[30px] px-2.5 text-xs gap-1.5',
+    md: 'h-9 px-3.5 text-[13px] gap-2',
+    lg: 'h-[42px] px-5 text-sm gap-2',
   }
 
   return (
@@ -46,10 +50,7 @@ export function Button({
       {...props}
     >
       {loading && (
-        <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
-          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-        </svg>
+        <TextSpinner label="" decorative />
       )}
       {children}
     </button>

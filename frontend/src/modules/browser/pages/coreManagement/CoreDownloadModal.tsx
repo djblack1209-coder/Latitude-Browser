@@ -1,3 +1,5 @@
+import { translateMessage } from '../../../../shared/i18n'
+import { tr, useLocale } from '../../../../shared/i18n'
 import type { Dispatch, SetStateAction } from 'react'
 import { Button, FormItem, Input, Modal, toast } from '../../../../shared/components'
 import { BrowserOpenURL } from '../../../../wailsjs/runtime/runtime'
@@ -35,12 +37,14 @@ export function CoreDownloadModal({
   onClose,
   onStart,
 }: CoreDownloadModalProps) {
+  useLocale()
+
   const downloading = progress !== null && progress.phase !== 'error'
   const isRedownload = form.mode === 'redownload'
 
   const handleClose = () => {
     if (progress && progress.phase !== 'done' && progress.phase !== 'error') {
-      toast.warning('正在下载中，请稍候...')
+      toast.warning(tr("browser.pages.coreManagement.CoreDownloadModal.CoreDownloadModal.3be57ef"))
       return
     }
     onClose()
@@ -51,48 +55,47 @@ export function CoreDownloadModal({
     <Modal
       open={open}
       onClose={handleClose}
-      title={isRedownload ? '重新下载内核' : '下载内核'}
+      title={isRedownload ? tr("browser.pages.coreManagement.CoreDownloadModal.CoreDownloadModal.7af1133") : tr("browser.pages.CoreManagementPage.text.ee587b7")}
       width="480px"
       footer={
         <>
-          <Button variant="secondary" onClick={handleClose} disabled={downloading}>取消</Button>
-          <Button onClick={onStart} loading={downloading}>{isRedownload ? '开始重新下载' : '开始下载'}</Button>
+          <Button variant="secondary" onClick={handleClose} disabled={downloading}>{tr("App.CloseConfirmModal.4d0b468")}</Button>
+          <Button onClick={onStart} loading={downloading}>{isRedownload ? tr("browser.pages.coreManagement.CoreDownloadModal.CoreDownloadModal.d230290") : tr("browser.pages.coreManagement.CoreDownloadModal.CoreDownloadModal.92f3559")}</Button>
         </>
       }
     >
       <div className="space-y-4">
-        <FormItem label="内核名称" required>
+        <FormItem label={tr("browser.components.BrowserListLayout.label.01e4c4a")} required>
           <Input
             value={form.name}
             onChange={e => setForm(prev => ({ ...prev, name: e.target.value }))}
-            placeholder={recommendation?.namePlaceholder || '例如: chrome-latest'}
+            placeholder={recommendation?.namePlaceholder || tr("browser.pages.coreManagement.CoreDownloadModal.CoreDownloadModal.eff6f43")}
             disabled={progress !== null || isRedownload}
           />
           {!isRedownload && (
-            <p className="text-xs text-[var(--color-text-muted)] mt-1">该名称将同时作为数据存放的子文件夹名。</p>
+            <p className="text-xs text-[var(--color-text-muted)] mt-1">{tr("browser.pages.coreManagement.CoreDownloadModal.text.8d1527d")}</p>
           )}
         </FormItem>
 
         {isRedownload && (
-          <div className="rounded-lg border border-[var(--color-warning)]/40 bg-[var(--color-warning)]/10 p-3 text-xs leading-5 text-[var(--color-warning)]">
-            重新下载会在校验新压缩包可用后替换当前内核目录；替换失败会自动恢复旧目录。正在使用该内核的实例请先停止。
-          </div>
+          <div className="rounded-lg border border-[var(--color-warning)]/40 bg-[var(--color-warning)]/10 p-3 text-xs leading-5 text-[var(--color-warning)]">{tr("browser.pages.coreManagement.CoreDownloadModal.text.58f8416")}</div>
         )}
+        {recommendation?.target.platform === 'darwin' && <p role="note" className="text-xs text-[var(--color-warning)]">{tr("browser.pages.coreManagement.CoreDownloadModal.text.a546fb1")}</p>}
 
-        <FormItem label="下载地址" required>
+        <FormItem label={tr("browser.pages.ExtensionManagementModals.ManualInstallModal.581bbd6")} required>
           <Input
             value={form.url}
             onChange={e => setForm(prev => ({ ...prev, url: e.target.value }))}
-            placeholder={recommendationLoading ? '正在匹配当前环境...' : 'https://github.com/.../chromium.zip'}
+            placeholder={recommendationLoading ? tr("browser.pages.coreManagement.CoreDownloadModal.CoreDownloadModal.a04ea66") : 'https://github.com/.../chromium.zip'}
             disabled={progress !== null}
           />
           <div className="text-xs text-[var(--color-text-muted)] mt-2 flex items-center justify-between gap-3 bg-[var(--color-bg-muted)] p-2 rounded">
             <span className="min-w-0 truncate">
               {recommendation
-                ? `已按 ${recommendation.target.label} 推荐：${recommendation.assetName}`
+                ? tr("browser.pages.coreManagement.CoreDownloadModal.CoreDownloadModal.ff50b03", [recommendation.target.label, recommendation.assetName])
                 : recommendationLoading
-                  ? '正在按当前环境获取推荐地址...'
-                  : recommendationError || '未获取到当前环境推荐地址'}
+                  ? tr("browser.pages.coreManagement.CoreDownloadModal.CoreDownloadModal.686f54a")
+                  : recommendationError || tr("browser.pages.coreManagement.CoreDownloadModal.CoreDownloadModal.dacc526")}
             </span>
             {recommendation && (
               <button
@@ -100,30 +103,24 @@ export function CoreDownloadModal({
                 onClick={() => setForm(prev => ({ ...prev, url: recommendation.downloadUrl }))}
                 className="shrink-0 text-[var(--color-accent)] hover:underline cursor-pointer font-medium"
                 disabled={progress !== null}
-              >
-                使用推荐
-              </button>
+              >{tr("browser.pages.coreManagement.CoreDownloadModal.text.8128094")}</button>
             )}
             <button
               type="button"
               onClick={() => BrowserOpenURL(recommendation?.releasesUrl || FINGERPRINT_CHROMIUM_RELEASES_URL)}
               className="shrink-0 text-[var(--color-accent)] hover:underline cursor-pointer font-medium"
-            >
-              打开 Releases
-            </button>
+            >{tr("browser.pages.coreManagement.CoreDownloadModal.text.62d152a")}</button>
             {!recommendationLoading && !recommendation && (
               <button
                 type="button"
                 onClick={onRefreshRecommendation}
                 className="shrink-0 text-[var(--color-accent)] hover:underline cursor-pointer font-medium"
-              >
-                重试
-              </button>
+              >{tr("settings.SettingsPage.text.e2d53a6")}</button>
             )}
           </div>
         </FormItem>
 
-        <FormItem label="下载代理设置">
+        <FormItem label={tr("browser.pages.coreManagement.CoreDownloadModal.label.0f3e47e")}>
           <select
             value={form.proxyMode}
             onChange={e => {
@@ -137,14 +134,14 @@ export function CoreDownloadModal({
             className="w-full h-9 px-3 rounded-md border border-[var(--color-border-default)] bg-[var(--color-bg-primary)] text-[var(--color-text-primary)] text-sm focus:outline-none focus:ring-1 focus:ring-[var(--color-accent)] focus:border-[var(--color-accent)]"
             disabled={progress !== null}
           >
-            <option value="system">跟随系统全局代理</option>
-            <option value="direct">直连模式 (不使用代理)</option>
-            {proxies.length > 0 && <option value="custom">指定应用代理配置...</option>}
+            <option value="system">{tr("browser.pages.coreManagement.CoreDownloadModal.text.1e21cc1")}</option>
+            <option value="direct">{tr("browser.pages.coreManagement.CoreDownloadModal.text.08c13c3")}</option>
+            {proxies.length > 0 && <option value={tr("ui.modules.browser.pages.coreManagement.CoreDownloadModal.label.f9ac14b")}>{tr("browser.pages.coreManagement.CoreDownloadModal.text.305690e")}</option>}
           </select>
         </FormItem>
 
         {form.proxyMode === 'custom' && (
-          <FormItem label="选择代理池节点" required>
+          <FormItem label={tr("browser.pages.AutoConfigPage.text.313f10d")} required>
             <select
               value={form.proxyId}
               onChange={e => setForm(prev => ({ ...prev, proxyId: e.target.value }))}
@@ -163,7 +160,7 @@ export function CoreDownloadModal({
         {progress && (
           <div className="mt-4 p-4 border border-[var(--color-border-default)] rounded-lg bg-[var(--color-bg-secondary)]">
             <div className="flex justify-between text-sm mb-2">
-              <span className="font-medium text-[var(--color-text-primary)]">{progress.message}</span>
+              <span className="font-medium text-[var(--color-text-primary)]">{translateMessage(progress.message)}</span>
               <span className="text-[var(--color-text-muted)]">{progress.progress}%</span>
             </div>
             <div className="w-full bg-[var(--color-bg-surface)] rounded-full h-2 overflow-hidden border border-[var(--color-border-muted)]">

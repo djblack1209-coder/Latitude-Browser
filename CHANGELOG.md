@@ -1,5 +1,36 @@
 # Changelog
 
+## 2.1.0 - 2026-11-06
+
+- Fieldwork 全界面重设计：黑色画布、荧光绿操作色、淡紫点阵、分层工作区与统一组件；保留中英文和现有功能入口。
+- 移除退出警告与确认框，原生关闭直接执行受管运行时清理；保留清理失败时的进程归属与重试能力。
+- 修复空指纹参数导致实例列表渲染失败，增加渲染恢复入口与错误记录。
+- 保留既有 Chrome 148 默认项、157 可选项和两套连接栈规则。
+- 更新双语 README、原生截图、工程导览与设计来源记录。
+- macOS arm64 安装及 Chrome 157 流程通过；Chrome 148 的 CDP 就绪检查和四份完整参考提示词仍待补齐。
+
+- Redesign the application as Fieldwork while retaining bilingual controls and existing workflows.
+- Remove quit confirmation and retain managed runtime cleanup and ownership on failure.
+- Handle empty fingerprint arguments and provide recovery from rendering failures.
+- Retain configured Chrome 148 defaults, optional 157, and explicit connector stacks.
+- Refresh bilingual documentation and real native screenshots; record the remaining Chrome 148 and reference-prompt limitations.
+
+## 2.0.0 - 2026-11-06
+
+- Terminal 深色界面：扁平导航、实例表格、真实状态栏、集中设计令牌和本地 JetBrains Mono 字体。
+- 完整简体中文 / 英文消息层，默认系统语言，支持即时手动切换与原生菜单/对话框本地化。
+- 精简重复说明、统计条、装饰图形和无效设置；资产页提供内核、扩展、书签与标签入口。
+- 可跳过的短启动层，支持减弱动态效果、会话去重和就绪失败超时移除。
+- 更新 Go、Wails、React、Vite、Tailwind、SQLite 和代理运行时；macOS 新内核推荐官方 Chrome for Testing 157。
+- 保留既有实例内核绑定及 PolyForm Noncommercial 1.0.0；普通 Chrome 不承诺补丁内核的指纹能力。
+
+- Terminal interface, flat navigation, one instance table, live status bar and shared design tokens.
+- System-default Chinese/English localization with immediate switching and native UI messages.
+- Reduced secondary copy, decorative graphics, duplicate statistics and settings with no runtime effect.
+- Skippable startup layer with reduced motion, session gating and a hard timeout.
+- Current stable application dependencies and proxy runtimes; official Chrome for Testing 157 on macOS.
+- Existing core bindings and the noncommercial license retained. Stock Chrome does not implement patched fingerprint flags.
+
 ## 未发布
 
 - SOCKS5 优化：完善 SOCKS5 与链式代理连接流程，统一实例启动、代理测速、连通性检测和健康检测体验。

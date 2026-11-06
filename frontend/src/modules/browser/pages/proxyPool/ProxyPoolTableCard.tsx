@@ -1,3 +1,5 @@
+import { translateMessage } from '../../../../shared/i18n'
+import { tr, useLocale } from '../../../../shared/i18n'
 import { useEffect, useMemo, useState } from 'react'
 import { ChevronDown, Search, Trash2, X } from 'lucide-react'
 
@@ -98,6 +100,8 @@ export function ProxyPoolTableCard({
   latencyErrorMap,
   latencyDiagnosticMap,
 }: ProxyPoolTableCardProps) {
+  const uiLocale = useLocale()
+
   const hasActiveFilters = filterProtocol !== 'all' || !!filterKeyword || filterGroup !== 'all' || filterAvailableOnly
   const [openMoreProxyId, setOpenMoreProxyId] = useState<string | null>(null)
   const [moreMenuPlacement, setMoreMenuPlacement] = useState<'up' | 'down'>('down')
@@ -124,15 +128,15 @@ export function ProxyPoolTableCard({
 
   const renderLatency = (record: ProxyDisplayInfo) => {
     if (record.proxyConfig === 'direct://') {
-      return <span className="text-[var(--color-text-muted)] text-xs">不适用</span>
+      return <span className="text-[var(--color-text-muted)] text-xs">{tr("browser.pages.proxyPool.ProxyPoolTableCard.text.eec46c1")}</span>
     }
     const value = latencyMap[record.proxyId]
     if (value === undefined) return <span className="text-[var(--color-text-muted)] text-xs">-</span>
-    if (value === -1) return <span className="text-[var(--color-text-muted)] text-xs animate-pulse">测试中...</span>
+    if (value === -1) return <span className="text-[var(--color-text-muted)] text-xs animate-pulse">{tr("browser.pages.proxyPool.ProxyPoolTableCard.text.f43705c")}</span>
     const error = latencyErrorMap[record.proxyId] || ''
-    if (value === -2) return <span className="text-[var(--color-error)] text-xs" title={error || '测速超时'}>超时</span>
-    if (value === -3) return <span className="text-gray-400 text-xs" title={error || '协议不支持'}>不支持</span>
-    if (value === -4) return <span className="text-[var(--color-error)] text-xs" title={error || '测速失败'}>失败</span>
+    if (value === -2) return <span className="text-[var(--color-error)] text-xs" title={error || tr("browser.pages.proxyPool.ProxyPoolTableCard.ProxyPoolTableCard.d66b317")}>{tr("browser.pages.proxyPool.ProxyPoolTableCard.text.ff06c24")}</span>
+    if (value === -3) return <span className="text-gray-400 text-xs" title={error || tr("browser.pages.proxyPool.ProxyPoolTableCard.ProxyPoolTableCard.5e34c10")}>{tr("browser.pages.proxyPool.ProxyPoolTableCard.text.ef8274b")}</span>
+    if (value === -4) return <span className="text-[var(--color-error)] text-xs" title={error || tr("browser.components.BrowserProfilesPanel.ProxyInlineActions.efe2c8c")}>{tr("browser.components.AutomationScriptHistoryModal.getRunStatusLabel.3e3c806")}</span>
     const color = value < 200
       ? 'text-[var(--color-success)]'
       : value < 500
@@ -143,7 +147,7 @@ export function ProxyPoolTableCard({
 
   const renderLatencyEngine = (record: ProxyDisplayInfo) => {
     if (record.proxyConfig === 'direct://') {
-      return <span className="text-[var(--color-text-muted)] text-xs">不适用</span>
+      return <span className="text-[var(--color-text-muted)] text-xs">{tr("browser.pages.proxyPool.ProxyPoolTableCard.text.eec46c1")}</span>
     }
     const value = latencyMap[record.proxyId]
     if (value === undefined) return <span className="text-[var(--color-text-muted)] text-xs">-</span>
@@ -155,7 +159,7 @@ export function ProxyPoolTableCard({
 
   const renderDiagnostic = (record: ProxyDisplayInfo) => {
     if (record.proxyConfig === 'direct://') {
-      return <span className="text-[var(--color-text-muted)] text-xs">不适用</span>
+      return <span className="text-[var(--color-text-muted)] text-xs">{tr("browser.pages.proxyPool.ProxyPoolTableCard.text.eec46c1")}</span>
     }
     const value = latencyMap[record.proxyId]
     const diagnostic = latencyDiagnosticMap[record.proxyId]
@@ -170,26 +174,26 @@ export function ProxyPoolTableCard({
           ? 'border-[var(--color-error-border)] bg-[var(--color-error-muted)] text-[var(--color-error)]'
           : 'border-[var(--color-border-default)] bg-[var(--color-bg-subtle)] text-[var(--color-text-muted)]'
     const code = diagnostic?.code || (inferredStage === 'success' ? 'OK' : '')
-    const message = diagnostic?.message || latencyErrorMap[record.proxyId] || (inferredStage === 'not_tested' ? '等待执行测速' : '')
+    const message = diagnostic?.message || latencyErrorMap[record.proxyId] || (inferredStage === 'not_tested' ? tr("browser.pages.proxyPool.ProxyPoolTableCard.ProxyPoolTableCard.53846af") : '')
     return (
       <div className="min-w-0 max-w-[190px]" title={[code, diagnostic?.error || message].filter(Boolean).join(' · ')}>
         <div className="flex min-w-0 items-center gap-1.5">
           <span className={`inline-flex shrink-0 items-center rounded-sm border px-1.5 py-0.5 text-[10px] font-medium ${toneClass}`}>
             {diagnosticStageLabel(inferredStage)}
           </span>
-          {code && <code className="truncate font-mono text-[10px] uppercase tracking-[0.08em] text-[var(--color-text-muted)]">{code}</code>}
+          {code && <code className="truncate font-mono text-[10px]   text-[var(--color-text-muted)]">{code}</code>}
         </div>
-        {message && <div className="mt-1 truncate text-[11px] text-[var(--color-text-muted)]">{message}</div>}
+        {message && <div className="mt-1 truncate text-[11px] text-[var(--color-text-muted)]">{translateMessage(message)}</div>}
       </div>
     )
   }
 
   const renderIPHealth = (record: ProxyDisplayInfo) => {
     if (record.proxyConfig === 'direct://') {
-      return <span className="text-[var(--color-text-muted)] text-xs">不适用</span>
+      return <span className="text-[var(--color-text-muted)] text-xs">{tr("browser.pages.proxyPool.ProxyPoolTableCard.text.eec46c1")}</span>
     }
     if (checkingIPHealthIds.has(record.proxyId)) {
-      return <span className="text-[var(--color-text-muted)] text-xs animate-pulse">检测中...</span>
+      return <span className="text-[var(--color-text-muted)] text-xs animate-pulse">{tr("browser.pages.proxyPool.ProxyCoreDownloadModal.ProxyCoreDownloadModal.d3c8f2e")}</span>
     }
 
     const result = ipHealthMap[record.proxyId]
@@ -205,17 +209,17 @@ export function ProxyPoolTableCard({
       const toneClass = tone === 'warning'
         ? 'border-[var(--color-warning-border)] bg-[var(--color-warning-muted)] text-[var(--color-warning)]'
         : 'border-[var(--color-error-border)] bg-[var(--color-error-muted)] text-[var(--color-error)]'
-      const message = diagnostic.error || diagnostic.message || result.error || '检测失败'
+      const message = diagnostic.error || diagnostic.message || result.error || tr("browser.pages.proxyPool.ProxyPoolModals.ProxyPoolIPHealthDetailModal.92d705e")
       return (
         <div className="min-w-0 max-w-[250px]" title={[diagnostic.code, diagnostic.engine, diagnostic.targetUrl, message].filter(Boolean).join(' · ')}>
           <div className="flex min-w-0 items-center gap-1.5">
             <span className={`inline-flex shrink-0 items-center rounded-sm border px-1.5 py-0.5 text-[10px] font-medium ${toneClass}`}>
               {diagnosticStageLabel(diagnostic.stage)}
             </span>
-            {diagnostic.code && <code className="truncate font-mono text-[10px] uppercase tracking-[0.08em] text-[var(--color-text-muted)]">{diagnostic.code}</code>}
-            <Button size="sm" variant="ghost" onClick={(event) => { event.stopPropagation(); onOpenIPHealthDetail(record.proxyId) }}>原始</Button>
+            {diagnostic.code && <code className="truncate font-mono text-[10px]   text-[var(--color-text-muted)]">{diagnostic.code}</code>}
+            <Button size="sm" variant="ghost" onClick={(event) => { event.stopPropagation(); onOpenIPHealthDetail(record.proxyId) }}>{tr("browser.pages.proxyPool.ProxyPoolTableCard.text.a55afe4")}</Button>
           </div>
-          <div className="mt-1 truncate text-[11px] text-[var(--color-text-muted)]">{message}</div>
+          <div className="mt-1 truncate text-[11px] text-[var(--color-text-muted)]">{translateMessage(message)}</div>
         </div>
       )
     }
@@ -226,10 +230,10 @@ export function ProxyPoolTableCard({
         <div className="min-w-0">
           <div className="text-xs text-[var(--color-text-primary)] truncate">{result.ip || '-'}</div>
           <div className="text-[11px] text-[var(--color-text-muted)] truncate">
-            {`fraud ${result.fraudScore} | ${result.isResidential ? '住宅' : '机房'}${location ? ` | ${location}` : ''}`}
+            {`fraud ${result.fraudScore} | ${result.isResidential ? tr("browser.pages.proxyPool.ProxyPoolTableCard.ProxyPoolTableCard.f6cd7e5") : tr("browser.pages.proxyPool.ProxyPoolTableCard.ProxyPoolTableCard.695bcbf")}${location ? ` | ${location}` : ''}`}
           </div>
         </div>
-        <Button size="sm" variant="ghost" onClick={(event) => { event.stopPropagation(); onOpenIPHealthDetail(record.proxyId) }}>原始</Button>
+        <Button size="sm" variant="ghost" onClick={(event) => { event.stopPropagation(); onOpenIPHealthDetail(record.proxyId) }}>{tr("browser.pages.proxyPool.ProxyPoolTableCard.text.a55afe4")}</Button>
       </div>
     )
   }
@@ -242,7 +246,7 @@ export function ProxyPoolTableCard({
       render: (_, record) => (
         <input
           type="checkbox"
-          aria-label={`选择代理 ${record.proxyName}`}
+          aria-label={tr("browser.pages.proxyPool.ProxyPoolTableCard.ProxyPoolTableCard.5f723a7", [record.proxyName])}
           checked={selectedIds.has(record.proxyId)}
           disabled={BUILTIN_PROXY_IDS.has(record.proxyId)}
           onChange={() => onToggleOne(record.proxyId)}
@@ -251,17 +255,17 @@ export function ProxyPoolTableCard({
         />
       ),
     },
-    { key: 'proxyName', title: '代理名称', width: '180px', sortable: true },
+    { key: 'proxyName', title: tr("browser.components.ProxyImportModal.title.c617e8e"), width: '180px', sortable: true },
     {
       key: 'groupName',
-      title: '分组',
+      title: tr("browser.components.GroupTreeNav.text.97d8a6c"),
       width: '100px',
       sortable: true,
-      render: (value) => value ? <span className="inline-flex rounded-sm border border-[var(--color-accent-border)] bg-[var(--color-accent-muted)] px-1.5 py-0.5 font-mono text-[10px] font-medium uppercase tracking-wide text-[var(--color-accent)]">{value}</span> : '-',
+      render: (value) => value ? <span className="inline-flex rounded-sm border border-[var(--color-accent-border)] bg-[var(--color-accent-muted)] px-1.5 py-0.5 font-mono text-[10px] font-medium   text-[var(--color-accent)]">{value}</span> : '-',
     },
     {
       key: 'source',
-      title: '来源',
+      title: tr("browser.pages.proxyPool.ProxyPoolTableCard.title.c63f79e"),
       width: '180px',
       render: (_, record) => {
         if (!record.sourceUrl) return '-'
@@ -270,31 +274,31 @@ export function ProxyPoolTableCard({
           <div className="text-xs leading-5">
             <div className="text-[var(--color-text-primary)] truncate" title={record.sourceUrl}>{host}</div>
             <div className="text-[var(--color-text-muted)]">
-              {globalAutoRefreshEnabled ? `自动刷新 ${globalRefreshInterval} 分钟（全局）` : '手动刷新'}
+              {globalAutoRefreshEnabled ? tr("browser.pages.proxyPool.ProxyPoolTableCard.ProxyPoolTableCard.39be4c9", [globalRefreshInterval]) : tr("browser.pages.proxyPool.ProxyPoolTableCard.ProxyPoolTableCard.7ea1129")}
             </div>
           </div>
         )
       },
     },
-    { key: 'type', title: '类型', width: '90px', sortable: true },
-    { key: 'server', title: '服务器', width: '180px', sortable: true },
-    { key: 'port', title: '端口', width: '80px', sortable: true, render: (value) => value || '-' },
+    { key: 'type', title: tr("browser.components.AutomationScriptHistoryModal.text.e4e46c7"), width: '90px', sortable: true },
+    { key: 'server', title: tr("browser.components.ProxyImportModal.title.30d94cb"), width: '180px', sortable: true },
+    { key: 'port', title: tr("browser.components.ProxyImportModal.title.6cbb733"), width: '80px', sortable: true, render: (value) => value || '-' },
     {
       key: 'latency',
-      title: '延迟',
+      title: tr("browser.pages.proxyPool.ProxyPoolTableCard.title.e9f0921"),
       width: '90px',
       sortable: true,
       render: (_, record) => renderLatency(record),
     },
     {
       key: 'latencyEngine',
-      title: '测速类型',
+      title: tr("browser.pages.proxyPool.ProxyPoolTableCard.title.3e66a7e"),
       width: '90px',
       render: (_, record) => renderLatencyEngine(record),
     },
     {
       key: 'diagnostic',
-      title: '诊断',
+      title: tr("browser.pages.proxyPool.ProxyPoolTableCard.title.e0b4789"),
       width: '210px',
       render: (_, record) => renderDiagnostic(record),
     },
@@ -302,10 +306,8 @@ export function ProxyPoolTableCard({
       key: 'ipHealth',
       title: (
         <div className="leading-tight">
-          <div>IP 健康</div>
-          <div className="mt-0.5 text-[10px] font-normal text-[var(--color-text-muted)]">
-            仅供参考
-          </div>
+          <div>{tr("browser.pages.proxyPool.ProxyPoolTableCard.text.3d18742")}</div>
+          <div className="mt-0.5 text-[10px] font-normal text-[var(--color-text-muted)]">{tr("browser.pages.proxyPool.ProxyPoolTableCard.text.24f264c")}</div>
         </div>
       ),
       width: '280px',
@@ -313,7 +315,7 @@ export function ProxyPoolTableCard({
     },
     {
       key: 'actions',
-      title: '操作',
+      title: tr("browser.components.AutomationScriptHistoryModal.text.f3ea6d3"),
       width: '190px',
       render: (_, record) => {
         const isBuiltin = BUILTIN_PROXY_IDS.has(record.proxyId)
@@ -329,28 +331,24 @@ export function ProxyPoolTableCard({
               onClick={(event) => { event.stopPropagation(); closeMore(); onTestOne(record) }}
               loading={latencyMap[record.proxyId] === -1}
               disabled={record.proxyConfig === 'direct://'}
-            >
-              测速
-            </Button>
+            >{tr("browser.api.proxies.unavailableSpeedResult.304d8c0")}</Button>
             <Button
               size="sm"
               variant="ghost"
               disabled={isBuiltin}
-              title={isBuiltin ? '内置代理不可编辑' : undefined}
+              title={isBuiltin ? tr("browser.pages.proxyPool.ProxyPoolTableCard.ProxyPoolTableCard.0e2956e") : undefined}
               onClick={(event) => {
                 event.stopPropagation()
                 closeMore()
                 if (!isBuiltin) onEdit(record)
               }}
-            >
-              编辑
-            </Button>
+            >{tr("browser.components.BrowserListLayout.title.a7f814c")}</Button>
             <div className="relative" onClick={(event) => event.stopPropagation()}>
               <Button
                 size="sm"
                 variant="secondary"
                 aria-expanded={moreOpen}
-                aria-label="更多代理操作"
+                aria-label={tr("browser.pages.proxyPool.ProxyPoolTableCard.aria_label.20014b4")}
                 className="px-2"
                 onClick={(event) => {
                   event.stopPropagation()
@@ -362,7 +360,7 @@ export function ProxyPoolTableCard({
                   setOpenMoreProxyId(record.proxyId)
                 }}
               >
-                <span className="sr-only">更多</span>
+                <span className="sr-only">{tr("browser.components.BrowserProfilesPanel.title.9b0c6c7")}</span>
                 <ChevronDown className="h-3.5 w-3.5" aria-hidden="true" />
               </Button>
               {moreOpen && (
@@ -374,9 +372,7 @@ export function ProxyPoolTableCard({
                       className="w-full justify-start"
                       onClick={(event) => { event.stopPropagation(); closeMore(); onRefreshSingleSource(sourceId) }}
                       loading={refreshingSourceIds.has(sourceId)}
-                    >
-                      刷新订阅
-                    </Button>
+                    >{tr("browser.pages.proxyPool.ProxyPoolHeader.text.dd92fb9")}</Button>
                   )}
                   {latencyDiagnosticMap[record.proxyId] && (
                     <Button
@@ -384,9 +380,7 @@ export function ProxyPoolTableCard({
                       variant="ghost"
                       className="w-full justify-start"
                       onClick={(event) => { event.stopPropagation(); closeMore(); onClearDiagnostic(record.proxyId) }}
-                    >
-                      清除结果
-                    </Button>
+                    >{tr("browser.pages.proxyPool.ProxyPoolTableCard.text.10ab747")}</Button>
                   )}
                   <Button
                     size="sm"
@@ -395,23 +389,19 @@ export function ProxyPoolTableCard({
                     onClick={(event) => { event.stopPropagation(); closeMore(); onCheckOneIPHealth(record) }}
                     loading={checkingIPHealthIds.has(record.proxyId)}
                     disabled={record.proxyConfig === 'direct://'}
-                  >
-                    IP 健康
-                  </Button>
+                  >{tr("browser.pages.proxyPool.ProxyPoolTableCard.text.3d18742")}</Button>
                   <Button
                     size="sm"
                     variant="danger"
                     className="w-full justify-start"
                     disabled={isBuiltin}
-                    title={isBuiltin ? '内置代理不可删除' : undefined}
+                    title={isBuiltin ? tr("browser.pages.proxyPool.ProxyPoolTableCard.ProxyPoolTableCard.066bfdb") : undefined}
                     onClick={(event) => {
                       event.stopPropagation()
                       closeMore()
                       if (!isBuiltin) onDelete(record.proxyId)
                     }}
-                  >
-                    删除
-                  </Button>
+                  >{tr("browser.components.BrowserListLayout.title.3755f56")}</Button>
                 </div>
               )}
             </div>
@@ -440,7 +430,7 @@ export function ProxyPoolTableCard({
     onToggleOne,
     refreshingSourceIds,
     selectedIds,
-  ])
+  , uiLocale])
 
   return (
     <section className="network-proxy-table overflow-hidden border border-[var(--color-border-default)] bg-[var(--color-bg-surface)]">
@@ -451,47 +441,45 @@ export function ProxyPoolTableCard({
           <Input
             value={filterKeyword}
             onChange={event => onFilterKeywordChange(event.target.value)}
-            placeholder="搜索名称或服务器"
+            placeholder={tr("browser.pages.proxyPool.ProxyPoolTableCard.placeholder.70c7107")}
             className="pl-8"
           />
         </div>
         <select
-          aria-label="按代理协议筛选"
+          aria-label={tr("browser.pages.proxyPool.ProxyPoolTableCard.aria_label.1f9f566")}
           value={filterProtocol}
           onChange={event => onFilterProtocolChange(event.target.value)}
           className="h-9 rounded-md border border-[var(--color-border-default)] bg-[var(--color-bg-surface)] px-3 text-sm text-[var(--color-text-primary)] transition-colors duration-150 focus:border-[var(--color-border-strong)] focus:outline-none focus:ring-1 focus:ring-[var(--color-border-strong)]"
         >
           {protocolOptions.map(protocol => (
-            <option key={protocol} value={protocol}>{protocol === 'all' ? '全部协议' : protocol.toUpperCase()}</option>
+            <option key={protocol} value={protocol}>{protocol === 'all' ? tr("browser.pages.proxyPool.ProxyPoolTableCard.ProxyPoolTableCard.fa939b8") : protocol.toUpperCase()}</option>
           ))}
         </select>
         <select
-          aria-label="按代理分组筛选"
+          aria-label={tr("browser.pages.proxyPool.ProxyPoolTableCard.aria_label.f1e8244")}
           value={filterGroup}
           onChange={event => onFilterGroupChange(event.target.value)}
           className="h-9 rounded-md border border-[var(--color-border-default)] bg-[var(--color-bg-surface)] px-3 text-sm text-[var(--color-text-primary)] transition-colors duration-150 focus:border-[var(--color-border-strong)] focus:outline-none focus:ring-1 focus:ring-[var(--color-border-strong)]"
         >
-          <option value="all">全部分组</option>
+          <option value="all">{tr("browser.components.InstanceFilterBar.label.eb8d23f")}</option>
           {groups.map(group => <option key={group} value={group}>{group}</option>)}
         </select>
         {hasActiveFilters && (
           <Button size="sm" variant="ghost" onClick={onClearFilters} className="gap-1.5 px-2">
-            <X className="h-3.5 w-3.5" aria-hidden="true" />
-            清除
-          </Button>
+            <X className="h-3.5 w-3.5" aria-hidden="true" />{tr("browser.components.InstanceFilterBar.text.7b15e5e")}</Button>
         )}
         <label className="flex h-9 items-center gap-1.5 px-1.5 text-xs text-[var(--color-text-secondary)] cursor-pointer select-none">
           <input
             type="checkbox"
-            aria-label="仅显示已有成功测速或通过 IP 检测的代理"
+            aria-label={tr("browser.pages.proxyPool.ProxyPoolTableCard.aria_label.cee6129")}
             checked={filterAvailableOnly}
             onChange={event => onFilterAvailableOnlyChange(event.target.checked)}
             className="h-4 w-4 cursor-pointer rounded-sm border-[var(--color-border-default)] accent-[var(--color-accent)]"
           />
-          <span title="需有成功测速或通过 IP 检测">仅已验证</span>
+          <span title={tr("browser.pages.proxyPool.ProxyPoolTableCard.title.d36eed4")}>{tr("browser.pages.proxyPool.ProxyPoolTableCard.text.89d52b2")}</span>
         </label>
-        <div className="flex h-9 items-center gap-2 border-l border-[var(--color-border-default)] pl-3" role="group" aria-label="订阅源自动刷新">
-          <span className="whitespace-nowrap text-xs text-[var(--color-text-muted)]">自动刷新</span>
+        <div className="flex h-9 items-center gap-2 border-l border-[var(--color-border-default)] pl-3" role="group" aria-label={tr("browser.pages.proxyPool.ProxyPoolTableCard.aria_label.7a4f626")}>
+          <span className="whitespace-nowrap text-xs text-[var(--color-text-muted)]">{tr("browser.pages.BrowserLogsPage.text.297a7ec")}</span>
           <Switch
             checked={globalAutoRefreshEnabled}
             onChange={onGlobalAutoRefreshEnabledChange}
@@ -505,7 +493,7 @@ export function ProxyPoolTableCard({
             className="h-8 w-20"
             disabled={!globalAutoRefreshEnabled}
           />
-          <span className="text-xs text-[var(--color-text-muted)]">分钟</span>
+          <span className="text-xs text-[var(--color-text-muted)]">{tr("browser.pages.proxyPool.ProxyPoolTableCard.text.28bf227")}</span>
         </div>
         </div>
         <div className="flex flex-wrap items-center gap-2 xl:justify-end">
@@ -513,7 +501,7 @@ export function ProxyPoolTableCard({
           <label className="flex h-9 items-center gap-1.5 px-1.5 text-xs text-[var(--color-text-muted)] cursor-pointer select-none">
             <input
               type="checkbox"
-              aria-label="选择当前筛选结果中的全部代理"
+              aria-label={tr("browser.pages.proxyPool.ProxyPoolTableCard.aria_label.f151cc9")}
               checked={allFilteredSelected}
               ref={(element) => {
                 if (element) {
@@ -522,14 +510,11 @@ export function ProxyPoolTableCard({
               }}
               onChange={onToggleAll}
               className="h-4 w-4 cursor-pointer rounded-sm border-[var(--color-border-default)] accent-[var(--color-accent)]"
-            />
-            全选
-          </label>
+            />{tr("browser.components.BrowserListWidgets.text.3e44b2a")}</label>
         )}
         {selectedCount > 0 && (
           <Button size="sm" variant="danger" onClick={onOpenBatchDelete} className="gap-1.5">
-            <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
-            删除所选 ({selectedCount})
+            <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />{tr("browser.pages.proxyPool.ProxyPoolTableCard.text.4cccac3")}{selectedCount})
           </Button>
         )}
         </div>
@@ -541,7 +526,7 @@ export function ProxyPoolTableCard({
             data={data}
             rowKey="proxyId"
             loading={loading}
-            emptyText="暂无代理配置"
+            emptyText={tr("browser.pages.proxyPool.ProxyPoolTableCard.emptyText.b2ae879")}
             sortColumn={sortColumn}
             sortOrder={sortOrder}
             onSort={onSort}
@@ -550,9 +535,9 @@ export function ProxyPoolTableCard({
         ) : (
           <SignalEmptyState
             symbol="network"
-            title={hasActiveFilters ? '没有匹配的代理配置' : '代理池尚无配置'}
-            description={hasActiveFilters ? '调整协议、分组、关键词或验证状态后再试。' : '通过页面顶部的导入操作添加代理节点。'}
-            action={hasActiveFilters ? <Button size="sm" variant="secondary" onClick={onClearFilters}>清除筛选</Button> : undefined}
+            title={hasActiveFilters ? tr("browser.pages.proxyPool.ProxyPoolTableCard.ProxyPoolTableCard.f3f7686") : tr("browser.pages.proxyPool.ProxyPoolTableCard.ProxyPoolTableCard.20abdd7")}
+
+            action={hasActiveFilters ? <Button size="sm" variant="secondary" onClick={onClearFilters}>{tr("browser.components.BrowserProfilesPanel.text.4bbc4e5")}</Button> : undefined}
           />
         )}
       </div>

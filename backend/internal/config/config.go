@@ -10,8 +10,8 @@ const (
 	DefaultLaunchServerAPIKeyHeader = "X-Ant-Api-Key"
 	DefaultAutomationInstallPolicy  = "on_demand"
 	DefaultAutomationNodeSource     = "auto"
-	DefaultAutomationNodeVersion    = "22.15.1"
-	DefaultAutomationPWVersion      = "1.59.0"
+	DefaultAutomationNodeVersion    = "26.13.0"
+	DefaultAutomationPWVersion      = "1.65.0"
 )
 
 const (
@@ -86,8 +86,9 @@ type SQLiteConfig struct {
 }
 
 type AppConfig struct {
-	Name   string       `yaml:"name"`
-	Window WindowConfig `yaml:"window"`
+	Name     string       `yaml:"name"`
+	Language string       `yaml:"language,omitempty"`
+	Window   WindowConfig `yaml:"window"`
 }
 
 type WindowConfig struct {

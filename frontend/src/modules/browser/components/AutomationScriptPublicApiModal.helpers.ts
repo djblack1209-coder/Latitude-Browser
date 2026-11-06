@@ -1,3 +1,4 @@
+import { tr } from '../../../shared/i18n'
 ﻿import { toast } from "../../../shared/components";
 import type { AutomationScriptPublicApiInvokeResult } from "../automationScriptApi";
 import {
@@ -38,7 +39,7 @@ export function parseJSONText(
     return {
       ok: false,
       value: null,
-      error: error instanceof Error ? error.message : "JSON 解析失败",
+      error: error instanceof Error ? error.message : tr("browser.automationScripts.publicApiUtils.parseAutomationScriptPublicAPIJSONText.c18abb4"),
     };
   }
 }
@@ -206,11 +207,11 @@ function formatPublicApiOutputLabel(key: string): string {
     case "outputPath":
     case "downloadPath":
     case "downloadAddress":
-      return "导出文件";
+      return tr("browser.components.AutomationScriptPublicApiModal.helpers.formatPublicApiOutputLabel.c2cd73b");
     case "screenshotPath":
-      return "截图文件";
+      return tr("browser.components.AutomationScriptPublicApiModal.helpers.formatPublicApiOutputLabel.2e8ad36");
     case "artifacts":
-      return "导出文件";
+      return tr("browser.components.AutomationScriptPublicApiModal.helpers.formatPublicApiOutputLabel.c2cd73b");
     default:
       return key;
   }
@@ -226,6 +227,6 @@ export async function copyText(text: string, successMessage: string) {
     await navigator.clipboard.writeText(text);
     toast.success(successMessage);
   } catch {
-    toast.error("复制失败");
+    toast.error(tr("browser.components.AutomationScriptPublicApiModal.helpers.copyText.f2c6b51"));
   }
 }

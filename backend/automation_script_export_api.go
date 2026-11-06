@@ -1,6 +1,7 @@
 package backend
 
 import (
+ "ant-chrome/backend/internal/locale"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -31,10 +32,10 @@ func (a *App) AutomationScriptExport(scriptID string) (map[string]any, error) {
 	}
 
 	savePath, err := wailsruntime.SaveFileDialog(a.ctx, wailsruntime.SaveDialogOptions{
-		Title:           "导出脚本模板",
+		Title:           locale.Text("error.backend.message.253b95b89b"),
 		DefaultFilename: buildAutomationScriptTemplateFilename(bundle.Record.Name),
 		Filters: []wailsruntime.FileFilter{
-			{DisplayName: "JSON 模板 (*.json)", Pattern: "*.json"},
+			{DisplayName: locale.Text("error.backend.message.94e2cc2fb7"), Pattern: "*.json"},
 		},
 	})
 	if err != nil {
@@ -75,10 +76,10 @@ func (a *App) AutomationScriptExportZip(scriptID string) (map[string]any, error)
 	}
 
 	savePath, err := wailsruntime.SaveFileDialog(a.ctx, wailsruntime.SaveDialogOptions{
-		Title:           "导出脚本 ZIP",
+		Title:           locale.Text("error.backend.message.2a229fe9eb"),
 		DefaultFilename: buildAutomationScriptPackageZipFilename(bundle.Record.Name),
 		Filters: []wailsruntime.FileFilter{
-			{DisplayName: "ZIP 脚本包 (*.zip)", Pattern: "*.zip"},
+			{DisplayName: locale.Text("error.backend.message.5009b6923c"), Pattern: "*.zip"},
 		},
 	})
 	if err != nil {
@@ -140,10 +141,10 @@ func (a *App) AutomationScriptExportBatchZip(scriptIDs []string) (map[string]any
 	}
 
 	savePath, err := wailsruntime.SaveFileDialog(a.ctx, wailsruntime.SaveDialogOptions{
-		Title:           "导出脚本 ZIP",
+		Title:           locale.Text("error.backend.message.2a229fe9eb"),
 		DefaultFilename: buildAutomationScriptBatchZipFilename(len(bundles)),
 		Filters: []wailsruntime.FileFilter{
-			{DisplayName: "ZIP 脚本包 (*.zip)", Pattern: "*.zip"},
+			{DisplayName: locale.Text("error.backend.message.5009b6923c"), Pattern: "*.zip"},
 		},
 	})
 	if err != nil {
@@ -185,7 +186,7 @@ func (a *App) AutomationScriptExportDirectory(scriptID string) (map[string]any, 
 	}
 
 	baseDir, err := wailsruntime.OpenDirectoryDialog(a.ctx, wailsruntime.OpenDialogOptions{
-		Title: "选择导出目录",
+		Title: locale.Text("error.backend.message.fed88120dc"),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("打开目录对话框失败: %w", err)

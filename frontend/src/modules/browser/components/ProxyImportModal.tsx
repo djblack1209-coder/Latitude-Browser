@@ -1,3 +1,4 @@
+import { tr, useLocale } from '../../../shared/i18n'
 import { useEffect, useMemo, useState } from 'react'
 import { Button, toast } from '../../../shared/components'
 import type { TableColumn } from '../../../shared/components/Table'
@@ -36,6 +37,8 @@ export function ProxyImportModal({
   globalRefreshIntervalM = 60,
   onImported,
 }: ProxyImportModalProps) {
+  const uiLocale = useLocale()
+
   const [importMode, setImportMode] = useState<ProxyImportMode>('clash')
   const [importUrl, setImportUrl] = useState('')
   const [importFetchProxyId, setImportFetchProxyId] = useState('')
@@ -95,7 +98,7 @@ export function ProxyImportModal({
   const handleFetchImportURL = async () => {
     const targetURL = importUrl.trim()
     if (!targetURL) {
-      toast.error('请输入订阅 URL')
+      toast.error(tr("browser.components.ProxyImportModal.ProxyImportModal.d82fc08"))
       return
     }
 
@@ -104,7 +107,7 @@ export function ProxyImportModal({
       const result = await fetchClashImportFromURL(targetURL, importFetchProxyId)
       const content = (result?.content || '').trim()
       if (!content) {
-        throw new Error('订阅内容为空')
+        throw new Error(tr("browser.components.ProxyImportModal.ProxyImportModal.f9bf09d"))
       }
 
       setImportResolvedUrl((result?.url || targetURL).trim())
@@ -117,10 +120,10 @@ export function ProxyImportModal({
         setImportGroupName(result.suggestedGroup.trim())
       }
 
-      toast.success(`URL 获取成功，检测到 ${Math.max(0, Number(result?.proxyCount || 0))} 个代理`)
+      toast.success(tr("browser.components.ProxyImportModal.ProxyImportModal.72bfa26", [Math.max(0, Number(result?.proxyCount || 0))]))
     } catch (error: any) {
       setImportResolvedUrl('')
-      toast.error(error?.message || 'URL 获取失败')
+      toast.error(error?.message || tr("browser.components.ProxyImportModal.ProxyImportModal.55d56eb"))
     } finally {
       setFetchingImportUrl(false)
     }
@@ -147,14 +150,14 @@ export function ProxyImportModal({
         candidates = [buildChainImportCandidate(chainImportForm)]
       }
       if (!candidates.length) {
-        toast.error('未解析到可导入代理')
+        toast.error(tr("browser.components.ProxyImportModal.ProxyImportModal.29a6e8f"))
         return
       }
       const preview = buildImportPreview(candidates, previewGroupName)
       setPreviewList(preview)
       setPreviewModalOpen(true)
     } catch (error: any) {
-      toast.error(`解析失败: ${error?.message || '未知错误'}`)
+      toast.error(tr("browser.components.ProxyImportModal.ProxyImportModal.a02c61c", [error?.message || tr("browser.components.ProxyImportModal.ProxyImportModal.5f76edc")]))
     }
   }
 
@@ -165,12 +168,12 @@ export function ProxyImportModal({
   const handleCopyDirectTemplate = async () => {
     try {
       if (!navigator?.clipboard?.writeText) {
-        throw new Error('当前环境不支持剪贴板')
+        throw new Error(tr("browser.components.ProxyImportModal.ProxyImportModal.2712dc6"))
       }
       await navigator.clipboard.writeText(DIRECT_QUICK_IMPORT_TEMPLATE)
-      toast.success('JSON 模板已复制')
+      toast.success(tr("browser.components.ProxyImportModal.ProxyImportModal.e738c80"))
     } catch (error: any) {
-      toast.error(error?.message || '复制模板失败')
+      toast.error(error?.message || tr("browser.components.ProxyImportModal.ProxyImportModal.8403a27"))
     }
   }
 
@@ -182,15 +185,15 @@ export function ProxyImportModal({
         setImportGroupName(groupName)
       }
       setDirectImportText('')
-      toast.success('文本已应用')
+      toast.success(tr("browser.components.ProxyImportModal.ProxyImportModal.fbeaa69"))
     } catch (error: any) {
-      toast.error(error?.message || '文本应用失败')
+      toast.error(error?.message || tr("browser.components.ProxyImportModal.ProxyImportModal.65190b0"))
     }
   }
 
   const handleConfirmImport = async () => {
     if (previewList.length === 0) {
-      toast.error('请至少保留 1 个代理后再导入')
+      toast.error(tr("browser.components.ProxyImportModal.ProxyImportModal.376ad66"))
       return
     }
     setImporting(true)
@@ -232,12 +235,12 @@ export function ProxyImportModal({
 
       await saveBrowserProxies(allProxies)
       await onImported?.(newProxies)
-      toast.success(`成功导入 ${newProxies.length} 个代理`)
+      toast.success(tr("browser.components.ProxyImportModal.ProxyImportModal.cf0eb8b", [newProxies.length]))
       setPreviewModalOpen(false)
       resetImportState()
       onClose()
     } catch (error: any) {
-      toast.error(error?.message || '导入失败')
+      toast.error(error?.message || tr("browser.components.ProxyImportModal.ProxyImportModal.a01a8d5"))
     } finally {
       setImporting(false)
     }
@@ -257,25 +260,23 @@ export function ProxyImportModal({
         && !!chainImportForm.second.port.trim()
 
   const previewColumns = useMemo<TableColumn<ProxyDisplayInfo>[]>(() => [
-    { key: 'proxyName', title: '代理名称', width: '200px' },
-    { key: 'type', title: '类型', width: '100px' },
-    { key: 'server', title: '服务器', width: '200px' },
-    { key: 'port', title: '端口', width: '100px', render: (val) => val || '-' },
+    { key: 'proxyName', title: tr("browser.components.ProxyImportModal.title.c617e8e"), width: '200px' },
+    { key: 'type', title: tr("browser.components.AutomationScriptHistoryModal.text.e4e46c7"), width: '100px' },
+    { key: 'server', title: tr("browser.components.ProxyImportModal.title.30d94cb"), width: '200px' },
+    { key: 'port', title: tr("browser.components.ProxyImportModal.title.6cbb733"), width: '100px', render: (val) => val || '-' },
     {
       key: 'actions',
-      title: '操作',
+      title: tr("browser.components.AutomationScriptHistoryModal.text.f3ea6d3"),
       width: '96px',
       render: (_, record) => (
         <Button
           size="sm"
           variant="danger"
           onClick={() => handleRemovePreviewProxy(record.proxyId)}
-        >
-          删除
-        </Button>
+        >{tr("browser.components.BrowserListLayout.title.3755f56")}</Button>
       ),
     },
-  ], [])
+  ], [uiLocale])
 
   return (
     <ProxyImportModalView

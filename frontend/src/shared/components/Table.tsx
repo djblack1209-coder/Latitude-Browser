@@ -1,3 +1,4 @@
+import { tr, useLocale } from '../i18n'
 import { ReactNode } from 'react'
 import clsx from 'clsx'
 import { ArrowUp, ArrowDown } from 'lucide-react'
@@ -38,7 +39,7 @@ export function Table<T extends Record<string, any>>({
   data,
   rowKey,
   loading = false,
-  emptyText = '暂无数据',
+  emptyText = tr("ui.components.Table.Table.b246458"),
   onRowClick,
   className,
   maxHeight = 'calc(100vh - 320px)',
@@ -47,6 +48,8 @@ export function Table<T extends Record<string, any>>({
   sortColumn,
   sortOrder,
 }: TableProps<T>) {
+  useLocale()
+
   const getRowKey = (record: T, index: number): string => {
     if (typeof rowKey === 'function') {
       return rowKey(record)
@@ -59,7 +62,7 @@ export function Table<T extends Record<string, any>>({
       <div className="flex items-center justify-center py-16" style={{ maxHeight }}>
         <div className="flex flex-col items-center gap-3">
           <div className="w-6 h-6 border-2 border-[var(--color-border-default)] border-t-[var(--color-accent)] rounded-full animate-spin" />
-          <span className="text-sm text-[var(--color-text-muted)]">加载中...</span>
+          <span className="text-sm text-[var(--color-text-muted)]">{tr("ui.components.Table.text.514c33a")}</span>
         </div>
       </div>
     )
@@ -105,24 +108,26 @@ export function Table<T extends Record<string, any>>({
     >
       <table className="min-w-full">
         <thead className={clsx(stickyHeader && 'sticky top-0 z-10')}>
-          <tr>
+          <tr className="border-b border-[var(--color-border-default)]">
             {columns.map((col) => (
               <th
                 key={col.key}
                 className={clsx(
-                  'px-4 py-3 text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-[0.1em] bg-[var(--color-bg-muted)]',
+                  'px-4 py-2.5 text-[11px] font-semibold text-[var(--color-text-muted)]   bg-[var(--color-bg-surface)]/90 ',
                   col.align === 'center' && 'text-center',
                   col.align === 'right' && 'text-right',
                   !col.align && 'text-left',
                   col.sortable && 'cursor-pointer group hover:text-[var(--color-text-primary)]'
                 )}
                 style={{ width: col.width }}
-                onClick={() => col.sortable && handleSortClick(col)}
+                aria-sort={col.sortable ? sortColumn === col.key && sortOrder ? (sortOrder === 'asc' ? "ascending" : "descending") : "none" : undefined}
               >
-                <span className="flex items-center">
+                {col.sortable && onSort ? <button type="button" onClick={() => handleSortClick(col)}
+                  className="flex items-center rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)]"
+                  aria-label={tr("ui.components.Table.Table.01bfdad", [typeof col.title === 'string' ? col.title : col.key])}>
                   {col.title}
                   {renderSortIcon(col)}
-                </span>
+                </button> : <span className="flex items-center">{col.title}</span>}
               </th>
             ))}
           </tr>
@@ -146,7 +151,7 @@ export function Table<T extends Record<string, any>>({
               <tr
                 key={getRowKey(record, index)}
                 className={clsx(
-                  'hover:bg-[var(--color-bg-muted)]/70 transition-colors duration-150',
+                  'hover:bg-[var(--color-accent-muted)]/50 transition-colors duration-150',
                   onRowClick && 'cursor-pointer'
                 )}
                 onClick={() => onRowClick?.(record)}
@@ -155,7 +160,7 @@ export function Table<T extends Record<string, any>>({
                   <td
                     key={col.key}
                     className={clsx(
-                      'px-4 py-3.5 text-sm text-[var(--color-text-secondary)]',
+                      'px-4 py-3 text-[13px] text-[var(--color-text-secondary)]',
                       col.align === 'center' && 'text-center',
                       col.align === 'right' && 'text-right'
                     )}

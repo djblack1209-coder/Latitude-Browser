@@ -1,3 +1,4 @@
+import { tr } from '../../../shared/i18n'
 import type { BrowserProfile, BrowserTab } from '../types'
 import { getBindings, getMockProfiles, nowISOString, setMockProfiles } from './runtime'
 
@@ -92,8 +93,8 @@ export async function fetchBrowserTabs(profileId: string): Promise<BrowserTab[]>
     return (await bindings.BrowserInstanceGetTabs(profileId)) || []
   }
   return [
-    { tabId: 'tab-1', title: '新标签页', url: 'about:blank', active: true },
-    { tabId: 'tab-2', title: '示例站点', url: 'https://example.com', active: false },
+    { tabId: 'tab-1', title: tr("browser.api.instances.title.a0517cc"), url: 'about:blank', active: true },
+    { tabId: 'tab-2', title: tr("browser.api.instances.title.887177d"), url: 'https://example.com', active: false },
   ]
 }
 

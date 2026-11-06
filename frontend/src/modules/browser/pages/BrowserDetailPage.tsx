@@ -1,6 +1,8 @@
+import { getLocale, translateMessage } from '../../../shared/i18n'
+import { tr, useLocale, localized } from '../../../shared/i18n'
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { Copy, Globe, Play, RadioTower, RefreshCw, RotateCcw, Square } from 'lucide-react'
+import { Copy, Globe, Play, RefreshCw, RotateCcw, Square } from 'lucide-react'
 import { Badge, Button, Card, Input, Table, toast } from '../../../shared/components'
 import { WorkspaceHeader } from '../../../shared/components/SignalPrimitives'
 import type { TableColumn } from '../../../shared/components/Table'
@@ -22,29 +24,32 @@ import { warmupProfileProxyBeforeStart } from '../utils/proxyWarmup'
 import { TorModeNotice } from './TorModeNotice'
 
 const resolveRuntimeStatus = (running: boolean, debugReady: boolean) => {
-  if (!running) return { variant: 'warning' as const, label: '已停止' }
-  if (!debugReady) return { variant: 'info' as const, label: '运行中（待就绪）' }
-  return { variant: 'success' as const, label: '运行中' }
+  if (!running) return { variant: 'warning' as const, label: tr("browser.components.InstanceFilterBar.label.75dddf5") }
+  if (!debugReady) return { variant: 'info' as const, label: tr("browser.pages.BrowserDetailPage.label.ba3cd6f") }
+  return { variant: 'success' as const, label: tr("browser.components.AutomationScriptHistoryModal.getRunStatusLabel.5942497") }
 }
 
 const formatTime = (value?: string) => {
   if (!value) return '-'
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return '-'
-  return date.toLocaleString('zh-CN')
+  return date.toLocaleString(getLocale())
 }
 
 type TabKey = 'overview' | 'snapshot'
 
-const TABS: { key: TabKey; label: string }[] = [
-  { key: 'overview', label: '概览' },
-  { key: 'snapshot', label: '快照管理' },
-]
+const TABS: { key: TabKey; label: string }[] = localized(() => ([
+  { key: 'overview', label: tr("browser.pages.BrowserDetailPage.label.5060421") },
+  { key: 'snapshot', label: tr("browser.pages.BrowserDetailPage.label.ff173de") },
+]))
 
 export function BrowserDetailPage() {
+  useLocale()
+
   const { id } = useParams()
   const [profile, setProfile] = useState<BrowserProfile | null>(null)
   const [tabs, setTabs] = useState<BrowserTab[]>([])
+  const [tabsError, setTabsError] = useState('')
   const [targetUrl, setTargetUrl] = useState('https://example.com')
   const [activeTab, setActiveTab] = useState<TabKey>('overview')
   const [pendingAction, setPendingAction] = useState<'starting' | 'stopping' | 'restarting' | null>(null)
@@ -58,8 +63,14 @@ export function BrowserDetailPage() {
 
   const loadTabs = async () => {
     if (!id) return
-    const list = await fetchBrowserTabs(id)
-    setTabs(list)
+    try {
+      const list = await fetchBrowserTabs(id)
+      setTabs(list)
+      setTabsError('')
+    } catch (error) {
+      setTabs([])
+      setTabsError(error instanceof Error ? error.message : String(error))
+    }
   }
 
   useEffect(() => { void loadProfile() }, [id])
@@ -103,9 +114,7 @@ export function BrowserDetailPage() {
 
   if (!profile) {
     return (
-      <div className="flex items-center justify-center h-64 text-sm text-[var(--color-text-muted)]">
-        暂无实例信息
-      </div>
+      <div className="flex items-center justify-center h-64 text-sm text-[var(--color-text-muted)]">{tr("browser.pages.BrowserDetailPage.text.b30d600")}</div>
     )
   }
 
@@ -114,19 +123,19 @@ export function BrowserDetailPage() {
   const handleOpenUrl = async () => {
     const normalizedTargetUrl = targetUrl.trim()
     if (!normalizedTargetUrl) {
-      toast.warning('请输入目标地址')
+      toast.warning(tr("browser.pages.BrowserDetailPage.BrowserDetailPage.ebc866e"))
       return
     }
 
     try {
       const opened = await openBrowserUrl(profile.profileId, normalizedTargetUrl)
       if (!opened) {
-        toast.warning('打开指令未执行')
+        toast.warning(tr("browser.pages.BrowserDetailPage.BrowserDetailPage.2371eed"))
         return
       }
-      toast.success('已在运行中实例打开地址')
+      toast.success(tr("browser.pages.BrowserDetailPage.BrowserDetailPage.70e8c1f"))
     } catch (error: any) {
-      const feedback = resolveActionFeedback(error, '打开地址失败')
+      const feedback = resolveActionFeedback(error, tr("browser.pages.BrowserDetailPage.BrowserDetailPage.4807381"))
       if (feedback.tone === 'warning') {
         toast.warning(feedback.message)
       } else {
@@ -146,10 +155,10 @@ export function BrowserDetailPage() {
       if (startedProfile?.running && !startedProfile.debugReady && startedProfile.runtimeWarning) {
         toast.warning(startedProfile.runtimeWarning)
       } else {
-        toast.success('实例已启动')
+        toast.success(tr("browser.pages.BrowserDetailPage.BrowserDetailPage.1df0cd8"))
       }
     } catch (error: any) {
-      const feedback = resolveActionFeedback(error, '实例启动失败')
+      const feedback = resolveActionFeedback(error, tr("browser.pages.AutoConfigPage.AutoConfigPage.176529e"))
       if (feedback.tone === 'warning') {
         toast.warning(feedback.message)
       } else {
@@ -168,9 +177,9 @@ export function BrowserDetailPage() {
       if (stoppedProfile) {
         setProfile(stoppedProfile)
       }
-      toast.success('实例已停止')
+      toast.success(tr("browser.pages.BrowserDetailPage.BrowserDetailPage.361960e"))
     } catch (error: any) {
-      toast.error(resolveActionErrorMessage(error, '实例停止失败'))
+      toast.error(resolveActionErrorMessage(error, tr("browser.pages.BrowserDetailPage.BrowserDetailPage.531cbdd")))
     } finally {
       await loadProfile()
       setPendingAction(null)
@@ -185,9 +194,9 @@ export function BrowserDetailPage() {
       if (restartedProfile) {
         setProfile(restartedProfile)
       }
-      toast.success('实例已重启')
+      toast.success(tr("browser.pages.BrowserDetailPage.BrowserDetailPage.feffaa2"))
     } catch (error: any) {
-      const feedback = resolveActionFeedback(error, '实例重启失败')
+      const feedback = resolveActionFeedback(error, tr("browser.pages.BrowserDetailPage.BrowserDetailPage.201d96f"))
       if (feedback.tone === 'warning') {
         toast.warning(feedback.message)
       } else {
@@ -200,15 +209,8 @@ export function BrowserDetailPage() {
   }
 
   const tabsColumns: TableColumn<BrowserTab>[] = [
-    { key: 'title', title: '标题' },
-    { key: 'url', title: '地址' },
-    {
-      key: 'active',
-      title: '状态',
-      render: value => (
-        <Badge variant={value ? 'success' : 'default'}>{value ? '当前' : '后台'}</Badge>
-      ),
-    },
+    { key: 'title', title: tr("browser.pages.BrowserDetailPage.title.748d7dc") },
+    { key: 'url', title: tr("browser.pages.BrowserDetailPage.title.67d2d79") },
   ]
 
   const isStarting = pendingAction === 'starting'
@@ -220,26 +222,16 @@ export function BrowserDetailPage() {
   return (
     <div className="space-y-5 animate-fade-in">
       <WorkspaceHeader
-        eyebrow="INSTANCE / DETAIL"
-        title="实例详情"
-        description={(
-          <span className="inline-flex flex-wrap items-center gap-2">
-            <span>{profile.profileName}</span>
-            {isTorMode && (
-              <Badge variant="warning">
-                <RadioTower className="mr-1 h-3 w-3" aria-hidden="true" />
-                Tor 实验性模式
-              </Badge>
-            )}
-          </span>
-        )}
+
+        title={tr("browser.pages.BrowserDetailPage.title.53d9738")}
+
         actions={(
           <>
             <Link to={`/browser/edit/${profile.profileId}`}>
-              <Button variant="secondary" size="sm">编辑配置</Button>
+              <Button variant="secondary" size="sm">{tr("browser.pages.BrowserDetailPage.text.bb81078")}</Button>
             </Link>
             <Link to="/browser/list">
-              <Button variant="ghost" size="sm">返回列表</Button>
+              <Button variant="ghost" size="sm">{tr("browser.pages.AutomationScriptDetailPage.text.53505b1")}</Button>
             </Link>
           </>
         )}
@@ -267,79 +259,79 @@ export function BrowserDetailPage() {
       {activeTab === 'overview' && (
         <div className="space-y-4">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <Card title="运行信息" subtitle="状态与端口">
+            <Card title={tr("browser.pages.BrowserDetailPage.title.b73b67a")} >
               <div className="space-y-3 text-sm text-[var(--color-text-secondary)]">
                 <div className="flex justify-between">
-                  <span>状态</span>
+                  <span>{tr("browser.components.AutomationScriptHistoryModal.text.62e951a")}</span>
                   <Badge variant={runtimeStatus.variant} dot>{runtimeStatus.label}</Badge>
                 </div>
                 <div className="flex justify-between">
-                  <span>进程 PID</span>
+                  <span>{tr("browser.pages.BrowserDetailPage.text.b31aa4b")}</span>
                   <span>{profile.pid || '-'}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>调试端口</span>
+                  <span>{tr("browser.pages.BrowserDetailPage.text.8e41f20")}</span>
                   <span>{profile.debugPort || '-'}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>调试状态</span>
-                  <span>{profile.debugReady ? '已就绪' : (profile.running ? '等待就绪' : '-')}</span>
+                  <span>{tr("browser.pages.BrowserDetailPage.text.ae9e76b")}</span>
+                  <span>{profile.debugReady ? tr("browser.automationRuntime.getAutomationRuntimeBadgeText.f2afde8") : (profile.running ? tr("browser.pages.BrowserDetailPage.BrowserDetailPage.5456ad8") : '-')}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>最近启动</span>
+                  <span>{tr("browser.pages.BrowserDetailPage.text.3a82007")}</span>
                   <span>{formatTime(profile.lastStartAt)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>最近停止</span>
+                  <span>{tr("browser.pages.BrowserDetailPage.text.ad1d579")}</span>
                   <span>{formatTime(profile.lastStopAt)}</span>
                 </div>
               </div>
             </Card>
 
-            <Card title="配置摘要" subtitle={isTorMode ? 'Tor、指纹与启动参数' : '网络、指纹与启动参数'}>
+            <Card title={tr("browser.pages.BrowserDetailPage.title.86a20b5")} >
               <div className="space-y-3 text-sm text-[var(--color-text-secondary)]">
                 <div className="flex justify-between">
-                  <span>用户数据目录</span>
+                  <span>{tr("browser.pages.BrowserDetailPage.text.4786f7a")}</span>
                   <span>{profile.userDataDir}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>内核</span>
-                  <span>{profile.coreId || '默认'}</span>
+                  <span>{tr("browser.pages.BrowserDetailPage.text.8f190c5")}</span>
+                  <span>{profile.coreId || tr("browser.api.runtime.message.c8d09cf")}</span>
                 </div>
                 <div className="flex justify-between gap-4">
-                  <span>网络模式</span>
+                  <span>{tr("browser.pages.BrowserDetailPage.text.8f26543")}</span>
                   <span className={isTorMode ? 'font-medium text-[var(--color-warning)]' : ''}>
-                    {isTorMode ? 'Tor TCP 路由（实验性）' : '常规网络'}
+                    {isTorMode ? tr("browser.pages.BrowserDetailPage.BrowserDetailPage.9f61ea7") : tr("browser.pages.BrowserDetailPage.BrowserDetailPage.e4d38f8")}
                   </span>
                 </div>
                 <div className="flex justify-between gap-4">
-                  <span>网络入口</span>
+                  <span>{tr("browser.pages.AutoConfigPage.label.5d8cb1f")}</span>
                   <span className="max-w-[65%] break-all text-right">
-                    {isTorMode ? '由应用受管 Tor 运行时提供' : profile.proxyConfig || profile.proxyBindName || profile.proxyId || '-'}
+                    {isTorMode ? tr("browser.pages.BrowserDetailPage.BrowserDetailPage.62b7b0a") : profile.proxyConfig || profile.proxyBindName || profile.proxyId || '-'}
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span>指纹参数</span>
-                  <span>{profile.fingerprintArgs?.length || 0} 项</span>
+                  <span>{tr("browser.pages.BrowserDetailPage.text.ac2d2f2")}</span>
+                  <span>{profile.fingerprintArgs?.length || 0}{tr("browser.components.BrowserProfileCopyForm.text.12de8e1")}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>启动参数</span>
-                  <span>{profile.launchArgs?.length || 0} 项</span>
+                  <span>{tr("browser.pages.BrowserDetailPage.text.d60b73d")}</span>
+                  <span>{profile.launchArgs?.length || 0}{tr("browser.components.BrowserProfileCopyForm.text.12de8e1")}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>标签</span>
+                  <span>{tr("browser.pages.BrowserDetailPage.text.ae0a7af")}</span>
                   <span>{profile.tags?.join(', ') || '-'}</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span>快捷码</span>
+                  <span>{tr("browser.components.BrowserProfilesPanel.text.f8f5047")}</span>
                   <div className="flex items-center gap-1">
                     {profile.launchCode ? (
                       <>
                         <code className="text-xs font-mono bg-[var(--color-bg-secondary)] px-1.5 py-0.5 rounded text-[var(--color-accent)]">{profile.launchCode}</code>
                         <button
-                          onClick={() => navigator.clipboard.writeText(profile.launchCode!).then(() => toast.success('已复制快捷码'))}
+                          onClick={() => navigator.clipboard.writeText(profile.launchCode!).then(() => toast.success(tr("browser.components.BrowserListWidgets.LaunchCodeCell.169ec47")))}
                           className="p-0.5 hover:text-[var(--color-accent)] text-[var(--color-text-muted)] transition-colors"
-                          title="复制"
+                          title={tr("browser.components.AutomationScriptPublicApiBodyExamples.text.4edd1d0")}
                         >
                           <Copy className="w-3 h-3" />
                         </button>
@@ -347,10 +339,10 @@ export function BrowserDetailPage() {
                           onClick={async () => {
                             await regenerateBrowserProfileCode(profile.profileId)
                             loadProfile()
-                            toast.success('快捷码已重新生成')
+                            toast.success(tr("browser.components.BrowserListWidgets.LaunchCodeCell.69c7e21"))
                           }}
                           className="p-0.5 hover:text-[var(--color-accent)] text-[var(--color-text-muted)] transition-colors"
-                          title="重新生成"
+                          title={tr("browser.components.BrowserListWidgets.title.2e19057")}
                         >
                           <RefreshCw className="w-3 h-3" />
                         </button>
@@ -366,53 +358,53 @@ export function BrowserDetailPage() {
 
           {isTorMode && <TorModeNotice />}
 
-          <Card title="快捷操作" subtitle="控制实例">
+          <Card title={tr("browser.pages.BrowserDetailPage.title.309c0a9")} >
             <div className="flex flex-wrap items-center gap-2">
               {profile.running ? (
                 <Button size="sm" variant="secondary" onClick={handleStop} loading={isStopping} disabled={isBusy && !isStopping}>
                   {!isStopping && <Square className="w-4 h-4" />}
-                  {isStopping ? '停止中' : '停止'}
+                  {isStopping ? tr("browser.components.BrowserProfilesPanel.BrowserProfileCard.434eb8e") : tr("browser.components.BrowserListWidgets.text.a17f70a")}
                 </Button>
               ) : (
                 <Button size="sm" onClick={handleStart} loading={isStarting} disabled={isBusy && !isStarting}>
                   {!isStarting && <Play className="w-4 h-4" />}
-                  {isStarting ? '启动中' : '启动'}
+                  {isStarting ? tr("browser.components.AutomationScriptRunModal.helpers.formatSelectableProfileStatus.7e0798c") : tr("browser.components.BrowserListWidgets.text.ebd26da")}
                 </Button>
               )}
               <Button size="sm" variant="ghost" onClick={handleRestart} loading={isRestarting} disabled={isBusy && !isRestarting}>
                 {!isRestarting && <RotateCcw className="w-4 h-4" />}
-                {isRestarting ? '重启中' : '重启'}
+                {isRestarting ? tr("browser.pages.BrowserDetailPage.BrowserDetailPage.60c273c") : tr("browser.components.BrowserProfilesPanel.text.385c272")}
               </Button>
             </div>
           </Card>
 
           {profile.lastError && (
-            <Card title="最近错误" subtitle="最近一次失败原因">
+            <Card title={tr("browser.pages.BrowserDetailPage.title.5e8913a")} >
               <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 whitespace-pre-line">
-                {profile.lastError}
+                {translateMessage(profile.lastError)}
               </div>
             </Card>
           )}
 
           {profile.runtimeWarning && (
-            <Card title="运行提示" subtitle="当前实例部分可用">
+            <Card title={tr("browser.pages.BrowserDetailPage.title.ac12c48")} >
               <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700 whitespace-pre-line">
                 {profile.runtimeWarning}
               </div>
             </Card>
           )}
 
-          <Card title="打开地址" subtitle="发送打开 URL 指令">
+          <Card title={tr("browser.pages.BrowserDetailPage.title.8923d89")} >
             <div className="flex flex-col md:flex-row gap-3">
-              <Input value={targetUrl} onChange={e => setTargetUrl(e.target.value)} placeholder="请输入目标地址" />
+              <Input value={targetUrl} onChange={e => setTargetUrl(e.target.value)} placeholder={tr("browser.pages.BrowserDetailPage.BrowserDetailPage.ebc866e")} />
               <Button onClick={handleOpenUrl}>
-                <Globe className="w-4 h-4" />
-                打开
-              </Button>
+                <Globe className="w-4 h-4" />{tr("browser.pages.BrowserDetailPage.text.65fc81e")}</Button>
             </div>
           </Card>
 
-          <Card title="标签页列表" subtitle="当前标签页">
+          <Card title={tr("browser.pages.BrowserDetailPage.title.a575a76")} >
+            <div className="mb-2 flex items-center justify-end"><Button size="sm" variant="ghost" onClick={() => void loadTabs()}>{tr('common.refresh')}</Button></div>
+            {tabsError && <p role="alert" className="mb-2 text-xs text-[var(--warn)]">{translateMessage(tabsError)}</p>}
             <Table columns={tabsColumns} data={tabs} rowKey="tabId" />
           </Card>
 

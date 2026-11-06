@@ -3,6 +3,7 @@
 package tray
 
 import (
+	"ant-chrome/backend/internal/locale"
 	_ "embed"
 	"runtime"
 
@@ -30,10 +31,16 @@ func Run(cb Callbacks) {
 		systray.SetTitle("Latitude Browser")
 		systray.SetTooltip("Latitude Browser")
 
-		mShow := systray.AddMenuItem("显示窗口", "显示主窗口")
+		mShow := systray.AddMenuItem(locale.Text("tray.show"), "")
 		systray.AddSeparator()
-		mQuitAppOnly := systray.AddMenuItem("仅退出应用", "关闭客户端，保留已打开的浏览器")
-		mQuit := systray.AddMenuItem("退出应用与浏览器", "退出应用并关闭当前打开的浏览器")
+		mQuitAppOnly := systray.AddMenuItem(locale.Text("tray.quitApp"), "")
+		mQuit := systray.AddMenuItem(locale.Text("tray.quitAll"), "")
+
+		locale.OnChange(func() {
+			mShow.SetTitle(locale.Text("tray.show"))
+			mQuitAppOnly.SetTitle(locale.Text("tray.quitApp"))
+			mQuit.SetTitle(locale.Text("tray.quitAll"))
+		})
 
 		systray.SetOnClick(func(menu systray.IMenu) {
 			if cb.OnShow != nil {

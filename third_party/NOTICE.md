@@ -2,7 +2,28 @@
 
 This file identifies third-party code copied, adapted, or loaded by Latitude Browser. Full license texts are stored in `third_party/licenses/`. The noncommercial policy in the root LICENSE applies only within [LICENSE-SCOPE](../LICENSE-SCOPE.md); it does not restrict rights granted by these third-party licenses.
 
-## Included or adapted
+## Current application · 2.0.0 (2026-11-06)
+
+Latitude Browser derives from [black-ant/Ant-Browser](https://github.com/black-ant/Ant-Browser). Upstream rights are not relicensed by the maintainer; see [LICENSE-SCOPE](../LICENSE-SCOPE.md) and the existing provenance record. The legacy Go module name `ant-chrome` is retained for compatibility only.
+
+- Application framework: [Wails 2.17.1](https://github.com/wailsapp/wails/tree/v2.17.1), MIT. Go modules in the application package graph and their supplied license texts are collected in [go-dependencies.txt](licenses/go-dependencies.txt); exact revisions are pinned in `go.mod`/`go.sum`.
+- Frontend: React/React DOM 19.3.1, React Router 7.18.5, Lucide 1.70.0, Zustand 5.0.16, js-yaml 5.5.0, react-markdown 10.1.0, remark/rehype and their production dependencies. Package declarations and full supplied texts are collected in [frontend-dependencies.txt](licenses/frontend-dependencies.txt); exact artifacts are pinned in `frontend/package-lock.json`.
+- [JetBrains Mono](https://github.com/JetBrains/JetBrainsMono), bundled from `@fontsource-variable/jetbrains-mono@5.3.0`: SIL Open Font License 1.1, [full text](licenses/JetBrainsMono-OFL.txt). Only the Latin variable WOFF2 is bundled; system fonts cover Chinese. No remote font requests.
+- `AsciiMeter` retains the komari-ascii provenance below; it now draws real progress with text blocks. Historical Globe, RadarSpinner and COBE implementations and the chart gallery have been removed. COBE and Recharts are absent from current dependencies; historic license evidence is retained.
+
+| Standalone runtime | Current version / source | License text |
+| --- | --- | --- |
+| Xray | [26.10.31](https://github.com/XTLS/Xray-core/tree/v26.10.31) | [MPL 2.0](licenses/xray-v26.10.31.txt) |
+| sing-box | [1.14.4](https://github.com/SagerNet/sing-box/tree/v1.14.4) | [GPL 3.0](licenses/sing-box-v1.14.4.txt) |
+| Mihomo | [1.19.33](https://github.com/MetaCubeX/mihomo/tree/v1.19.33) | [GPL 3.0](licenses/mihomo-v1.19.33.txt) |
+
+All previously pinned platform artifacts were refreshed (Xray and sing-box on four Unix targets plus Windows; Mihomo on Darwin arm64). `publish/runtime-sources.json` records official archive URLs, sizes and SHA256; `publish/runtime-manifest.json` records extracted binary SHA256 before local signing. Integrity checks do not establish publisher signatures, absence of vulnerabilities or reproducible builds. Runtime source tags above and each distribution's dependency notices remain relevant to redistribution.
+
+Chromium is a separate downloaded executable, not linked into the desktop shell. On macOS the app recommends [official Chrome for Testing](https://googlechromelabs.github.io/chrome-for-testing/) 157.0.8103.38. [fingerprint-chromium](https://github.com/adryfish/fingerprint-chromium/releases/tag/150.0.7871.186) is a separate upstream patched core; stock Chrome does not implement its flags. Browser-provider terms and notices apply to downloaded cores. This source checkout does not redistribute the downloaded Google Chrome for Testing app or a Tor bundle.
+
+The following records describe earlier versions and preserve their authorship and distribution evidence; they do not describe the current UI or currently pinned runtime payloads.
+
+## Historical UI components (removed or replaced in 2.0.0)
 
 ### komari-theme-commander
 
@@ -29,7 +50,7 @@ This file identifies third-party code copied, adapted, or loaded by Latitude Bro
 - Full text: `third_party/licenses/cobe-MIT.txt`
 - Use: dynamically imported WebGL renderer for `NetworkGlobe`; a local SVG remains when the renderer is unavailable.
 
-### Current proxy runtimes (Darwin arm64; pinned on 2026-09-10)
+### Historical proxy runtimes (2026-09-10; superseded on 2026-11-06)
 
 Official release archives were downloaded over HTTPS and verified against GitHub asset SHA256 metadata. `publish/runtime-sources.json` pins archive size and hash; `publish/runtime-manifest.json` pins each extracted binary before local signing. Only Darwin arm64 was refreshed. These are integrity checks, not publisher signatures or reproducible-build attestations.
 

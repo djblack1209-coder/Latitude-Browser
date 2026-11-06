@@ -1,3 +1,4 @@
+import { tr } from '../../../shared/i18n'
 import type {
   AutomationScriptPublicAPIConfig,
   AutomationScriptPublicAPIVariable,
@@ -21,7 +22,7 @@ export function parseAutomationScriptPublicAPIJSONText(
     return {
       ok: false,
       value: null,
-      error: error instanceof Error ? error.message : "JSON 解析失败",
+      error: error instanceof Error ? error.message : tr("browser.automationScripts.publicApiUtils.parseAutomationScriptPublicAPIJSONText.c18abb4"),
     };
   }
 }

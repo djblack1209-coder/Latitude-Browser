@@ -1,8 +1,10 @@
 import ReactDOM from 'react-dom/client'
 import App from './App'
+import { AppErrorBoundary } from './shared/components/AppErrorBoundary'
 import './index.css'
+import { initializeLocale } from './shared/i18n'
 
-;(window as Window & { __ANT_APP_BOOTED__?: boolean }).__ANT_APP_BOOTED__ = true
 
-ReactDOM.createRoot(document.getElementById('root')!).render(<App />)
+void initializeLocale()
+ReactDOM.createRoot(document.getElementById('root')!).render(<AppErrorBoundary><App /></AppErrorBoundary>)
 

@@ -1,3 +1,4 @@
+import { tr } from '../../shared/i18n'
 import { exportAutomationScript, type AutomationScriptRecord } from "./automationScripts";
 import { getBindings, type AutomationScriptExportResult } from "./automationScriptApi.shared";
 
@@ -42,7 +43,7 @@ function downloadAutomationTemplate(
   return {
     cancelled: false,
     format: "json",
-    message: "模板已导出",
+    message: tr("browser.automationScriptApi.exports.message.2043de9"),
     path: filename,
     fileCount: 1,
   };
@@ -54,7 +55,7 @@ export async function exportAutomationScriptTemplate(
 ): Promise<AutomationScriptExportResult> {
   const normalizedScriptId = String(scriptId || "").trim();
   if (!normalizedScriptId) {
-    throw new Error("脚本 ID 不能为空");
+    throw new Error(tr("browser.automationScriptApi.exports.exportAutomationScriptTemplate.69e2e09"));
   }
 
   const bindings: any = await getBindings();
@@ -78,7 +79,7 @@ export async function exportAutomationScriptTemplate(
     );
   }
 
-  throw new Error("当前环境不支持脚本模板导出");
+  throw new Error(tr("browser.automationScriptApi.exports.exportAutomationScriptTemplate.91acd2a"));
 }
 
 export async function exportAutomationScriptZip(
@@ -86,7 +87,7 @@ export async function exportAutomationScriptZip(
 ): Promise<AutomationScriptExportResult> {
   const normalizedScriptId = String(scriptId || "").trim();
   if (!normalizedScriptId) {
-    throw new Error("脚本 ID 不能为空");
+    throw new Error(tr("browser.automationScriptApi.exports.exportAutomationScriptTemplate.69e2e09"));
   }
 
   const bindings: any = await getBindings();
@@ -103,7 +104,7 @@ export async function exportAutomationScriptZip(
     );
   }
 
-  throw new Error("当前环境不支持 ZIP 脚本包导出");
+  throw new Error(tr("browser.automationScriptApi.exports.exportAutomationScriptZip.67c2c39"));
 }
 
 export async function exportAutomationScriptsBatchZip(
@@ -117,7 +118,7 @@ export async function exportAutomationScriptsBatchZip(
     ),
   );
   if (normalizedScriptIds.length === 0) {
-    throw new Error("请先勾选要导出的脚本");
+    throw new Error(tr("browser.automationScriptApi.exports.exportAutomationScriptsBatchZip.d53e924"));
   }
 
   const bindings: any = await getBindings();
@@ -138,7 +139,7 @@ export async function exportAutomationScriptsBatchZip(
     return exportAutomationScriptZip(normalizedScriptIds[0]);
   }
 
-  throw new Error("当前环境不支持批量 ZIP 脚本包导出");
+  throw new Error(tr("browser.automationScriptApi.exports.exportAutomationScriptsBatchZip.7fbac60"));
 }
 
 export async function exportAutomationScriptDirectory(
@@ -146,7 +147,7 @@ export async function exportAutomationScriptDirectory(
 ): Promise<AutomationScriptExportResult> {
   const normalizedScriptId = String(scriptId || "").trim();
   if (!normalizedScriptId) {
-    throw new Error("脚本 ID 不能为空");
+    throw new Error(tr("browser.automationScriptApi.exports.exportAutomationScriptTemplate.69e2e09"));
   }
 
   const bindings: any = await getBindings();
@@ -163,5 +164,5 @@ export async function exportAutomationScriptDirectory(
     );
   }
 
-  throw new Error("当前环境不支持目录脚本包导出");
+  throw new Error(tr("browser.automationScriptApi.exports.exportAutomationScriptDirectory.eb97a9c"));
 }

@@ -1,3 +1,5 @@
+import { useLocale } from '../../../../shared/i18n'
+import { getLocale } from '../../../../shared/i18n'
 import { useMemo } from 'react'
 import type { SortOrder } from '../../../../shared/components/Table'
 import type { ProxyIPHealthResult } from '../../types'
@@ -15,7 +17,7 @@ interface UseProxyPoolFilterOptions {
   ipHealthMap: Record<string, ProxyIPHealthResult>
 }
 
-const compareText = (a: string, b: string) => a.localeCompare(b, 'zh-CN')
+const compareText = (a: string, b: string) => a.localeCompare(b, getLocale())
 
 function getLatencySortTuple(latencyMap: Record<string, number>, proxyId: string): [number, number] {
   const latency = latencyMap[proxyId]
@@ -66,6 +68,8 @@ function compareByColumn(
 }
 
 export function useProxyPoolFilter(options: UseProxyPoolFilterOptions) {
+  const uiLocale = useLocale()
+
   const {
     displayList,
     filterProtocol,
@@ -80,7 +84,7 @@ export function useProxyPoolFilter(options: UseProxyPoolFilterOptions) {
 
   const protocolOptions = useMemo(
     () => ['all', ...Array.from(new Set(displayList.map(p => p.type).filter(t => t !== '-')))],
-    [displayList],
+    [displayList, uiLocale],
   )
 
   const filteredList = useMemo(() => {
@@ -98,7 +102,7 @@ export function useProxyPoolFilter(options: UseProxyPoolFilterOptions) {
       const cmp = compareByColumn(latencyMap, a, b, sortColumn)
       return sortOrder === 'asc' ? cmp : -cmp
     })
-  }, [displayList, filterProtocol, filterKeyword, filterGroup, filterAvailableOnly, sortColumn, sortOrder, latencyMap, ipHealthMap])
+  }, [displayList, filterProtocol, filterKeyword, filterGroup, filterAvailableOnly, sortColumn, sortOrder, latencyMap, ipHealthMap, uiLocale])
 
   return { protocolOptions, filteredList }
 }

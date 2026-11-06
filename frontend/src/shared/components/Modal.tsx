@@ -1,3 +1,4 @@
+import { tr, useLocale } from '../i18n'
 import { ReactNode, useEffect, useId, useLayoutEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { X } from 'lucide-react'
@@ -107,6 +108,8 @@ export function Modal({
   'aria-label': ariaLabel,
   'aria-labelledby': ariaLabelledBy,
 }: ModalProps) {
+  useLocale()
+
   const generatedId = useId()
   const modalId = `modal-${generatedId}`
   const titleId = title ? `${modalId}-title` : undefined
@@ -201,13 +204,13 @@ export function Modal({
   if (!open) return null
 
   const resolvedLabelledBy = ariaLabelledBy ?? (ariaLabel ? undefined : titleId)
-  const resolvedLabel = ariaLabel ?? (!resolvedLabelledBy ? '对话框' : undefined)
+  const resolvedLabel = ariaLabel ?? (!resolvedLabelledBy ? tr("ui.components.Modal.Modal.21a5897") : undefined)
 
   return createPortal(
     <div className="fixed inset-0 z-[9990] flex items-center justify-center">
       <div
         aria-hidden="true"
-        className="absolute inset-0 bg-black/65 backdrop-blur-[2px] animate-fade-in"
+        className="absolute inset-0 bg-black/60 backdrop-blur-[6px] animate-fade-in"
         onClick={closable ? onClose : undefined}
       />
 
@@ -218,36 +221,36 @@ export function Modal({
         aria-label={resolvedLabel}
         aria-labelledby={resolvedLabelledBy}
         tabIndex={-1}
-        className="signal-panel relative bg-[var(--color-bg-elevated)] rounded-lg shadow-[var(--shadow-lg)] animate-scale-in max-h-[90vh] w-full flex flex-col"
-        style={{ width, maxWidth: '90vw' }}
+        className="signal-panel signal-dialog relative rounded-[var(--radius-xl)] shadow-[var(--shadow-modal)] border border-[var(--color-border-default)] animate-scale-in max-h-[90vh] w-full flex flex-col"
+        style={{ width, maxWidth: '92vw' }}
         onClick={(e) => e.stopPropagation()}
       >
         {(title || closable) && (
-          <div className="signal-panel-header flex items-center justify-between px-6 py-4 border-b border-[var(--color-border)] flex-shrink-0">
+          <div className="signal-panel-header flex items-center justify-between px-6 py-4 border-b border-[var(--color-border-muted)] flex-shrink-0">
             {title && (
-              <h3 id={titleId} className="text-lg font-semibold text-[var(--color-text-primary)]">
+              <h3 id={titleId} className="text-base font-semibold  text-[var(--color-text-primary)]">
                 {title}
               </h3>
             )}
             {closable && (
               <button
                 type="button"
-                aria-label="关闭"
+                aria-label={tr("ui.components.Modal.aria_label.6c14bd7")}
                 onClick={onClose}
-                className="p-1.5 rounded-md text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-bg-muted)] transition-colors ml-auto"
+                className="p-1.5 rounded-[var(--radius-sm)] text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-bg-muted)] transition-colors ml-auto focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)]"
               >
-                <X aria-hidden="true" className="w-5 h-5" />
+                <X aria-hidden="true" className="w-4.5 h-4.5" />
               </button>
             )}
           </div>
         )}
 
-        <div className="px-6 py-4 overflow-y-auto flex-1 min-h-0">
+        <div className="px-6 py-4.5 overflow-y-auto flex-1 min-h-0">
           {children}
         </div>
 
         {footer && (
-          <div className="flex items-center justify-end gap-3 bg-[var(--color-bg-subtle)] px-6 py-4 border-t border-[var(--color-border)] flex-shrink-0">
+          <div className="signal-dialog-footer flex flex-wrap items-center justify-end gap-3 px-6 py-3.5 border-t border-[var(--color-border-muted)] flex-shrink-0">
             {footer}
           </div>
         )}
@@ -273,12 +276,14 @@ export function ConfirmModal({
   open,
   onClose,
   onConfirm,
-  title = '确认',
+  title = tr("ui.components.Modal.ConfirmModal.b56d9ac"),
   content,
-  confirmText = '确定',
-  cancelText = '取消',
+  confirmText = tr("ui.components.Modal.ConfirmModal.f526c89"),
+  cancelText = tr("App.CloseConfirmModal.4d0b468"),
   danger = false,
 }: ConfirmModalProps) {
+  useLocale()
+
   return (
     <Modal
       open={open}
@@ -291,7 +296,7 @@ export function ConfirmModal({
             {cancelText}
           </Button>
           <Button
-            variant={danger ? 'danger' : 'primary'}
+            variant={danger ? "danger" : "primary"}
             onClick={() => {
               onConfirm()
               onClose()

@@ -1,3 +1,4 @@
+import { tr } from '../../../../shared/i18n'
 import { useState } from 'react'
 import { toast } from '../../../../shared/components'
 import type { BrowserProxy } from '../../types'
@@ -46,10 +47,10 @@ export function useProxySelection({ proxies, filteredList, saveProxies }: UsePro
     try {
       const newProxies = proxies.filter(p => !selectedIds.has(p.proxyId))
       await saveProxies(newProxies)
-      toast.success(`已删除 ${selectedIds.size} 个代理`)
+      toast.success(tr("browser.pages.proxyPool.useProxySelection.useProxySelection.9a0deab", [selectedIds.size]))
       setSelectedIds(new Set())
     } catch (error: any) {
-      toast.error(error?.message || '删除失败')
+      toast.error(error?.message || tr("browser.components.ProxyPickerModal.ProxyPickerModal.72250c5"))
     }
   }
 

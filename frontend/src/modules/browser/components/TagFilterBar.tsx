@@ -1,3 +1,4 @@
+import { tr, useLocale } from '../../../shared/i18n'
 interface TagFilterBarProps {
   tags: string[]
   selected: Set<string>
@@ -5,6 +6,8 @@ interface TagFilterBarProps {
 }
 
 export function TagFilterBar({ tags, selected, onChange }: TagFilterBarProps) {
+  useLocale()
+
   if (tags.length === 0) return null
 
   const toggle = (tag: string) => {
@@ -17,7 +20,7 @@ export function TagFilterBar({ tags, selected, onChange }: TagFilterBarProps) {
 
   return (
     <div className="flex items-center gap-2 flex-wrap">
-      <span className="text-xs text-[var(--color-text-muted)] shrink-0">标签：</span>
+      <span className="text-xs text-[var(--color-text-muted)] shrink-0">{tr("browser.components.TagFilterBar.text.1f7febb")}</span>
       <button
         type="button"
         aria-pressed={isAllSelected}
@@ -27,9 +30,7 @@ export function TagFilterBar({ tags, selected, onChange }: TagFilterBarProps) {
             ? 'bg-[var(--color-accent)] text-[var(--color-text-inverse)]'
             : 'bg-[var(--color-bg-muted)] text-[var(--color-text-muted)] hover:bg-[var(--color-bg-subtle)]'
         }`}
-      >
-        全部
-      </button>
+      >{tr("browser.components.GroupTreeNav.text.778fc8f")}</button>
       {tags.map(tag => (
         <button
           type="button"

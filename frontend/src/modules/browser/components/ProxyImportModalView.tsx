@@ -1,3 +1,4 @@
+import { tr, useLocale } from '../../../shared/i18n'
 import { Button, FormItem, Input, Modal, Select, Table, Textarea } from '../../../shared/components'
 import type { TableColumn } from '../../../shared/components/Table'
 import type { BrowserProxy } from '../types'
@@ -96,44 +97,40 @@ export function ProxyImportModalView({
   onPreviewModalOpenChange,
   onConfirmImport,
 }: ProxyImportModalViewProps) {
+  useLocale()
+
   return (
     <>
       <Modal
         open={open}
         onClose={onClose}
-        title="导入代理配置"
+        title={tr("browser.components.ProxyImportModalView.title.44de58e")}
         width="600px"
         footer={
           <>
-            <Button variant="secondary" onClick={onClose} disabled={fetchingImportUrl}>取消</Button>
-            <Button onClick={onParseImport} disabled={fetchingImportUrl || !canParseImport}>解析</Button>
+            <Button variant="secondary" onClick={onClose} disabled={fetchingImportUrl}>{tr("App.CloseConfirmModal.4d0b468")}</Button>
+            <Button onClick={onParseImport} disabled={fetchingImportUrl || !canParseImport}>{tr("browser.components.ProxyImportModalView.text.af57b02")}</Button>
           </>
         }
       >
         <div className="space-y-4">
           <div className="grid grid-cols-3 gap-2">
             <Button
-              variant={importMode === 'clash' ? undefined : 'secondary'}
+              variant={importMode === 'clash' ? undefined : "secondary"}
               onClick={() => onImportModeChange('clash')}
-            >
-              Clash 订阅 / YAML
-            </Button>
+            >{tr("browser.components.ProxyImportModalView.text.7aa93f5")}</Button>
             <Button
-              variant={importMode === 'direct' ? undefined : 'secondary'}
+              variant={importMode === 'direct' ? undefined : "secondary"}
               onClick={() => onImportModeChange('direct')}
-            >
-              HTTP / SOCKS5
-            </Button>
+            >{tr("ui.modules.browser.components.ProxyImportModalView.label.3947166")}</Button>
             <Button
-              variant={importMode === 'chain' ? undefined : 'secondary'}
+              variant={importMode === 'chain' ? undefined : "secondary"}
               onClick={() => onImportModeChange('chain')}
-            >
-              链式代理
-            </Button>
+            >{tr("browser.components.ProxyImportModalView.text.af838e5")}</Button>
           </div>
           {importMode === 'clash' && (
             <>
-              <FormItem label="订阅 URL（可选）">
+              <FormItem label={tr("browser.components.ProxyImportModalView.label.2720c84")}>
                 <div className="grid grid-cols-[minmax(0,1fr)_150px_auto] gap-2">
                   <Input
                     value={importUrl}
@@ -144,7 +141,7 @@ export function ProxyImportModalView({
                         onImportResolvedUrlChange('')
                       }
                     }}
-                    placeholder="订阅 URL"
+                    placeholder={tr("browser.components.ProxyImportModalView.placeholder.6c1f23d")}
                     className="flex-1"
                   />
                   <Select
@@ -152,7 +149,7 @@ export function ProxyImportModalView({
                     onChange={e => onImportFetchProxyIdChange(e.target.value)}
                     disabled={fetchingImportUrl}
                     options={[
-                      { value: '', label: '直连拉取' },
+                      { value: '', label: tr("browser.components.ProxyImportModalView.label.7fce46d") },
                       ...fetchProxyOptions.map(proxy => ({
                         value: proxy.proxyId,
                         label: proxy.proxyName || proxy.proxyId,
@@ -164,13 +161,10 @@ export function ProxyImportModalView({
                     onClick={onFetchImportURL}
                     loading={fetchingImportUrl}
                     disabled={!importUrl.trim()}
-                  >
-                    从 URL 获取
-                  </Button>
+                  >{tr("browser.components.ProxyImportModalView.text.64042d5")}</Button>
                 </div>
                 {importResolvedUrl.trim() && (
-                  <p className="text-xs text-[var(--color-success)] mt-1 break-all">
-                    已绑定订阅：{importResolvedUrl}
+                  <p className="text-xs text-[var(--color-success)] mt-1 break-all">{tr("browser.components.ProxyImportModalView.text.482a36e")}{importResolvedUrl}
                   </p>
                 )}
               </FormItem>
@@ -185,54 +179,54 @@ export function ProxyImportModalView({
           {importMode === 'direct' && (
             <div className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <FormItem label="代理协议" required>
+                <FormItem label={tr("browser.components.ProxyImportModalView.label.cceab16")} required>
                   <Select
                     options={[...DIRECT_PROXY_PROTOCOL_OPTIONS]}
                     value={directImportForm.protocol}
                     onChange={e => onDirectImportFormChange(prev => ({ ...prev, protocol: e.target.value as DirectImportForm['protocol'] }))}
                   />
                 </FormItem>
-                <FormItem label="代理名称（可选）">
+                <FormItem label={tr("browser.components.ProxyImportModalView.label.8adc21f")}>
                   <Input
                     value={directImportForm.proxyName}
                     onChange={e => onDirectImportFormChange(prev => ({ ...prev, proxyName: e.target.value }))}
-                    placeholder="节点名称"
+                    placeholder={tr("browser.components.ProxyImportModalView.placeholder.3de90b4")}
                   />
                 </FormItem>
-                <FormItem label="代理地址" required>
+                <FormItem label={tr("browser.components.ProxyImportModalView.label.903f8d3")} required>
                   <Input
                     value={directImportForm.server}
                     onChange={e => onDirectImportFormChange(prev => ({ ...prev, server: e.target.value }))}
-                    placeholder="例如：127.0.0.1 或 hk.example.com"
+                    placeholder={tr("browser.components.ProxyImportModalView.placeholder.0f27921")}
                   />
                 </FormItem>
-                <FormItem label="代理端口" required>
+                <FormItem label={tr("browser.components.ProxyImportModalView.label.52b14ee")} required>
                   <Input
                     type="number"
                     min={1}
                     max={65535}
                     value={directImportForm.port}
                     onChange={e => onDirectImportFormChange(prev => ({ ...prev, port: e.target.value }))}
-                    placeholder="例如：1080"
+                    placeholder={tr("browser.components.ProxyImportModalView.placeholder.b50ae7c")}
                   />
                 </FormItem>
-                <FormItem label="账号（可选）">
+                <FormItem label={tr("browser.components.ProxyImportModalView.label.75312f8")}>
                   <Input
                     value={directImportForm.username}
                     onChange={e => onDirectImportFormChange(prev => ({ ...prev, username: e.target.value }))}
-                    placeholder="留空则不使用认证"
+                    placeholder={tr("browser.components.ProxyImportModalView.placeholder.77980ea")}
                   />
                 </FormItem>
-                <FormItem label="密码（可选）">
+                <FormItem label={tr("browser.components.ProxyImportModalView.label.29e03e6")}>
                   <Input
                     type="password"
                     value={directImportForm.password}
                     onChange={e => onDirectImportFormChange(prev => ({ ...prev, password: e.target.value }))}
-                    placeholder="留空则不使用密码"
+                    placeholder={tr("browser.components.ProxyImportModalView.placeholder.9ce530c")}
                   />
                 </FormItem>
               </div>
-              <FormItem label="文本辅助（可选）" hint="支持单个 JSON、JSON 数组，或多行 http:// / https:// / socks5://，每行一个">
+              <FormItem label={tr("browser.components.ProxyImportModalView.label.f02332d")}>
                 <Textarea
                   value={directImportText}
                   onChange={e => onDirectImportTextChange(e.target.value)}
@@ -240,135 +234,127 @@ export function ProxyImportModalView({
                   placeholder={DIRECT_QUICK_IMPORT_TEMPLATE}
                 />
                 <div className="mt-2 flex gap-2">
-                  <Button size="sm" variant="secondary" onClick={onFillDirectTemplate}>
-                    填入模板
-                  </Button>
-                  <Button size="sm" variant="secondary" onClick={() => void onCopyDirectTemplate()}>
-                    复制模板
-                  </Button>
-                  <Button size="sm" variant="secondary" onClick={onApplyDirectText} disabled={!directImportText.trim()}>
-                    应用文本
-                  </Button>
+                  <Button size="sm" variant="secondary" onClick={onFillDirectTemplate}>{tr("browser.components.ProxyImportModalView.text.036c96a")}</Button>
+                  <Button size="sm" variant="secondary" onClick={() => void onCopyDirectTemplate()}>{tr("browser.components.ProxyImportModalView.text.b880979")}</Button>
+                  <Button size="sm" variant="secondary" onClick={onApplyDirectText} disabled={!directImportText.trim()}>{tr("browser.components.ProxyImportModalView.text.1b7d8a6")}</Button>
                 </div>
-                <p className="mt-2 text-xs text-[var(--color-text-muted)]">
-                  留空则按上方表单导入；有内容则点击“解析”按文本直接导入，可批量。
-                </p>
+                <p className="mt-2 text-xs text-[var(--color-text-muted)]">{tr("browser.components.ProxyImportModalView.text.1034d7d")}</p>
               </FormItem>
             </div>
           )}
           {importMode === 'chain' && (
             <div className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <FormItem label="代理名称（可选）">
+                <FormItem label={tr("browser.components.ProxyImportModalView.label.8adc21f")}>
                   <Input
                     value={chainImportForm.proxyName}
                     onChange={e => onChainImportFormChange(prev => ({ ...prev, proxyName: e.target.value }))}
-                    placeholder="链路名称"
+                    placeholder={tr("browser.components.ProxyImportModalView.placeholder.1c99aa8")}
                   />
                 </FormItem>
-                <FormItem label="本地监听端口（可选）">
+                <FormItem label={tr("browser.components.ProxyImportModalView.label.d3f4ba1")}>
                   <Input
                     type="number"
                     min={1}
                     max={65535}
                     value={chainImportForm.localPort}
                     onChange={e => onChainImportFormChange(prev => ({ ...prev, localPort: e.target.value }))}
-                    placeholder="留空自动分配"
+                    placeholder={tr("browser.components.ProxyImportModalView.placeholder.08eb3ce")}
                   />
                 </FormItem>
               </div>
 
               <div className="rounded-md border border-[var(--color-border)] p-3 space-y-3">
-                <h4 className="text-sm font-medium text-[var(--color-text-primary)]">第一层代理</h4>
+                <h4 className="text-sm font-medium text-[var(--color-text-primary)]">{tr("browser.components.ProxyImportModalView.text.05d4bfc")}</h4>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <FormItem label="协议">
+                  <FormItem label={tr("browser.components.ProxyImportModalView.label.b0c4316")}>
                     <Select
                       value={chainImportForm.first.protocol}
                       onChange={e => onUpdateChainHop('first', 'protocol', e.target.value)}
                       options={[
-                        { value: 'http', label: 'HTTP' },
-                        { value: 'socks5', label: 'SOCKS5' },
+                        { value: 'http', label: "HTTP" },
+                        { value: 'socks5', label: "SOCKS5" },
                       ]}
                     />
                   </FormItem>
-                  <FormItem label="代理地址" required>
+                  <FormItem label={tr("browser.components.ProxyImportModalView.label.903f8d3")} required>
                     <Input
                       value={chainImportForm.first.server}
                       onChange={e => onUpdateChainHop('first', 'server', e.target.value)}
-                      placeholder="例如：s1.example.com"
+                      placeholder={tr("browser.components.ProxyImportModalView.placeholder.b6d3b53")}
                     />
                   </FormItem>
-                  <FormItem label="代理端口" required>
+                  <FormItem label={tr("browser.components.ProxyImportModalView.label.52b14ee")} required>
                     <Input
                       type="number"
                       min={1}
                       max={65535}
                       value={chainImportForm.first.port}
                       onChange={e => onUpdateChainHop('first', 'port', e.target.value)}
-                      placeholder="例如：1080"
+                      placeholder={tr("browser.components.ProxyImportModalView.placeholder.b50ae7c")}
                     />
                   </FormItem>
-                  <FormItem label="账号（可选）">
+                  <FormItem label={tr("browser.components.ProxyImportModalView.label.75312f8")}>
                     <Input
                       value={chainImportForm.first.username}
                       onChange={e => onUpdateChainHop('first', 'username', e.target.value)}
-                      placeholder="留空则不使用认证"
+                      placeholder={tr("browser.components.ProxyImportModalView.placeholder.77980ea")}
                     />
                   </FormItem>
-                  <FormItem label="密码（可选）">
+                  <FormItem label={tr("browser.components.ProxyImportModalView.label.29e03e6")}>
                     <Input
                       type="password"
                       value={chainImportForm.first.password}
                       onChange={e => onUpdateChainHop('first', 'password', e.target.value)}
-                      placeholder="留空则不使用密码"
+                      placeholder={tr("browser.components.ProxyImportModalView.placeholder.9ce530c")}
                     />
                   </FormItem>
                 </div>
               </div>
 
               <div className="rounded-md border border-[var(--color-border)] p-3 space-y-3">
-                <h4 className="text-sm font-medium text-[var(--color-text-primary)]">第二层代理</h4>
+                <h4 className="text-sm font-medium text-[var(--color-text-primary)]">{tr("browser.components.ProxyImportModalView.text.bf35c8b")}</h4>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <FormItem label="协议">
+                  <FormItem label={tr("browser.components.ProxyImportModalView.label.b0c4316")}>
                     <Select
                       value={chainImportForm.second.protocol}
                       onChange={e => onUpdateChainHop('second', 'protocol', e.target.value)}
                       options={[
-                        { value: 'http', label: 'HTTP' },
-                        { value: 'socks5', label: 'SOCKS5' },
+                        { value: 'http', label: "HTTP" },
+                        { value: 'socks5', label: "SOCKS5" },
                       ]}
                     />
                   </FormItem>
-                  <FormItem label="代理地址" required>
+                  <FormItem label={tr("browser.components.ProxyImportModalView.label.903f8d3")} required>
                     <Input
                       value={chainImportForm.second.server}
                       onChange={e => onUpdateChainHop('second', 'server', e.target.value)}
-                      placeholder="例如：s2.example.com"
+                      placeholder={tr("browser.components.ProxyImportModalView.placeholder.3693f3b")}
                     />
                   </FormItem>
-                  <FormItem label="代理端口" required>
+                  <FormItem label={tr("browser.components.ProxyImportModalView.label.52b14ee")} required>
                     <Input
                       type="number"
                       min={1}
                       max={65535}
                       value={chainImportForm.second.port}
                       onChange={e => onUpdateChainHop('second', 'port', e.target.value)}
-                      placeholder="例如：1081"
+                      placeholder={tr("browser.components.ProxyImportModalView.placeholder.86796be")}
                     />
                   </FormItem>
-                  <FormItem label="账号（可选）">
+                  <FormItem label={tr("browser.components.ProxyImportModalView.label.75312f8")}>
                     <Input
                       value={chainImportForm.second.username}
                       onChange={e => onUpdateChainHop('second', 'username', e.target.value)}
-                      placeholder="留空则不使用认证"
+                      placeholder={tr("browser.components.ProxyImportModalView.placeholder.77980ea")}
                     />
                   </FormItem>
-                  <FormItem label="密码（可选）">
+                  <FormItem label={tr("browser.components.ProxyImportModalView.label.29e03e6")}>
                     <Input
                       type="password"
                       value={chainImportForm.second.password}
                       onChange={e => onUpdateChainHop('second', 'password', e.target.value)}
-                      placeholder="留空则不使用密码"
+                      placeholder={tr("browser.components.ProxyImportModalView.placeholder.9ce530c")}
                     />
                   </FormItem>
                 </div>
@@ -376,11 +362,11 @@ export function ProxyImportModalView({
             </div>
           )}
 
-          <FormItem label="分组名称（可选）">
+          <FormItem label={tr("browser.components.ProxyImportModalView.label.bf588e9")}>
             <Input
               value={importGroupName}
               onChange={e => onImportGroupNameChange(e.target.value)}
-              placeholder="分组名称"
+              placeholder={tr("browser.components.GroupTreeNav.placeholder.65731c1")}
               list="proxy-groups-datalist"
             />
             {groups.length > 0 && (
@@ -388,25 +374,23 @@ export function ProxyImportModalView({
                 {groups.map(g => <option key={g} value={g} />)}
               </datalist>
             )}
-            <p className="text-xs text-[var(--color-text-muted)] mt-1">填写后本次导入的代理将归入该分组，可按分组筛选</p>
+            <p className="text-xs text-[var(--color-text-muted)] mt-1">{tr("browser.components.ProxyImportModalView.text.661e125")}</p>
           </FormItem>
           {importMode === 'clash' && (
-            <FormItem label="名称前缀（可选）">
+            <FormItem label={tr("browser.components.ProxyImportModalView.label.86c8e87")}>
               <Input
                 value={importNamePrefix}
                 onChange={e => onImportNamePrefixChange(e.target.value)}
-                placeholder="例如：HK、US、机场A"
+                placeholder={tr("browser.components.ProxyImportModalView.placeholder.4b175db")}
               />
-              <p className="text-xs text-[var(--color-text-muted)] mt-1">
-                填写后代理名称将变为 <code className="px-1 bg-[var(--color-bg-secondary)] rounded">前缀-原名称</code>，留空则保持原名
-              </p>
+              <p className="text-xs text-[var(--color-text-muted)] mt-1">{tr("browser.components.ProxyImportModalView.text.164fee8")}<code className="px-1 bg-[var(--color-bg-secondary)] rounded">{tr("browser.components.ProxyImportModalView.text.ba91499")}</code>{tr("browser.components.ProxyImportModalView.text.f65b57f")}</p>
             </FormItem>
           )}
           {importMode === 'clash' && (
-            <FormItem label="批量 DNS 配置（可选）">
+            <FormItem label={tr("browser.components.ProxyImportModalView.label.0b116c0")}>
               <Textarea value={importDnsServers} onChange={e => onImportDnsServersChange(e.target.value)} rows={5}
                 placeholder={`dns:\n  enable: true\n  nameserver:\n    - 119.29.29.29\n    - 223.5.5.5`} />
-              <p className="text-xs text-[var(--color-text-muted)] mt-1">留空则不配置 DNS，填写后将应用到本次导入的所有代理</p>
+              <p className="text-xs text-[var(--color-text-muted)] mt-1">{tr("browser.components.ProxyImportModalView.text.e20b2f3")}</p>
             </FormItem>
           )}
         </div>
@@ -415,20 +399,20 @@ export function ProxyImportModalView({
       <Modal
         open={previewModalOpen}
         onClose={() => onPreviewModalOpenChange(false)}
-        title="确认导入以下代理"
+        title={tr("browser.components.ProxyImportModalView.title.bbc5274")}
         width="700px"
         footer={
           <>
-            <Button variant="secondary" onClick={() => onPreviewModalOpenChange(false)}>返回修改</Button>
-            <Button onClick={onConfirmImport} loading={importing} disabled={previewList.length === 0}>确认导入</Button>
+            <Button variant="secondary" onClick={() => onPreviewModalOpenChange(false)}>{tr("browser.components.ProxyImportModalView.text.9a233f2")}</Button>
+            <Button onClick={onConfirmImport} loading={importing} disabled={previewList.length === 0}>{tr("browser.components.ProxyImportModalView.text.de6433b")}</Button>
           </>
         }
       >
         <div className="space-y-3">
           {importMode === 'clash' && importDnsServers.trim() && (
-            <p className="text-xs text-[var(--color-text-muted)] bg-[var(--color-bg-secondary)] px-3 py-2 rounded">已配置批量 DNS，将应用到以下所有代理</p>
+            <p className="text-xs text-[var(--color-text-muted)] bg-[var(--color-bg-secondary)] px-3 py-2 rounded">{tr("browser.components.ProxyImportModalView.text.a437f66")}</p>
           )}
-          <Table columns={previewColumns} data={previewList} rowKey="proxyId" maxHeight="380px" emptyText="无代理数据" />
+          <Table columns={previewColumns} data={previewList} rowKey="proxyId" maxHeight="380px" emptyText={tr("browser.components.ProxyImportModalView.emptyText.e95387a")} />
         </div>
       </Modal>
     </>

@@ -32,6 +32,9 @@ function parseArgs(argv) {
     outputDir: process.env.LATITUDE_VERIFY_OUTPUT || '',
     scope: process.env.LATITUDE_VERIFY_SCOPE || 'full',
     headed: process.env.LATITUDE_VERIFY_HEADED === '1',
+    route: '',
+    variant: '',
+    routesOnly: false,
   }
 
   for (const arg of argv) {
@@ -40,6 +43,9 @@ function parseArgs(argv) {
     else if (arg.startsWith('--url=')) options.baseURL = arg.slice('--url='.length)
     else if (arg.startsWith('--output=')) options.outputDir = arg.slice('--output='.length)
     else if (arg.startsWith('--scope=')) options.scope = arg.slice('--scope='.length)
+    else if (arg.startsWith('--route=')) options.route = arg.slice('--route='.length)
+    else if (arg.startsWith('--variant=')) options.variant = arg.slice('--variant='.length)
+    else if (arg === '--routes-only') options.routesOnly = true
     else if (arg === '--help' || arg === '-h') options.help = true
     else throw new Error(`Unknown argument: ${arg}`)
   }
@@ -48,7 +54,7 @@ function parseArgs(argv) {
 }
 
 function printHelp() {
-  console.log(`Usage: node frontend/scripts/verify-workspace.mjs [options]\n\nOptions:\n  --url=<url>       Running Vite preview URL (or LATITUDE_VERIFY_URL)\n  --scope=smoke     Desktop-dark route sweep plus operation fixtures\n  --scope=full      Dark/light route sweeps at 1440, 900, and 375 px (default)\n  --output=<dir>    Artifact directory (default: output/playwright/workspace-<time>)\n  --headed          Show Chromium while running\n  --headless        Force headless mode\n`)
+  console.log(`Usage: node frontend/scripts/verify-workspace.mjs [options]\n\nOptions:\n  --url=<url>       Running Vite preview URL (or LATITUDE_VERIFY_URL)\n  --scope=smoke     Desktop-dark route sweep plus operation fixtures\n  --scope=full      Dark/light route sweeps at 1440, 900, and 375 px (default)\n  --output=<dir>    Artifact directory (default: output/playwright/workspace-<time>)\n  --route=<path>    Recheck one exact route\n  --variant=<id>    Recheck one viewport/theme\n  --routes-only     Skip operation fixtures during a route recheck\n  --headed          Show Chromium while running\n  --headless        Force headless mode\n`)
 }
 
 function normalizeModuleRoots(value) {
@@ -139,14 +145,15 @@ async function loadWorkspaceRoutes() {
     readFile(settingsSectionsPath, 'utf8').catch(() => ''),
   ])
   const routeDefinitions = [
-    { source: navigationSource, pattern: /name:\s*'([^']+)'\s*,\s*path:\s*'([^']+)'/g },
-    { source: settingsSource, pattern: /label:\s*'([^']+)'\s*,\s*to:\s*'([^']+)'/g },
+    { source: navigationSource, pattern: /name:\s*(?:tr\("([^"]+)"\)|'([^']+)')\s*,\s*path:\s*'([^']+)'/g },
+    { source: settingsSource, pattern: /label:\s*(?:tr\("([^"]+)"\)|'([^']+)')\s*,\s*to:\s*'([^']+)'/g },
   ]
   const routes = []
   const seen = new Set()
   for (const { source, pattern } of routeDefinitions) {
     for (const match of source.matchAll(pattern)) {
-      const [, name, path] = match
+      const name = match[1] || match[2]
+      const path = match[3]
       if (!path.startsWith('/') || seen.has(path)) continue
       seen.add(path)
       routes.push({ name, path })
@@ -293,6 +300,9 @@ async function inspectRoute(page, route, variant, outputDir) {
     const expectedSearch = new URL(route.path, variant.baseURL).search
     assert(current.search === expectedSearch, `Expected query ${expectedSearch || '(empty)'}, got ${current.search || '(empty)'}`)
 
+    // The shell can briefly be ready before a lazy route enters Suspense.
+    // Wait for this route's actual content rather than reading an empty main.
+    await main.locator('h1, h2, [role="heading"]').filter({ hasText: expected.heading }).first().waitFor({ state: 'visible', timeout: 15_000 })
     const headingTexts = (await main.locator('h1, h2, [role="heading"]').allTextContents())
       .map((text) => text.replace(/\s+/g, ' ').trim())
       .filter(Boolean)
@@ -642,7 +652,7 @@ async function runOperationFixtures(browser, baseURL, outputDir) {
       await page.locator('aside a[href="/browser/list?status=attention"]').click()
       await page.waitForURL('**/browser/list?status=attention')
       const attentionMain = await waitForWorkspace(page)
-      await attentionMain.getByRole('heading', { name: '需要处理' }).waitFor({ state: 'visible' })
+      await attentionMain.getByRole('heading', { name: /需要处理|待处理/ }).waitFor({ state: 'visible' })
       await attentionMain.getByText(profileName, { exact: true }).first().waitFor({ state: 'visible' })
       await attentionMain.getByText(/未找到可用浏览器内核/).first().waitFor({ state: 'visible' })
 
@@ -667,7 +677,7 @@ async function runOperationFixtures(browser, baseURL, outputDir) {
       await page.locator('a[href="/browser/edit/new"]').first().click()
       await page.waitForURL('**/browser/edit/new')
       const createMain = await waitForWorkspace(page)
-      await createMain.getByRole('heading', { name: '新建配置' }).waitFor({ state: 'visible' })
+      await createMain.getByRole('heading', { name: /新建配置|新建实例/ }).waitFor({ state: 'visible' })
       await createMain.getByPlaceholder('请输入配置名称').fill(fixtureName)
 
       const proxySource = createMain.getByRole('combobox', { name: '代理来源' })
@@ -687,7 +697,7 @@ async function runOperationFixtures(browser, baseURL, outputDir) {
       const clearedProxy = createMain.getByRole('combobox', { name: '代理地址选择' })
       assert(await clearedProxy.isDisabled(), 'Regular proxy selector must be disabled in Tor mode.')
       assert(await clearedProxy.inputValue() === '', `Tor mode retained a conflicting proxy value: ${await clearedProxy.inputValue()}`)
-      await createMain.getByText(/Tor 模式已清空并锁定常规代理选项/).waitFor({ state: 'visible' })
+      await createMain.getByText(/Tor 模式锁定常规代理/).waitFor({ state: 'visible' })
 
       await createMain.getByRole('button', { name: '保存配置', exact: true }).click()
       await page.waitForURL('**/browser/list')
@@ -806,23 +816,12 @@ async function runOperationFixtures(browser, baseURL, outputDir) {
       }
     }, settingsPage)
 
-    await record('close-failure-retains-app-and-recovers-actions', async () => {
+    await record('native-quit-has-no-frontend-confirmation', async () => {
       await settingsPage.evaluate(() => window.__LATITUDE_EMIT_CLOSE_FIXTURE__())
-      const dialog = settingsPage.getByRole('dialog', { name: '关闭应用确认' })
-      await dialog.waitFor({ state: 'visible' })
-      assert(await dialog.getByText(/有 Tor 会话时.*关闭全部受管浏览器与传输/).isVisible(), 'Close confirmation omitted the all-managed-browser cleanup policy when Tor is active.')
-      const appOnly = dialog.getByRole('button', { name: '仅退出应用', exact: true })
-      const all = dialog.getByRole('button', { name: '退出应用与浏览器', exact: true })
-      await appOnly.click()
-      await settingsPage.getByText(/可重试关闭/).waitFor({ state: 'visible' })
-      assert(await appOnly.isEnabled() && await all.isEnabled(), 'Rejected app-only quit left the dialog stuck in a busy state.')
-      await all.click()
-      await settingsPage.getByText(/仍有浏览器或 Tor 运行时未能确认退出/).waitFor({ state: 'visible' })
-      assert(await dialog.isVisible() && await appOnly.isEnabled() && await all.isEnabled(), 'Rejected full quit closed or disabled the recovery dialog.')
+      assert(await settingsPage.getByRole('dialog', { name: '关闭应用确认' }).count() === 0, 'Removed close confirmation was rendered.')
       const state = await settingsPage.evaluate(() => ({ ...window.__LATITUDE_SETTINGS_FIXTURE_STATE__ }))
-      assert(state.forceQuitCalls === 1 && state.quitAppOnlyCalls === 1, 'The close fixture did not exercise both backend promise rejections.')
-      assert(state.nativeQuitCalls === 0, 'Frontend bypassed the backend shutdown gate via runtime.Quit.')
-      return { source: 'explicit mock Wails errors; no backend calls', applicationRemainedOpen: true, retryEnabled: true, nativeQuitFallbackCalls: state.nativeQuitCalls }
+      assert(state.forceQuitCalls === 0 && state.quitAppOnlyCalls === 0 && state.nativeQuitCalls === 0, 'Frontend attempted to own native shutdown.')
+      return { source: 'mock frontend only; native managed cleanup is tested separately', confirmationDialogs: 0, frontendQuitCalls: 0 }
     }, settingsPage)
   } finally {
     await settingsContext.close()
@@ -970,7 +969,8 @@ async function main() {
   assert(preflight.ok, `Frontend server preflight returned HTTP ${preflight.status}. Start a local dev/preview server before verifying.`)
 
   const { playwright, source } = loadPlaywright()
-  const routes = await loadWorkspaceRoutes()
+  const routes = (await loadWorkspaceRoutes()).filter(route => !options.route || route.path === options.route)
+  assert(routes.length > 0, `No workspace route matches ${options.route}.`)
   const allVariants = [
     { id: 'desktop-1440x960-dark', width: 1440, height: 960, theme: 'dark', colorScheme: 'dark', collapseSidebar: false },
     { id: 'desktop-1440x960-light', width: 1440, height: 960, theme: 'light', colorScheme: 'light', collapseSidebar: false },
@@ -979,7 +979,9 @@ async function main() {
     { id: 'narrow-375x800-dark', width: 375, height: 800, theme: 'dark', colorScheme: 'dark', collapseSidebar: true },
     { id: 'narrow-375x800-light', width: 375, height: 800, theme: 'light', colorScheme: 'light', collapseSidebar: true },
   ].map((variant) => ({ ...variant, baseURL }))
-  const variants = options.scope === 'smoke' ? [allVariants[0]] : allVariants
+  const variants = (options.scope === 'smoke' ? [allVariants[0]] : allVariants)
+    .filter(variant => !options.variant || variant.id === options.variant)
+  assert(variants.length > 0, `No viewport variant matches ${options.variant}.`)
 
   console.log(`[verify-workspace] URL=${baseURL}`)
   console.log(`[verify-workspace] Playwright=${source}`)
@@ -1026,8 +1028,8 @@ async function main() {
       await context.close()
     }
 
-    const operationResults = await runOperationFixtures(browser, baseURL, outputDir)
-    const globeResults = await runGlobeMotionFixture(browser, baseURL, outputDir)
+    const operationResults = options.routesOnly ? [] : await runOperationFixtures(browser, baseURL, outputDir)
+    const globeResults = options.routesOnly ? [] : await runGlobeMotionFixture(browser, baseURL, outputDir)
     operationResults.push(...globeResults)
     for (const result of operationResults) {
       console.log(`${result.ok ? 'PASS' : 'FAIL'} operation ${result.fixture}${result.ok ? '' : ` :: ${String(result.error).split('\n')[0]}`}`)

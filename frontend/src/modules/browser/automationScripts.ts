@@ -1,3 +1,4 @@
+import { tr } from '../../shared/i18n'
 import {
   AUTOMATION_SCRIPT_MANIFEST_VERSION,
   AUTOMATION_SCRIPT_PACKAGE_FORMAT,
@@ -138,7 +139,7 @@ function normalizeScriptRecord(raw: unknown): AutomationScriptRecord | null {
     name:
       typeof source.name === "string" && source.name.trim()
         ? source.name.trim()
-        : "未命名脚本",
+        : tr("browser.automationScripts.normalizeScriptRecord.2a05a0f"),
     description:
       typeof source.description === "string" ? source.description.trim() : "",
     type,
@@ -210,11 +211,11 @@ export function createAutomationScriptDraft(
 ): AutomationScriptRecord {
   const createdAt = nowIso();
   const name =
-    type === "launch-api" ? "新建 Launch API 脚本" : "百度搜索示例";
+    type === "launch-api" ? tr("browser.automationScripts.createAutomationScriptDraft.bbf9bb5") : tr("browser.automationScripts.createAutomationScriptDraft.a6bc8c7");
   const description =
     type === "launch-api"
       ? ""
-      : "启动示例实例，打开百度并搜索关键词，用来验证 Launch API + Playwright CDP 链路。";
+      : tr("browser.automationScripts.createAutomationScriptDraft.1a318ce");
 
   return {
     packageFormat: AUTOMATION_SCRIPT_PACKAGE_FORMAT,
@@ -225,7 +226,7 @@ export function createAutomationScriptDraft(
     type,
     status: type === "playwright-cdp" ? "ready" : "draft",
     entryFile: "index.cjs",
-    tags: type === "launch-api" ? ["HTTP"] : ["Playwright", "示例"],
+    tags: type === "launch-api" ? ["HTTP"] : ["Playwright", tr("browser.automationScripts.createAutomationScriptDraft.30fd4ed")],
     selectorText: buildSelectorTemplate(type),
     paramsText: buildParamsTemplate(type),
     scriptText: buildScriptTemplate(type),
@@ -251,7 +252,7 @@ export function duplicateAutomationScript(
   return {
     ...script,
     id: createScriptId(),
-    name: `${script.name} - 副本`,
+    name: tr("browser.automationScripts.name.129991b", [script.name]),
     status: "draft",
     publicAPI: {
       ...createAutomationScriptPublicAPIConfig(),
@@ -283,14 +284,14 @@ function stringifyJsonBlock(value: unknown, fallback: string): string {
 export function importAutomationScript(text: string): AutomationScriptRecord {
   const normalized = text.trim();
   if (!normalized) {
-    throw new Error("导入内容不能为空");
+    throw new Error(tr("browser.automationScriptApi.imports.importAutomationScriptFromText.9b6e1c6"));
   }
 
   let parsed: any;
   try {
     parsed = JSON.parse(normalized);
   } catch {
-    throw new Error("导入内容不是合法 JSON");
+    throw new Error(tr("browser.automationScripts.importAutomationScript.6aa700f"));
   }
 
   const manifest =
@@ -371,7 +372,7 @@ export function importAutomationScript(text: string): AutomationScriptRecord {
   });
 
   if (!imported) {
-    throw new Error("导入内容无法识别为脚本");
+    throw new Error(tr("browser.automationScripts.importAutomationScript.cb746c3"));
   }
 
   return imported;

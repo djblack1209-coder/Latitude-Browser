@@ -32,16 +32,16 @@ func TestSelectProxyCoreAssetPrefersMihomoCompatibleArchive(t *testing.T) {
 		t.Fatal(err)
 	}
 	assets := []githubReleaseAsset{
-		{Name: "mihomo-linux-amd64-v1.19.27.gz"},
-		{Name: "mihomo-linux-amd64-compatible-v1.19.27.gz"},
-		{Name: "mihomo-linux-amd64-compatible-v1.19.27.gz.sha256"},
-		{Name: "mihomo-linux-arm64-compatible-v1.19.27.gz"},
+		{Name: "mihomo-linux-amd64-v1.19.33.gz"},
+		{Name: "mihomo-linux-amd64-compatible-v1.19.33.gz"},
+		{Name: "mihomo-linux-amd64-compatible-v1.19.33.gz.sha256"},
+		{Name: "mihomo-linux-arm64-compatible-v1.19.33.gz"},
 	}
 	got, err := selectProxyCoreAsset(spec, assets, "linux", "amd64")
 	if err != nil {
 		t.Fatalf("selectProxyCoreAsset returned error: %v", err)
 	}
-	if got.Name != "mihomo-linux-amd64-compatible-v1.19.27.gz" {
+	if got.Name != "mihomo-linux-amd64-compatible-v1.19.33.gz" {
 		t.Fatalf("asset = %q, want compatible amd64 gzip", got.Name)
 	}
 }
@@ -221,8 +221,8 @@ func TestProxyCoreInstalledLookupSkipsTransientDirectories(t *testing.T) {
 
 func proxyCoreTestAsset(contents []byte) githubReleaseAsset {
 	return githubReleaseAsset{
-		Name:               "mihomo-darwin-arm64-v1.19.27.gz",
-		BrowserDownloadURL: "https://github.com/MetaCubeX/mihomo/releases/download/v1.19.27/mihomo-darwin-arm64-v1.19.27.gz",
+		Name:               "mihomo-darwin-arm64-v1.19.33.gz",
+		BrowserDownloadURL: "https://github.com/MetaCubeX/mihomo/releases/download/v1.19.33/mihomo-darwin-arm64-v1.19.33.gz",
 		Size:               int64(len(contents)),
 		Digest:             fmt.Sprintf("sha256:%x", sha256.Sum256(contents)),
 	}
@@ -402,7 +402,7 @@ func TestProxyCoreReleaseAssetMustBelongToSelectedOfficialRelease(t *testing.T) 
 		{name: "plain_http", url: strings.Replace(asset.BrowserDownloadURL, "https:", "http:", 1)},
 		{name: "lookalike_host", url: strings.Replace(asset.BrowserDownloadURL, "github.com/", "github.com.attacker.invalid/", 1)},
 		{name: "different_repository", url: strings.Replace(asset.BrowserDownloadURL, "MetaCubeX/mihomo", "attacker/mihomo", 1)},
-		{name: "different_release", url: strings.Replace(asset.BrowserDownloadURL, "/v1.19.27/", "/v1.19.26/", 1)},
+		{name: "different_release", url: strings.Replace(asset.BrowserDownloadURL, "/v1.19.33/", "/v1.19.32/", 1)},
 		{name: "different_filename", url: asset.BrowserDownloadURL + ".other"},
 		{name: "userinfo", url: strings.Replace(asset.BrowserDownloadURL, "https://", "https://user:password@", 1)},
 		{name: "nondefault_port", url: strings.Replace(asset.BrowserDownloadURL, "github.com/", "github.com:8443/", 1)},
@@ -490,13 +490,13 @@ func TestProxyCoreNativeVersionValidation(t *testing.T) {
 		exitCode           int
 		wantErr            bool
 	}{
-		{name: "mihomo_valid", core: "mihomo", output: "Mihomo Meta v1.19.27 " + target.GOOS + " " + target.GOARCH},
-		{name: "xray_valid", core: "xray", output: "Xray 26.3.27 (Xray, Penetrates Everything.)"},
-		{name: "sing_box_valid", core: "sing-box", output: "sing-box version 1.13.13"},
-		{name: "version_mismatch", core: "mihomo", output: "Mihomo Meta v1.19.26", wantErr: true},
-		{name: "version_prefix_not_equal", core: "mihomo", output: "Mihomo Meta v1.19.270", wantErr: true},
+		{name: "mihomo_valid", core: "mihomo", output: "Mihomo Meta v1.19.33 " + target.GOOS + " " + target.GOARCH},
+		{name: "xray_valid", core: "xray", output: "Xray 26.10.31 (Xray, Penetrates Everything.)"},
+		{name: "sing_box_valid", core: "sing-box", output: "sing-box version 1.14.4"},
+		{name: "version_mismatch", core: "mihomo", output: "Mihomo Meta v1.19.32", wantErr: true},
+		{name: "version_prefix_not_equal", core: "mihomo", output: "Mihomo Meta v1.19.330", wantErr: true},
 		{name: "empty_output", core: "mihomo", wantErr: true},
-		{name: "nonzero_exit", core: "mihomo", output: "Mihomo Meta v1.19.27", exitCode: 1, wantErr: true},
+		{name: "nonzero_exit", core: "mihomo", output: "Mihomo Meta v1.19.33", exitCode: 1, wantErr: true},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			spec, err := normalizeProxyCoreSpec(tc.core)
@@ -651,7 +651,7 @@ func TestProxyCoreReleaseInstallVerifiesBeforePublishAndPreservesFailures(t *tes
 			marker := filepath.Join(root, "version-probe-ran")
 			version := spec.Version
 			if mode == "wrong_version" {
-				version = "v1.19.26"
+				version = "v1.19.32"
 			}
 			script := fmt.Sprintf("#!/bin/sh\nprintf ran > '%s'\nprintf 'Mihomo Meta %s %s %s\\n'\n", marker, version, target.GOOS, target.GOARCH)
 			release, body := proxyCoreTestGzipRelease(t, spec, target, script)
@@ -665,7 +665,7 @@ func TestProxyCoreReleaseInstallVerifiesBeforePublishAndPreservesFailures(t *tes
 				release.Assets[0].Size = int64(len(body))
 				release.Assets[0].Digest = fmt.Sprintf("sha256:%x", sha256.Sum256(body))
 			case "wrong_source":
-				release.Assets[0].BrowserDownloadURL = strings.Replace(release.Assets[0].BrowserDownloadURL, "/v1.19.27/", "/v1.19.26/", 1)
+				release.Assets[0].BrowserDownloadURL = strings.Replace(release.Assets[0].BrowserDownloadURL, "/v1.19.33/", "/v1.19.32/", 1)
 			}
 			requests := 0
 			client := &http.Client{Transport: proxyCoreTestRoundTripper(func(req *http.Request) (*http.Response, error) {
@@ -1114,7 +1114,7 @@ func TestProxyCoreSharedClientPreservesExtensionHTTPSRedirects(t *testing.T) {
 }
 
 func TestProxyCoreReleaseClientRestrictsRedirects(t *testing.T) {
-	const initialURL = "https://github.com/MetaCubeX/mihomo/releases/download/v1.19.27/fixture.gz"
+	const initialURL = "https://github.com/MetaCubeX/mihomo/releases/download/v1.19.33/fixture.gz"
 	for _, tc := range []struct {
 		name, destination string
 		allowed           bool

@@ -1,0 +1,43 @@
+/* Latitude / Fieldwork: shared by the desktop workspace and browser pages. */
+:root {
+  color-scheme: dark;
+  --bg-canvas: #080a09; --bg-surface: #101311; --bg-raised: #191d1a;
+  --bg-inset: #0b0e0c; --bg-hover: #1d231e; --bg-selected: #222c16;
+  --border: #2a302b; --border-muted: #202621; --border-strong: #3d473e;
+  --text: #edf1e9; --text-2: #adb5aa; --text-3: #889482; --text-disabled: #596354;
+  --accent: #d2fa69; --accent-hover: #e2ff9d; --accent-press: #b5da50;
+  --accent-muted: #232e16; --accent-line: #5c7133; --on-accent: #17200b;
+  --identity: #bcacee; --identity-muted: #24202e;
+  --ok: #8edda4; --ok-bg: #152b1c; --warn: #f3c77b; --warn-bg: #302715;
+  --err: #ff8084; --err-bg: #321a1d;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', 'PingFang SC', 'Microsoft YaHei UI', 'Noto Sans SC', sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, 'PingFang SC', 'Microsoft YaHei UI', monospace;
+  --field-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='%23adb5aa' stroke-width='1.5'%3E%3Cpath d='m6 8 4 4 4-4'/%3E%3C/svg%3E");
+  --font-display: var(--font-sans);
+  --t-xs: 11px; --t-sm: 12px; --t-base: 13px; --t-md: 16px; --t-lg: 26px; --t-xl: 32px;
+  --s-1: 2px; --s-2: 4px; --s-3: 8px; --s-4: 12px; --s-5: 16px; --s-6: 24px; --s-7: 32px; --s-8: 48px;
+  --h-sm: 30px; --h-md: 36px; --h-lg: 42px;
+  --r-0: 0; --r-1: 6px; --r-2: 10px;
+  --layout-sidebar: 216px; --layout-sidebar-collapsed: 64px; --layout-topbar: 56px;
+  --content-gutter: 28px; --motion-fast: 100ms; --motion-base: 160ms; --motion-slow: 220ms;
+  --motion-ease: cubic-bezier(.2,0,0,1);
+  --focus-ring: 0 0 0 3px rgb(210 250 105 / 18%);
+  --shadow-float: 0 18px 60px rgb(0 0 0 / 55%);
+  /* Semantic aliases preserve the existing component API during the overhaul. */
+  --color-bg-base: var(--bg-canvas); --color-bg-surface: var(--bg-surface); --color-bg-elevated: var(--bg-raised);
+  --color-bg-muted: var(--bg-hover); --color-bg-subtle: var(--bg-surface); --color-bg-input: var(--bg-inset);
+  --color-bg-default: var(--bg-canvas); --color-bg-card: var(--bg-surface); --color-bg-primary: var(--bg-surface);
+  --color-bg-secondary: var(--bg-inset); --color-bg-hover: var(--bg-hover);
+  --color-border-default: var(--border); --color-border-muted: var(--border-muted); --color-border-strong: var(--border-strong); --color-border: var(--border);
+  --color-text-primary: var(--text); --color-text-secondary: var(--text-2); --color-text-muted: var(--text-3); --color-text-inverse: var(--on-accent);
+  --color-accent: var(--accent); --color-accent-hover: var(--accent-hover); --color-accent-muted: var(--accent-muted); --color-accent-border: var(--accent-line);
+  --color-action: var(--accent); --color-action-hover: var(--accent-hover); --color-action-text: var(--on-accent);
+  --color-primary: var(--accent); --color-surface-elevated: var(--bg-raised);
+  --color-success: var(--ok); --color-warning: var(--warn); --color-error: var(--err); --color-error-hover: var(--err); --color-info: var(--text-2); --color-danger-text: var(--text);
+  --radius-xs: var(--r-1); --radius-sm: var(--r-1); --radius-md: var(--r-2); --radius-lg: var(--r-2); --radius-xl: var(--r-2);
+  --shadow-xs: none; --shadow-sm: none; --shadow-md: none; --shadow-lg: var(--shadow-float); --shadow-modal: var(--shadow-float); --shadow-dropdown: var(--shadow-float);
+  --background: var(--bg-canvas); --foreground: var(--text); --card: var(--bg-surface); --card-foreground: var(--text);
+  --popover: var(--bg-raised); --popover-foreground: var(--text); --primary: var(--accent); --primary-foreground: var(--on-accent);
+  --secondary: var(--bg-hover); --secondary-foreground: var(--text-2); --muted: var(--bg-inset); --muted-foreground: var(--text-3);
+  --accent-foreground: var(--text); --destructive: var(--err); --destructive-foreground: var(--text); --input: var(--border-strong); --ring: var(--accent);
+}

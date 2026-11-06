@@ -1,3 +1,4 @@
+import { localized } from '../../../../shared/i18n'
 ﻿export type {
   StructuredApiDocId,
   StructuredApiEndpointDoc,
@@ -17,19 +18,19 @@ import { STRUCTURED_API_SECTION_DOCS } from './structuredApiDocs.sections'
 
 export { STRUCTURED_API_SECTION_DOCS } from './structuredApiDocs.sections'
 
-export const STRUCTURED_API_ENDPOINT_DOCS: StructuredApiEndpointDoc[] = [
+export const STRUCTURED_API_ENDPOINT_DOCS: StructuredApiEndpointDoc[] = localized(() => [
   ...PROFILE_API_ENDPOINT_DOCS,
   ...RUNTIME_API_ENDPOINT_DOCS,
   ...AUTOMATION_API_ENDPOINT_DOCS,
-]
+])
 
-export const STRUCTURED_API_SECTION_DOC_MAP = Object.fromEntries(
+export const STRUCTURED_API_SECTION_DOC_MAP = localized(() => Object.fromEntries(
   STRUCTURED_API_SECTION_DOCS.map((doc) => [doc.id, doc]),
-) as Record<StructuredApiSectionId, StructuredApiSectionDoc>
+) as Record<StructuredApiSectionId, StructuredApiSectionDoc>)
 
-export const STRUCTURED_API_ENDPOINT_DOC_MAP = Object.fromEntries(
+export const STRUCTURED_API_ENDPOINT_DOC_MAP = localized(() => Object.fromEntries(
   STRUCTURED_API_ENDPOINT_DOCS.map((doc) => [doc.id, doc]),
-) as Record<Exclude<StructuredApiDocId, StructuredApiSectionId>, StructuredApiEndpointDoc>
+) as Record<Exclude<StructuredApiDocId, StructuredApiSectionId>, StructuredApiEndpointDoc>)
 
 const STRUCTURED_API_DOC_IDS = new Set<StructuredApiDocId>([
   ...STRUCTURED_API_SECTION_DOCS.map((doc) => doc.id),

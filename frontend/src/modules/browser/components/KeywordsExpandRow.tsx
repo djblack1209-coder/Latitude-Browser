@@ -1,3 +1,4 @@
+import { tr, useLocale } from '../../../shared/i18n'
 import { useState, useRef, useEffect } from 'react'
 import { ChevronDown, ChevronUp } from 'lucide-react'
 
@@ -7,6 +8,8 @@ interface Props {
 }
 
 export function KeywordsExpandRow({ keywords, colSpan }: Props) {
+  useLocale()
+
   const [expanded, setExpanded] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
   const [isOverflowing, setIsOverflowing] = useState(false)
@@ -51,9 +54,9 @@ export function KeywordsExpandRow({ keywords, colSpan }: Props) {
                 className="shrink-0 flex items-center gap-1 text-xs text-[var(--color-accent)] hover:underline mt-1 focus:outline-none"
               >
                 {expanded ? (
-                  <>收回 <ChevronUp className="w-3.5 h-3.5" /></>
+                  <>{tr("browser.components.BrowserListWidgets.text.77cd3ee")}<ChevronUp className="w-3.5 h-3.5" /></>
                 ) : (
-                  <>展开详情 <ChevronDown className="w-3.5 h-3.5" /></>
+                  <>{tr("browser.components.BrowserListWidgets.text.d8647fe")}<ChevronDown className="w-3.5 h-3.5" /></>
                 )}
               </button>
             )}

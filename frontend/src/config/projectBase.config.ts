@@ -1,6 +1,7 @@
-export const projectConfig = {
+import { tr, localized } from '../shared/i18n'
+export const projectConfig = localized(() => ({
   name: 'Latitude Browser',
   shortName: 'Latitude',
-  description: '面向多账号隔离、代理绑定和本地环境管理的隐私浏览器工作台',
+  description: tr("config.projectBase.config.description.6a15bf5"),
   primaryColor: 'primary',
-}
+}))

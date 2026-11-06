@@ -1,10 +1,11 @@
+import { tr, localized } from '../../../../shared/i18n'
 import type { BrowserProxy } from '../../types'
 
 export const BUILTIN_PROXY_IDS = new Set(['__direct__'])
 
-export const BUILTIN_PROXIES: BrowserProxy[] = [
-  { proxyId: '__direct__', proxyName: '直连（不走代理）', proxyConfig: 'direct://' },
-]
+export const BUILTIN_PROXIES: BrowserProxy[] = localized(() => ([
+  { proxyId: '__direct__', proxyName: tr("browser.pages.proxyPool.helpers.types.proxyName.e3b5f9f"), proxyConfig: 'direct://' },
+]))
 
 export interface ClashProxy {
   name: string
@@ -87,9 +88,9 @@ export const DIRECT_QUICK_IMPORT_TEMPLATE = `{
 }`
 
 export const DIRECT_PROXY_PROTOCOL_OPTIONS = [
-  { value: 'http', label: 'HTTP' },
-  { value: 'https', label: 'HTTPS' },
-  { value: 'socks5', label: 'SOCKS5' },
+  { value: 'http', label: tr("ui.modules.browser.pages.proxyPool.helpers.types.label.f40b27d") },
+  { value: 'https', label: tr("ui.modules.browser.pages.proxyPool.helpers.types.label.f52698c") },
+  { value: 'socks5', label: tr("ui.modules.browser.pages.proxyPool.helpers.types.label.b6a033a") },
 ] as const
 
 export const INITIAL_DIRECT_IMPORT_FORM: DirectImportForm = {

@@ -1,3 +1,5 @@
+import { getLocale, translateMessage } from '../../../shared/i18n'
+import { tr, useLocale, localized } from '../../../shared/i18n'
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
@@ -7,20 +9,17 @@ import {
   CheckCircle2,
   HelpCircle,
   Fingerprint,
-  Globe2,
   LockKeyhole,
   Monitor,
   Network,
   RefreshCw,
-  ShieldCheck,
-  Shuffle,
   Wand2,
   Wifi,
   X,
   type LucideIcon,
 } from 'lucide-react'
-import { Badge, Button, Progress, toast } from '../../../shared/components'
-import { TelemetryStrip, TerminalPanel, WorkspaceHeader } from '../../../shared/components/SignalPrimitives'
+import { Badge, Button, ConfirmModal, toast } from '../../../shared/components'
+import { TerminalPanel, WorkspaceHeader } from '../../../shared/components/SignalPrimitives'
 import type { BrowserProfile, BrowserProxy, BrowserSettings } from '../types'
 import { checkBrowserProfileFingerprint, createBrowserProfile, fetchBrowserProxies, fetchBrowserSettings, startBrowserInstance, testProxyRealConnectivity, testProxyRealConnectivityWithConfig, validateProxyConfig } from '../api'
 import { buildAutoConfigProfileInput, isAutoConfigProxyReady, sanitizeAutoConfigDraft } from '../utils/autoConfig'
@@ -82,12 +81,12 @@ type AutoConfigDraft = {
 
 const STORAGE_KEY = 'latitude-browser:auto-config-draft'
 
-const STEPS = [
-  { eyebrow: '01', label: '网络入口' },
-  { eyebrow: '02', label: '设备基线' },
-  { eyebrow: '03', label: '指纹策略' },
-  { eyebrow: '04', label: '确认并创建' },
-]
+const STEPS = localized(() => ([
+  { eyebrow: '01', label: tr("browser.pages.AutoConfigPage.label.5d8cb1f") },
+  { eyebrow: '02', label: tr("browser.pages.AutoConfigPage.label.382aa54") },
+  { eyebrow: '03', label: tr("browser.pages.AutoConfigPage.label.a03c568") },
+  { eyebrow: '04', label: tr("browser.pages.AutoConfigPage.label.6d55107") },
+]))
 
 const clearStoredDraft = () => {
   if (typeof window === 'undefined') return
@@ -232,11 +231,11 @@ const buildFingerprintRecommendation = (
   const viewport = `${baseline.viewportWidth || baseline.screenWidth} × ${baseline.viewportHeight || baseline.screenHeight}`
   const hardwareClass = baseline.hardwareConcurrency
     ? baseline.hardwareConcurrency >= 8
-      ? '高性能桌面'
+      ? tr("browser.pages.AutoConfigPage.message.ff6e700")
       : baseline.hardwareConcurrency >= 4
-        ? '标准桌面'
-        : '轻量设备'
-    : '保守兼容'
+        ? tr("browser.pages.AutoConfigPage.message.8467f26")
+        : tr("browser.pages.AutoConfigPage.message.2b1dacc")
+    : tr("browser.pages.AutoConfigPage.message.24402fb")
   const signature = stableHash(
     [
       baseline.browserFamily,
@@ -262,33 +261,33 @@ const buildFingerprintRecommendation = (
     hardwareClass,
     connectorStack,
     consistencyChecks: [
-      `语言 ${locale} 与时区 ${baseline.timezone} 保持同一地区逻辑`,
-      `视口 ${viewport} 与屏幕 ${baseline.screenWidth} × ${baseline.screenHeight} 对齐`,
-      `${baseline.browserFamily} 与 ${osFamily} 的 UA 组合保持一致`,
+      tr("browser.pages.AutoConfigPage.message.b54153a", [locale, baseline.timezone]),
+      tr("browser.pages.AutoConfigPage.message.0ddf859", [viewport, baseline.screenWidth, baseline.screenHeight]),
+      tr("browser.pages.AutoConfigPage.message.9a13d3f", [baseline.browserFamily, osFamily]),
     ],
   }
 }
 
-const connectorLabel: Record<ConnectorStack, string> = {
-  xray: 'Xray + sing-box 组合栈',
-  mihomo: '独立 Mihomo 栈',
-  none: '直连，不启用代理内核',
-}
+const connectorLabel: Record<ConnectorStack, string> = localized(() => ({
+  xray: tr("browser.pages.AutoConfigPage.xray.11aa47e"),
+  mihomo: tr("browser.pages.AutoConfigPage.mihomo.900e4dc"),
+  none: tr("browser.pages.AutoConfigPage.none.6a55d11"),
+}))
 
-const networkLabel: Record<NetworkMode, string> = {
-  proxy: '使用代理',
-  direct: '直连',
-}
+const networkLabel: Record<NetworkMode, string> = localized(() => ({
+  proxy: tr("browser.pages.AutoConfigPage.proxy.b168ef4"),
+  direct: tr("browser.pages.AutoConfigPage.direct.a7dd3b6"),
+}))
 
-const fingerprintLabel: Record<FingerprintMode, string> = {
-  fixed: '固定指纹',
-  'constrained-random': '约束随机（预览）',
-}
+const fingerprintLabel: Record<FingerprintMode, string> = localized(() => ({
+  fixed: tr("browser.pages.AutoConfigPage.fixed.0467103"),
+  'constrained-random': tr("browser.pages.AutoConfigPage.option.a74c567"),
+}))
 
 const formatCapturedAt = (value?: string | null) => {
   if (!value) return ''
   const date = new Date(value)
-  return Number.isNaN(date.getTime()) ? '' : date.toLocaleString('zh-CN')
+  return Number.isNaN(date.getTime()) ? '' : date.toLocaleString(getLocale())
 }
 
 function SelectionOption({
@@ -306,6 +305,8 @@ function SelectionOption({
   onSelect: () => void
   badge?: string
 }) {
+  useLocale()
+
   return (
     <button
       type="button"
@@ -313,7 +314,7 @@ function SelectionOption({
       aria-checked={selected}
       onClick={onSelect}
       className={[
-        'group w-full rounded-sm border p-4 text-left transition-[background-color,border-color,color,transform] duration-150 active:translate-y-px',
+        'remit-choice group w-full rounded-[var(--radius-md)] border p-4 text-left transition-[background-color,border-color,color,transform] duration-150 active:translate-y-px',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)]',
 
         selected
@@ -324,7 +325,7 @@ function SelectionOption({
       <span className="flex items-start justify-between gap-4">
         <span
           className={[
-            'flex h-9 w-9 items-center justify-center rounded-sm border',
+            'flex h-9 w-9 items-center justify-center rounded-full border',
             selected
               ? 'border-[var(--color-accent)] text-[var(--color-accent)]'
               : 'border-[var(--color-border-default)] text-[var(--color-text-secondary)] group-hover:text-[var(--color-text-primary)]',
@@ -335,7 +336,7 @@ function SelectionOption({
         <span
           aria-hidden="true"
           className={[
-            'mt-1 flex h-4 w-4 items-center justify-center rounded-sm border',
+            'mt-1 flex h-4 w-4 items-center justify-center rounded-full border',
             selected
               ? 'border-[var(--color-accent)] bg-[var(--color-accent)] text-[var(--color-text-inverse)]'
               : 'border-[var(--color-border-strong)] text-transparent',
@@ -349,16 +350,18 @@ function SelectionOption({
           {title}
           {badge && <Badge variant="info" size="sm">{badge}</Badge>}
         </span>
-        <span className="mt-2 block text-sm leading-6 text-[var(--color-text-secondary)]">{description}</span>
+        {description && <span className="mt-2 block text-xs leading-5 text-[var(--color-text-secondary)]">{description}</span>}
       </span>
     </button>
   )
 }
 
 function DetailRow({ label, value, mono = false }: { label: string; value: string; mono?: boolean }) {
+  useLocale()
+
   return (
     <div className="flex items-start justify-between gap-6 border-b border-[var(--color-border-muted)] py-3 last:border-b-0">
-      <dt className="shrink-0 text-xs uppercase tracking-[0.12em] text-[var(--color-text-muted)]">{label}</dt>
+      <dt className="shrink-0 text-xs   text-[var(--color-text-muted)]">{label}</dt>
       <dd className={mono ? 'max-w-[70%] break-words text-right font-mono text-xs text-[var(--color-text-secondary)]' : 'max-w-[70%] text-right text-sm text-[var(--color-text-primary)]'}>
         {value}
       </dd>
@@ -367,6 +370,8 @@ function DetailRow({ label, value, mono = false }: { label: string; value: strin
 }
 
 export function AutoConfigPage() {
+  const uiLocale = useLocale()
+
   const navigate = useNavigate()
   const [step, setStep] = useState(0)
   const [networkMode, setNetworkMode] = useState<NetworkMode | null>(null)
@@ -391,7 +396,7 @@ export function AutoConfigPage() {
     () => (baseline && networkMode
       ? buildFingerprintRecommendation(baseline, networkMode, settings?.defaultConnectorType)
       : null),
-    [baseline, networkMode, settings?.defaultConnectorType],
+    [baseline, networkMode, settings?.defaultConnectorType, uiLocale],
   )
 
   useEffect(() => {
@@ -413,7 +418,7 @@ export function AutoConfigPage() {
           setSettings(settingsResult.value)
           setSettingsLoadError('')
         } else {
-          setSettingsLoadError('全局连接栈读取失败。直连仍可继续；代理模式需要先确认后端设置。')
+          setSettingsLoadError(tr("browser.pages.AutoConfigPage.AutoConfigPage.949925d"))
         }
 
         if (proxiesResult.status === 'fulfilled') {
@@ -427,7 +432,7 @@ export function AutoConfigPage() {
           }
         } else {
           const error = proxiesResult.reason
-          setProxyLoadError(error instanceof Error ? error.message : '代理池加载失败，可改用自定义配置')
+          setProxyLoadError(error instanceof Error ? error.message : tr("browser.pages.AutoConfigPage.AutoConfigPage.bae3f53"))
         }
       })
       .finally(() => {
@@ -485,11 +490,11 @@ export function AutoConfigPage() {
     if (persistDraft(draft)) {
       toast.success(
         draft.proxyConfig?.trim()
-          ? '自动配置草稿已保存；自定义代理内容不会写入本地存储，恢复后需要重新输入'
-          : '自动配置草稿已保存',
+          ? tr("browser.pages.AutoConfigPage.AutoConfigPage.c2c2b02")
+          : tr("browser.pages.AutoConfigPage.AutoConfigPage.366efa9"),
       )
     } else {
-      toast.warning('当前环境不允许本地存储，配置仍可继续创建')
+      toast.warning(tr("browser.pages.AutoConfigPage.AutoConfigPage.5d25e09"))
     }
   }
 
@@ -499,7 +504,7 @@ export function AutoConfigPage() {
     const requiresProxyEntry = savedDraft.networkMode === 'proxy' && savedDraft.proxyConfigRedacted
     setNetworkMode(savedDraft.networkMode)
     setBaseline(savedDraft.baseline)
-    setFingerprintMode(savedDraft.fingerprintMode)
+    setFingerprintMode('fixed')
     setProxySource(savedDraft.proxySource === 'custom' ? 'custom' : 'pool')
     setProxyId(savedDraft.proxyId || '')
     setProxyConfig('')
@@ -512,8 +517,8 @@ export function AutoConfigPage() {
 
     toast.info(
       requiresProxyEntry
-        ? '草稿已恢复；为保护代理凭据，请重新输入自定义代理配置'
-        : '自动配置草稿已恢复',
+        ? tr("browser.pages.AutoConfigPage.AutoConfigPage.852504a")
+        : tr("browser.pages.AutoConfigPage.AutoConfigPage.d0e14b7"),
     )
   }
 
@@ -522,9 +527,9 @@ export function AutoConfigPage() {
     try {
       window.localStorage.removeItem(STORAGE_KEY)
       setSavedDraft(null)
-      toast.success('自动配置草稿已清除')
+      toast.success(tr("browser.pages.AutoConfigPage.AutoConfigPage.b0919a6"))
     } catch {
-      toast.warning('当前环境不允许清除本地草稿，请稍后重试')
+      toast.warning(tr("browser.pages.AutoConfigPage.AutoConfigPage.6980e65"))
     }
   }
 
@@ -534,13 +539,13 @@ export function AutoConfigPage() {
 
   const handleStartCreatedProfile = async (profileId: string) => {
     setOperationStatus('loading')
-    setOperationMessage('正在启动实例并等待调试端口就绪…')
+    setOperationMessage(tr("browser.pages.AutoConfigPage.AutoConfigPage.fa514bb"))
     setFingerprintCheckStatus('checking')
     setFingerprintCheckMessage('')
 
     try {
       const started = await startBrowserInstance(profileId)
-      if (!started) throw new Error('实例启动后没有返回运行状态')
+      if (!started) throw new Error(tr("browser.pages.AutoConfigPage.AutoConfigPage.ddf18b9"))
       setCreatedProfile(started)
 
       let fingerprintOutcome: 'passed' | 'failed' | 'unavailable' = 'unavailable'
@@ -557,41 +562,41 @@ export function AutoConfigPage() {
           setFingerprintCheckStatus('failed')
           setFingerprintCheckMessage(
             mismatchLabels.length
-              ? `发现不一致：${mismatchLabels.join('、')}`
-              : '运行时检查发现需要复核的指纹项',
+              ? tr("browser.pages.AutoConfigPage.AutoConfigPage.f78be0f", [mismatchLabels.join('、')])
+              : tr("browser.pages.AutoConfigPage.AutoConfigPage.c43ccf9"),
           )
         } else if (evaluation.status === 'unavailable') {
           setFingerprintCheckStatus('unavailable')
           setFingerprintCheckMessage(
             evaluation.summary.isComparable
-              ? '运行时已采集，但部分配置项无法读取，请进入实例详情复核。'
-              : '运行时已采集，但当前环境没有足够的配置期望值可比较。',
+              ? tr("browser.pages.AutoConfigPage.AutoConfigPage.4ff0eb2")
+              : tr("browser.pages.AutoConfigPage.AutoConfigPage.c82eda2"),
           )
         } else {
           setFingerprintCheckStatus('passed')
           setFingerprintCheckMessage(
-            `快速字段检查通过：${evaluation.summary.matchCount} 项一致${evaluation.summary.compatibleCount ? `，${evaluation.summary.compatibleCount} 项兼容` : ''}`,
+            tr("browser.pages.AutoConfigPage.AutoConfigPage.cbc7268", [evaluation.summary.matchCount, evaluation.summary.compatibleCount ? tr("browser.pages.AutoConfigPage.AutoConfigPage.9359f5f", [evaluation.summary.compatibleCount]) : '']),
           )
         }
       } catch (error: unknown) {
         setFingerprintCheckStatus('unavailable')
-        setFingerprintCheckMessage(`实例已启动，指纹自测暂不可用：${resolveErrorMessage(error, '稍后可在实例详情中重试')}`)
+        setFingerprintCheckMessage(tr("browser.pages.AutoConfigPage.AutoConfigPage.ae76fc9", [resolveErrorMessage(error, tr("browser.pages.AutoConfigPage.AutoConfigPage.1fcce77"))]))
       }
 
       setOperationStatus('success')
       setOperationMessage(
         fingerprintOutcome === 'failed'
-          ? '实例已创建并启动，但指纹自测发现不一致，请进入实例详情复核。'
+          ? tr("browser.pages.AutoConfigPage.AutoConfigPage.b44fb99")
           : fingerprintOutcome === 'unavailable'
-            ? '实例已创建并启动；快速检查未完成，请稍后在实例详情复核。'
-            : '实例已创建并启动，可以开始使用。',
+            ? tr("browser.pages.AutoConfigPage.AutoConfigPage.0b3a45a")
+            : tr("browser.pages.AutoConfigPage.AutoConfigPage.e9c604b"),
       )
-      toast.success(`实例已启动${started.profileName ? `：${started.profileName}` : ''}`)
+      toast.success(tr("browser.pages.AutoConfigPage.AutoConfigPage.8b5a5ce", [started.profileName ? `：${started.profileName}` : '']))
     } catch (error: unknown) {
       setFingerprintCheckStatus('idle')
       setOperationStatus('error')
-      setOperationMessage(resolveErrorMessage(error, '实例启动失败；配置已保留，可稍后重试'))
-      toast.error(resolveErrorMessage(error, '实例启动失败'))
+      setOperationMessage(resolveErrorMessage(error, tr("browser.pages.AutoConfigPage.AutoConfigPage.bc8c176")))
+      toast.error(resolveErrorMessage(error, tr("browser.pages.AutoConfigPage.AutoConfigPage.176529e")))
     }
   }
 
@@ -600,17 +605,17 @@ export function AutoConfigPage() {
     if (!draft || !fingerprintMode || !baseline || !recommendation || !networkMode) return
     if (networkMode === 'proxy' && !settings) {
       setOperationStatus('error')
-      setOperationMessage(settingsLoadError || '无法读取全局连接栈设置，暂不创建代理实例。')
+      setOperationMessage(settingsLoadError || tr("browser.pages.AutoConfigPage.AutoConfigPage.139115d"))
       return
     }
     if (!isAutoConfigProxyReady(networkMode, proxySource, proxyId, proxyConfig)) {
       setOperationStatus('error')
-      setOperationMessage(proxySource === 'pool' ? '请选择一个代理池节点后再创建。' : '请输入代理配置后再创建。')
+      setOperationMessage(proxySource === 'pool' ? tr("browser.pages.AutoConfigPage.AutoConfigPage.9c840d3") : tr("browser.pages.AutoConfigPage.AutoConfigPage.f2a14c9"))
       return
     }
 
     setOperationStatus('loading')
-    setOperationMessage('正在校验指纹与代理配置…')
+    setOperationMessage(tr("browser.pages.AutoConfigPage.AutoConfigPage.b32fcb3"))
     setFingerprintCheckStatus('idle')
     setFingerprintCheckMessage('')
 
@@ -644,30 +649,30 @@ export function AutoConfigPage() {
 
       const proxyValidation = await validateProxyConfig(input.proxyConfig, input.proxyId)
       if (!proxyValidation.supported) {
-        throw new Error(proxyValidation.errorMsg || '代理配置无效')
+        throw new Error(proxyValidation.errorMsg || tr("browser.pages.AutoConfigPage.AutoConfigPage.3adabf7"))
       }
 
       if (networkMode === 'proxy') {
-        setOperationMessage('正在测试代理连通性…')
+        setOperationMessage(tr("browser.pages.AutoConfigPage.AutoConfigPage.4275964"))
         const connectivity = proxySource === 'pool'
           ? await testProxyRealConnectivity(input.proxyId)
           : await testProxyRealConnectivityWithConfig('', input.proxyConfig)
         if (!connectivity.ok) {
-          throw new Error(connectivity.error || '代理连通性检查失败，请检查节点或配置')
+          throw new Error(connectivity.error || tr("browser.pages.AutoConfigPage.AutoConfigPage.916996b"))
         }
       }
 
-      setOperationMessage('正在创建浏览器实例…')
+      setOperationMessage(tr("browser.pages.AutoConfigPage.AutoConfigPage.cd6bad9"))
       const created = await createBrowserProfile(input)
-      if (!created?.profileId) throw new Error('后端没有返回新实例 ID')
+      if (!created?.profileId) throw new Error(tr("browser.pages.AutoConfigPage.AutoConfigPage.13fe974"))
       setCreatedProfile(created)
       persistDraft(draft)
       await handleStartCreatedProfile(created.profileId)
     } catch (error: unknown) {
       setFingerprintCheckStatus('idle')
       setOperationStatus('error')
-      setOperationMessage(resolveErrorMessage(error, '自动配置创建失败'))
-      toast.error(resolveErrorMessage(error, '自动配置创建失败'))
+      setOperationMessage(resolveErrorMessage(error, tr("browser.pages.AutoConfigPage.AutoConfigPage.a2cb055")))
+      toast.error(resolveErrorMessage(error, tr("browser.pages.AutoConfigPage.AutoConfigPage.a2cb055")))
     }
   }
 
@@ -689,70 +694,72 @@ export function AutoConfigPage() {
   const currentSavedAt = savedDraft?.savedAt ? formatCapturedAt(savedDraft.savedAt) : ''
   const selectedProxy = proxies.find((proxy) => proxy.proxyId === proxyId)
   const proxySummary = networkMode === 'direct'
-    ? '不使用代理'
+    ? tr("browser.pages.AutoConfigPage.AutoConfigPage.4f18702")
     : proxySource === 'pool'
-      ? selectedProxy?.proxyName || '代理池节点未选择'
-      : '自定义配置（内容已隐藏）'
+      ? selectedProxy?.proxyName || tr("browser.pages.AutoConfigPage.AutoConfigPage.7a15f6d")
+      : tr("browser.pages.AutoConfigPage.AutoConfigPage.f251e47")
   const operationBusy = operationStatus === 'loading'
+  const [discardOpen, setDiscardOpen] = useState(false)
+  const handleCancel = () => {
+    if (operationBusy) return
+    const draft = buildDraft()
+    const comparable = (value: AutoConfigDraft) => JSON.stringify({ ...value, savedAt: '' })
+    const matchesSaved = draft && savedDraft && !proxyConfig.trim() && comparable(sanitizeAutoConfigDraft(draft)) === comparable(savedDraft)
+    const entered = Boolean(networkMode || baseline || fingerprintMode || proxyConfig.trim())
+    if (!createdProfile && entered && !matchesSaved) setDiscardOpen(true)
+    else navigate('/browser/list')
+  }
+  useEffect(() => {
+    const onEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && !document.querySelector('[role="dialog"]')) {
+        event.preventDefault()
+        handleCancel()
+      }
+    }
+    window.addEventListener('keydown', onEscape)
+    return () => window.removeEventListener('keydown', onEscape)
+  }, [handleCancel])
 
-  const telemetryItems = [
-    { label: '当前步骤', value: `${step + 1} / ${STEPS.length}`, detail: STEPS[step].label, tone: 'accent' as const },
-    { label: '网络入口', value: networkMode ? networkLabel[networkMode] : '待选择' },
-    {
-      label: '连接栈',
-      value: networkMode === 'direct' ? connectorLabel.none : settingsLoadError ? '读取失败' : recommendation ? connectorLabel[recommendation.connectorStack] : settings ? connectorLabel[getConnectorStack(settings.defaultConnectorType)] : '读取中',
-      tone: settingsLoadError ? 'warning' as const : 'neutral' as const,
-    },
-    { label: '指纹策略', value: fingerprintMode ? fingerprintLabel[fingerprintMode] : '待选择' },
-  ]
 
   return (
     <div className="apple-page mx-auto w-full max-w-5xl pb-12">
       <WorkspaceHeader
-        eyebrow="INSTANCE / SETUP"
-        title="自动配置实例"
-        description="按网络、设备、指纹和确认四步完成。"
+
+        title={tr("browser.components.BrowserListLayout.text.9c614ae")}
+
         actions={(
-          <Button type="button" variant="ghost" size="sm" onClick={() => navigate('/browser/list')}>
-            <X className="h-4 w-4" />
-            取消
-          </Button>
+          <Button type="button" variant="ghost" size="sm" onClick={handleCancel} disabled={operationBusy}>
+            <X className="h-4 w-4" />{tr("App.CloseConfirmModal.4d0b468")}</Button>
         )}
       />
-      <TelemetryStrip items={telemetryItems} className="mt-4" />
 
-      {savedDraft && (
+
+      {savedDraft && operationStatus === 'idle' && !createdProfile && (
         <section
           aria-labelledby="auto-config-draft-title"
-          className="mt-5 flex flex-col gap-4 rounded-sm border border-[var(--color-border-default)] bg-[var(--color-bg-subtle)] px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
+          className="mt-5 flex flex-col gap-4 rounded-[var(--radius-md)] border border-[var(--color-border-default)] bg-[var(--color-bg-subtle)] px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
         >
           <div className="flex items-start gap-3">
             <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[var(--color-accent)]" />
             <div>
-              <h2 id="auto-config-draft-title" className="text-sm font-semibold text-[var(--color-text-primary)]">
-                已找到自动配置草稿
-              </h2>
+              <h2 id="auto-config-draft-title" className="text-sm font-semibold text-[var(--color-text-primary)]">{tr("browser.pages.AutoConfigPage.text.adcea34")}</h2>
               <p className="mt-1 text-xs leading-5 text-[var(--color-text-secondary)]">
-                {currentSavedAt ? `保存于 ${currentSavedAt}。` : ''}
+                {currentSavedAt ? tr("browser.pages.AutoConfigPage.AutoConfigPage.83f9682", [currentSavedAt]) : ''}
                 {savedDraft.proxyConfigRedacted
-                  ? ' 自定义代理内容未保存，恢复后需要重新输入。'
-                  : ' 可以恢复到确认步骤继续。'}
+                  ? tr("browser.pages.AutoConfigPage.AutoConfigPage.ff06fd1")
+                  : tr("browser.pages.AutoConfigPage.AutoConfigPage.b673fec")}
               </p>
             </div>
           </div>
           <div className="flex shrink-0 items-center gap-2">
-            <Button type="button" variant="secondary" size="sm" onClick={handleRestoreDraft} disabled={operationBusy}>
-              恢复草稿
-            </Button>
-            <Button type="button" variant="ghost" size="sm" onClick={handleClearDraft} disabled={operationBusy}>
-              清除
-            </Button>
+            <Button type="button" variant="secondary" size="sm" onClick={handleRestoreDraft} disabled={operationBusy}>{tr("browser.pages.AutoConfigPage.text.95ba071")}</Button>
+            <Button type="button" variant="ghost" size="sm" onClick={handleClearDraft} disabled={operationBusy}>{tr("browser.components.InstanceFilterBar.text.7b15e5e")}</Button>
           </div>
         </section>
       )}
 
-      <nav aria-label="自动配置步骤" className="mb-8 mt-6">
-        <ol className="grid grid-cols-2 gap-2 md:grid-cols-4">
+      <nav aria-label={tr("browser.pages.AutoConfigPage.aria_label.9d1880b")} className="mb-8 mt-6">
+        <ol className="grid grid-cols-4 gap-2 font-mono">
           {STEPS.map((item, index) => {
             const isCurrent = index === step
             const isComplete = index < step
@@ -761,13 +768,13 @@ export function AutoConfigPage() {
                 <button
                   type="button"
                   onClick={() => index <= step && setStep(index)}
-                  disabled={index > step}
-                  className="flex w-full items-center gap-3 rounded-sm px-2 py-2 text-left disabled:cursor-default disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)]"
-                  aria-current={isCurrent ? 'step' : undefined}
+                  disabled={index > step || operationBusy}
+                  className="flex w-full items-center gap-3 rounded-full px-2 py-2 text-left disabled:cursor-default disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)]"
+                  aria-current={isCurrent ? "step" : undefined}
                 >
                   <span
                     className={[
-                      'flex h-7 w-7 shrink-0 items-center justify-center rounded-sm border font-mono text-[10px]',
+                      'flex h-7 w-7 shrink-0 items-center justify-center rounded-full border text-xs',
                       isComplete || isCurrent
                         ? 'border-[var(--color-accent)] bg-[var(--color-accent-muted)] text-[var(--color-accent)]'
                         : 'border-[var(--color-border-default)] text-[var(--color-text-muted)]',
@@ -783,77 +790,59 @@ export function AutoConfigPage() {
             )
           })}
         </ol>
-        <Progress percent={((step + 1) / STEPS.length) * 100} showInfo={false} size="sm" className="mt-3" />
+
       </nav>
 
       {step === 0 && (
-        <section aria-labelledby="network-choice-title">
-          <div className="mb-5">
-            <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-[var(--color-text-muted)]">网络 / 入口</p>
-            <h2 id="network-choice-title" className="mt-2 text-lg font-semibold text-[var(--color-text-primary)]">网络入口</h2>
-            <p className="mt-2 text-sm text-[var(--color-text-secondary)]">选择代理或直连。代理模式需先选节点或填写配置。</p>
-          </div>
-          <div className="grid gap-4 md:grid-cols-2" role="radiogroup" aria-label="网络入口">
+        <section aria-label={tr("browser.pages.AutoConfigPage.label.5d8cb1f")}>
+          <div className="grid gap-4 md:grid-cols-2" role="radiogroup" aria-label={tr("browser.pages.AutoConfigPage.label.5d8cb1f")}>
             <SelectionOption
-              title="使用代理"
-              description="从代理池或自定义配置接入。"
+              title={tr("browser.pages.AutoConfigPage.proxy.b168ef4")}
+              description=""
               icon={Network}
               selected={networkMode === 'proxy'}
               onSelect={() => setNetworkMode('proxy')}
-              badge="推荐给多实例"
+
             />
             <SelectionOption
-              title="直连"
-              description="使用当前网络，不启动代理内核。"
+              title={tr("browser.pages.AutoConfigPage.direct.a7dd3b6")}
+              description={tr("browser.pages.AutoConfigPage.description.dab36cd")}
               icon={Wifi}
               selected={networkMode === 'direct'}
               onSelect={() => setNetworkMode('direct')}
             />
           </div>
           {networkMode === 'proxy' && (
-            <div className="mt-5 rounded-sm border border-[var(--color-border-default)] bg-[var(--color-bg-surface)] p-4" aria-label="代理来源">
-              <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-                <div>
-                  <p className="text-sm font-semibold text-[var(--color-text-primary)]">代理来源</p>
-                  <p className="mt-1 text-xs leading-5 text-[var(--color-text-muted)]">先选一个真实来源，创建前会执行代理格式与连通性检查。</p>
-                </div>
-                <Badge variant={recommendation?.connectorStack === 'mihomo' ? 'warning' : 'info'} size="sm">
-                  {connectorLabel[recommendation?.connectorStack || 'xray']}
-                </Badge>
-              </div>
-              <div className="mt-4 flex flex-wrap gap-2" role="radiogroup" aria-label="代理来源类型">
+            <div className="mt-5 rounded-sm border border-[var(--color-border-default)] bg-[var(--color-bg-surface)] p-4" aria-label={tr("browser.pages.AutoConfigPage.aria_label.d03acac")}>
+              <div className="flex flex-wrap gap-2" role="radiogroup" aria-label={tr("browser.pages.AutoConfigPage.aria_label.bf9181d")}>
                 <button
                   type="button"
                   role="radio"
                   aria-checked={proxySource === 'pool'}
                   onClick={() => setProxySource('pool')}
                   className={[
-                    'rounded-sm border px-3 py-2 text-xs font-medium transition-[background-color,border-color,color] duration-150',
+                    'rounded-full border px-3 py-2 text-xs font-medium transition-[background-color,border-color,color] duration-150',
                     proxySource === 'pool'
                       ? 'border-[var(--color-accent)] bg-[var(--color-accent-muted)] text-[var(--color-accent)]'
                       : 'border-[var(--color-border-default)] text-[var(--color-text-secondary)] hover:border-[var(--color-border-strong)]',
                   ].join(' ')}
-                >
-                  代理池节点
-                </button>
+                >{tr("browser.pages.AutoConfigPage.text.8fcd5eb")}</button>
                 <button
                   type="button"
                   role="radio"
                   aria-checked={proxySource === 'custom'}
                   onClick={() => setProxySource('custom')}
                   className={[
-                    'rounded-sm border px-3 py-2 text-xs font-medium transition-[background-color,border-color,color] duration-150',
+                    'rounded-full border px-3 py-2 text-xs font-medium transition-[background-color,border-color,color] duration-150',
                     proxySource === 'custom'
                       ? 'border-[var(--color-accent)] bg-[var(--color-accent-muted)] text-[var(--color-accent)]'
                       : 'border-[var(--color-border-default)] text-[var(--color-text-secondary)] hover:border-[var(--color-border-strong)]',
                   ].join(' ')}
-                >
-                  自定义配置
-                </button>
+                >{tr("browser.pages.AutoConfigPage.text.c4a8bbd")}</button>
               </div>
               {proxySource === 'pool' ? (
                 <div className="mt-4">
-                  <label htmlFor="auto-config-proxy" className="mb-2 block text-xs font-medium text-[var(--color-text-secondary)]">选择代理池节点</label>
+                  <label htmlFor="auto-config-proxy" className="mb-2 block text-xs font-medium text-[var(--color-text-secondary)]">{tr("browser.pages.AutoConfigPage.text.313f10d")}</label>
                   <select
                     id="auto-config-proxy"
                     value={proxyId}
@@ -861,33 +850,29 @@ export function AutoConfigPage() {
                     disabled={proxyLoading || proxies.length === 0}
                     className="h-10 w-full rounded-sm border border-[var(--color-border-default)] bg-[var(--color-bg-base)] px-3 text-sm text-[var(--color-text-primary)] outline-none transition-[border-color,box-shadow] focus:border-[var(--color-accent)] focus:ring-2 focus:ring-[var(--color-accent)]/20 disabled:cursor-not-allowed disabled:opacity-60"
                   >
-                    <option value="">{proxyLoading ? '正在读取代理池…' : proxies.length ? '请选择节点' : '暂无可用代理池节点'}</option>
+                    <option value="">{proxyLoading ? tr("browser.pages.AutoConfigPage.AutoConfigPage.2cac33e") : proxies.length ? tr("browser.pages.AutoConfigPage.AutoConfigPage.1f5e069") : tr("browser.pages.AutoConfigPage.AutoConfigPage.bfceb3d")}</option>
                     {proxies.map((proxy) => (
                       <option key={proxy.proxyId} value={proxy.proxyId}>
                         {proxy.proxyName || proxy.proxyId}{proxy.groupName ? ` · ${proxy.groupName}` : ''}
                       </option>
                     ))}
                   </select>
-                  {proxyLoadError && <p className="mt-2 text-xs text-[var(--color-warning)]">{proxyLoadError}</p>}
+                  {proxyLoadError && <p className="mt-2 text-xs text-[var(--color-warning)]">{translateMessage(proxyLoadError)}</p>}
                   {!proxyLoading && !proxies.length && !proxyLoadError && (
-                    <p className="mt-2 text-xs text-[var(--color-text-muted)]">还没有可用节点，可以切换到“自定义配置”。</p>
+                    <p className="mt-2 text-xs text-[var(--color-text-muted)]">{tr("browser.pages.AutoConfigPage.text.9fb43d1")}</p>
                   )}
                 </div>
               ) : (
                 <div className="mt-4">
-                  <label htmlFor="auto-config-proxy-config" className="mb-2 block text-xs font-medium text-[var(--color-text-secondary)]">代理配置</label>
+                  <label htmlFor="auto-config-proxy-config" className="mb-2 block text-xs font-medium text-[var(--color-text-secondary)]">{tr("browser.components.ProxyPickerModal.edit.label.6c9e697")}</label>
                   <textarea
                     id="auto-config-proxy-config"
                     value={proxyConfig}
                     onChange={(event) => setProxyConfig(event.target.value)}
                     rows={4}
-                    placeholder="例如 socks5://user:password@host:port，或项目支持的代理配置格式"
+                    placeholder={tr("browser.pages.AutoConfigPage.placeholder.1c709e6")}
                     className="w-full resize-y rounded-sm border border-[var(--color-border-default)] bg-[var(--color-bg-base)] px-3 py-2 font-mono text-xs leading-5 text-[var(--color-text-primary)] outline-none transition-[border-color,box-shadow] focus:border-[var(--color-accent)] focus:ring-2 focus:ring-[var(--color-accent)]/20"
                   />
-                  <p className="mt-2 flex items-start gap-2 text-xs leading-5 text-[var(--color-text-muted)]">
-                    <HelpCircle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[var(--color-accent)]" />
-                    <span>仅用于本次创建，不写入页面文案或指纹签名。</span>
-                  </p>
                 </div>
               )}
             </div>
@@ -895,57 +880,42 @@ export function AutoConfigPage() {
           {settingsLoadError && (
             <div className="mt-4 flex items-start gap-3 rounded-sm border border-[var(--color-warning)]/45 bg-[var(--color-bg-subtle)] px-4 py-3 text-xs leading-5 text-[var(--color-text-secondary)]" role="status">
               <HelpCircle className="mt-0.5 h-4 w-4 shrink-0 text-[var(--color-warning)]" />
-              <span>{settingsLoadError}</span>
-            </div>
-          )}
-          {networkMode !== 'proxy' && (
-            <div className="mt-5 flex items-start gap-3 rounded-sm border border-[var(--color-accent)]/40 bg-[var(--color-bg-subtle)] px-4 py-3 text-sm leading-6 text-[var(--color-text-secondary)]">
-              <HelpCircle className="mt-0.5 h-4 w-4 shrink-0 text-[var(--color-accent)]" />
-              <span>直连不启动代理内核；需要代理时在实例设置中切换。</span>
+              <span>{translateMessage(settingsLoadError)}</span>
             </div>
           )}
         </section>
       )}
 
       {step === 1 && (
-        <section aria-labelledby="baseline-title">
+        <section aria-label={tr("browser.pages.AutoConfigPage.label.382aa54")}>
           <div className="mb-5 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
-            <div>
-              <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-[var(--color-text-muted)]">设备 / 基线</p>
-              <h2 id="baseline-title" className="mt-2 text-lg font-semibold text-[var(--color-text-primary)]">设备基线</h2>
-              <p className="mt-2 text-sm text-[var(--color-text-secondary)]">读取桌面环境参数，用于生成初始指纹。</p>
-            </div>
             <Button type="button" variant="secondary" size="sm" onClick={() => setBaseline(captureDeviceBaseline())}>
-              <RefreshCw className="h-4 w-4" />
-              重新读取
-            </Button>
+              <RefreshCw className="h-4 w-4" />{tr("browser.pages.AutoConfigPage.text.7784972")}</Button>
           </div>
           {!baseline ? (
-            <TerminalPanel title="设备基线" meta="正在读取">
+            <TerminalPanel title={tr("browser.pages.AutoConfigPage.label.382aa54")} meta={tr("browser.pages.AutoConfigPage.meta.62e5156")}>
               <div className="flex items-center gap-3 p-4 text-sm text-[var(--color-text-secondary)]">
-                <Monitor className="h-5 w-5 text-[var(--color-accent)]" />
-                正在读取本机基线…
-              </div>
+                <Monitor className="h-5 w-5 text-[var(--color-accent)]" />{tr("browser.pages.AutoConfigPage.text.a959603")}</div>
             </TerminalPanel>
           ) : (
             <div className="grid gap-4 md:grid-cols-[1.1fr_0.9fr]">
-              <TerminalPanel title="环境摘要" meta={`读取于 ${formatCapturedAt(baseline.capturedAt)}`}>
+              <TerminalPanel title={tr("browser.pages.AutoConfigPage.title.5c8b1d4")} meta={tr("browser.pages.AutoConfigPage.AutoConfigPage.c10194d", [formatCapturedAt(baseline.capturedAt)])}>
                 <dl className="px-4">
-                  <DetailRow label="浏览器" value={baseline.browserFamily} />
-                  <DetailRow label="平台" value={baseline.platform} />
-                  <DetailRow label="语言" value={baseline.languages.length ? baseline.languages.join(', ') : baseline.language} />
-                  <DetailRow label="时区" value={baseline.timezone} />
-                  <DetailRow label="屏幕" value={`${baseline.screenWidth} × ${baseline.screenHeight} / DPR ${baseline.pixelRatio}`} mono />
-                  <DetailRow label="视口" value={`${baseline.viewportWidth} × ${baseline.viewportHeight}`} mono />
+                  <DetailRow label={tr("browser.pages.AutoConfigPage.label.88d650d")} value={baseline.browserFamily} />
+                  <DetailRow label={tr("browser.components.FingerprintPanel.label.e4b9d69")} value={baseline.platform} />
+                  <DetailRow label={tr("browser.components.FingerprintPanel.label.cd99b22")} value={baseline.languages.length ? baseline.languages.join(', ') : baseline.language} />
+                  <DetailRow label={tr("browser.components.FingerprintPanel.label.fb2a23d")} value={baseline.timezone} />
+                  <DetailRow label={tr("browser.pages.AutoConfigPage.label.c68cb70")} value={`${baseline.screenWidth} × ${baseline.screenHeight} / DPR ${baseline.pixelRatio}`} mono />
+                  <DetailRow label={tr("browser.pages.AutoConfigPage.label.23a42e6")} value={`${baseline.viewportWidth} × ${baseline.viewportHeight}`} mono />
                 </dl>
               </TerminalPanel>
-              <TerminalPanel title="硬件线索" meta="缺失项保持为空">
+              <TerminalPanel title={tr("browser.pages.AutoConfigPage.title.93a85c0")} meta={tr("browser.pages.AutoConfigPage.meta.29935be")}>
                 <dl className="px-4">
-                  <DetailRow label="并发线程" value={baseline.hardwareConcurrency ? `${baseline.hardwareConcurrency}` : '未提供'} mono />
-                  <DetailRow label="设备内存" value={baseline.deviceMemory ? `${baseline.deviceMemory} GB` : '未提供'} mono />
-                  <DetailRow label="色深" value={baseline.colorDepth ? `${baseline.colorDepth} bit` : '未提供'} mono />
-                  <DetailRow label="触控点" value={`${baseline.touchPoints}`} mono />
-                  <DetailRow label="UA 摘要" value={baseline.userAgent} mono />
+                  <DetailRow label={tr("browser.pages.AutoConfigPage.label.fe5e640")} value={baseline.hardwareConcurrency ? `${baseline.hardwareConcurrency}` : tr("browser.pages.AutoConfigPage.AutoConfigPage.071fb24")} mono />
+                  <DetailRow label={tr("browser.pages.AutoConfigPage.label.063c974")} value={baseline.deviceMemory ? `${baseline.deviceMemory} GB` : tr("browser.pages.AutoConfigPage.AutoConfigPage.071fb24")} mono />
+                  <DetailRow label={tr("browser.pages.AutoConfigPage.label.f79e991")} value={baseline.colorDepth ? `${baseline.colorDepth} bit` : tr("browser.pages.AutoConfigPage.AutoConfigPage.071fb24")} mono />
+                  <DetailRow label={tr("browser.pages.AutoConfigPage.label.e8e82c9")} value={`${baseline.touchPoints}`} mono />
+                  <DetailRow label={tr("browser.pages.AutoConfigPage.label.709e0b2")} value={baseline.userAgent} mono />
                 </dl>
               </TerminalPanel>
             </div>
@@ -954,69 +924,47 @@ export function AutoConfigPage() {
       )}
 
       {step === 2 && (
-        <section aria-labelledby="fingerprint-title">
-          <div className="mb-5">
-            <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-[var(--color-text-muted)]">指纹 / 策略</p>
-            <h2 id="fingerprint-title" className="mt-2 text-lg font-semibold text-[var(--color-text-primary)]">指纹策略</h2>
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-[var(--color-text-secondary)]">固定指纹，或预览约束随机策略。</p>
-          </div>
-          <div className="space-y-3" role="radiogroup" aria-label="指纹策略">
+        <section aria-label={tr("browser.pages.AutoConfigPage.label.a03c568")}>
+          <div className="space-y-3" role="radiogroup" aria-label={tr("browser.pages.AutoConfigPage.label.a03c568")}>
             <SelectionOption
-              title="固定指纹"
-              description="为实例保留同一套设备特征。"
+              title={tr("browser.pages.AutoConfigPage.fixed.0467103")}
+              description={tr('fingerprint.compatibility')}
               icon={LockKeyhole}
               selected={fingerprintMode === 'fixed'}
               onSelect={() => setFingerprintMode('fixed')}
-              badge="稳定"
+
             />
-            <SelectionOption
-              title="约束随机（预览）"
-              description="策略预览；当前仍使用已验证的默认参数。"
-              icon={Shuffle}
-              selected={fingerprintMode === 'constrained-random'}
-              onSelect={() => setFingerprintMode('constrained-random')}
-              badge="策略预览"
-            />
+
           </div>
-          <div className="mt-5 flex items-start gap-3 rounded-sm border border-[var(--color-warning)]/45 bg-[var(--color-bg-subtle)] px-4 py-3 text-sm leading-6 text-[var(--color-text-secondary)]">
-            <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-[var(--color-warning)]" />
-            <span>固定指纹会直接使用一致参数；约束随机目前保留为策略标签，并沿用同一套已验证的默认参数，避免首次创建时产生未验证的随机字段。</span>
-          </div>
+
         </section>
       )}
 
       {step === 3 && baseline && networkMode && fingerprintMode && recommendation && (
-        <section aria-labelledby="review-title">
-          <div className="mb-5">
-            <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-[var(--color-text-muted)]">确认 / 创建</p>
-            <h2 id="review-title" className="mt-2 text-lg font-semibold text-[var(--color-text-primary)]">确认实例</h2>
-            <p className="mt-2 text-sm text-[var(--color-text-secondary)]">写入配置，执行检查并启动。</p>
-          </div>
+        <section aria-label={tr("browser.pages.AutoConfigPage.label.6d55107")}>
           <TerminalPanel
-            title="创建预览"
-            meta={<Badge variant="warning" dot>待创建前校验</Badge>}
+            title={tr("browser.pages.AutoConfigPage.title.35f1dd1")}
+            meta={<Badge variant="warning" dot>{tr("browser.pages.AutoConfigPage.text.e0ecb79")}</Badge>}
           >
             <div className="px-4">
               <div className="border-b border-[var(--color-border-muted)] py-4">
-                <Badge variant="default">指纹签名 {recommendation.signature}</Badge>
+                <Badge variant="default">{tr("browser.pages.AutoConfigPage.text.804f3f7")}{recommendation.signature}</Badge>
                 <h3 className="mt-3 text-base font-semibold text-[var(--color-text-primary)]">{recommendation.profileName}</h3>
                 <p className="mt-1 text-sm text-[var(--color-text-secondary)]">{fingerprintLabel[fingerprintMode]} · {networkLabel[networkMode]}</p>
               </div>
               <dl>
-                <DetailRow label="网络入口" value={networkLabel[networkMode]} />
-                <DetailRow label="代理来源" value={proxySummary} />
-                <DetailRow label="连接栈" value={connectorLabel[recommendation.connectorStack]} />
-                <DetailRow label="指纹策略" value={fingerprintLabel[fingerprintMode]} />
-                <DetailRow label="设备类型" value={`${recommendation.osFamily} · ${recommendation.hardwareClass}`} />
-                <DetailRow label="语言 / 时区" value={`${recommendation.locale} · ${recommendation.timezone}`} mono />
-                <DetailRow label="视口" value={recommendation.viewport} mono />
+                <DetailRow label={tr("browser.pages.AutoConfigPage.label.5d8cb1f")} value={networkLabel[networkMode]} />
+                <DetailRow label={tr("browser.pages.AutoConfigPage.aria_label.d03acac")} value={proxySummary} />
+                <DetailRow label={tr("config.navigation.config.name.624647e")} value={connectorLabel[recommendation.connectorStack]} />
+                <DetailRow label={tr("browser.pages.AutoConfigPage.label.a03c568")} value={fingerprintLabel[fingerprintMode]} />
+                <DetailRow label={tr("browser.pages.AutoConfigPage.label.47a991d")} value={`${recommendation.osFamily} · ${recommendation.hardwareClass}`} />
+                <DetailRow label={tr("browser.copyOptions.detail.85653bc")} value={`${recommendation.locale} · ${recommendation.timezone}`} mono />
+                <DetailRow label={tr("browser.pages.AutoConfigPage.label.23a42e6")} value={recommendation.viewport} mono />
               </dl>
             </div>
           </TerminalPanel>
           <details className="mt-4 rounded-sm border border-[var(--color-border-default)] bg-[var(--color-bg-surface)]">
-            <summary className="cursor-pointer list-none px-5 py-4 text-sm font-semibold text-[var(--color-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--color-accent)]">
-              高级设置预览
-              <span className="ml-2 text-xs font-normal text-[var(--color-text-muted)]">不改也能直接使用</span>
+            <summary className="cursor-pointer list-none px-5 py-4 text-sm font-semibold text-[var(--color-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--color-accent)]">{tr("browser.pages.AutoConfigPage.text.d28c05e")}<span className="ml-2 text-xs font-normal text-[var(--color-text-muted)]">{tr("browser.pages.AutoConfigPage.text.6c8aa43")}</span>
             </summary>
             <div className="border-t border-[var(--color-border-muted)] px-5 py-4">
               <ul className="space-y-2 text-sm leading-6 text-[var(--color-text-secondary)]">
@@ -1028,9 +976,7 @@ export function AutoConfigPage() {
                 ))}
               </ul>
               <p className="mt-4 flex items-start gap-2 border-t border-[var(--color-border-muted)] pt-4 text-xs leading-5 text-[var(--color-text-muted)]">
-                <Fingerprint className="mt-0.5 h-4 w-4 shrink-0" />
-                首次创建只写入已验证的语言、时区和窗口参数；更复杂的指纹字段继续收纳在实例设置的“高级设置”中。
-              </p>
+                <Fingerprint className="mt-0.5 h-4 w-4 shrink-0" />{tr("browser.pages.AutoConfigPage.text.fc5fc1c")}</p>
             </div>
           </details>
           {operationStatus !== 'idle' && (
@@ -1043,7 +989,7 @@ export function AutoConfigPage() {
                     ? 'border-[var(--color-error)] bg-[var(--color-error)]/10 text-[var(--color-text-secondary)]'
                     : 'border-[var(--color-accent)] bg-[var(--color-accent-muted)] text-[var(--color-text-secondary)]',
               ].join(' ')}
-              role={operationStatus === 'error' ? 'alert' : 'status'}
+              role={operationStatus === 'error' ? "alert" : "status"}
             >
               {operationStatus === 'success' ? (
                 <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[var(--color-success)]" />
@@ -1053,14 +999,12 @@ export function AutoConfigPage() {
                 <RefreshCw className="mt-0.5 h-4 w-4 shrink-0 animate-spin text-[var(--color-accent)]" />
               )}
               <div className="min-w-0 flex-1">
-                <p>{operationMessage}</p>
+                <p>{translateMessage(operationMessage)}</p>
                 {createdProfile && operationStatus === 'success' && (
-                  <p className="mt-1 font-mono text-xs text-[var(--color-text-muted)]">实例 ID：{createdProfile.profileId}</p>
+                  <p className="mt-1 font-mono text-xs text-[var(--color-text-muted)]">{tr("browser.pages.AutoConfigPage.text.054f435")}{createdProfile.profileId}</p>
                 )}
                 {fingerprintCheckMessage && (
-                  <p className="mt-2 text-xs text-[var(--color-text-muted)]">
-                    指纹快速检查：
-                    <span
+                  <p className="mt-2 text-xs text-[var(--color-text-muted)]">{tr("browser.pages.AutoConfigPage.text.8703cc2")}<span
                       className={[
                         'ml-1 font-medium',
                         fingerprintCheckStatus === 'passed'
@@ -1073,18 +1017,18 @@ export function AutoConfigPage() {
                       ].join(' ')}
                     >
                       {fingerprintCheckStatus === 'passed'
-                        ? '已通过'
+                        ? tr("browser.pages.AutoConfigPage.AutoConfigPage.4b3c965")
                         : fingerprintCheckStatus === 'failed'
-                          ? '需复核'
+                          ? tr("browser.pages.AutoConfigPage.AutoConfigPage.eaae113")
                           : fingerprintCheckStatus === 'checking'
-                            ? '检查中'
+                            ? tr("browser.pages.AutoConfigPage.AutoConfigPage.9908c92")
                             : fingerprintCheckStatus === 'unavailable'
-                              ? '不可用'
-                              : '未检查'}
+                              ? tr("browser.pages.AutoConfigPage.AutoConfigPage.beff4a1")
+                              : tr("browser.pages.AutoConfigPage.AutoConfigPage.ed9ec81")}
                     </span>
                     {' · '}
-                    {fingerprintCheckMessage}
-                    <span className="mt-1 block">此检查仅比较可读取的基础字段，不代表 WebRTC 无泄漏或 Canvas、字体等效果已验证；这些项目需在浏览器内检测页复核。</span>
+                    {translateMessage(fingerprintCheckMessage)}
+                    <span className="mt-1 block">{tr("browser.pages.AutoConfigPage.text.87e43b2")}</span>
                   </p>
                 )}
               </div>
@@ -1096,32 +1040,24 @@ export function AutoConfigPage() {
       <footer className="mt-8 flex flex-col-reverse gap-3 border-t border-[var(--color-border-muted)] pt-5 sm:flex-row sm:items-center sm:justify-between">
         <div>
           {step > 0 ? (
-            <Button type="button" variant="ghost" onClick={() => setStep((current) => Math.max(0, current - 1))}>
-              <ArrowLeft className="h-4 w-4" />
-              上一步
-            </Button>
+            <Button type="button" variant="ghost" onClick={() => setStep((current) => Math.max(0, current - 1))} disabled={operationBusy}>
+              <ArrowLeft className="h-4 w-4" />{tr("browser.pages.AutoConfigPage.text.75ef124")}</Button>
           ) : (
-            <Button type="button" variant="ghost" onClick={() => navigate('/browser/list')}>
-              返回实例总览
-            </Button>
+            <Button type="button" variant="ghost" onClick={handleCancel} disabled={operationBusy}>{tr("browser.pages.AutoConfigPage.text.82a0afa")}</Button>
           )}
         </div>
         <div className="flex flex-col gap-3 sm:flex-row">
           {step === 3 && (savedDraft || createdProfile) ? (
-            <Button type="button" variant="secondary" onClick={handleReset} disabled={operationBusy}>
-              重新配置
-            </Button>
+            <Button type="button" variant="secondary" onClick={handleReset} disabled={operationBusy}>{tr("browser.pages.AutoConfigPage.text.737d065")}</Button>
           ) : null}
           {step < 3 ? (
-            <Button type="button" onClick={() => setStep((current) => Math.min(STEPS.length - 1, current + 1))} disabled={!canContinue}>
-              继续
-              <ArrowRight className="h-4 w-4" />
+            <Button type="button" onClick={() => setStep((current) => Math.min(STEPS.length - 1, current + 1))} disabled={!canContinue}>{tr("browser.pages.AutoConfigPage.text.1fc1afc")}<ArrowRight className="h-4 w-4" />
             </Button>
           ) : (
             <>
               <Button type="button" variant="secondary" onClick={handleSaveDraft} disabled={!canContinue || operationBusy}>
                 <Check className="h-4 w-4" />
-                {savedDraft ? '再次保存草稿' : '保存草稿'}
+                {savedDraft ? tr("browser.pages.AutoConfigPage.AutoConfigPage.b8bd077") : tr("browser.pages.AutoConfigPage.AutoConfigPage.4cd30ef")}
               </Button>
               {createdProfile && operationStatus === 'error' ? (
                 <Button
@@ -1130,9 +1066,7 @@ export function AutoConfigPage() {
                   onClick={() => void handleStartCreatedProfile(createdProfile.profileId)}
                   loading={operationBusy}
                 >
-                  <RefreshCw className="h-4 w-4" />
-                  重试启动
-                </Button>
+                  <RefreshCw className="h-4 w-4" />{tr("browser.pages.AutoConfigPage.text.aa4d0c9")}</Button>
               ) : null}
               <Button
                 type="button"
@@ -1140,13 +1074,9 @@ export function AutoConfigPage() {
                 disabled={!canContinue || operationBusy || operationStatus === 'success' || (networkMode === 'proxy' && !settings)}
                 loading={operationBusy}
               >
-                <Wand2 className="h-4 w-4" />
-                创建并启动实例
-              </Button>
+                <Wand2 className="h-4 w-4" />{tr("browser.pages.AutoConfigPage.text.86fa54f")}</Button>
               {createdProfile && operationStatus === 'success' ? (
-                <Button type="button" variant="primary" onClick={() => navigate('/browser/list')}>
-                  进入实例总览
-                  <ArrowRight className="h-4 w-4" />
+                <Button type="button" variant="primary" onClick={handleCancel} disabled={operationBusy}>{tr("browser.pages.AutoConfigPage.text.02f5287")}<ArrowRight className="h-4 w-4" />
                 </Button>
               ) : null}
             </>
@@ -1154,10 +1084,9 @@ export function AutoConfigPage() {
         </div>
       </footer>
 
-      <p className="mt-6 flex items-center gap-2 text-xs text-[var(--color-text-muted)]">
-        <Globe2 className="h-3.5 w-3.5" />
-        本地草稿 · 按当前连接栈创建
-      </p>
+
+      <ConfirmModal open={discardOpen} onClose={() => setDiscardOpen(false)} onConfirm={() => navigate('/browser/list')} title={tr('setup.discardTitle')} content={tr('setup.discardBody')} confirmText={tr('setup.discard')} />
+
     </div>
   )
 }

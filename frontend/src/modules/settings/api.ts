@@ -1,3 +1,4 @@
+import { tr } from '../../shared/i18n'
 // Settings 模块 API
 import type { AppSettings } from './types'
 import { defaultSettings } from './types'
@@ -76,15 +77,15 @@ export const defaultAutomationState: AutomationState = {
   settings: {
     enabled: false,
     installPolicy: 'on_demand',
-    runtimeVersion: 'node-22.15.1-playwright-core-1.59.0',
+    runtimeVersion: 'node-26.13.0-playwright-core-1.65.0',
     headlessDefault: false,
     keepRuntimeOnDisable: true,
     allowTypeScriptBuild: false,
     artifactsDir: 'data/automation/artifacts',
     nodeSource: 'auto',
     systemNodePath: '',
-    nodeVersion: '22.15.1',
-    playwrightVersion: '1.59.0',
+    nodeVersion: '26.13.0',
+    playwrightVersion: '1.65.0',
   },
   status: {
     installed: false,
@@ -98,8 +99,8 @@ export const defaultAutomationState: AutomationState = {
     systemNodeDetected: false,
     systemNodePath: '',
     systemNodeError: '',
-    nodeVersion: '22.15.1',
-    playwrightVersion: '1.59.0',
+    nodeVersion: '26.13.0',
+    playwrightVersion: '1.65.0',
   },
 }
 
@@ -155,7 +156,7 @@ export async function resetSettings(): Promise<AppSettings> {
 export async function initializeSystemData(): Promise<BackupActionResult> {
   const bindings: any = await getBindings()
   if (!bindings?.BackupInitializeSystem) {
-    return { cancelled: false, message: '当前环境不支持后端初始化接口' }
+    return { cancelled: false, message: tr("settings.api.message.e665aac") }
   }
   return (await bindings.BackupInitializeSystem()) || {}
 }
@@ -163,7 +164,7 @@ export async function initializeSystemData(): Promise<BackupActionResult> {
 export async function exportSystemConfig(): Promise<BackupActionResult> {
   const bindings: any = await getBindings()
   if (!bindings?.BackupExportPackage) {
-    return { cancelled: false, message: '当前环境不支持后端导出接口' }
+    return { cancelled: false, message: tr("settings.api.message.02fa19b") }
   }
   return (await bindings.BackupExportPackage()) || {}
 }
@@ -171,7 +172,7 @@ export async function exportSystemConfig(): Promise<BackupActionResult> {
 export async function importSystemConfig(resetFirst: boolean): Promise<BackupActionResult> {
   const bindings: any = await getBindings()
   if (!bindings?.BackupImportPackage) {
-    return { cancelled: false, message: '当前环境不支持后端加载接口' }
+    return { cancelled: false, message: tr("settings.api.message.69ef8f4") }
   }
   return (await bindings.BackupImportPackage(resetFirst)) || {}
 }

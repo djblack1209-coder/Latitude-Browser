@@ -1,3 +1,4 @@
+import { tr, useLocale } from '../../../shared/i18n'
 import type { ReactNode } from 'react'
 import { Badge } from '../../../shared/components'
 import type { LaunchServerInfo } from '../api'
@@ -15,33 +16,31 @@ export function LaunchServerStatusBlock({
   apiAuth,
   children,
 }: LaunchServerStatusBlockProps) {
+  useLocale()
+
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap items-center gap-2">
-        <Badge variant={launchServerReady ? 'success' : 'warning'} size="sm" dot>
-          Launch API {launchServerReady ? '已就绪' : '待就绪'}
+        <Badge variant={launchServerReady ? "success" : "warning"} size="sm" dot>{tr("ui.modules.browser.components.LaunchServerStatusBlock.label.6c42827")}{launchServerReady ? tr("browser.automationRuntime.getAutomationRuntimeBadgeText.f2afde8") : tr("browser.components.LaunchServerStatusBlock.LaunchServerStatusBlock.a4a7017")}
         </Badge>
-        <Badge variant="default" size="sm">
-          Base URL {launchBaseUrl}
+        <Badge variant="default" size="sm">{tr("ui.modules.browser.components.LaunchServerStatusBlock.label.1dbd61f")}{launchBaseUrl}
         </Badge>
         {apiAuth.enabled && (
-          <Badge variant="warning" size="sm">
-            API 认证已启用 · {apiAuth.header}
+          <Badge variant="warning" size="sm">{tr("browser.components.LaunchServerStatusBlock.text.f3fcb57")}{apiAuth.header}
           </Badge>
         )}
       </div>
 
       <div className="text-sm leading-relaxed text-[var(--color-text-secondary)]">
-        <p>
-          当前 Launch 地址：<code>{launchBaseUrl}</code>
-          {!launchServerReady ? '（服务启动后会自动刷新）' : ''}
+        <p>{tr("browser.components.LaunchServerStatusBlock.text.08e13d8")}<code>{launchBaseUrl}</code>
+          {!launchServerReady ? tr("browser.components.LaunchServerStatusBlock.LaunchServerStatusBlock.1414ebc") : ''}
         </p>
         <p className="mt-2">
           {apiAuth.enabled
-            ? <>当前 API 认证已启用，请为所有 <code>/api/*</code> 请求追加 <code>{apiAuth.header}: &lt;your-api-key&gt;</code>。</>
+            ? <>{tr("browser.components.LaunchServerStatusBlock.text.25b1755")}<code>/api/*</code>{tr("browser.components.LaunchServerStatusBlock.text.e5887a9")}<code>{apiAuth.header}{tr("ui.modules.browser.components.LaunchServerStatusBlock.label.ba16ec3")}</code>。</>
             : apiAuth.requested && !apiAuth.configured
-              ? <>当前配置要求启用 API 认证，但 <code>api_key</code> 为空，认证尚未生效。</>
-              : <>当前 API 认证未启用；如需开启，可在 <code>config.yaml</code> 的 <code>launch_server.auth</code> 下配置。</>}
+              ? <>{tr("browser.components.LaunchServerStatusBlock.text.56244c9")}<code>api_key</code>{tr("browser.components.LaunchServerStatusBlock.text.158ce2f")}</>
+              : <>{tr("browser.components.LaunchServerStatusBlock.text.ffd0fdd")}<code>{tr("ui.modules.browser.components.LaunchServerStatusBlock.label.b5106b5")}</code>{tr("browser.components.LaunchServerStatusBlock.text.246cfa4")}<code>{tr("ui.modules.browser.components.LaunchServerStatusBlock.label.5fe8ff2")}</code>{tr("browser.components.LaunchServerStatusBlock.text.c7cda9b")}</>}
         </p>
       </div>
 

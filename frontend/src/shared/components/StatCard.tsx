@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n'
 import { ReactNode } from 'react'
 import clsx from 'clsx'
 
@@ -12,10 +13,12 @@ interface StatCardProps {
 }
 
 export function StatCard({ title, value, icon, trend }: StatCardProps) {
+  useLocale()
+
   return (
-    <div 
+    <div
       className={clsx(
-        'signal-panel min-w-0 bg-[var(--color-bg-surface)] rounded-md overflow-hidden',
+        'signal-panel min-w-0 bg-[var(--color-bg-surface)] rounded-[var(--radius-md)] overflow-hidden',
         'border border-[var(--color-border-default)]',
         'transition-[border-color,box-shadow] duration-200',
         'hover:border-[var(--color-border-strong)] hover:shadow-[var(--shadow-sm)]',
@@ -25,7 +28,7 @@ export function StatCard({ title, value, icon, trend }: StatCardProps) {
       <div className="p-5">
         <div className="flex items-start justify-between gap-4">
           <div className="flex-1 min-w-0">
-            <p className="text-xs text-[var(--color-text-muted)] font-medium tracking-wide uppercase">
+            <p className="text-xs text-[var(--color-text-muted)] font-medium">
               {title}
             </p>
             <p className="text-2xl font-semibold text-[var(--color-text-primary)] mt-2 tabular-nums">
@@ -46,7 +49,7 @@ export function StatCard({ title, value, icon, trend }: StatCardProps) {
             )}
           </div>
           {icon && (
-            <div className="w-11 h-11 rounded-md bg-[var(--color-bg-muted)] flex items-center justify-center text-[var(--color-text-secondary)] transition-colors group-hover:bg-[var(--color-accent-muted)]">
+            <div className="w-11 h-11 rounded-full bg-[var(--color-bg-muted)] flex items-center justify-center text-[var(--color-text-secondary)] transition-colors group-hover:bg-[var(--color-accent-muted)]">
               {icon}
             </div>
           )}

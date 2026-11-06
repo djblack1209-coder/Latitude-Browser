@@ -1,3 +1,4 @@
+import { tr, sourceText } from '../../../shared/i18n'
 import { toast } from "../../../shared/components";
 import {
   findAutomationTargetProfile,
@@ -42,11 +43,11 @@ export type AutomationCardPresentation = {
 
 function getAutomationCardRailClass(seed: string): string {
   const palette = [
-    "bg-[#8aa0b3]",
-    "bg-[#8da79b]",
-    "bg-[#929ab1]",
-    "bg-[#aa9a8e]",
-    "bg-[#8b9a9c]",
+    "bg-[var(--color-text-secondary)]",
+    "bg-[var(--color-text-secondary)]",
+    "bg-[var(--color-text-secondary)]",
+    "bg-[var(--color-text-secondary)]",
+    "bg-[var(--color-text-secondary)]",
   ];
 
   let hash = 0;
@@ -106,7 +107,7 @@ export async function copyToClipboard(text: string, successMessage: string) {
     await navigator.clipboard.writeText(text);
     toast.success(successMessage);
   } catch {
-    toast.error("复制失败");
+    toast.error(tr("browser.components.AutomationScriptPublicApiModal.helpers.copyText.f2c6b51"));
   }
 }
 
@@ -233,7 +234,7 @@ function buildAutomationCardMode(
 }
 
 function getAutomationModeLabel(type: AutomationScriptType): string {
-  return type === "playwright-cdp" ? "脚本模式" : "接口模式";
+  return type === "playwright-cdp" ? tr("browser.pages.AutomationPage.helpers.getAutomationModeLabel.d44735e") : tr("browser.pages.AutomationPage.helpers.getAutomationModeLabel.b65f076");
 }
 
 function getAutomationModeToneClass(type: AutomationScriptType): string {
@@ -247,20 +248,20 @@ function buildAutomationSkillPrompt(
   payload: Record<string, unknown>,
 ) {
   const lines = [
-    "使用 Latitude Browser OpenClaw skill。",
-    `执行预置脚本 ${script.id}（${script.name}）。`,
+    tr("browser.pages.AutomationPage.helpers.buildAutomationSkillPrompt.fd391a9"),
+    tr("browser.pages.AutomationPage.helpers.buildAutomationSkillPrompt.34f684f", [script.id, script.name]),
   ];
 
   if (Object.prototype.hasOwnProperty.call(payload, "selector")) {
     lines.push(`selector: ${JSON.stringify(payload.selector)}`);
   } else if (payload.useScriptSelector) {
-    lines.push("selector: 使用脚本默认值。");
+    lines.push(tr("browser.pages.AutomationPage.helpers.buildAutomationSkillPrompt.b07720a"));
   }
 
   if (Object.prototype.hasOwnProperty.call(payload, "params")) {
     lines.push(`params: ${JSON.stringify(payload.params)}`);
   } else if (payload.useScriptParams) {
-    lines.push("params: 使用脚本默认值。");
+    lines.push(tr("browser.pages.AutomationPage.helpers.buildAutomationSkillPrompt.2cb7823"));
   }
 
   return lines.join("\n");
@@ -271,20 +272,20 @@ function buildAutomationShortDescription(
 ): string {
   switch (script.id) {
     case DUAL_INSTANCE_SCRIPT_ID:
-      return "启动双实例并切换 Runtime";
+      return tr("browser.pages.AutomationPage.helpers.buildAutomationShortDescription.8e222d6");
     case NEWS_SCRIPT_ID:
-      return "搜索新闻并写入 TXT";
+      return tr("browser.pages.AutomationPage.helpers.buildAutomationShortDescription.82d9163");
     default:
       break;
   }
 
   const source = normalizeText(script.description || script.name);
-  const firstSentence = source.split(/[。！？\n]/)[0]?.trim() || "按预置流程执行自动化";
+  const firstSentence = source.split(/[。！？\n]/)[0]?.trim() || tr("browser.pages.AutomationPage.helpers.buildAutomationShortDescription.f2b54df");
   const compact = firstSentence
     .replace(/^通过/, "")
     .replace(/^使用/, "")
     .replace(/^基于/, "")
-    .replace(/浏览器实例/g, "实例")
+    .replace(/浏览器实例/g, sourceText("config.navigation.config.name.69fffaf"))
     .replace(/本地 txt/gi, "TXT")
     .replace(/\s+/g, " ");
 
@@ -302,12 +303,12 @@ function buildAutomationCodeDisplay(
 
   switch (script.targetConfig.mode) {
     case "existing": {
-      return resolveTargetCode(script.targetConfig.selector, profiles) || "运行时传入";
+      return resolveTargetCode(script.targetConfig.selector, profiles) || tr("browser.pages.AutomationPage.helpers.buildAutomationCodeDisplay.643064f");
     }
     case "create": {
       return (
         resolveTargetCode(script.targetConfig.templateSelector, profiles) ||
-        "运行时传入"
+        tr("browser.pages.AutomationPage.helpers.buildAutomationCodeDisplay.643064f")
       );
     }
     case "rotate": {
@@ -323,7 +324,7 @@ function buildAutomationCodeDisplay(
           selector.keywords.length > 0 ||
           selector.tags.length > 0,
       );
-      return hasFilter ? "条件匹配" : "运行时传入";
+      return hasFilter ? tr("browser.pages.AutomationPage.helpers.buildAutomationCodeDisplay.f2e0541") : tr("browser.pages.AutomationPage.helpers.buildAutomationCodeDisplay.643064f");
     }
     default: {
       const selector = parseJSONObjectText(script.selectorText);
@@ -333,7 +334,7 @@ function buildAutomationCodeDisplay(
       const launchCode = normalizeCode(
         typeof selector?.launchCode === "string" ? selector.launchCode : "",
       );
-      return directCode || launchCode || "运行时传入";
+      return directCode || launchCode || tr("browser.pages.AutomationPage.helpers.buildAutomationCodeDisplay.643064f");
     }
   }
 }
@@ -387,10 +388,10 @@ export function buildAutomationCardPresentation(options: {
         ? buildAutomationSkillPrompt(script, requestPayload)
         : requestCurlDemo,
     primaryActionSuccessMessage:
-      cardMode === "skill" ? "Skill 提示词已复制" : "模拟 cURL 已复制",
+      cardMode === "skill" ? tr("browser.pages.AutomationPage.helpers.buildAutomationCardPresentation.f218609") : tr("browser.pages.AutomationPage.helpers.buildAutomationCardPresentation.b884b11"),
     secondaryActionLabel: "JSON",
     secondaryActionText: requestPayloadText,
-    secondaryActionSuccessMessage: "请求 JSON 已复制",
+    secondaryActionSuccessMessage: tr("browser.pages.AutomationPage.helpers.secondaryActionSuccessMessage.b933c05"),
     modeToneClass: getAutomationModeToneClass(script.type),
     publicAPIEnabled: resolvedPublicAPI.enabled,
     railClassName: getAutomationCardRailClass(script.id),
@@ -404,18 +405,18 @@ export function buildDualInstanceFallbackPresentation(options: {
 }): AutomationCardPresentation {
   return {
     key: `${DUAL_INSTANCE_SCRIPT_ID}-fallback`,
-    title: "双实例启动与 Runtime 切换",
+    title: tr("browser.automationScripts.builtins.name.520164b"),
     versionLabel: "V -",
     scriptType: "launch-api",
-    modeLabel: "接口模式",
-    description: "启动双实例并切换 Runtime",
+    modeLabel: tr("browser.pages.AutomationPage.helpers.getAutomationModeLabel.b65f076"),
+    description: tr("browser.pages.AutomationPage.helpers.buildAutomationShortDescription.8e222d6"),
     codeDisplay: `${options.dualLaunchCodes.primaryCode} / ${options.dualLaunchCodes.secondaryCode}`,
     primaryActionLabel: "cURL",
     primaryActionText: options.dualInstanceRunCurlDemo,
-    primaryActionSuccessMessage: "模拟 cURL 已复制",
+    primaryActionSuccessMessage: tr("browser.pages.AutomationPage.helpers.buildAutomationCardPresentation.b884b11"),
     secondaryActionLabel: "JSON",
     secondaryActionText: options.dualInstanceRunPayloadText,
-    secondaryActionSuccessMessage: "请求 JSON 已复制",
+    secondaryActionSuccessMessage: tr("browser.pages.AutomationPage.helpers.secondaryActionSuccessMessage.b933c05"),
     modeToneClass: getAutomationModeToneClass("launch-api"),
     publicAPIEnabled: false,
     railClassName: getAutomationCardRailClass(DUAL_INSTANCE_SCRIPT_ID),

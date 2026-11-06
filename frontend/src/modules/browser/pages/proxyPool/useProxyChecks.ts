@@ -1,3 +1,4 @@
+import { tr } from '../../../../shared/i18n'
 import { useEffect, useState } from 'react'
 import { toast } from '../../../../shared/components'
 import { EventsOn } from '../../../../wailsjs/runtime/runtime'
@@ -194,7 +195,7 @@ export function useProxyChecks({ proxies, connectorType }: UseProxyChecksOptions
         if (local && backend && !isNewerDiagnostic(backend, local)) return
         const nextLatency = proxy.lastTestOk === true && Number.isFinite(latency) && latency >= 0
           ? latency
-          : toLatencyValue(false, 0, proxy.lastTestError || backend?.error || '最近一次测速失败')
+          : toLatencyValue(false, 0, proxy.lastTestError || backend?.error || tr("browser.pages.proxyPool.useProxyChecks.useProxyChecks.a8b3023"))
         if (next[proxy.proxyId] !== nextLatency) {
           next[proxy.proxyId] = nextLatency
           changed = true
@@ -229,7 +230,7 @@ export function useProxyChecks({ proxies, connectorType }: UseProxyChecksOptions
       })
       Object.entries(backendDiagnostics).forEach(([proxyId, diagnostic]) => {
         if (diagnostic.error || (diagnostic.stage && diagnostic.stage !== 'success')) {
-          const message = diagnostic.error || diagnostic.message || '最近一次测速失败'
+          const message = diagnostic.error || diagnostic.message || tr("browser.pages.proxyPool.useProxyChecks.useProxyChecks.a8b3023")
           if (next[proxyId] !== message) {
             next[proxyId] = message
             changed = true
@@ -286,7 +287,7 @@ export function useProxyChecks({ proxies, connectorType }: UseProxyChecksOptions
 
   const handleTestOne = async (record: ProxyDisplayInfo) => {
     if (record.proxyConfig === 'direct://') {
-      toast.info('直连模式无需测速')
+      toast.info(tr("browser.pages.proxyPool.useProxyChecks.useProxyChecks.f0ff63e"))
       return
     }
     setLatencyMap(prev => ({ ...prev, [record.proxyId]: -1 }))
@@ -308,7 +309,7 @@ export function useProxyChecks({ proxies, connectorType }: UseProxyChecksOptions
       const result = await browserProxyTestSpeed(record.proxyId)
       applySpeedResult(result)
     } catch (error) {
-      const message = error instanceof Error ? error.message : String(error || '测速失败')
+      const message = error instanceof Error ? error.message : String(error || tr("browser.components.BrowserProfilesPanel.ProxyInlineActions.efe2c8c"))
       applySpeedResult({
         proxyId: record.proxyId,
         ok: false,
@@ -358,7 +359,7 @@ export function useProxyChecks({ proxies, connectorType }: UseProxyChecksOptions
       const results = await browserProxyBatchTestSpeed(proxyIds, 0)
       results.forEach(applySpeedResult)
     } catch (error) {
-      const message = error instanceof Error ? error.message : String(error || '批量测速失败')
+      const message = error instanceof Error ? error.message : String(error || tr("browser.pages.proxyPool.useProxyChecks.useProxyChecks.874ee95"))
       testable.forEach(proxy => applySpeedResult({
         proxyId: proxy.proxyId,
         ok: false,
@@ -368,7 +369,7 @@ export function useProxyChecks({ proxies, connectorType }: UseProxyChecksOptions
         stage: 'failed',
         code: 'BATCH_CHECK_FAILED',
       }))
-      toast.error(`批量测速失败：${message}`)
+      toast.error(tr("browser.pages.proxyPool.useProxyChecks.useProxyChecks.d49c2dc", [message]))
     } finally {
       off?.()
       setTestingAll(false)
@@ -406,7 +407,7 @@ export function useProxyChecks({ proxies, connectorType }: UseProxyChecksOptions
         proxyId,
         stage: 'not_tested',
         code: 'CLEARED',
-        message: '已清除旧结果，等待重新检测',
+        message: tr("browser.pages.proxyPool.useProxyChecks.message.b9f295b"),
         checkedAt: new Date().toISOString(),
       }, { source: 'local' }),
     }))
@@ -414,7 +415,7 @@ export function useProxyChecks({ proxies, connectorType }: UseProxyChecksOptions
 
   const handleWarmupOne = async (record: ProxyDisplayInfo) => {
     if (record.proxyConfig === 'direct://') {
-      toast.info('直连模式无需预热')
+      toast.info(tr("browser.pages.proxyPool.useProxyChecks.useProxyChecks.3373e3b"))
       return
     }
     if (warmingBridgeIds.has(record.proxyId)) return
@@ -422,8 +423,8 @@ export function useProxyChecks({ proxies, connectorType }: UseProxyChecksOptions
     setWarmingBridgeIds(prev => new Set(prev).add(record.proxyId))
     try {
       const result = await browserProxyWarmupBridge(record.proxyId)
-      if (result.ok) toast.success(`${record.proxyName} 已预热`)
-      else toast.error(result.error || `${record.proxyName} 预热失败`)
+      if (result.ok) toast.success(tr("browser.pages.proxyPool.useProxyChecks.useProxyChecks.3e76af2", [record.proxyName]))
+      else toast.error(result.error || tr("browser.pages.proxyPool.useProxyChecks.useProxyChecks.3269bfa", [record.proxyName]))
     } finally {
       setWarmingBridgeIds(prev => {
         const next = new Set(prev)
@@ -442,8 +443,8 @@ export function useProxyChecks({ proxies, connectorType }: UseProxyChecksOptions
     try {
       const results = await browserProxyBatchWarmupBridge(ids, 5)
       const failed = results.filter(r => !r.ok).length
-      if (failed > 0) toast.info(`预热完成：成功 ${results.length - failed}，失败 ${failed}`)
-      else toast.success(`预热完成：共 ${results.length} 条`)
+      if (failed > 0) toast.info(tr("browser.pages.proxyPool.useProxyChecks.useProxyChecks.7e3ffab", [results.length - failed, failed]))
+      else toast.success(tr("browser.pages.proxyPool.useProxyChecks.useProxyChecks.4b524c8", [results.length]))
     } finally {
       setWarmingBridgeIds(prev => {
         const next = new Set(prev)
@@ -456,7 +457,7 @@ export function useProxyChecks({ proxies, connectorType }: UseProxyChecksOptions
 
   const handleCheckOneIPHealth = async (record: ProxyDisplayInfo) => {
     if (record.proxyConfig === 'direct://') {
-      toast.info('直连模式无需检测')
+      toast.info(tr("browser.pages.proxyPool.useProxyChecks.useProxyChecks.16b37c4"))
       return
     }
     if (checkingIPHealthIds.has(record.proxyId)) return
@@ -465,7 +466,7 @@ export function useProxyChecks({ proxies, connectorType }: UseProxyChecksOptions
     try {
       const result = await browserProxyCheckIPHealth(record.proxyId)
       setIPHealthMap(prev => ({ ...prev, [record.proxyId]: result }))
-      if (!result.ok) toast.error(result.error || `${record.proxyName} 检测失败`)
+      if (!result.ok) toast.error(result.error || tr("browser.pages.proxyPool.useProxyChecks.useProxyChecks.939a6af", [record.proxyName]))
     } finally {
       setCheckingIPHealthIds(prev => {
         const next = new Set(prev)
@@ -507,8 +508,8 @@ export function useProxyChecks({ proxies, connectorType }: UseProxyChecksOptions
         return next
       })
       const failed = results.filter(r => !r.ok).length
-      if (failed > 0) toast.info(`IP 健康检测完成：成功 ${results.length - failed}，失败 ${failed}`)
-      else toast.success(`IP 健康检测完成：共 ${results.length} 条`)
+      if (failed > 0) toast.info(tr("browser.pages.proxyPool.useProxyChecks.useProxyChecks.9087412", [results.length - failed, failed]))
+      else toast.success(tr("browser.pages.proxyPool.useProxyChecks.useProxyChecks.74dbefc", [results.length]))
     } finally {
       off?.()
       setCheckingIPHealthIds(prev => {

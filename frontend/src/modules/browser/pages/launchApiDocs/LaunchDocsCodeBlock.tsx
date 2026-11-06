@@ -1,3 +1,4 @@
+import { tr, useLocale } from '../../../../shared/i18n'
 import { useState, type ReactNode } from 'react'
 import clsx from 'clsx'
 import { CheckCircle, Copy } from 'lucide-react'
@@ -240,6 +241,8 @@ function renderHighlightedCode(language: string, code: string): ReactNode {
 }
 
 function CopyButton({ text }: { text: string }) {
+  useLocale()
+
   const [copied, setCopied] = useState(false)
 
   return (
@@ -247,17 +250,17 @@ function CopyButton({ text }: { text: string }) {
       onClick={() => {
         navigator.clipboard.writeText(text).then(() => {
           setCopied(true)
-          toast.success('已复制')
+          toast.success(tr("browser.pages.launchApiDocs.LaunchDocsCodeBlock.CopyButton.e381a57"))
           setTimeout(() => setCopied(false), 2000)
         })
       }}
       type="button"
-      aria-label={copied ? '代码已复制' : '复制代码'}
-      title={copied ? '代码已复制' : '复制代码'}
+      aria-label={copied ? tr("browser.pages.launchApiDocs.LaunchDocsCodeBlock.CopyButton.8df903a") : tr("browser.pages.launchApiDocs.LaunchDocsCodeBlock.CopyButton.3b1fde4")}
+      title={copied ? tr("browser.pages.launchApiDocs.LaunchDocsCodeBlock.CopyButton.8df903a") : tr("browser.pages.launchApiDocs.LaunchDocsCodeBlock.CopyButton.3b1fde4")}
       className="flex items-center gap-1 rounded-sm px-2 py-1 text-xs text-[var(--color-text-muted)] transition-colors hover:bg-[var(--color-bg-muted)] hover:text-[var(--color-accent)]"
     >
       {copied ? <CheckCircle className="h-3.5 w-3.5 text-[var(--color-success)]" /> : <Copy className="h-3.5 w-3.5" />}
-      {copied ? '已复制' : '复制'}
+      {copied ? tr("browser.pages.launchApiDocs.LaunchDocsCodeBlock.CopyButton.e381a57") : tr("browser.components.AutomationScriptPublicApiBodyExamples.text.4edd1d0")}
     </button>
   )
 }
@@ -269,6 +272,8 @@ export function LaunchDocsCodeBlock({
   maxHeightClassName,
   showCopyButton = true,
 }: LaunchDocsCodeBlockProps) {
+  useLocale()
+
   const normalizedLanguage = normalizeLanguage(language)
   const displayCode = code.replace(/\n$/, '')
 
@@ -280,8 +285,8 @@ export function LaunchDocsCodeBlock({
       )}
     >
       <div className="flex items-center justify-between border-b border-[var(--color-border-muted)] bg-[var(--color-bg-surface)] px-4 py-2">
-        <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
-          {normalizedLanguage || 'code'}
+        <span className="text-[11px] font-semibold   text-[var(--color-text-muted)]">
+          {normalizedLanguage || tr("ui.modules.browser.pages.launchApiDocs.LaunchDocsCodeBlock.label.e6fb062")}
         </span>
         {showCopyButton ? <CopyButton text={displayCode} /> : null}
       </div>

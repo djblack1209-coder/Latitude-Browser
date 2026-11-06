@@ -1,3 +1,5 @@
+import { useLocale } from '../../../../shared/i18n'
+import { tr } from '../../../../shared/i18n'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { toast } from '../../../../shared/components'
 import type { BrowserProxy } from '../../types'
@@ -24,6 +26,8 @@ export function useProxySourceRefresh({
   globalRefreshInterval,
   saveProxies,
 }: UseProxySourceRefreshOptions) {
+  const uiLocale = useLocale()
+
   const [refreshingAllSources, setRefreshingAllSources] = useState(false)
   const [refreshingSourceIds, setRefreshingSourceIds] = useState<Set<string>>(new Set())
   const proxiesRef = useRef<BrowserProxy[]>([])
@@ -38,7 +42,7 @@ export function useProxySourceRefresh({
     refreshingSourceIdsRef.current = refreshingSourceIds
   }, [refreshingSourceIds])
 
-  const sourceMetas = useMemo(() => collectURLImportSources(proxies), [proxies])
+  const sourceMetas = useMemo(() => collectURLImportSources(proxies), [proxies, uiLocale])
   const hasURLImportSources = sourceMetas.length > 0
 
   const refreshSingleSource = useCallback(async (sourceId: string, silent: boolean) => {
@@ -58,7 +62,7 @@ export function useProxySourceRefresh({
       const result = await fetchClashImportFromURL(meta.sourceUrl)
       const parsed = parseClashImportText(result.content || '')
       if (!parsed.length) {
-        throw new Error('订阅内容未解析到可用代理')
+        throw new Error(tr("browser.pages.proxyPool.useProxySourceRefresh.useProxySourceRefresh.8b96a5d"))
       }
       const ignoredNameMap = readSourceIgnoredProxyNames()
       const sourceIgnoredNames = ignoredNameMap[sourceId] || []
@@ -80,12 +84,12 @@ export function useProxySourceRefresh({
 
       await saveProxies(merged)
       if (!silent) {
-        toast.success(`订阅刷新成功：${meta.sourceUrl}（${refreshedSourceProxies.length} 条）`)
+        toast.success(tr("browser.pages.proxyPool.useProxySourceRefresh.useProxySourceRefresh.e14ecd5", [meta.sourceUrl, refreshedSourceProxies.length]))
       }
       return true
     } catch (error: any) {
       if (!silent) {
-        toast.error(error?.message || '订阅刷新失败')
+        toast.error(error?.message || tr("browser.pages.proxyPool.useProxySourceRefresh.useProxySourceRefresh.1e3d95a"))
       }
       return false
     } finally {
@@ -101,7 +105,7 @@ export function useProxySourceRefresh({
     const metas = collectURLImportSources(proxiesRef.current)
     if (metas.length === 0) {
       if (!silent) {
-        toast.info('当前没有 URL 导入订阅')
+        toast.info(tr("browser.pages.proxyPool.useProxySourceRefresh.useProxySourceRefresh.5c8afd9"))
       }
       return
     }
@@ -116,9 +120,9 @@ export function useProxySourceRefresh({
 
     if (!silent) {
       if (successCount === metas.length) {
-        toast.success(`订阅刷新完成：${successCount}/${metas.length}`)
+        toast.success(tr("browser.pages.proxyPool.useProxySourceRefresh.useProxySourceRefresh.b9c2a77", [successCount, metas.length]))
       } else {
-        toast.warning(`订阅刷新完成：成功 ${successCount}/${metas.length}`)
+        toast.warning(tr("browser.pages.proxyPool.useProxySourceRefresh.useProxySourceRefresh.6ec08c9", [successCount, metas.length]))
       }
     }
   }, [refreshSingleSource])

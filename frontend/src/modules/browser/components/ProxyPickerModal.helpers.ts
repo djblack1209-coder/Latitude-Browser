@@ -1,3 +1,4 @@
+import { tr } from '../../../shared/i18n'
 ﻿export type SpeedResult = { ok: boolean; latencyMs: number; engine?: string; error: string }
 
 export type ChainSocksHop = {
@@ -126,29 +127,29 @@ export function buildChainProxyConfig(form: ChainEditForm): string {
     const protocol = hop.protocol === 'socks5' ? 'socks5' : 'http'
     const server = hop.server.trim()
     if (!server) {
-      throw new Error(`请输入${label}代理地址`)
+      throw new Error(tr("browser.components.ProxyImportModal.helpers.buildChainImportCandidate.ee16748", [label]))
     }
     if (/^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//.test(server)) {
-      throw new Error(`${label}代理地址只需要填写主机名或 IP，不需要协议头`)
+      throw new Error(tr("browser.components.ProxyImportModal.helpers.buildChainImportCandidate.98d8e5a", [label]))
     }
 
     const portInput = hop.port.trim()
     if (!portInput) {
-      throw new Error(`请输入${label}代理端口`)
+      throw new Error(tr("browser.components.ProxyImportModal.helpers.buildChainImportCandidate.2221a30", [label]))
     }
     if (!/^\d+$/.test(portInput)) {
-      throw new Error(`${label}代理端口必须为数字`)
+      throw new Error(tr("browser.components.ProxyImportModal.helpers.buildChainImportCandidate.5b261b4", [label]))
     }
 
     const port = Number(portInput)
     if (!Number.isInteger(port) || port < 1 || port > 65535) {
-      throw new Error(`${label}代理端口必须在 1-65535 之间`)
+      throw new Error(tr("browser.components.ProxyImportModal.helpers.buildChainImportCandidate.4683711", [label]))
     }
 
     const username = hop.username.trim()
     const password = hop.password
     if (password && !username) {
-      throw new Error(`${label}填写密码时请同时填写账号`)
+      throw new Error(tr("browser.components.ProxyImportModal.helpers.buildChainImportCandidate.94a80f7", [label]))
     }
 
     return {
@@ -162,16 +163,16 @@ export function buildChainProxyConfig(form: ChainEditForm): string {
 
   const localPortInput = form.localPort.trim()
   if (localPortInput && !/^\d+$/.test(localPortInput)) {
-    throw new Error('本地监听端口必须为数字')
+    throw new Error(tr("browser.components.ProxyImportModal.helpers.buildChainImportCandidate.f444691"))
   }
   const localPort = localPortInput ? Number(localPortInput) : 0
   if (localPortInput && (!Number.isInteger(localPort) || localPort < 1 || localPort > 65535)) {
-    throw new Error('本地监听端口必须在 1-65535 之间')
+    throw new Error(tr("browser.components.ProxyImportModal.helpers.buildChainImportCandidate.50dbe6e"))
   }
 
   const payload: ChainSocksConfig = {
-    first: parseHop('第一层', form.first),
-    second: parseHop('第二层', form.second),
+    first: parseHop(tr("browser.components.ProxyImportModal.helpers.buildChainImportCandidate.059b5ee"), form.first),
+    second: parseHop(tr("browser.components.ProxyImportModal.helpers.buildChainImportCandidate.482605a"), form.second),
     localPort: localPort > 0 ? localPort : undefined,
   }
 

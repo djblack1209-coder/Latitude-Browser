@@ -1,3 +1,4 @@
+import { tr } from '../../../shared/i18n'
 import type { BrowserProxy } from '../types'
 
 export interface ProxyImportModalProps {
@@ -45,9 +46,9 @@ export interface ChainImportForm {
 }
 
 export const DIRECT_PROXY_PROTOCOL_OPTIONS = [
-  { value: 'http', label: 'HTTP' },
-  { value: 'https', label: 'HTTPS' },
-  { value: 'socks5', label: 'SOCKS5' },
+  { value: 'http', label: tr("ui.modules.browser.components.ProxyImportModal.types.label.f40b27d") },
+  { value: 'https', label: tr("ui.modules.browser.components.ProxyImportModal.types.label.f52698c") },
+  { value: 'socks5', label: tr("ui.modules.browser.components.ProxyImportModal.types.label.b6a033a") },
 ] as const
 
 export const INITIAL_DIRECT_IMPORT_FORM: DirectImportForm = {

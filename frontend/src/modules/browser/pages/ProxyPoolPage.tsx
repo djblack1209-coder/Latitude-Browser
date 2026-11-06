@@ -1,3 +1,4 @@
+import { tr, useLocale } from '../../../shared/i18n'
 import { useCallback, useEffect, useState } from 'react'
 import { ConfirmModal, toast } from '../../../shared/components'
 import type { SortOrder } from '../../../shared/components/Table'
@@ -40,6 +41,8 @@ import { useProxyPoolFilter } from './proxyPool/useProxyPoolFilter'
 import './network-pages.css'
 
 export function ProxyPoolPage() {
+  useLocale()
+
   const [proxies, setProxies] = useState<BrowserProxy[]>([])
   const [displayList, setDisplayList] = useState<ProxyDisplayInfo[]>([])
   const [loading, setLoading] = useState(true)
@@ -209,7 +212,7 @@ export function ProxyPoolPage() {
         return next
       })
     } catch (error: any) {
-      toast.error(error?.message || '加载代理失败')
+      toast.error(error?.message || tr("browser.pages.ProxyPoolPage.ProxyPoolPage.207cb87"))
     } finally {
       setLoading(false)
     }
@@ -314,7 +317,7 @@ export function ProxyPoolPage() {
         nextProxyName = candidate.proxyName
         nextProxyConfig = candidate.proxyConfig
       } catch (error: any) {
-        toast.error(error?.message || '链式代理配置无效')
+        toast.error(error?.message || tr("browser.components.ProxyPickerModal.ProxyPickerModal.73c8469"))
         return
       }
     } else if (directEditMode) {
@@ -323,11 +326,11 @@ export function ProxyPoolPage() {
         nextProxyName = candidate.proxyName
         nextProxyConfig = candidate.proxyConfig
       } catch (error: any) {
-        toast.error(error?.message || '代理配置无效')
+        toast.error(error?.message || tr("browser.pages.AutoConfigPage.AutoConfigPage.3adabf7"))
         return
       }
     } else if (!nextProxyName) {
-      toast.error('请输入代理名称')
+      toast.error(tr("browser.components.ProxyPickerModal.ProxyPickerModal.7fe2ac0"))
       return
     }
 
@@ -347,9 +350,9 @@ export function ProxyPoolPage() {
       )
       await saveProxies(newProxies)
       setEditModalOpen(false)
-      toast.success('代理已更新')
+      toast.success(tr("browser.components.ProxyPickerModal.ProxyPickerModal.0134754"))
     } catch (error: any) {
-      toast.error(error?.message || '保存失败')
+      toast.error(error?.message || tr("browser.components.BrowserSettingsModal.BrowserSettingsModal.40525a7"))
     } finally {
       setSaving(false)
     }
@@ -557,10 +560,10 @@ export function ProxyPoolPage() {
       />
 
       <ConfirmModal open={deleteConfirmOpen} onClose={() => setDeleteConfirmOpen(false)} onConfirm={handleDeleteConfirm}
-        title="确认删除" content="确定要删除这个代理吗？此操作不可恢复。" confirmText="删除" danger />
+        title={tr("browser.components.ProxyPickerModal.confirmText.3c06abe")} content={tr("browser.pages.ProxyPoolPage.content.8f60773")} confirmText={tr("browser.components.BrowserListLayout.title.3755f56")} danger />
 
       <ConfirmModal open={batchDeleteConfirmOpen} onClose={() => setBatchDeleteConfirmOpen(false)} onConfirm={handleBatchDeleteConfirm}
-        title="批量删除" content={`确定要删除选中的 ${selectedCount} 个代理吗？此操作不可恢复。`} confirmText="删除" danger />
+        title={tr("browser.components.BrowserListWidgets.title.362aedc")} content={tr("browser.pages.ProxyPoolPage.ProxyPoolPage.ccd0a2c", [selectedCount])} confirmText={tr("browser.components.BrowserListLayout.title.3755f56")} danger />
     </div>
   )
 }

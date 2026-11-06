@@ -16,6 +16,7 @@ func CoreExecutableCandidates() []string {
 		return []string{"chrome", "chrome-bin", "chromium", "chromium-browser", "ungoogled-chromium", "chrome.exe"}
 	case "darwin":
 		return []string{
+			"Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing",
 			"Google Chrome.app/Contents/MacOS/Google Chrome",
 			"Chromium.app/Contents/MacOS/Chromium",
 			"chrome",

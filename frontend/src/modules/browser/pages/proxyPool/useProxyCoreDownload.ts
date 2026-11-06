@@ -1,3 +1,4 @@
+import { tr } from '../../../../shared/i18n'
 ﻿import { useCallback, useEffect, useState } from 'react'
 import { toast } from '../../../../shared/components'
 import { browserProxyConnectorPreflight, browserProxyCoreDownload, browserProxyCoreStatus, fetchBrowserSettings } from '../../api'
@@ -88,7 +89,7 @@ export function useProxyCoreDownload() {
       setCurrentConnectorType(null)
       setCurrentConnectorStatuses([])
       setCurrentConnectorPreflight(null)
-      toast.error(error?.message || '读取代理连接栈状态失败')
+      toast.error(error?.message || tr("browser.pages.proxyPool.useProxyCoreDownload.useProxyCoreDownload.ac16350"))
     }
   }, [refreshCurrentConnectorStatus])
 
@@ -121,13 +122,13 @@ export function useProxyCoreDownload() {
     const onProgress = (data: ProxyCoreDownloadProgress) => {
       setCoreDownloadProgress(data)
       if (data.phase === 'done') {
-        toast.success(data.message || '代理内核已安装')
+        toast.success(data.message || tr("browser.pages.proxyPool.useProxyCoreDownload.useProxyCoreDownload.d1cefab"))
         void refreshDownloadCoreStatus(data.core, data.goos, data.goarch)
         if (currentConnectorType && connectorStackCores(currentConnectorType).includes(data.core)) {
           void refreshCurrentConnectorStatus(currentConnectorType)
         }
       }
-      if (data.phase === 'error') toast.error(data.message || '代理内核下载失败')
+      if (data.phase === 'error') toast.error(data.message || tr("browser.pages.proxyPool.useProxyCoreDownload.useProxyCoreDownload.1859b3a"))
     }
 
     const runtime = typeof window !== 'undefined' ? (window as any).runtime : undefined
@@ -143,12 +144,12 @@ export function useProxyCoreDownload() {
 
   const handleStartCoreDownload = useCallback(async () => {
     const downloadProxy = coreDownloadProxy.trim()
-    setCoreDownloadProgress({ core: coreDownloadType, goos: coreDownloadGOOS, goarch: coreDownloadGOARCH, phase: 'starting', progress: 0, message: downloadProxy ? `准备下载（指定代理：${downloadProxy}）` : '准备下载（直连）' })
+    setCoreDownloadProgress({ core: coreDownloadType, goos: coreDownloadGOOS, goarch: coreDownloadGOARCH, phase: 'starting', progress: 0, message: downloadProxy ? tr("browser.pages.proxyPool.useProxyCoreDownload.useProxyCoreDownload.1c0835c", [downloadProxy]) : tr("browser.pages.proxyPool.useProxyCoreDownload.useProxyCoreDownload.45e453d") })
     try {
       const started = await browserProxyCoreDownload(coreDownloadType, coreDownloadGOOS, coreDownloadGOARCH, downloadProxy)
-      if (!started) throw new Error('下载服务未连接后端；请在 Latitude Browser 桌面应用中重试')
+      if (!started) throw new Error(tr("browser.pages.proxyPool.useProxyCoreDownload.useProxyCoreDownload.7ac07c2"))
     } catch (error: any) {
-      const message = error?.message || '启动下载失败'
+      const message = error?.message || tr("browser.pages.proxyPool.useProxyCoreDownload.useProxyCoreDownload.72f13ef")
       setCoreDownloadProgress({ core: coreDownloadType, goos: coreDownloadGOOS, goarch: coreDownloadGOARCH, phase: 'error', progress: 0, message })
       toast.error(message)
     }

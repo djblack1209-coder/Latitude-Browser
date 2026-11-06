@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n'
 import { ReactNode } from 'react'
 import clsx from 'clsx'
 
@@ -14,17 +15,17 @@ interface BadgeProps {
 }
 
 const variantStyles = {
-  default: 'bg-[var(--color-bg-muted)] text-[var(--color-text-secondary)]',
-  success: 'bg-[var(--color-success)]/15 text-[var(--color-success)]',
-  error: 'bg-[var(--color-error)]/15 text-[var(--color-error)]',
-  warning: 'bg-[var(--color-warning)]/15 text-[var(--color-warning)]',
-  info: 'bg-[var(--color-accent)]/15 text-[var(--color-accent)]',
+  default: 'text-[var(--color-text-secondary)]',
+  success: 'text-[var(--color-success)]',
+  error: 'text-[var(--color-error)]',
+  warning: 'text-[var(--color-warning)]',
+  info: 'text-[var(--color-accent)]',
 }
 
 const sizeStyles = {
-  sm: 'px-1.5 py-0.5 text-xs',
-  md: 'px-2 py-1 text-xs',
-  lg: 'px-2.5 py-1 text-sm',
+  sm: 'text-xs',
+  md: 'text-xs',
+  lg: 'text-sm',
 }
 
 const dotStyles = {
@@ -43,6 +44,8 @@ export function Badge({
   dotClassName = 'w-1.5 h-1.5',
   className,
 }: BadgeProps) {
+  useLocale()
+
   return (
     <span
       className={clsx(

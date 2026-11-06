@@ -1,6 +1,7 @@
 package backend
 
 import (
+ "ant-chrome/backend/internal/locale"
 	"fmt"
 	"strings"
 	"time"
@@ -26,10 +27,10 @@ func (a *App) BackupExportPackage() (map[string]interface{}, error) {
 
 	defaultName := fmt.Sprintf("latitude-browser-backup-%s.zip", time.Now().Format("20060102-150405"))
 	savePath, err := wailsruntime.SaveFileDialog(a.ctx, wailsruntime.SaveDialogOptions{
-		Title:           "导出配置",
+		Title:           locale.Text("error.backend.message.3d05c8ad5e"),
 		DefaultFilename: defaultName,
 		Filters: []wailsruntime.FileFilter{
-			{DisplayName: "ZIP 文件 (*.zip)", Pattern: "*.zip"},
+			{DisplayName: locale.Text("error.backend.message.e3ae6a06fd"), Pattern: "*.zip"},
 		},
 	})
 	if err != nil {
@@ -63,9 +64,9 @@ func (a *App) BackupImportPackage(resetFirst bool) (map[string]interface{}, erro
 	a.backupEmitImportProgress("starting", 0, "等待选择 ZIP 配置文件...")
 
 	zipPath, err := wailsruntime.OpenFileDialog(a.ctx, wailsruntime.OpenDialogOptions{
-		Title: "加载配置",
+		Title: locale.Text("error.backend.message.346870609c"),
 		Filters: []wailsruntime.FileFilter{
-			{DisplayName: "ZIP 文件 (*.zip)", Pattern: "*.zip"},
+			{DisplayName: locale.Text("error.backend.message.e3ae6a06fd"), Pattern: "*.zip"},
 		},
 	})
 	if err != nil {

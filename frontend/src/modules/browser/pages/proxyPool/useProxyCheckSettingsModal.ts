@@ -1,3 +1,4 @@
+import { tr } from '../../../../shared/i18n'
 ﻿import { useState } from 'react'
 import { toast } from '../../../../shared/components'
 import { createDefaultProxyCheckSettings, fetchProxyCheckSettings, saveProxyCheckSettings } from '../../api'
@@ -21,10 +22,10 @@ export function useProxyCheckSettingsModal() {
     try {
       const targets = JSON.parse(checkTargetsText || '[]')
       await saveProxyCheckSettings({ ...checkSettings, targets })
-      toast.success('检测设置已保存')
+      toast.success(tr("browser.pages.proxyPool.useProxyCheckSettingsModal.useProxyCheckSettingsModal.72d887e"))
       setCheckSettingsOpen(false)
     } catch (error: any) {
-      toast.error(error?.message || '检测设置保存失败')
+      toast.error(error?.message || tr("browser.pages.proxyPool.useProxyCheckSettingsModal.useProxyCheckSettingsModal.e135faf"))
     } finally {
       setSavingCheckSettings(false)
     }

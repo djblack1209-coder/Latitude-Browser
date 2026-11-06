@@ -1,3 +1,4 @@
+import { tr, useLocale } from '../../../shared/i18n'
 import { useEffect, useState } from 'react'
 import { Plus, Trash2 } from 'lucide-react'
 import { Button, Input, Modal, toast } from '../../../shared/components'
@@ -13,6 +14,8 @@ interface Props {
 }
 
 export function KeywordsModal({ profileId, profileName, initialKeywords, open, onClose, onSaved }: Props) {
+  useLocale()
+
   const [items, setItems] = useState<string[]>([])
   const [saving, setSaving] = useState(false)
 
@@ -35,11 +38,11 @@ export function KeywordsModal({ profileId, profileName, initialKeywords, open, o
     setSaving(true)
     try {
       await setProfileKeywords(profileId, keywords)
-      toast.success('关键字已保存')
+      toast.success(tr("browser.components.KeywordsModal.KeywordsModal.d7311a7"))
       onSaved(keywords)
       onClose()
     } catch {
-      toast.error('保存失败')
+      toast.error(tr("browser.components.BrowserSettingsModal.BrowserSettingsModal.40525a7"))
     } finally {
       setSaving(false)
     }
@@ -49,26 +52,24 @@ export function KeywordsModal({ profileId, profileName, initialKeywords, open, o
     <Modal
       open={open}
       onClose={onClose}
-      title={`关键字 — ${profileName}`}
+      title={tr("browser.components.KeywordsModal.KeywordsModal.cc4d3c3", [profileName])}
       width="420px"
       footer={
         <>
-          <Button variant="secondary" onClick={onClose}>取消</Button>
-          <Button onClick={handleSave} loading={saving}>保存</Button>
+          <Button variant="secondary" onClick={onClose}>{tr("App.CloseConfirmModal.4d0b468")}</Button>
+          <Button onClick={handleSave} loading={saving}>{tr("browser.components.BrowserListLayout.text.fadf24d")}</Button>
         </>
       }
     >
       <div className="space-y-2">
-        <p className="text-xs text-[var(--color-text-muted)] mb-3">
-          关键字附加在实例上，例如账号、备注等，支持在列表页搜索。
-        </p>
+        <p className="text-xs text-[var(--color-text-muted)] mb-3">{tr("browser.components.KeywordsModal.text.ab264f3")}</p>
 
         {items.map((item, i) => (
           <div key={i} className="flex items-center gap-2">
             <Input
               value={item}
               onChange={e => setItem(i, e.target.value)}
-              placeholder="输入关键字"
+              placeholder={tr("browser.components.KeywordsModal.placeholder.ded605f")}
               className="flex-1"
             />
             <button
@@ -81,9 +82,7 @@ export function KeywordsModal({ profileId, profileName, initialKeywords, open, o
         ))}
 
         <Button variant="ghost" size="sm" onClick={addItem} className="mt-1">
-          <Plus className="w-4 h-4" />
-          添加关键字
-        </Button>
+          <Plus className="w-4 h-4" />{tr("browser.components.KeywordsModal.text.37008d7")}</Button>
       </div>
     </Modal>
   )

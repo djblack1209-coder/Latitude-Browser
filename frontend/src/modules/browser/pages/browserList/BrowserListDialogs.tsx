@@ -1,3 +1,5 @@
+import { getLocale, translateMessage } from '../../../../shared/i18n'
+import { tr, useLocale } from '../../../../shared/i18n'
 import { Link } from 'react-router-dom'
 import { XCircle } from 'lucide-react'
 import { Button, Modal } from '../../../../shared/components'
@@ -80,10 +82,12 @@ export function BrowserListDialogs({
   opError,
   onCloseOpError,
 }: BrowserListDialogsProps) {
+  useLocale()
+
   const formatTime = (value?: string) => {
     if (!value) return '-'
     const date = new Date(value)
-    return Number.isNaN(date.getTime()) ? '-' : date.toLocaleString('zh-CN')
+    return Number.isNaN(date.getTime()) ? '-' : date.toLocaleString(getLocale())
   }
 
   const formatExpireTime = (value?: string) => {
@@ -91,27 +95,25 @@ export function BrowserListDialogs({
     const date = new Date(value)
     if (Number.isNaN(date.getTime())) return '-'
     date.setDate(date.getDate() + 3)
-    return date.toLocaleString('zh-CN')
+    return date.toLocaleString(getLocale())
   }
 
   return (
     <>
       <Modal
         open={proxyErrorModal}
-        onClose={onCloseProxyError}
-        title="代理链路不可用"
+        onClose={translateMessage(onCloseProxyError)}
+        title={tr("browser.pages.browserList.BrowserListDialogs.title.ebdf8d8")}
         width="420px"
         footer={
           <>
-            <Button variant="secondary" onClick={onCloseProxyError} disabled={startingDirect}>取消</Button>
+            <Button variant="secondary" onClick={translateMessage(onCloseProxyError)} disabled={startingDirect}>{tr("App.CloseConfirmModal.4d0b468")}</Button>
             {pendingStartId && (
-              <Button variant="secondary" onClick={onStartDirect} loading={startingDirect}>
-                直连启动
-              </Button>
+              <Button variant="secondary" onClick={onStartDirect} loading={startingDirect}>{tr("browser.pages.browserList.BrowserListDialogs.text.215da23")}</Button>
             )}
             {pendingStartId && (
               <Link to={`/browser/edit/${pendingStartId}`}>
-                <Button onClick={onCloseProxyError} disabled={startingDirect}>去修改代理</Button>
+                <Button onClick={translateMessage(onCloseProxyError)} disabled={startingDirect}>{tr("browser.pages.browserList.BrowserListDialogs.text.2dc6d88")}</Button>
               </Link>
             )}
           </>
@@ -119,10 +121,10 @@ export function BrowserListDialogs({
       >
         <div className="space-y-3">
           <div className="flex items-start gap-3 p-3 rounded-lg bg-[var(--color-bg-secondary)]">
-            <XCircle className="w-5 h-5 text-red-500 mt-0.5 shrink-0" />
+            <XCircle className="w-5 h-5 text-[var(--color-error)] mt-0.5 shrink-0" />
             <p className="text-sm text-[var(--color-text-primary)]">{proxyErrorMsg}</p>
           </div>
-          <p className="text-sm text-[var(--color-text-muted)]">请前往编辑页面重新选择可用链路；如果是订阅导入，先刷新订阅并确认该节点仍存在。</p>
+          <p className="text-sm text-[var(--color-text-muted)]">{tr("browser.pages.browserList.BrowserListDialogs.text.7712716")}</p>
         </div>
       </Modal>
 
@@ -140,12 +142,12 @@ export function BrowserListDialogs({
       <Modal
         open={copyModal.open}
         onClose={onCloseCopy}
-        title="复制实例"
+        title={tr("browser.pages.BrowserCopyPage.title.7d46ab5")}
         width="720px"
         footer={
           <>
-            <Button variant="secondary" onClick={onCloseCopy}>取消</Button>
-            <Button onClick={onConfirmCopy} loading={copying} disabled={copyConfirmDisabled}>确认复制</Button>
+            <Button variant="secondary" onClick={onCloseCopy}>{tr("App.CloseConfirmModal.4d0b468")}</Button>
+            <Button onClick={onConfirmCopy} loading={copying} disabled={copyConfirmDisabled}>{tr("browser.pages.browserList.BrowserListDialogs.text.25654ca")}</Button>
           </>
         }
       >
@@ -162,48 +164,48 @@ export function BrowserListDialogs({
       <Modal
         open={deleteConfirm.open}
         onClose={onCloseDeleteConfirm}
-        title="删除实例"
+        title={tr("browser.pages.browserList.BrowserListDialogs.title.6e73a5f")}
         width="400px"
         footer={
           <>
-            <Button variant="secondary" onClick={onCloseDeleteConfirm} disabled={deleting}>取消</Button>
-            <Button variant="danger" onClick={onConfirmDelete} loading={deleting}>确定删除</Button>
+            <Button variant="secondary" onClick={onCloseDeleteConfirm} disabled={deleting}>{tr("App.CloseConfirmModal.4d0b468")}</Button>
+            <Button variant="danger" onClick={onConfirmDelete} loading={deleting}>{tr("browser.pages.browserList.BrowserListDialogs.text.56e90a3")}</Button>
           </>
         }
       >
         <div className="text-sm text-[var(--color-text-secondary)]">
           {deleteConfirm.mode === 'batch'
-            ? `确定将选中的 ${deleteConfirm.count} 个实例移入回收站？3 天内可恢复。`
-            : `确定将实例「${deleteConfirm.profileName || '未命名实例'}」移入回收站？3 天内可恢复。`}
+            ? tr("browser.pages.browserList.BrowserListDialogs.BrowserListDialogs.ca2aebb", [deleteConfirm.count])
+            : tr("browser.pages.browserList.BrowserListDialogs.BrowserListDialogs.f7c8232", [deleteConfirm.profileName || tr("browser.copyName.buildBrowserProfileCopyName.11a8063")])}
         </div>
       </Modal>
 
       <Modal
         open={trashModalOpen}
         onClose={onCloseTrash}
-        title="实例回收站"
+        title={tr("browser.pages.browserList.BrowserListDialogs.title.ecc12f2")}
         width="720px"
-        footer={<Button variant="secondary" onClick={onCloseTrash}>关闭</Button>}
+        footer={<Button variant="secondary" onClick={onCloseTrash}>{tr("ui.components.Modal.aria_label.6c14bd7")}</Button>}
       >
         {trashLoading ? (
-          <div className="py-10 text-center text-sm text-[var(--color-text-muted)]">加载中...</div>
+          <div className="py-10 text-center text-sm text-[var(--color-text-muted)]">{tr("ui.components.Table.text.514c33a")}</div>
         ) : trashProfiles.length === 0 ? (
-          <div className="py-10 text-center text-sm text-[var(--color-text-muted)]">回收站为空</div>
+          <div className="py-10 text-center text-sm text-[var(--color-text-muted)]">{tr("browser.pages.browserList.BrowserListDialogs.text.fecda03")}</div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-[var(--color-border-default)] text-left text-xs text-[var(--color-text-muted)]">
-                  <th className="py-2 pr-3 font-medium">实例</th>
-                  <th className="py-2 pr-3 font-medium">删除时间</th>
-                  <th className="py-2 pr-3 font-medium">自动清理</th>
-                  <th className="py-2 text-right font-medium">操作</th>
+                  <th className="py-2 pr-3 font-medium">{tr("config.navigation.config.name.69fffaf")}</th>
+                  <th className="py-2 pr-3 font-medium">{tr("browser.pages.browserList.BrowserListDialogs.text.8d55c8d")}</th>
+                  <th className="py-2 pr-3 font-medium">{tr("browser.pages.browserList.BrowserListDialogs.text.c010eec")}</th>
+                  <th className="py-2 text-right font-medium">{tr("browser.components.AutomationScriptHistoryModal.text.f3ea6d3")}</th>
                 </tr>
               </thead>
               <tbody>
                 {trashProfiles.map((profile) => (
                   <tr key={profile.profileId} className="border-b border-[var(--color-border-muted)] last:border-0">
-                    <td className="py-3 pr-3 text-[var(--color-text-primary)]">{profile.profileName || '未命名实例'}</td>
+                    <td className="py-3 pr-3 text-[var(--color-text-primary)]">{profile.profileName || tr("browser.copyName.buildBrowserProfileCopyName.11a8063")}</td>
                     <td className="py-3 pr-3 text-[var(--color-text-secondary)]">{formatTime(profile.deletedAt)}</td>
                     <td className="py-3 pr-3 text-[var(--color-text-secondary)]">{formatExpireTime(profile.deletedAt)}</td>
                     <td className="py-3 text-right">
@@ -214,18 +216,14 @@ export function BrowserListDialogs({
                           onClick={() => onRestoreProfile(profile.profileId)}
                           loading={restoringId === profile.profileId}
                           disabled={!!permanentlyDeletingId}
-                        >
-                          恢复
-                        </Button>
+                        >{tr("browser.components.SnapshotTab.text.79748ca")}</Button>
                         <Button
                           size="sm"
                           variant="danger"
                           onClick={() => onOpenPermanentDelete(profile)}
                           loading={permanentlyDeletingId === profile.profileId}
                           disabled={!!restoringId}
-                        >
-                          彻底删除
-                        </Button>
+                        >{tr("browser.pages.browserList.BrowserListDialogs.text.8c0b37b")}</Button>
                       </div>
                     </td>
                   </tr>
@@ -239,29 +237,29 @@ export function BrowserListDialogs({
       <Modal
         open={permanentDeleteConfirm.open}
         onClose={onClosePermanentDelete}
-        title="彻底删除实例"
+        title={tr("browser.pages.browserList.BrowserListDialogs.title.02d602b")}
         width="420px"
         footer={
           <>
-            <Button variant="secondary" onClick={onClosePermanentDelete} disabled={!!permanentlyDeletingId}>取消</Button>
-            <Button variant="danger" onClick={onConfirmPermanentDelete} loading={!!permanentlyDeletingId}>彻底删除</Button>
+            <Button variant="secondary" onClick={onClosePermanentDelete} disabled={!!permanentlyDeletingId}>{tr("App.CloseConfirmModal.4d0b468")}</Button>
+            <Button variant="danger" onClick={onConfirmPermanentDelete} loading={!!permanentlyDeletingId}>{tr("browser.pages.browserList.BrowserListDialogs.text.8c0b37b")}</Button>
           </>
         }
       >
         <div className="space-y-2 text-sm text-[var(--color-text-secondary)]">
-          <p>确定彻底删除实例「{permanentDeleteConfirm.profile?.profileName || '未命名实例'}」？</p>
-          <p className="text-red-500">这会删除配置、浏览器用户数据、快照、快捷码和插件绑定，删除后不可恢复。</p>
+          <p>{tr("browser.pages.browserList.BrowserListDialogs.text.44e64c4")}{permanentDeleteConfirm.profile?.profileName || tr("browser.copyName.buildBrowserProfileCopyName.11a8063")}」？</p>
+          <p className="text-[var(--color-error)]">{tr("browser.pages.browserList.BrowserListDialogs.text.4f6640a")}</p>
         </div>
       </Modal>
 
       <Modal
         open={!!opError}
-        onClose={onCloseOpError}
-        title="操作失败"
+        onClose={translateMessage(onCloseOpError)}
+        title={tr("browser.pages.TagManagementPage.TagManagementPage.09e424b")}
         width="420px"
-        footer={<Button onClick={onCloseOpError}>知道了</Button>}
+        footer={<Button onClick={translateMessage(onCloseOpError)}>{tr("browser.pages.BrowserEditPage.text.cb63c62")}</Button>}
       >
-        <div className="text-[var(--color-text-secondary)] whitespace-pre-line">{opError}</div>
+        <div className="text-[var(--color-text-secondary)] whitespace-pre-line">{translateMessage(opError)}</div>
       </Modal>
     </>
   )

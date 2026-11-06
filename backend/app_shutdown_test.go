@@ -9,15 +9,37 @@ import (
 	"ant-chrome/backend/internal/config"
 )
 
-func TestDesktopNativeCloseRequiresConfirmation(t *testing.T) {
+func TestDesktopNativeCloseUsesManagedCleanup(t *testing.T) {
 	for _, platform := range []string{"windows", "darwin", "linux", " Windows "} {
-		if !platformSupportsCloseConfirmationForOS(platform) {
-			t.Errorf("%s native close bypasses pre-shutdown confirmation", platform)
+		if !platformUsesManagedCloseForOS(platform) {
+			t.Errorf("%s native close bypasses managed cleanup", platform)
 		}
 	}
-	if platformSupportsCloseConfirmationForOS("unsupported") {
+	if platformUsesManagedCloseForOS("unsupported") {
 		t.Fatal("unsupported platform unexpectedly entered the desktop close flow")
 	}
+}
+
+func TestNativeCloseCleansUpWithoutFrontendConfirmation(t *testing.T) {
+	app := &App{}
+	// No Wails emitter exists here. Emitting a confirmation would panic.
+	if !ShouldBlockClose(app, context.Background()) {
+		t.Fatal("initial native close must defer teardown until cleanup completes")
+	}
+	deadline := time.Now().Add(time.Second)
+	for time.Now().Before(deadline) {
+		app.quitMu.Lock()
+		done := app.forceQuit && app.quitRequested && app.quitMode == quitModeFull
+		app.quitMu.Unlock()
+		if done {
+			if ShouldBlockClose(app, context.Background()) {
+				t.Fatal("completed cleanup blocked native close")
+			}
+			return
+		}
+		time.Sleep(time.Millisecond)
+	}
+	t.Fatal("native close waited for frontend confirmation")
 }
 
 func TestQuitRequestDoesNotAuthorizeCloseBeforeCleanup(t *testing.T) {

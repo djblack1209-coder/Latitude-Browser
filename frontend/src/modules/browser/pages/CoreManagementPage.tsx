@@ -1,7 +1,10 @@
+import { AssetScopeTabs } from './AssetScopeTabs'
+import { translateMessage } from '../../../shared/i18n'
+import { tr, useLocale } from '../../../shared/i18n'
 import { useEffect, useState, useCallback } from 'react'
-import { Download, FolderOpen, PackagePlus, Plus, Radar } from 'lucide-react'
+import { Download, Edit2, FolderOpen, PackagePlus, Plus, Radar, RotateCcw, Star, Trash2 } from 'lucide-react'
 import { Badge, Button, ConfirmModal, Table, toast } from '../../../shared/components'
-import { TelemetryStrip, TerminalPanel, WorkspaceHeader } from '../../../shared/components/SignalPrimitives'
+import { TerminalPanel, WorkspaceHeader } from '../../../shared/components/SignalPrimitives'
 import type { TableColumn } from '../../../shared/components/Table'
 import type { BrowserCore, BrowserCoreInput, BrowserCoreValidateResult, BrowserSettings, BrowserCoreExtended, BrowserProxy } from '../types'
 import { fetchBrowserCores, saveBrowserCore, deleteBrowserCore, setDefaultBrowserCore, validateBrowserCorePath, openCorePath, fetchBrowserSettings, saveBrowserSettings, fetchCoreExtendedInfo, scanBrowserCores, importLocalBrowserCore, BrowserCoreDownload, fetchBrowserProxies, redownloadBrowserCore } from '../api'
@@ -15,6 +18,8 @@ import type { CoreDownloadRecommendation } from './coreManagement/coreDownloadRe
 import type { CoreDisplayInfo, CoreDownloadForm, CoreDownloadProgress, CoreEditForm, CoreSettingsForm } from './coreManagement.types'
 
 export function CoreManagementPage() {
+  useLocale()
+
   const [cores, setCores] = useState<BrowserCore[]>([])
   const [displayList, setDisplayList] = useState<CoreDisplayInfo[]>([])
   const [loading, setLoading] = useState(true)
@@ -175,59 +180,51 @@ export function CoreManagementPage() {
 
   // 表格列定义
   const columns: TableColumn<CoreDisplayInfo>[] = [
-    { key: 'coreName', title: '内核名称', width: '150px' },
-    { key: 'corePath', title: '内核路径', width: '180px' },
+    { key: 'coreName', title: tr("browser.components.BrowserListLayout.label.01e4c4a"), width: '150px', render: value => <span className="block max-w-[126px] truncate" title={String(value)}>{value}</span> },
+    { key: 'corePath', title: tr("browser.components.BrowserListLayout.label.a1d450e"), width: '180px', render: value => <span className="block max-w-[156px] truncate font-mono text-xs" title={String(value)}>{value}</span> },
     {
       key: 'chromeVersion',
-      title: 'Chrome 版本',
+      title: tr("browser.pages.CoreManagementPage.title.f5a40d9"),
       width: '130px',
       render: (val) => val || '-',
     },
     {
       key: 'instanceCount',
-      title: '使用实例',
+      title: tr("browser.pages.CoreManagementPage.title.9730b09"),
       width: '90px',
       render: (val) => <Badge variant="default">{val}</Badge>,
     },
     {
       key: 'isDefault',
-      title: '默认',
+      title: tr("browser.api.runtime.message.c8d09cf"),
       width: '70px',
-      render: (val) => val ? <Badge variant="info">默认</Badge> : null,
+      render: (val) => val ? <Badge variant="info">{tr("browser.api.runtime.message.c8d09cf")}</Badge> : null,
     },
     {
       key: 'pathValid',
-      title: '状态',
+      title: tr("browser.components.AutomationScriptHistoryModal.text.62e951a"),
       width: '80px',
       render: (val) => (
-        <Badge variant={val ? 'success' : 'error'}>
-          {val ? '有效' : '无效'}
+        <Badge variant={val ? "success" : "error"}>
+          {val ? tr("browser.pages.CoreManagementPage.CoreManagementPage.ad385d3") : tr("browser.pages.CoreManagementPage.CoreManagementPage.eb645ab")}
         </Badge>
       ),
     },
     {
       key: 'actions',
-      title: '操作',
+      title: tr("browser.components.AutomationScriptHistoryModal.text.f3ea6d3"),
       width: '220px',
       render: (_, record) => (
-        <div className="flex gap-2">
-          <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); handleOpenPath(record.corePath) }} title="打开目录" aria-label={`打开 ${record.coreName} 的内核目录`}>
+        <div className="terminal-core-actions flex gap-1">
+          <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); handleOpenPath(record.corePath) }} title={tr("browser.pages.CoreManagementPage.title.031c105")} aria-label={tr("browser.pages.CoreManagementPage.CoreManagementPage.1cac86f", [record.coreName])}>
             <FolderOpen className="w-4 h-4" />
           </Button>
-          <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); handleEdit(record) }}>
-            编辑
-          </Button>
-          <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); handleRedownload(record) }}>
-            重新下载
-          </Button>
+          <Button size="sm" variant="ghost" aria-label={`${tr("browser.components.BrowserListLayout.title.a7f814c")}: ${record.coreName}`} title={tr("browser.components.BrowserListLayout.title.a7f814c")} onClick={(e) => { e.stopPropagation(); handleEdit(record) }}><Edit2 className="h-3.5 w-3.5" aria-hidden="true" /></Button>
+          <Button size="sm" variant="ghost" aria-label={`${tr("browser.pages.CoreManagementPage.text.2b22765")}: ${record.coreName}`} title={tr("browser.pages.CoreManagementPage.text.2b22765")} onClick={(e) => { e.stopPropagation(); handleRedownload(record) }}><RotateCcw className="h-3.5 w-3.5" aria-hidden="true" /></Button>
           {!record.isDefault && (
-            <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); handleSetDefault(record.coreId) }}>
-              设为默认
-            </Button>
+            <Button size="sm" variant="ghost" aria-label={`${tr("browser.components.BrowserListLayout.title.536a009")}: ${record.coreName}`} title={tr("browser.components.BrowserListLayout.title.536a009")} onClick={(e) => { e.stopPropagation(); handleSetDefault(record.coreId) }}><Star className="h-3.5 w-3.5" aria-hidden="true" /></Button>
           )}
-          <Button size="sm" variant="danger" onClick={(e) => { e.stopPropagation(); handleDeleteClick(record) }}>
-            删除
-          </Button>
+          <Button size="sm" variant="danger" aria-label={`${tr("browser.components.BrowserListLayout.title.3755f56")}: ${record.coreName}`} title={tr("browser.components.BrowserListLayout.title.3755f56")} onClick={(e) => { e.stopPropagation(); handleDeleteClick(record) }}><Trash2 className="h-3.5 w-3.5" aria-hidden="true" /></Button>
         </div>
       ),
     },
@@ -238,7 +235,7 @@ export function CoreManagementPage() {
     try {
       await openCorePath(corePath)
     } catch (error: any) {
-      toast.error(error?.message || '打开目录失败')
+      toast.error(error?.message || tr("browser.components.AutomationScriptPublicApiModal.AutomationScriptPublicApiModal.6651d08"))
     }
   }
 
@@ -248,9 +245,9 @@ export function CoreManagementPage() {
     try {
       await scanBrowserCores()
       await loadData()
-      toast.success('扫描完成')
+      toast.success(tr("browser.pages.CoreManagementPage.CoreManagementPage.936420f"))
     } catch (error: any) {
-      toast.error(error?.message || '扫描失败')
+      toast.error(error?.message || tr("browser.pages.CoreManagementPage.CoreManagementPage.978790d"))
     } finally {
       setScanning(false)
     }
@@ -258,7 +255,7 @@ export function CoreManagementPage() {
 
   const handleImportLocal = async () => {
     setImporting(true)
-    setImportProgress({ phase: 'selecting', progress: 0, message: '请选择本地内核包...' })
+    setImportProgress({ phase: 'selecting', progress: 0, message: tr("browser.pages.CoreManagementPage.message.963d523") })
     try {
       const imported = await importLocalBrowserCore()
       if (!imported) {
@@ -266,9 +263,9 @@ export function CoreManagementPage() {
         return
       }
       await loadData()
-      toast.success(`已导入：${imported.coreName}`)
+      toast.success(tr("browser.pages.CoreManagementPage.CoreManagementPage.1af075d", [imported.coreName]))
     } catch (error: any) {
-      toast.error(error?.message || '导入失败')
+      toast.error(error?.message || tr("browser.components.ProxyImportModal.ProxyImportModal.a01a8d5"))
     } finally {
       setImporting(false)
     }
@@ -306,7 +303,7 @@ export function CoreManagementPage() {
       const recommendation = await fetchCoreDownloadRecommendation(runtimeEnv)
       setDownloadRecommendation(recommendation)
       if (!recommendation) {
-        setDownloadRecommendationError('当前环境没有可自动解压的 Release 压缩包')
+        setDownloadRecommendationError(tr("browser.pages.CoreManagementPage.CoreManagementPage.998fb9e"))
         return
       }
       setDownloadForm(prev => ({
@@ -315,7 +312,7 @@ export function CoreManagementPage() {
       }))
     } catch (error: any) {
       setDownloadRecommendation(null)
-      setDownloadRecommendationError(error?.message || '获取推荐地址失败')
+      setDownloadRecommendationError(error?.message || tr("browser.pages.CoreManagementPage.CoreManagementPage.17a4303"))
     } finally {
       setDownloadRecommendationLoading(false)
     }
@@ -342,11 +339,11 @@ export function CoreManagementPage() {
   // 保存内核
   const handleSaveCore = async () => {
     if (!editForm.coreName.trim()) {
-      toast.error('请输入内核名称')
+      toast.error(tr("browser.components.BrowserSettingsModal.BrowserSettingsModal.51faa0a"))
       return
     }
     if (!editForm.corePath.trim()) {
-      toast.error('请输入内核路径')
+      toast.error(tr("browser.components.BrowserSettingsModal.BrowserSettingsModal.c345da5"))
       return
     }
     setSaving(true)
@@ -360,9 +357,9 @@ export function CoreManagementPage() {
       await saveBrowserCore(input)
       await loadData()
       setEditModalOpen(false)
-      toast.success(editingCore ? '内核已更新' : '内核已添加')
+      toast.success(editingCore ? tr("browser.pages.CoreManagementPage.CoreManagementPage.40a21d9") : tr("browser.pages.CoreManagementPage.CoreManagementPage.30b09f9"))
     } catch (error: any) {
-      toast.error(error?.message || '保存失败')
+      toast.error(error?.message || tr("browser.components.BrowserSettingsModal.BrowserSettingsModal.40525a7"))
     } finally {
       setSaving(false)
     }
@@ -371,7 +368,7 @@ export function CoreManagementPage() {
   // 删除点击
   const handleDeleteClick = (record: CoreDisplayInfo) => {
     if (record.isDefault) {
-      toast.warning('默认内核不能删除')
+      toast.warning(tr("browser.pages.CoreManagementPage.CoreManagementPage.c6e32cb"))
       return
     }
     setDeletingCore(record)
@@ -384,9 +381,9 @@ export function CoreManagementPage() {
     try {
       await deleteBrowserCore(deletingCore.coreId)
       await loadData()
-      toast.success('内核已删除')
+      toast.success(tr("browser.components.BrowserSettingsModal.BrowserSettingsModal.ad82a94"))
     } catch (error: any) {
-      toast.error(error?.message || '删除失败')
+      toast.error(error?.message || tr("browser.components.ProxyPickerModal.ProxyPickerModal.72250c5"))
     }
     setDeletingCore(null)
   }
@@ -396,23 +393,23 @@ export function CoreManagementPage() {
     try {
       await setDefaultBrowserCore(coreId)
       await loadData()
-      toast.success('已设为默认内核')
+      toast.success(tr("browser.pages.CoreManagementPage.CoreManagementPage.f22c475"))
     } catch (error: any) {
-      toast.error(error?.message || '设置失败')
+      toast.error(error?.message || tr("browser.pages.CoreManagementPage.CoreManagementPage.7f77f45"))
     }
   }
 
   // 开始下载
   const handleStartDownloadCore = async () => {
     if (!downloadForm.name.trim() || !downloadForm.url.trim()) {
-      toast.error('请输入名称和下载地址')
+      toast.error(tr("browser.pages.CoreManagementPage.CoreManagementPage.acb9ee9"))
       return
     }
     if (downloadForm.mode === 'redownload' && !downloadForm.coreId) {
-      toast.error('缺少内核ID')
+      toast.error(tr("browser.pages.CoreManagementPage.CoreManagementPage.54edda8"))
       return
     }
-    setDownloadProgress({ phase: 'starting', progress: 0, message: '准备下载...' })
+    setDownloadProgress({ phase: 'starting', progress: 0, message: tr("browser.pages.CoreManagementPage.message.2144fea") })
     try {
       // 在这儿我们需要从 proxies 中寻找匹配到的代理设定，如果有则传过去的 url
       let targetProxy = ''
@@ -434,7 +431,7 @@ export function CoreManagementPage() {
         await BrowserCoreDownload(downloadForm.name.trim(), downloadForm.url.trim(), targetProxy)
       }
     } catch (err: any) {
-      toast.error(err.message || '内部启动下载失败')
+      toast.error(err.message || tr("browser.pages.CoreManagementPage.CoreManagementPage.2af53de"))
       setDownloadProgress(null)
     }
   }
@@ -472,9 +469,9 @@ export function CoreManagementPage() {
       await saveBrowserSettings(newSettings)
       setSettings(newSettings)
       setSettingsModalOpen(false)
-      toast.success('设置已保存')
+      toast.success(tr("browser.pages.CoreManagementPage.CoreManagementPage.cb84a96"))
     } catch (error: any) {
-      toast.error(error?.message || '保存失败')
+      toast.error(error?.message || tr("browser.components.BrowserSettingsModal.BrowserSettingsModal.40525a7"))
     } finally {
       setSavingSettings(false)
     }
@@ -482,64 +479,37 @@ export function CoreManagementPage() {
 
 
   const validCoreCount = displayList.filter((item) => item.pathValid).length
-  const linkedInstanceCount = displayList.reduce((total, item) => total + item.instanceCount, 0)
-  const defaultCore = displayList.find((item) => item.isDefault)
 
   return (
     <div className="apple-page space-y-4">
       <WorkspaceHeader
-        eyebrow="FINGERPRINT / CORES"
-        title="浏览器内核"
-        description="管理浏览器内核、默认基线与数据目录。"
+
+        title={tr("config.navigation.config.name.a709cd9")}
+
         actions={(
           <>
             <Button size="sm" variant="secondary" onClick={handleOpenDownload}>
-              <Download className="h-4 w-4" aria-hidden="true" />
-              下载内核
-            </Button>
+              <Download className="h-4 w-4" aria-hidden="true" />{tr("browser.pages.CoreManagementPage.text.ee587b7")}</Button>
             <Button size="sm" variant="secondary" onClick={handleImportLocal} loading={importing}>
-              <PackagePlus className="h-4 w-4" aria-hidden="true" />
-              导入本地
-            </Button>
+              <PackagePlus className="h-4 w-4" aria-hidden="true" />{tr("browser.pages.CoreManagementPage.text.455bb7c")}</Button>
             <Button size="sm" variant="secondary" onClick={handleScan} loading={scanning}>
-              <Radar className="h-4 w-4" aria-hidden="true" />
-              扫描目录
-            </Button>
+              <Radar className="h-4 w-4" aria-hidden="true" />{tr("browser.pages.CoreManagementPage.text.d364de8")}</Button>
             <Button size="sm" onClick={handleAdd}>
-              <Plus className="h-4 w-4" aria-hidden="true" />
-              新增内核
-            </Button>
+              <Plus className="h-4 w-4" aria-hidden="true" />{tr("browser.components.BrowserListLayout.text.c5ae8df")}</Button>
           </>
         )}
       />
 
-      <TelemetryStrip
-        items={[
-          { label: '已注册', value: displayList.length, detail: 'Chrome Runtime' },
-          {
-            label: '路径可用',
-            value: `${validCoreCount}/${displayList.length}`,
-            detail: loading ? '正在校验' : '启动前置检查',
-            tone: loading || displayList.length === 0 ? 'neutral' : validCoreCount === displayList.length ? 'success' : 'warning',
-          },
-          { label: '关联实例', value: linkedInstanceCount, detail: '使用当前内核' },
-          {
-            label: '默认内核',
-            value: defaultCore?.coreName || '未设置',
-            detail: defaultCore?.chromeVersion || '等待指定',
-            tone: defaultCore ? 'accent' : 'warning',
-          },
-        ]}
-      />
+      <AssetScopeTabs />
 
       {importProgress && (
         <TerminalPanel
-          title="LOCAL IMPORT"
+          title={tr("ui.modules.browser.pages.CoreManagementPage.label.1bc5f78")}
           meta={<span className="font-mono tabular-nums">{Math.max(0, Math.min(100, importProgress.progress))}%</span>}
         >
           <div className="flex items-center gap-3 px-4 py-3 text-sm text-[var(--color-text-secondary)]" role="status" aria-live="polite">
             <span className="h-2 w-2 rounded-full bg-[var(--color-accent)]" aria-hidden="true" />
-            {importProgress.message}
+            {translateMessage(importProgress.message)}
           </div>
         </TerminalPanel>
       )}
@@ -547,15 +517,15 @@ export function CoreManagementPage() {
       <CoreSettingsCard settings={settings} onEdit={handleEditSettings} />
 
       <TerminalPanel
-        title="RUNTIME REGISTRY"
-        meta={<span className="font-mono tabular-nums">{validCoreCount} READY / {displayList.length} TOTAL</span>}
+        title={tr("ui.modules.browser.pages.CoreManagementPage.label.d0db190")}
+        meta={<span className="font-mono tabular-nums">{validCoreCount} / {displayList.length}</span>}
       >
         <Table
           columns={columns}
           data={displayList}
           rowKey="coreId"
           loading={loading}
-          emptyText="暂无内核，请添加内核"
+          emptyText={tr("browser.pages.BrowserEditPage.label.9a115eb")}
         />
       </TerminalPanel>
       <CoreSettingsModal
@@ -584,9 +554,9 @@ export function CoreManagementPage() {
         open={deleteConfirmOpen}
         onClose={() => setDeleteConfirmOpen(false)}
         onConfirm={handleDeleteConfirm}
-        title="确认删除"
-        content={`确定要删除内核"${deletingCore?.coreName}"吗？此操作不可恢复。`}
-        confirmText="删除"
+        title={tr("browser.components.ProxyPickerModal.confirmText.3c06abe")}
+        content={tr("browser.pages.CoreManagementPage.CoreManagementPage.043eb09", [deletingCore?.coreName])}
+        confirmText={tr("browser.components.BrowserListLayout.title.3755f56")}
         danger
       />
 
@@ -596,7 +566,7 @@ export function CoreManagementPage() {
         progress={downloadProgress}
         recommendation={downloadRecommendation}
         recommendationLoading={downloadRecommendationLoading}
-        recommendationError={downloadRecommendationError}
+        recommendationError={translateMessage(downloadRecommendationError)}
         proxies={proxies}
         setForm={setDownloadForm}
         setProgress={setDownloadProgress}

@@ -1,3 +1,4 @@
+import { tr, useLocale } from '../../../shared/i18n'
 ﻿import type { Dispatch, SetStateAction } from "react";
 import { FileText, Play } from "lucide-react";
 import {
@@ -121,11 +122,13 @@ export function AutomationScriptRunModalView({
   updateParamsText,
   updateRotateSelector,
 }: AutomationScriptRunModalViewProps) {
+  useLocale()
+
   return (
     <Modal
       open={open}
       onClose={handleClose}
-      title="执行脚本"
+      title={tr("browser.components.AutomationScriptRunModalView.title.0ee58c6")}
       width="880px"
       footer={
         <>
@@ -133,22 +136,18 @@ export function AutomationScriptRunModalView({
             variant="secondary"
             onClick={handleClose}
             disabled={running || demoBusy}
-          >
-            关闭
-          </Button>
+          >{tr("ui.components.Modal.aria_label.6c14bd7")}</Button>
           <Button
             onClick={() => void handlePrimaryAction()}
             loading={running}
             disabled={!launchApiExecutable || demoBusy}
           >
-            <Play className="h-4 w-4" />
-            立即执行
-          </Button>
+            <Play className="h-4 w-4" />{tr("browser.components.AutomationScriptRunModalView.text.9a42843")}</Button>
         </>
       }
     >
       <div className="space-y-3">
-        <p className="text-sm text-[var(--color-text-secondary)]">脚本以当前用户权限运行，可读取本机文件、访问网络并执行系统命令。超时限制不会隔离这些权限，请确认已检查并信任脚本。</p>
+        <p className="text-sm text-[var(--color-text-secondary)]">{tr("browser.components.AutomationScriptRunModalView.text.c7a6eaf")}</p>
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--color-border-muted)] pb-3">
           <div className="min-w-0">
             <div className="flex min-w-0 flex-wrap items-center gap-2">
@@ -178,10 +177,10 @@ export function AutomationScriptRunModalView({
                   dot
                 >
                   {script.status === "ready"
-                    ? "可用"
+                    ? tr("browser.automationScripts.definitions.label.e91365c")
                     : script.status === "disabled"
-                      ? "停用"
-                      : "草稿"}
+                      ? tr("browser.automationScripts.definitions.label.d989e55")
+                      : tr("browser.automationScripts.definitions.label.0f43681")}
                 </Badge>
             </div>
           </div>
@@ -191,16 +190,14 @@ export function AutomationScriptRunModalView({
             onClick={handleOpenScriptDetail}
             disabled={running || demoBusy}
           >
-            <FileText className="h-4 w-4" />
-            脚本详情
-          </Button>
+            <FileText className="h-4 w-4" />{tr("browser.components.AutomationScriptRunModalView.text.d54da6e")}</Button>
         </div>
 
         {dirty && (
           <div className="rounded-xl border border-[var(--color-warning)]/30 bg-[var(--color-warning)]/10 px-4 py-3 text-sm text-[var(--color-text-secondary)]">
             {isDualInstanceRuntimeScript
-              ? "当前详情页还有未保存修改。本次执行只使用弹窗里的启动配置，不会自动保存页面内容。"
-              : "当前详情页还有未保存修改。本次执行只使用弹窗里的 selector / params，不会自动保存页面内容。"}
+              ? tr("browser.components.AutomationScriptRunModalView.AutomationScriptRunModalView.530ec83")
+              : tr("browser.components.AutomationScriptRunModalView.AutomationScriptRunModalView.2e1f6c0")}
           </div>
         )}
 
@@ -209,15 +206,13 @@ export function AutomationScriptRunModalView({
             <div>
               {describeAutomationScriptTargetConfig(script.targetConfig)}
             </div>
-            <div className="mt-2 text-xs text-[var(--color-text-muted)]">
-              本次执行沿用脚本配置的实例策略，只填写本策略需要的执行配置。
-            </div>
+            <div className="mt-2 text-xs text-[var(--color-text-muted)]">{tr("browser.components.AutomationScriptRunModalView.text.11a6bc4")}</div>
           </div>
         )}
 
         {showDemoProfilePicker && isManualTargetMode ? (
           <AutomationInstanceSelector
-            title="传入实例"
+            title={tr("browser.automationScripts.definitions.label.6a30362")}
             mode="manual"
             modes={["manual"]}
             loading={profilesLoading}
@@ -225,22 +220,20 @@ export function AutomationScriptRunModalView({
             selectedCode={selectedLaunchCode}
             selectedProfileId={selectedProfileId}
             profileOptions={selectableProfileOptions}
-            selectPlaceholder="暂无可选实例"
-            codePlaceholder="例如 BUYER_001"
+            selectPlaceholder={tr("browser.components.AutomationInstanceSelector.AutomationInstanceSelector.deb0aa0")}
+            codePlaceholder={tr("browser.components.AutomationScriptPublicApiModalView.codePlaceholder.b2f5013")}
             onCodeChange={handleLaunchCodeChange}
             onSelectProfile={handleSelectedProfileChange}
             extra={
               selectorDetachedFromSelectedProfile ? (
                 <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-[var(--color-border-muted)] bg-[var(--color-bg-secondary)] px-3 py-2 text-xs text-[var(--color-text-secondary)]">
-                  <span>当前 selector 已手动修改，执行以下方 JSON 为准。</span>
+                  <span>{tr("browser.components.AutomationScriptRunModalView.text.4fd52c6")}</span>
                   <Button
                     size="sm"
                     variant="secondary"
                     onClick={handleRestoreSelectedProfileSelector}
                     disabled={running || demoBusy || !selectedProfile}
-                  >
-                    恢复实例联动
-                  </Button>
+                  >{tr("browser.components.AutomationScriptRunModalView.text.ee6d6ce")}</Button>
                 </div>
               ) : null
             }
@@ -249,7 +242,7 @@ export function AutomationScriptRunModalView({
 
         {script.targetConfig.mode === "create" ? (
           <AutomationInstanceSelector
-            title="模板创建"
+            title={tr("browser.components.AutomationInstanceSelector.modeLabel.a1eb055")}
             mode="create"
             modes={["create"]}
             loading={profilesLoading}
@@ -257,7 +250,7 @@ export function AutomationScriptRunModalView({
             createName={createDraft.profileName}
             templateProfileId={createDraft.templateProfileId}
             templateOptions={templateProfileOptions}
-            templatePlaceholder="暂无模板"
+            templatePlaceholder={tr("browser.components.AutomationInstanceSelector.AutomationInstanceSelector.71fdd5f")}
             onCreateNameChange={(profileName) =>
               setCreateDraft((current) => ({
                 ...current,
@@ -275,7 +268,7 @@ export function AutomationScriptRunModalView({
 
         {script.targetConfig.mode === "rotate" ? (
           <AutomationInstanceSelector
-            title="条件轮询"
+            title={tr("browser.components.AutomationInstanceSelector.modeLabel.ce09657")}
             mode="rotate"
             modes={["rotate"]}
             disabled={running || demoBusy}
@@ -295,28 +288,25 @@ export function AutomationScriptRunModalView({
 
         {showDemoProfilePicker && !isManualTargetMode && demoMode === "select" ? (
           <AutomationInstanceSelector
-            title="实例选择"
+            title={tr("browser.components.AutomationInstanceSelector.AutomationInstanceSelector.168f9e8")}
             mode="select"
             modes={["select"]}
             loading={profilesLoading}
             disabled={running || demoBusy}
             selectedProfileId={selectedProfileId}
             profileOptions={selectableProfileOptions}
-            selectPlaceholder="暂无可选实例"
-            hint="也可在下方手动填 selector。"
+            selectPlaceholder={tr("browser.components.AutomationInstanceSelector.AutomationInstanceSelector.deb0aa0")}
             onSelectProfile={handleSelectedProfileChange}
             extra={
               selectorDetachedFromSelectedProfile ? (
                 <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-[var(--color-border-muted)] bg-[var(--color-bg-secondary)] px-3 py-2 text-xs text-[var(--color-text-secondary)]">
-                  <span>当前 selector 已手动修改，执行以下方 JSON 为准。</span>
+                  <span>{tr("browser.components.AutomationScriptRunModalView.text.4fd52c6")}</span>
                   <Button
                     size="sm"
                     variant="secondary"
                     onClick={handleRestoreSelectedProfileSelector}
                     disabled={running || demoBusy}
-                  >
-                    恢复实例联动
-                  </Button>
+                  >{tr("browser.components.AutomationScriptRunModalView.text.ee6d6ce")}</Button>
                 </div>
               ) : null
             }
@@ -324,21 +314,15 @@ export function AutomationScriptRunModalView({
         ) : null}
 
         {script.status === "disabled" ? (
-          <div className="rounded-xl border border-[var(--color-border-default)] bg-[var(--color-bg-surface)] px-4 py-4 text-sm text-[var(--color-text-secondary)]">
-            该脚本当前处于停用状态，先把状态切回可用再执行。
-          </div>
+          <div className="rounded-xl border border-[var(--color-border-default)] bg-[var(--color-bg-surface)] px-4 py-4 text-sm text-[var(--color-text-secondary)]">{tr("browser.components.AutomationScriptRunModalView.text.ed78cc9")}</div>
         ) : (
           <div className="space-y-3">
               {hasPublicAPIVariables ? (
                 <div className="rounded-xl border border-[var(--color-border-default)] bg-[var(--color-bg-surface)] px-4 py-3">
                   <div className="mb-3 flex items-center justify-between gap-3">
-                    <div className="text-sm font-semibold text-[var(--color-text-primary)]">
-                      接口变量
-                    </div>
+                    <div className="text-sm font-semibold text-[var(--color-text-primary)]">{tr("browser.components.AutomationScriptPublicApiModalView.text.4b1315a")}</div>
                     {hasUnusedPublicAPIVariables ? (
-                      <div className="text-xs text-[var(--color-text-muted)]">
-                        未引用变量不生效
-                      </div>
+                      <div className="text-xs text-[var(--color-text-muted)]">{tr("browser.components.AutomationScriptRunModalView.text.dd5f638")}</div>
                     ) : null}
                   </div>
                   <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
@@ -367,7 +351,7 @@ export function AutomationScriptRunModalView({
               }
             >
               {showsSelectorInput && (
-                <FormItem label="目标选择器 JSON">
+                <FormItem label={tr("browser.components.AutomationScriptRunModalView.label.6e0d28d")}>
                   <Textarea
                     rows={hasPublicAPIVariables ? 6 : 9}
                     value={selectorText}

@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
     <dict>
@@ -20,7 +21,9 @@
         <key>CFBundleIconFile</key>
         <string>iconfile</string>
         <key>LSMinimumSystemVersion</key>
-        <string>10.13.0</string>
+        <string>13.3</string>
+        <key>CFBundleLocalizations</key>
+        <array><string>en</string><string>zh-Hans</string></array>
         <key>NSHighResolutionCapable</key>
         <string>true</string>
         <key>NSHumanReadableCopyright</key>

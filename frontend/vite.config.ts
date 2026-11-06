@@ -1,5 +1,9 @@
-import { defineConfig } from 'vite'
+import { defineConfig, type Plugin } from 'vite'
 import react from '@vitejs/plugin-react-swc'
+import tailwindcss from '@tailwindcss/vite'
+import packageInfo from './package.json' with { type: 'json' }
+import { enUS } from './src/shared/i18n/en-US.ts'
+import { zhCN } from './src/shared/i18n/zh-CN.ts'
 
 const defaultDevPort = 5218
 
@@ -29,8 +33,20 @@ const devPort = resolveDevPort()
 const disableHmr = resolveBoolean(process.env.FRONTEND_DISABLE_HMR, false)
 const cleanDist = resolveBoolean(process.env.FRONTEND_CLEAN_DIST, false)
 
+let development = false
+const terminalHtml: Plugin = {
+  name: 'latitude-terminal-document',
+  configResolved(config) { development = config.command === 'serve' },
+  transformIndexHtml(html) {
+    return html.replaceAll('__LATITUDE_VERSION__', packageInfo.version)
+      .replaceAll('__LATITUDE_DEV__', String(development))
+      .replace('__DEV_BOOT_WORDS__', JSON.stringify({ en: [enUS['dev.waiting'], enUS['dev.retry']], zh: [zhCN['dev.waiting'], zhCN['dev.retry']] }))
+  },
+}
+
 export default defineConfig({
-  plugins: [react()],
+  plugins: [terminalHtml, react(), tailwindcss()],
+  define: { __APP_VERSION__: JSON.stringify(packageInfo.version) },
   server: {
     port: devPort,
     strictPort: true,
@@ -49,8 +65,8 @@ export default defineConfig({
     emptyOutDir: cleanDist,
     rollupOptions: {
       output: {
-        manualChunks: {
-          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
+        manualChunks(id) {
+          if (/node_modules\/(react|react-dom|react-router|react-router-dom|scheduler)\//.test(id)) return 'react-vendor'
         },
       },
     },

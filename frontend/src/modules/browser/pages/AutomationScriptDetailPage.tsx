@@ -1,3 +1,4 @@
+import { tr, useLocale } from '../../../shared/i18n'
 import { ArrowLeft } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Button, toast } from "../../../shared/components";
@@ -25,6 +26,8 @@ import { getScriptParamsHelp } from "./automationScriptDetail/paramsHelp";
 import { useAutomationScriptDetailState } from "./automationScriptDetail/useAutomationScriptDetailState";
 
 export function AutomationScriptDetailPage() {
+  useLocale()
+
   const navigate = useNavigate();
   const { scriptId = "" } = useParams();
   const { launchBaseUrl, apiAuth } = useLaunchContext();
@@ -58,7 +61,7 @@ export function AutomationScriptDetailPage() {
   } = useAutomationScriptDetailState(scriptId);
 
   const leavePage = () => {
-    if (dirty && !window.confirm("当前脚本有未保存修改，确认离开吗？")) {
+    if (dirty && !window.confirm(tr("browser.pages.AutomationScriptDetailPage.AutomationScriptDetailPage.71ece1c"))) {
       return;
     }
     navigate("/browser/automation");
@@ -66,14 +69,14 @@ export function AutomationScriptDetailPage() {
 
   const validateDraftForSave = (script: AutomationScriptRecord): boolean => {
     if (!script.name.trim()) {
-      toast.warning("脚本名称不能为空");
+      toast.warning(tr("browser.pages.AutomationScriptDetailPage.AutomationScriptDetailPage.1d9778f"));
       return false;
     }
     if (!script.scriptText.trim()) {
       toast.warning(
         script.type === "launch-api"
-          ? "固定接口模板不能为空"
-          : "脚本内容不能为空",
+          ? tr("browser.pages.AutomationScriptDetailPage.AutomationScriptDetailPage.444aff5")
+          : tr("browser.pages.AutomationScriptDetailPage.AutomationScriptDetailPage.5a69755"),
       );
       return false;
     }
@@ -115,11 +118,11 @@ export function AutomationScriptDetailPage() {
       setDraft(saved);
       setDirty(false);
       if (!options?.silentSuccess) {
-        toast.success(options?.successMessage || "脚本已保存");
+        toast.success(options?.successMessage || tr("browser.pages.AutomationScriptDetailPage.AutomationScriptDetailPage.a1fd745"));
       }
       return saved;
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : "脚本保存失败";
+      const message = error instanceof Error ? error.message : tr("browser.pages.AutomationScriptDetailPage.AutomationScriptDetailPage.8b114c8");
       toast.error(message);
       return null;
     } finally {
@@ -131,7 +134,7 @@ export function AutomationScriptDetailPage() {
     if (!draft) {
       return;
     }
-    await persistDraft(draft, { successMessage: "脚本已保存" });
+    await persistDraft(draft, { successMessage: tr("browser.pages.AutomationScriptDetailPage.AutomationScriptDetailPage.a1fd745") });
   };
 
   const handleOpenPublicApiManager = () => {
@@ -172,17 +175,17 @@ export function AutomationScriptDetailPage() {
     if (!draft) {
       return;
     }
-    if (!window.confirm(`确认删除脚本「${draft.name || "未命名脚本"}」吗？`)) {
+    if (!window.confirm(tr("browser.pages.AutomationScriptDetailPage.AutomationScriptDetailPage.0cb86b1", [draft.name || tr("browser.automationScripts.normalizeScriptRecord.2a05a0f")]))) {
       return;
     }
 
     setBusyAction("delete");
     try {
       await deleteAutomationScript(draft.id);
-      toast.success("脚本已删除");
+      toast.success(tr("browser.pages.AutomationScriptDetailPage.AutomationScriptDetailPage.7263783"));
       navigate("/browser/automation", { replace: true });
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : "脚本删除失败";
+      const message = error instanceof Error ? error.message : tr("browser.pages.AutomationScriptDetailPage.AutomationScriptDetailPage.a0d737c");
       toast.error(message);
     } finally {
       setBusyAction("none");
@@ -194,14 +197,14 @@ export function AutomationScriptDetailPage() {
       return;
     }
     if (!canRefreshAutomationScriptSource(draft.source)) {
-      toast.warning("当前脚本来源不支持重新导入");
+      toast.warning(tr("browser.pages.AutomationScriptDetailPage.AutomationScriptDetailPage.7f2aa90"));
       return;
     }
     if (dirty) {
-      toast.warning("请先保存当前修改，再重新导入");
+      toast.warning(tr("browser.pages.AutomationScriptDetailPage.AutomationScriptDetailPage.e4bdfb4"));
       return;
     }
-    if (!window.confirm("确认按来源重新导入当前脚本吗？这会覆盖当前脚本内容。")) {
+    if (!window.confirm(tr("browser.pages.AutomationScriptDetailPage.AutomationScriptDetailPage.d01117e"))) {
       return;
     }
 
@@ -211,11 +214,11 @@ export function AutomationScriptDetailPage() {
       setDraft(refreshed);
       setDirty(false);
       toast.success(
-        draft.source.type === "git" ? "脚本已重新拉取" : "脚本已重新导入",
+        draft.source.type === "git" ? tr("browser.pages.AutomationScriptDetailPage.AutomationScriptDetailPage.48af931") : tr("browser.pages.AutomationScriptDetailPage.AutomationScriptDetailPage.4651cbf"),
       );
     } catch (error: unknown) {
       const message =
-        error instanceof Error ? error.message : "脚本重新导入失败";
+        error instanceof Error ? error.message : tr("browser.pages.AutomationScriptDetailPage.AutomationScriptDetailPage.5cd6e75");
       toast.error(message);
     } finally {
       setBusyAction("none");
@@ -231,7 +234,7 @@ export function AutomationScriptDetailPage() {
       return;
     }
     if (dirty) {
-      toast.warning("请先保存当前修改，再导出");
+      toast.warning(tr("browser.pages.AutomationScriptDetailPage.AutomationScriptDetailPage.bf428f7"));
       return;
     }
 
@@ -253,27 +256,27 @@ export function AutomationScriptDetailPage() {
         case "directory":
           toast.success(
             result.fileCount > 1
-              ? `目录已导出，包含 ${result.fileCount} 个文件`
-              : result.message || "目录已导出",
+              ? tr("browser.pages.AutomationScriptDetailPage.AutomationScriptDetailPage.bea4f08", [result.fileCount])
+              : result.message || tr("browser.pages.AutomationScriptDetailPage.AutomationScriptDetailPage.2cc9c35"),
           );
           break;
         case "zip":
           toast.success(
             result.fileCount > 1
-              ? `ZIP 已导出，包含 ${result.fileCount} 个文件`
-              : result.message || "ZIP 已导出",
+              ? tr("browser.pages.AutomationScriptDetailPage.AutomationScriptDetailPage.956b269", [result.fileCount])
+              : result.message || tr("browser.pages.AutomationScriptDetailPage.AutomationScriptDetailPage.f76ad10"),
           );
           break;
         default:
           toast.success(
             result.fileCount > 1
-              ? `模板已导出，包含 ${result.fileCount} 个文件`
-              : result.message || "模板已导出",
+              ? tr("browser.pages.AutomationScriptDetailPage.AutomationScriptDetailPage.4bde333", [result.fileCount])
+              : result.message || tr("browser.automationScriptApi.exports.message.2043de9"),
           );
           break;
       }
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : "脚本导出失败";
+      const message = error instanceof Error ? error.message : tr("browser.pages.AutomationPage.AutomationPage.ad0c1d4");
       toast.error(message);
     } finally {
       setBusyAction("none");
@@ -281,18 +284,14 @@ export function AutomationScriptDetailPage() {
   };
 
   if (loading) {
-    return <div className="animate-fade-in rounded-2xl border border-dashed border-[var(--color-border-default)] bg-[var(--color-bg-surface)] px-6 py-12 text-center text-sm text-[var(--color-text-muted)]">正在加载脚本...</div>;
+    return <div className="animate-fade-in rounded-2xl border border-dashed border-[var(--color-border-default)] bg-[var(--color-bg-surface)] px-6 py-12 text-center text-sm text-[var(--color-text-muted)]">{tr("browser.pages.AutomationScriptDetailPage.text.57e8174")}</div>;
   }
   if (notFound || !draft) {
     return (
       <div className="space-y-4 animate-fade-in">
         <Button variant="secondary" size="sm" onClick={() => navigate("/browser/automation")}>
-          <ArrowLeft className="h-4 w-4" />
-          返回列表
-        </Button>
-        <div className="rounded-2xl border border-dashed border-[var(--color-border-default)] bg-[var(--color-bg-surface)] px-6 py-12 text-center text-sm text-[var(--color-text-muted)]">
-          脚本不存在或已被删除。
-        </div>
+          <ArrowLeft className="h-4 w-4" />{tr("browser.pages.AutomationScriptDetailPage.text.53505b1")}</Button>
+        <div className="rounded-2xl border border-dashed border-[var(--color-border-default)] bg-[var(--color-bg-surface)] px-6 py-12 text-center text-sm text-[var(--color-text-muted)]">{tr("browser.pages.AutomationScriptDetailPage.text.893dae3")}</div>
       </div>
     );
   }
@@ -315,9 +314,9 @@ export function AutomationScriptDetailPage() {
   const handleCopyOpenClawCommand = async () => {
     try {
       await navigator.clipboard.writeText(openClawDualSiteCommand);
-      toast.success("OpenClaw 指令已复制");
+      toast.success(tr("browser.pages.AutomationScriptDetailPage.AutomationScriptDetailPage.240622a"));
     } catch {
-      toast.error("复制失败");
+      toast.error(tr("browser.components.AutomationScriptPublicApiModal.helpers.copyText.f2c6b51"));
     }
   };
 
@@ -344,9 +343,9 @@ export function AutomationScriptDetailPage() {
 
     try {
       await navigator.clipboard.writeText(publicAPIURL);
-      toast.success("对外接口地址已复制");
+      toast.success(tr("browser.pages.AutomationScriptDetailPage.AutomationScriptDetailPage.8555d6f"));
     } catch {
-      toast.error("复制失败");
+      toast.error(tr("browser.components.AutomationScriptPublicApiModal.helpers.copyText.f2c6b51"));
     }
   };
 

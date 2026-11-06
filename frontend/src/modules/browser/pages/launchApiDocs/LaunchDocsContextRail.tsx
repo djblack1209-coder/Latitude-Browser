@@ -1,3 +1,4 @@
+import { useLocale } from '../../../../shared/i18n'
 import type { LaunchServerInfo } from '../../api'
 import type {
   AutomationDemoActionKey,
@@ -44,6 +45,8 @@ export function LaunchDocsContextRail({
   onDelete,
   onCopyResponse,
 }: LaunchDocsContextRailProps) {
+  useLocale()
+
   return (
     <>
       <LaunchStatusPanel

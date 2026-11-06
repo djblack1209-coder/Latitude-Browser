@@ -1,5 +1,7 @@
+import { translateMessage } from '../i18n'
+import { tr, useLocale, localized } from '../i18n'
 import { useState, useRef, useEffect } from 'react'
-import { Bell, User, Check, Trash2, Info, AlertCircle, CheckCircle } from 'lucide-react'
+import { Bell, Check, Trash2, Info, AlertCircle, CheckCircle, Search } from 'lucide-react'
 import { Link, useLocation } from 'react-router-dom'
 import clsx from 'clsx'
 import { useNotificationStore, type Notification } from '../../store/notificationStore'
@@ -15,6 +17,8 @@ function NotificationDropdown({
   onMarkAllAsRead: () => void
   onClear: () => void
 }) {
+  useLocale()
+
   const unreadCount = notifications.filter(n => !n.read).length
 
   const getIcon = (type: Notification['type']) => {
@@ -31,14 +35,14 @@ function NotificationDropdown({
       id="notifications-dropdown"
       role="dialog"
       aria-labelledby="notifications-heading"
-      className="absolute right-0 top-full z-50 mt-2 w-80 max-w-[calc(100vw-5rem)] overflow-hidden rounded-lg border border-[var(--color-border-default)] bg-[var(--color-bg-surface)] shadow-[var(--shadow-lg)] animate-fade-in"
+      className="absolute right-0 top-full z-50 mt-2 w-84 max-w-[calc(100vw-5rem)] overflow-hidden rounded-[var(--radius-lg)] border border-[var(--color-border-default)] bg-[var(--color-bg-surface)]/95  shadow-[var(--shadow-dropdown)] animate-dropdown"
     >
       {/* Header */}
-      <div className="px-4 py-3 border-b border-[var(--color-border-muted)] flex items-center justify-between">
+      <div className="px-4 py-3 border-b border-[var(--color-border-muted)] flex items-center justify-between bg-[var(--color-bg-subtle)]/50">
         <div className="flex items-center gap-2">
-          <span id="notifications-heading" className="text-sm font-semibold text-[var(--color-text-primary)]">异常与通知</span>
+          <span id="notifications-heading" className="text-sm font-semibold  text-[var(--color-text-primary)]">{tr("ui.layout.Topbar.text.f6565ae")}</span>
           {unreadCount > 0 && (
-            <span className="px-1.5 py-0.5 text-xs font-medium bg-[var(--color-accent)] text-white rounded-full">
+            <span className="px-1.5 py-0.2 text-[10px] font-mono font-medium bg-[var(--color-accent)] text-[var(--color-text-inverse)] rounded-full">
               {unreadCount}
             </span>
           )}
@@ -48,7 +52,7 @@ function NotificationDropdown({
             <button
               onClick={onMarkAllAsRead}
               className="p-1.5 text-xs text-[var(--color-text-muted)] hover:text-[var(--color-accent)] hover:bg-[var(--color-bg-muted)] rounded transition-colors"
-              title="全部标为已读"
+              title={tr("ui.layout.Topbar.title.203c3fc")} aria-label={tr("ui.layout.Topbar.title.203c3fc")}
             >
               <Check className="w-3.5 h-3.5" />
             </button>
@@ -56,7 +60,7 @@ function NotificationDropdown({
           <button
             onClick={onClear}
             className="p-1.5 text-xs text-[var(--color-text-muted)] hover:text-[var(--color-error)] hover:bg-[var(--color-bg-muted)] rounded transition-colors"
-            title="清空通知"
+            title={tr("ui.layout.Topbar.title.446e37a")} aria-label={tr("ui.layout.Topbar.title.446e37a")}
           >
             <Trash2 className="w-3.5 h-3.5" />
           </button>
@@ -68,7 +72,7 @@ function NotificationDropdown({
         {notifications.length === 0 ? (
           <div className="py-8 text-center text-[var(--color-text-muted)]">
             <Bell className="w-8 h-8 mx-auto mb-2 opacity-50" />
-            <p className="text-sm">暂无异常记录</p>
+            <p className="text-sm">{tr("ui.layout.Topbar.text.1d45ccb")}</p>
           </div>
         ) : (
           notifications.map((notification) => (
@@ -91,14 +95,14 @@ function NotificationDropdown({
                       'text-sm truncate',
                       notification.read ? 'text-[var(--color-text-secondary)]' : 'text-[var(--color-text-primary)] font-medium'
                     )}>
-                      {notification.title}
+                      {translateMessage(notification.title)}
                     </p>
                     {!notification.read && (
                       <span className="w-2 h-2 rounded-full bg-[var(--color-accent)] shrink-0 mt-1.5" />
                     )}
                   </div>
                   <p className="text-xs text-[var(--color-text-muted)] mt-0.5 line-clamp-2">
-                    {notification.message}
+                    {translateMessage(notification.message)}
                   </p>
                   <p className="text-[10px] text-[var(--color-text-muted)] mt-1">
                     {notification.time}
@@ -113,50 +117,51 @@ function NotificationDropdown({
       {/* Footer */}
       {notifications.length > 0 && (
         <div className="px-4 py-2 border-t border-[var(--color-border-muted)] bg-[var(--color-bg-muted)]/50">
-          <Link to="/browser/logs" className="block w-full text-xs text-center text-[var(--color-accent)] hover:underline">
-            打开日志与诊断
-          </Link>
+          <Link to="/browser/logs" className="block w-full text-xs text-center text-[var(--color-accent)] hover:underline">{tr("ui.layout.Topbar.text.048cfa4")}</Link>
         </div>
       )}
     </div>
   )
 }
 
-const pageLabels: Array<{ prefix: string; label: string }> = [
-  { prefix: '/browser/auto-config', label: '自动配置' },
-  { prefix: '/browser/list', label: '实例' },
-  { prefix: '/browser/proxy-pool', label: '代理池' },
-  { prefix: '/browser/cores', label: '浏览器内核' },
-  { prefix: '/browser/extensions', label: '插件包' },
-  { prefix: '/browser/bookmarks', label: '书签与标签' },
-  { prefix: '/browser/automation', label: '自动化脚本' },
-  { prefix: '/browser/logs', label: '日志与诊断' },
-  { prefix: '/settings', label: '设置' },
-  { prefix: '/system/docs', label: '文档中心' },
-  { prefix: '/profile', label: '工作区资料' },
-]
+const pageLabels: Array<{ prefix: string; label: string }> = localized(() => ([
+  { prefix: '/browser/auto-config', label: tr("config.navigation.config.name.716e01f") },
+  { prefix: '/browser/list', label: tr("config.navigation.config.name.69fffaf") },
+  { prefix: '/browser/proxy-pool', label: tr("config.navigation.config.name.9830ee8") },
+  { prefix: '/browser/cores', label: tr("config.navigation.config.name.a709cd9") },
+  { prefix: '/browser/extensions', label: tr("config.navigation.config.name.09440f1") },
+  { prefix: '/browser/bookmarks', label: tr("config.navigation.config.name.9d1d2a1") },
+  { prefix: '/browser/automation', label: tr("config.navigation.config.name.b9a14be") },
+  { prefix: '/browser/logs', label: tr("config.navigation.config.name.53a41da") },
+  { prefix: '/settings', label: tr("config.navigation.config.name.7debf9c") },
+  { prefix: '/system/docs', label: tr("config.navigation.config.name.4bdf236") },
+  { prefix: '/profile', label: tr("ui.layout.Topbar.label.9a0ba59") },
+]))
 
 function getPageLabel(pathname: string, search: string) {
   const query = new URLSearchParams(search)
+  if (pathname.startsWith('/browser/detail/') || pathname.startsWith('/browser/edit/') || pathname.startsWith('/browser/copy/')) return tr('nav.instances')
   if (pathname === '/browser/list') {
-    if (query.get('view') === 'templates') return '指纹模板'
-    if (query.get('status') === 'attention') return '待处理与冲突'
-    if (query.get('sort') === 'recent') return '最近活动'
+    if (query.get('view') === 'templates') return tr("config.navigation.config.name.eab679e")
+    if (query.get('status') === 'attention') return tr("ui.layout.Topbar.getPageLabel.0023186")
+    if (query.get('sort') === 'recent') return tr("config.navigation.config.name.8764fbc")
   }
   if (pathname === '/browser/logs') {
-    if (query.get('view') === 'network') return '网络诊断'
-    if (query.get('view') === 'runs') return '运行记录'
+    if (query.get('view') === 'network') return tr("config.navigation.config.name.afddb5c")
+    if (query.get('view') === 'runs') return tr("config.navigation.config.name.24fb424")
   }
   if (pathname === '/settings') {
-    if (query.get('section') === 'connectors') return '连接栈'
-    if (query.get('section') === 'tor') return 'Tor 实验室'
-    if (query.get('section') === 'runtime') return '自动化运行时'
-    if (query.get('section') === 'storage') return '备份与数据'
+    if (query.get('section') === 'connectors') return tr("config.navigation.config.name.624647e")
+    if (query.get('section') === 'tor') return tr("ui.layout.Topbar.getPageLabel.5d04c6e")
+    if (query.get('section') === 'runtime') return tr("ui.layout.Topbar.getPageLabel.dcc5801")
+    if (query.get('section') === 'storage') return tr("ui.layout.Topbar.getPageLabel.ac9b001")
   }
-  return pageLabels.find(({ prefix }) => pathname.startsWith(prefix))?.label ?? '工作台'
+  return pageLabels.find(({ prefix }) => pathname.startsWith(prefix))?.label ?? tr("config.navigation.config.title.8483cd2")
 }
 
 export function Topbar() {
+  useLocale()
+
   const [showNotifications, setShowNotifications] = useState(false)
   const { notifications, markAsRead, markAllAsRead, clearNotifications } = useNotificationStore()
   const dropdownRef = useRef<HTMLDivElement>(null)
@@ -192,13 +197,18 @@ export function Topbar() {
   useEffect(() => { setShowNotifications(false) }, [location.pathname, location.search])
 
   return (
-    <header className="signal-topbar flex h-[52px] shrink-0 items-center justify-between gap-4 border-b border-[var(--color-border-default)] px-4 sm:px-6 lg:px-8">
+    <header className="terminal-titlebar">
       <div className="flex min-w-0 items-center gap-3">
-        <span className="hidden font-mono text-[10px] tracking-wider text-[var(--color-text-muted)] sm:inline" aria-hidden="true">WORKSPACE /</span>
+        <span className="latitude-breadcrumb">{tr('shell.workspace')}</span><span className="latitude-breadcrumb-divider" aria-hidden="true">/</span>
         <span className="truncate text-[12px] font-medium text-[var(--color-text-primary)]">{getPageLabel(location.pathname, location.search)}</span>
       </div>
 
       <div className="flex items-center gap-1">
+        <button type="button" className="terminal-quick-launch" onClick={() => window.dispatchEvent(new Event('latitude:quick-launch'))} aria-label={tr("ui.layout.Topbar.aria_label.f5f6dc9")}>
+          <Search size={15} aria-hidden="true" />
+          <span>{tr("ui.layout.Topbar.text.3875222")}</span>
+          <kbd>{/Mac/.test(navigator.platform) ? '⌘' : tr("ui.shared.layout.Topbar.label.dd6a02a")} K</kbd>
+        </button>
         {/* 通知按钮 */}
         <div className="relative" ref={dropdownRef}>
           <button
@@ -211,8 +221,8 @@ export function Topbar() {
                 ? 'text-[var(--color-accent)] bg-[var(--color-accent-muted)]'
                 : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)] hover:bg-[var(--color-accent-muted)]'
             )}
-            title="通知"
-            aria-label={unreadCount ? `通知，${unreadCount} 条未读` : '通知'}
+            title={tr("ui.layout.Topbar.title.7a66c0d")}
+            aria-label={unreadCount ? tr("ui.layout.Topbar.Topbar.6fb1198", [unreadCount]) : tr("ui.layout.Topbar.title.7a66c0d")}
             aria-expanded={showNotifications}
             aria-controls="notifications-dropdown"
             aria-haspopup="dialog"
@@ -238,18 +248,7 @@ export function Topbar() {
           )}
         </div>
 
-        <div className="mx-1.5 h-5 w-px bg-[var(--color-border-default)]" aria-hidden="true" />
 
-        <Link
-          to="/profile"
-          className="flex items-center gap-2 rounded-md px-1.5 py-1 transition-colors duration-150 hover:bg-[var(--color-bg-muted)]"
-          title="工作区资料"
-        >
-          <div className="flex h-7 w-7 items-center justify-center rounded-md border border-[var(--color-border-default)] bg-[var(--color-bg-muted)]">
-            <User className="h-3.5 w-3.5 text-[var(--color-text-secondary)]" />
-          </div>
-          <span className="hidden text-sm font-medium text-[var(--color-text-secondary)] sm:inline">本地工作区</span>
-        </Link>
       </div>
     </header>
   )

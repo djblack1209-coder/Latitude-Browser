@@ -1706,7 +1706,7 @@ export namespace browser {
 	    tabId: string;
 	    title: string;
 	    url: string;
-	    active: boolean;
+	    active?: boolean;
 
 	    static createFrom(source: any = {}) {
 	        return new Tab(source);
@@ -2087,4 +2087,3 @@ export namespace proxy {
 	}
 
 }
-

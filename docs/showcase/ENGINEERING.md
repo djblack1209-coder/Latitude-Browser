@@ -1,77 +1,34 @@
-# Latitude Browser · 工程导览
+# Engineering · Latitude Browser 2.1
 
-[返回首页](../../README.md) · [五分钟演示](DEMO.md) · [Roadmap](../../ROADMAP.md)
+[中文首页](../../README.md) · [English](../../README.en.md) · [真实演示](DEMO.md)
 
-这份导览面向第一次阅读项目的开发者。分析基线为 `e90e35d`；这一轮 GitHub 展示改动基于该提交，未将另一个工作区中尚未提交的修复当作已发布功能。
+Latitude Browser is a Go/Wails desktop application with a React/TypeScript interface and SQLite-backed local state. Fieldwork changes the application shell and shared visual system while keeping the browser managers, connector selection and existing workflow handlers.
 
-## 项目边界
+## Read the code by responsibility
 
-Latitude 是 Go/Wails 桌面工作台：React 负责配置与交互，Go 编排浏览器进程、代理桥接和本地数据。Chromium 是被管理的浏览器进程，Xray、sing-box、Mihomo 是相应连接栈的运行时。
+| Responsibility | Entry |
+| --- | --- |
+| Native application lifecycle | `main.go`, `backend/app_startup.go`, `backend/app_shutdown.go` |
+| Desktop UI and routing | `frontend/src/App.tsx`, `frontend/src/routes/AppRoutes.tsx` |
+| Visual tokens and layout | `backend/internal/uistyle/tokens.css`, `frontend/src/shared/layout/`, `frontend/src/shared/theme/terminal.css` |
+| Language and diagnostics | `frontend/src/shared/i18n/`, `backend/internal/locale/`, `frontend/src/shared/components/AppErrorBoundary.tsx` |
+| Profiles and real browser state | `backend/app_instance_status.go`, `backend/internal/browser/`, `frontend/src/modules/browser/` |
+| Proxy stack contract | [Xray + sing-box / independent Mihomo](../proxy-connector-stacks.md) |
+| Automation and local API | `backend/internal/automation/`, `backend/internal/launchcode/` |
+| Package identity and recovery | [macOS artifact contract](../../publish/mac/README.md), `tools/runtime/` |
 
-它适合需要反复配置多个本地 Web 测试环境的人。普通浏览器多用户配置足以处理简单身份切换；Playwright 等测试工具适合以代码为中心的测试任务。Latitude 值得维护的部分是将配置、进程状态和网络诊断组织成连续的桌面工作流。它暂未建立团队 SaaS、远程设备管理或商业支持闭环。
+## Changes a reviewer can trace
 
-## 架构与一次启动
+1. A native close closes the launch gate synchronously, performs managed cleanup asynchronously, then permits the final native quit. There is no frontend confirmation event. Cleanup failure restores the retry gate and retains runtime ownership.
+2. An API profile can contain a nil fingerprint-argument slice. Workspace classification treats it as an empty configuration, preventing a native render failure. The application boundary can recover from other rendering errors and records them through the existing logger.
+3. Shared design tokens cover the desktop and browser-facing pages. The dot graticule uses static SVG; it does not run a canvas loop or fabricate network observations.
+4. Production does not silently use development mock data when a desktop bridge method is unavailable. The UI preview is an explicit development mode with a visible label.
+5. Packaging validates the selected platform, runtime hashes, icon, identity and signatures, then keeps inspection bundles out of indexing. The canonical installed app is the only launch target.
 
-```mermaid
-flowchart TD
-    UI[React / TypeScript 工作台] --> IPC[Wails 生成绑定]
-    IPC --> APP[Go 应用用例编排]
-    API[本地 Launch API] --> APP
-    APP --> STORE[SQLite / 配置目录]
-    APP --> PLAN[实例启动计划]
-    PLAN --> CHROME[独立 Chromium 进程]
-    PLAN --> STACK{已选择的连接栈}
-    STACK --> COMBO[Xray + sing-box]
-    STACK --> MIHOMO[独立 Mihomo]
-    COMBO --> ROUTE[代理出口]
-    MIHOMO --> ROUTE
-    CHROME --> BRIDGE[本地代理入口]
-    BRIDGE --> ROUTE
-```
+## Verification boundaries
 
-图中代理路径为概念结构；直连实例不经代理。两套连接栈不会自动互相回退。
+The 2026-11-06 pass ran the frontend build, 121 frontend tests, `go test ./backend/...`, 34 bilingual/viewport UI checks, package-contract validation and native app/browser flows. The native test created disposable profiles and opened a local witness page; it did not use personal browser sessions or production proxies.
 
-1. 用户选择已有实例或在分步配置中创建实例。
-2. React 通过 Wails 绑定调用 Go 应用层；普通网页预览没有这个桌面运行时。
-3. 应用层解析实例、内核、数据目录、启动参数和有效代理，形成启动计划。
-4. 所选连接栈准备对应桥接；浏览器进程使用本地入口启动。
-5. 应用更新状态、记录失败并处理停止与资源清理。
+Chrome 157 passed real navigation and tab operations using a QA launcher that preserves the normal macOS home for Chromium services while enforcing an isolated user-data directory. The existing 148 core failed CDP readiness in QA; its default binding was kept. Remote proxy connectivity, Tor, Windows and Linux were not newly certified by this UI pass. Detailed commands, evidence and pending work are in [the execution result](../../LATITUDE-APP-REDESIGN-RESULT-2026-11-06.md).
 
-建议依次阅读 [AutoConfigPage](../../frontend/src/modules/browser/pages/AutoConfigPage.tsx)、[前端桥接](../../frontend/src/modules/browser/api/runtime.ts)、[启动准备](../../backend/app_instance_start_prepare.go) 和 [代理栈约定](../proxy-connector-stacks.md)。
-
-## 可以深入讨论的工程问题
-
-| 问题 | 当前实现入口 | 值得解释的取舍 |
-| --- | --- | --- |
-| 怎样将复杂参数变成可理解的配置流程？ | [四步配置页](../../frontend/src/modules/browser/pages/AutoConfigPage.tsx)、[导航配置](../../frontend/src/config/navigation.config.ts) | 按任务组织入口；设备基线与指纹策略分开；创建前明确确认 |
-| 为什么不能把所有代理都理解为 Xray？ | [协议解析](../../backend/internal/proxy/parser.go)、[Xray 配置](../../backend/internal/proxy/xray_runtime_config.go) | `xray` 代表组合栈；hysteria2/tuic/anytls 等由 sing-box 承担；独立 Mihomo 保持语义一致 |
-| 浏览器启动为什么需要计划对象？ | [browserStartPlan](../../backend/app_instance_start_prepare.go) | 配置、进程与网络资源需要协调，失败路径不能只报告一个 PID |
-| 桌面预览为什么不能代替集成测试？ | [getBindings](../../frontend/src/modules/browser/api/runtime.ts)、[UI 回归说明](../../frontend/scripts/verify-workspace.mjs) | 网页中没有 Wails；模拟状态能验证布局，不能证明代理和浏览器真正启动 |
-| 安装目录与可写状态如何分离？ | [运行路径](../../backend/runtime_paths.go)、[路径模块](../../backend/internal/apppath) | macOS 正式入口稳定，状态独立，保留旧目录兼容 |
-| 脚本运行时的信任边界在哪里？ | [自动化模块](../../backend/internal/automation)、[安全说明](../../SECURITY.md) | 可信本地脚本可操作系统；超时和杀进程不是安全沙箱 |
-
-## 上游基础与 Latitude 增量
-
-上游提供浏览器实例管理、代理、自动化及桌面技术栈等基础。保留原始 Git 历史，不将全部代码量记为本仓库维护者独立创作。下面的提交是可核查的本仓库演进；提交归属本身不能替代对每段代码来源的审查。
-
-| 增量 | 提交证据 | 查看重点 |
-| --- | --- | --- |
-| 工作台界面与 macOS 图标 | [deb57ca](https://github.com/djblack1209-coder/Latitude-Browser/commit/deb57ca) | 页面、图标与原有基础的改造范围 |
-| 唯一 macOS 应用入口 | [339636d](https://github.com/djblack1209-coder/Latitude-Browser/commit/339636d) | 安装路径、Bundle 身份和重复入口约束 |
-| 工作区简化与代理状态加载 | [ccb5fa0](https://github.com/djblack1209-coder/Latitude-Browser/commit/ccb5fa0) | 信息层级及异步状态 |
-| 统一产品品牌 | [922650f](https://github.com/djblack1209-coder/Latitude-Browser/commit/922650f) | 用户可见名称与兼容旧标识的边界 |
-| 控制工作台与代理流程 | [e90e35d](https://github.com/djblack1209-coder/Latitude-Browser/commit/e90e35d) | 结合 diff 阅读状态和代理流程；提交标题不等于验收结果 |
-
-## 后端修复与持续验证
-
-[后端修复说明](HARDENING.md) 按触发条件、修改行为和回归代码记录本轮集成：事务保存、一致性备份、快照恢复、API/CDP 认证、下载校验、进程租约和前端桌面边界。未使用的 Mihomo Go 嵌入依赖已经移除，独立进程连接方式保留。
-
-[CI](../../.github/workflows/ci.yml) 使用 Node.js 22 和 `go.mod` 中的 Go 1.26.8，执行生产构建、JavaScript 回归、Go 测试与 race 检测、Python 工具测试，以及三种代理内核的本地进程验证。远程结果以 [Actions](https://github.com/djblack1209-coder/Latitude-Browser/actions/workflows/ci.yml) 对应提交为准，完整复现命令见[验证说明](HARDENING.md)。
-
-2026-09-14 的首次展示截图来自隔离 Vite 服务与虚构数据。后端修复后的模拟模式需要显式开启；生产页面缺少桌面服务时不再进入业务流程。
-
-## 当前边界
-
-本轮没有重新构建、安装或验收原生应用，没有验证真实公网代理出口，没有执行 Windows/Linux 原生测试。源码测试、真实代理子进程测试和正式桌面安装物验收应分别说明。
-
-源码仍包含固定代理二进制，首次获取体积较大。维护者原创贡献采用非商业许可；上游授权和第三方权利另见[许可范围](../../LICENSE-SCOPE.md)。签名、公证、可分发运行时、数据加密和跨机器恢复的后续工作见 [Roadmap](../../ROADMAP.md)。
+For contribution and provenance requirements, read [CONTRIBUTING](../../CONTRIBUTING.md), [LICENSE-SCOPE](../../LICENSE-SCOPE.md) and [third-party notices](../../third_party/NOTICE.md). The original upstream history and existing local implementation work are preserved.

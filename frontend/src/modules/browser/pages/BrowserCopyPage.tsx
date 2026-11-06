@@ -1,3 +1,4 @@
+import { tr, useLocale } from '../../../shared/i18n'
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { Button, Card, FormItem, Select, toast } from '../../../shared/components'
@@ -9,6 +10,8 @@ import type { BrowserProfile, BrowserProfileCopyOptions } from '../types'
 import { copyBrowserProfile, fetchBrowserProfiles } from '../api'
 
 export function BrowserCopyPage() {
+  useLocale()
+
   const { id } = useParams()
   const navigate = useNavigate()
   const [profiles, setProfiles] = useState<BrowserProfile[]>([])
@@ -39,20 +42,20 @@ export function BrowserCopyPage() {
 
   const handleCopy = async () => {
     if (!sourceProfile || !targetName.trim()) {
-      toast.error('请填写目标名称')
+      toast.error(tr("browser.pages.BrowserCopyPage.BrowserCopyPage.b3d11f0"))
       return
     }
     if (!isBrowserProfileCopyOptionsValid(copyOptions)) {
-      toast.error('请至少勾选一个自动化指纹项')
+      toast.error(tr("browser.pages.BrowserCopyPage.BrowserCopyPage.dfb7c0d"))
       return
     }
     setSaving(true)
     try {
       await copyBrowserProfile(sourceProfile.profileId, targetName.trim(), copyOptions)
-      toast.success('配置已复制')
+      toast.success(tr("browser.pages.BrowserCopyPage.BrowserCopyPage.41b53ee"))
       navigate('/browser/list')
     } catch (error: any) {
-      toast.error(error?.message || '复制失败')
+      toast.error(error?.message || tr("browser.components.AutomationScriptPublicApiModal.helpers.copyText.f2c6b51"))
     } finally {
       setSaving(false)
     }
@@ -61,20 +64,20 @@ export function BrowserCopyPage() {
   return (
     <div className="space-y-5 animate-fade-in">
       <WorkspaceHeader
-        eyebrow="INSTANCE / COPY"
-        title="复制实例"
-        description="从现有实例复制选定的指纹参数。"
+
+        title={tr("browser.pages.BrowserCopyPage.title.7d46ab5")}
+
         actions={(
           <>
-            <Button variant="secondary" size="sm" onClick={() => navigate('/browser/list')}>返回列表</Button>
-            <Button size="sm" onClick={handleCopy} loading={saving} disabled={!targetName.trim() || !isBrowserProfileCopyOptionsValid(copyOptions)}>生成配置</Button>
+            <Button variant="secondary" size="sm" onClick={() => navigate('/browser/list')}>{tr("browser.pages.AutomationScriptDetailPage.text.53505b1")}</Button>
+            <Button size="sm" onClick={handleCopy} loading={saving} disabled={!targetName.trim() || !isBrowserProfileCopyOptionsValid(copyOptions)}>{tr("browser.pages.BrowserCopyPage.text.d53ed18")}</Button>
           </>
         )}
       />
 
-      <Card title="复制设置">
+      <Card title={tr("browser.pages.BrowserCopyPage.title.6e9a10c")}>
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <FormItem label="源配置">
+          <FormItem label={tr("browser.pages.BrowserCopyPage.label.ef4d1d5")}>
             <Select
               value={sourceId}
               onChange={e => setSourceId(e.target.value)}

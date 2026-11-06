@@ -1,6 +1,7 @@
 package backend
 
 import (
+ "ant-chrome/backend/internal/locale"
 	"fmt"
 	"path/filepath"
 	"runtime"
@@ -37,10 +38,10 @@ func (a *App) AutomationScriptImportLocalFile() (*automation.ScriptRecord, error
 	}
 
 	path, err := wailsruntime.OpenFileDialog(a.ctx, wailsruntime.OpenDialogOptions{
-		Title: "选择脚本文件",
+		Title: locale.Text("error.backend.message.3afffeea49"),
 		Filters: []wailsruntime.FileFilter{
-			{DisplayName: "脚本文件 (*.zip;*.json;*.js;*.cjs;*.mjs;*.ts;*.cts;*.mts)", Pattern: "*.zip;*.json;*.js;*.cjs;*.mjs;*.ts;*.cts;*.mts"},
-			{DisplayName: "所有文件 (*.*)", Pattern: "*.*"},
+			{DisplayName: locale.Text("error.backend.message.66e2c75016"), Pattern: "*.zip;*.json;*.js;*.cjs;*.mjs;*.ts;*.cts;*.mts"},
+			{DisplayName: locale.Text("error.backend.message.10236f887c"), Pattern: "*.*"},
 		},
 	})
 	if err != nil {
@@ -63,7 +64,7 @@ func (a *App) AutomationScriptImportLocalDirectory() (*automation.ScriptRecord, 
 	}
 
 	path, err := wailsruntime.OpenDirectoryDialog(a.ctx, wailsruntime.OpenDialogOptions{
-		Title: "选择脚本目录",
+		Title: locale.Text("error.backend.message.abd6824ed3"),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("打开目录对话框失败: %w", err)
@@ -85,7 +86,7 @@ func (a *App) AutomationScriptImportLocalLibrary() (*AutomationScriptBatchImport
 	}
 
 	path, err := wailsruntime.OpenDirectoryDialog(a.ctx, wailsruntime.OpenDialogOptions{
-		Title: "选择脚本库目录",
+		Title: locale.Text("error.backend.message.bcacb354c3"),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("打开目录对话框失败: %w", err)

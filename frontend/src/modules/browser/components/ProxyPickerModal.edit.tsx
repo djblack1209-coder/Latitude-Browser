@@ -1,3 +1,4 @@
+import { tr, useLocale } from '../../../shared/i18n'
 ﻿import type { Dispatch, SetStateAction } from 'react'
 import { Button, FormItem, Input, Modal, Select, Textarea } from '../../../shared/components'
 import type { ChainEditForm, ChainHopForm } from './ProxyPickerModal.helpers'
@@ -39,21 +40,23 @@ export function ProxyEditModal({
   onClose,
   onSave,
 }: ProxyEditModalProps) {
+  useLocale()
+
   return (
     <Modal
       open={open}
       onClose={onClose}
-      title="编辑代理"
+      title={tr("browser.components.ProxyPickerModal.edit.title.2b7d151")}
       width="520px"
       footer={
         <>
-          <Button variant="secondary" onClick={onClose} disabled={saving}>取消</Button>
-          <Button onClick={onSave} loading={saving}>保存</Button>
+          <Button variant="secondary" onClick={onClose} disabled={saving}>{tr("App.CloseConfirmModal.4d0b468")}</Button>
+          <Button onClick={onSave} loading={saving}>{tr("browser.components.BrowserListLayout.text.fadf24d")}</Button>
         </>
       }
     >
       <div className="space-y-3">
-        <FormItem label="代理名称" required>
+        <FormItem label={tr("browser.components.ProxyImportModal.title.c617e8e")} required>
           <Input
             value={chainEditMode ? chainEditForm.proxyName : editName}
             onChange={e => {
@@ -63,41 +66,41 @@ export function ProxyEditModal({
                 setEditName(e.target.value)
               }
             }}
-            placeholder="节点名称"
+            placeholder={tr("browser.components.ProxyImportModalView.placeholder.3de90b4")}
           />
         </FormItem>
 
-        <FormItem label="分组名称（可选）">
-          <Input value={editGroup} onChange={e => setEditGroup(e.target.value)} placeholder="分组名称" />
+        <FormItem label={tr("browser.components.ProxyImportModalView.label.bf588e9")}>
+          <Input value={editGroup} onChange={e => setEditGroup(e.target.value)} placeholder={tr("browser.components.GroupTreeNav.placeholder.65731c1")} />
         </FormItem>
 
         {chainEditMode ? (
           <div className="space-y-3 rounded-md border border-[var(--color-border)] p-3">
-            <FormItem label="本地监听端口（可选）">
+            <FormItem label={tr("browser.components.ProxyImportModalView.label.d3f4ba1")}>
               <Input
                 type="number"
                 min={1}
                 max={65535}
                 value={chainEditForm.localPort}
                 onChange={e => setChainEditForm(prev => ({ ...prev, localPort: e.target.value }))}
-                placeholder="留空自动分配"
+                placeholder={tr("browser.components.ProxyImportModalView.placeholder.08eb3ce")}
               />
             </FormItem>
-            <ChainHopSection title="第一层代理" hop="first" form={chainEditForm} updateChainHop={updateChainHop} />
-            <ChainHopSection title="第二层代理" hop="second" form={chainEditForm} updateChainHop={updateChainHop} />
+            <ChainHopSection title={tr("browser.components.ProxyImportModalView.text.05d4bfc")} hop="first" form={chainEditForm} updateChainHop={updateChainHop} />
+            <ChainHopSection title={tr("browser.components.ProxyImportModalView.text.bf35c8b")} hop="second" form={chainEditForm} updateChainHop={updateChainHop} />
           </div>
         ) : (
-          <FormItem label="代理配置" required>
+          <FormItem label={tr("browser.components.ProxyPickerModal.edit.label.6c9e697")} required>
             <Textarea
               value={editConfig}
               onChange={e => setEditConfig(e.target.value)}
               rows={6}
-              placeholder="支持 http://、https://、socks5://、chain+socks5://"
+              placeholder={tr("browser.components.ProxyPickerModal.edit.placeholder.8f42c2f")}
             />
           </FormItem>
         )}
 
-        <FormItem label="DNS 服务器（可选）">
+        <FormItem label={tr("browser.components.ProxyPickerModal.edit.label.dca90c5")}>
           <Textarea
             value={editDnsServers}
             onChange={e => setEditDnsServers(e.target.value)}
@@ -121,32 +124,34 @@ function ChainHopSection({
   form: ChainEditForm
   updateChainHop: (hop: 'first' | 'second', field: keyof ChainHopForm, value: string) => void
 }) {
+  useLocale()
+
   const hopForm = form[hop]
 
   return (
     <div className="rounded-md border border-[var(--color-border)] p-3 space-y-3">
       <h4 className="text-sm font-medium text-[var(--color-text-primary)]">{title}</h4>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <FormItem label="协议">
+        <FormItem label={tr("browser.components.ProxyImportModalView.label.b0c4316")}>
           <Select
             value={hopForm.protocol}
             onChange={e => updateChainHop(hop, 'protocol', e.target.value)}
             options={[
-              { value: 'http', label: 'HTTP' },
-              { value: 'socks5', label: 'SOCKS5' },
+              { value: 'http', label: "HTTP" },
+              { value: 'socks5', label: "SOCKS5" },
             ]}
           />
         </FormItem>
-        <FormItem label="代理地址" required>
+        <FormItem label={tr("browser.components.ProxyImportModalView.label.903f8d3")} required>
           <Input value={hopForm.server} onChange={e => updateChainHop(hop, 'server', e.target.value)} />
         </FormItem>
-        <FormItem label="代理端口" required>
+        <FormItem label={tr("browser.components.ProxyImportModalView.label.52b14ee")} required>
           <Input type="number" min={1} max={65535} value={hopForm.port} onChange={e => updateChainHop(hop, 'port', e.target.value)} />
         </FormItem>
-        <FormItem label="账号（可选）">
+        <FormItem label={tr("browser.components.ProxyImportModalView.label.75312f8")}>
           <Input value={hopForm.username} onChange={e => updateChainHop(hop, 'username', e.target.value)} />
         </FormItem>
-        <FormItem label="密码（可选）">
+        <FormItem label={tr("browser.components.ProxyImportModalView.label.29e03e6")}>
           <Input type="password" value={hopForm.password} onChange={e => updateChainHop(hop, 'password', e.target.value)} />
         </FormItem>
       </div>

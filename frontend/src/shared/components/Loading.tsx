@@ -1,3 +1,4 @@
+import { tr, useLocale } from '../i18n'
 import clsx from 'clsx'
 
 type LoadingSize = 'sm' | 'md' | 'lg'
@@ -15,14 +16,16 @@ const sizeStyles = {
   lg: 'w-8 h-8 border-[3px]',
 }
 
-export function Loading({ 
-  size = 'md', 
-  text, 
+export function Loading({
+  size = 'md',
+  text,
   fullscreen = false,
-  className 
+  className
 }: LoadingProps) {
+  useLocale()
+
   const spinner = (
-    <div className={clsx('flex flex-col items-center gap-3', className)}>
+    <div role="status" aria-label={text || tr("ui.components.Loading.Loading.ce56f61")} className={clsx('flex flex-col items-center gap-3', className)}>
       <div
         className={clsx(
           'border-[var(--color-border-default)] border-t-[var(--color-accent)] rounded-full animate-spin',
@@ -54,12 +57,14 @@ interface SkeletonProps {
   className?: string
 }
 
-export function Skeleton({ 
-  width = '100%', 
-  height = '20px', 
+export function Skeleton({
+  width = '100%',
+  height = '20px',
   circle = false,
-  className 
+  className
 }: SkeletonProps) {
+  useLocale()
+
   return (
     <div
       className={clsx(

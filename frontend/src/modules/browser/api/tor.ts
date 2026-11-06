@@ -1,3 +1,4 @@
+import { tr } from '../../../shared/i18n'
 import { getGoApp } from './runtime'
 
 export interface TorProfileRuntimeStatus {
@@ -29,7 +30,7 @@ export async function fetchTorStatus(): Promise<TorRuntimeStatus> {
     return {
       available: false, experimental: true, productionReady: false,
       configured: false, binaryPath: '', binaryValid: false, activeProfiles: [],
-      message: app ? '当前桌面版本尚未提供 Tor 运行时接口，请安装本次构建后检查。' : '界面预览未连接桌面，不能配置或验证 Tor。',
+      message: app ? tr("browser.api.tor.fetchTorStatus.37033d5") : tr("browser.api.tor.fetchTorStatus.291012a"),
     }
   }
   const result = await app.GetTorStatus()
@@ -38,7 +39,7 @@ export async function fetchTorStatus(): Promise<TorRuntimeStatus> {
 
 export async function setTorRuntimePath(path: string): Promise<TorRuntimeStatus> {
   const app = getGoApp()
-  if (typeof app?.SetTorRuntimePath !== 'function') throw new Error('Tor 配置仅能在支持此功能的桌面应用中保存')
+  if (typeof app?.SetTorRuntimePath !== 'function') throw new Error(tr("browser.api.tor.setTorRuntimePath.85f6841"))
   const result = await app.SetTorRuntimePath(path)
   return { ...result, activeProfiles: result?.activeProfiles || [], available: true }
 }

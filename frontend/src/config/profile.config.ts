@@ -1,3 +1,4 @@
+import { tr, localized } from '../shared/i18n'
 import { projectConfig } from './projectBase.config'
 import { PROJECT_GITHUB_URL } from './links'
 
@@ -57,7 +58,7 @@ export interface ProfilePageLocalConfig {
   project: ProjectProfileConfig
 }
 
-export const profilePageConfig: ProfilePageLocalConfig = {
+export const profilePageConfig: ProfilePageLocalConfig = localized(() => ({
   remoteAuthor: {
     // 留空时直接使用本地默认资料；需要远程作者页时再替换为真实地址。
     authorURL: '',
@@ -66,8 +67,8 @@ export const profilePageConfig: ProfilePageLocalConfig = {
   defaultAuthor: {
     name: 'Latitude Browser Team',
     initial: 'L',
-    title: '产品维护团队',
-    bio: '专注于多账号隔离、代理连接和本地浏览器环境管理。',
+    title: tr("config.profile.config.title.f1f23af"),
+    bio: tr("config.profile.config.bio.d6c9c57"),
     location: '',
     joinDate: '',
     email: '',
@@ -76,22 +77,22 @@ export const profilePageConfig: ProfilePageLocalConfig = {
     skills: ['Go', 'React', 'TypeScript', 'Wails', 'Node.js', 'Docker'],
     channels: [
       {
-        name: '掘金',
-        description: '技术文章与开发记录',
+        name: tr("config.profile.config.name.7992533"),
+        description: tr("config.profile.config.description.862e398"),
         detail: 'juejin.cn',
         href: 'https://juejin.cn/user/3790771822007822',
         icon: 'book-open',
       },
       {
-        name: '项目仓库',
-        description: '源码、发行版与问题追踪',
+        name: tr("config.profile.config.name.5cef613"),
+        description: tr("config.profile.config.description.35dd28d"),
         detail: 'GitHub',
         href: PROJECT_GITHUB_URL,
         icon: 'github',
       },
       {
-        name: '开发文档',
-        description: '工作流与连接栈说明',
+        name: tr("config.profile.config.name.1080c34"),
+        description: tr("config.profile.config.description.6d37be9"),
         detail: 'Repository docs',
         href: `${PROJECT_GITHUB_URL}#readme`,
         icon: 'book-open',
@@ -101,22 +102,22 @@ export const profilePageConfig: ProfilePageLocalConfig = {
   project: {
     name: projectConfig.name,
     introBadge: projectConfig.name,
-    introText: '是一个面向多账号隔离、代理绑定和本地环境管理的桌面浏览器工具。',
+    introText: tr("config.profile.config.introText.2e1dc6b"),
     techStack: ['Wails', 'React', 'TypeScript'],
-    description: '项目当前聚焦浏览器实例隔离、代理池配置、浏览器内核管理、标签检索和快捷启动等核心能力，适合跨境电商、社媒运营、本地测试以及需要统一管理浏览器环境的团队场景。',
+    description: tr("config.profile.config.description.69fb730"),
     actions: [
       {
-        label: '查看源码',
+        label: tr("config.profile.config.label.f24e8e0"),
         href: PROJECT_GITHUB_URL,
         icon: 'github',
       },
       {
-        label: '下载发布版',
+        label: tr("config.profile.config.label.042cbc2"),
         href: `${PROJECT_GITHUB_URL}/releases`,
         icon: 'globe',
       },
     ],
   },
-}
+}))
 
 export default profilePageConfig

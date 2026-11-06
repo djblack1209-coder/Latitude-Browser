@@ -1,3 +1,5 @@
+import { translateMessage } from '../i18n'
+import { tr, useLocale } from '../i18n'
 import { CheckCircle, XCircle, AlertCircle, Info, X } from 'lucide-react'
 import { create } from 'zustand'
 import { useNotificationStore } from '../../store/notificationStore'
@@ -45,7 +47,7 @@ export const useToastStore = create<ToastStore>((set) => ({
 function recordErrorNotification(message: string) {
   useNotificationStore.getState().addNotification({
     type: 'error',
-    title: '操作异常',
+    title: tr("ui.components.Toast.title.1d7fae6"),
     message,
   })
 }
@@ -78,18 +80,23 @@ const styles = {
 }
 
 function ToastItem({ toast: t }: { toast: Toast }) {
+  useLocale()
+
   const removeToast = useToastStore((state) => state.removeToast)
   const Icon = icons[t.type]
 
   return (
     <div
-      className={`flex items-start gap-3 px-4 py-3 rounded-lg border shadow-lg animate-slide-in-right ${styles[t.type]}`}
+      role={t.type === 'error' ? "alert" : "status"}
+      className={`signal-toast flex items-start gap-3 px-4 py-3 border animate-slide-in-right ${styles[t.type]}`}
     >
-      <Icon className="w-5 h-5 flex-shrink-0 mt-0.5" />
-      <p className="flex-1 text-sm font-medium">{t.message}</p>
+      <Icon aria-hidden="true" className="w-5 h-5 flex-shrink-0 mt-0.5" />
+      <p className="flex-1 min-w-0 break-words text-sm font-medium text-[var(--color-text-primary)]">{translateMessage(t.message)}</p>
       <button
+        type="button"
+        aria-label={tr("ui.components.Toast.aria_label.ef3b267")}
         onClick={() => removeToast(t.id)}
-        className="p-0.5 rounded hover:bg-black/10 transition-colors"
+        className="signal-dismiss"
       >
         <X className="w-4 h-4" />
       </button>
@@ -98,10 +105,12 @@ function ToastItem({ toast: t }: { toast: Toast }) {
 }
 
 export function ToastContainer() {
+  useLocale()
+
   const toasts = useToastStore((state) => state.toasts)
 
   return (
-    <div className="fixed top-4 right-4 z-[10000] flex flex-col gap-2 max-w-md">
+    <div className="signal-toast-stack fixed top-4 right-4 z-[10000] flex flex-col gap-2">
       {toasts.map((t) => (
         <ToastItem key={t.id} toast={t} />
       ))}

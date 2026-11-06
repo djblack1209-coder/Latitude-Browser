@@ -1,3 +1,5 @@
+import { translateMessage } from '../../../shared/i18n'
+import { tr, useLocale } from '../../../shared/i18n'
 ﻿import { Copy, FolderOpen } from "lucide-react";
 import { Badge, Button, Textarea } from "../../../shared/components";
 import type { AutomationScriptRunRecord } from "../automationScripts";
@@ -19,6 +21,8 @@ export function AutomationScriptRunResultPanel({
   lastRun,
   handleOpenOutputPath,
 }: AutomationScriptRunResultPanelProps) {
+  useLocale()
+
   const resultOutputs = parseRunResultOutputs(lastRun.resultText);
   const formattedResultText = formatRunResultText(lastRun.resultText);
 
@@ -31,10 +35,10 @@ export function AutomationScriptRunResultPanel({
             size="sm"
             dot
           >
-            {lastRun.status === "success" ? "执行成功" : "执行失败"}
+            {lastRun.status === "success" ? tr("browser.components.AutomationScriptRunResultPanel.AutomationScriptRunResultPanel.6c189aa") : tr("browser.components.AutomationScriptRunResultPanel.AutomationScriptRunResultPanel.9746cfc")}
           </Badge>
           <span className="text-sm text-[var(--color-text-primary)]">
-            {lastRun.summary || "执行已完成"}
+            {lastRun.summary || tr("browser.components.AutomationScriptRunResultPanel.AutomationScriptRunResultPanel.b8955d3")}
           </span>
         </div>
         <div className="text-xs text-[var(--color-text-muted)]">
@@ -44,22 +48,20 @@ export function AutomationScriptRunResultPanel({
 
       {lastRun.error && (
         <div className="mt-3 break-all text-sm text-[var(--color-error)]">
-          {lastRun.error}
+          {translateMessage(lastRun.error)}
         </div>
       )}
 
       {lastRun.resultText && (
         <div className="mt-4 space-y-2">
           <div className="flex items-center justify-between gap-2">
-            <div className="text-xs text-[var(--color-text-muted)]">结果输出</div>
+            <div className="text-xs text-[var(--color-text-muted)]">{tr("browser.components.AutomationScriptRunResultPanel.text.c14a48a")}</div>
             <Button
               size="sm"
               variant="secondary"
-              onClick={() => void copyToClipboard(formattedResultText, "执行结果已复制")}
+              onClick={() => void copyToClipboard(formattedResultText, tr("browser.components.AutomationScriptRunResultPanel.AutomationScriptRunResultPanel.02c7a1b"))}
             >
-              <Copy className="h-3.5 w-3.5" />
-              复制结果
-            </Button>
+              <Copy className="h-3.5 w-3.5" />{tr("browser.components.AutomationScriptRunResultPanel.text.0d6cb0c")}</Button>
           </div>
           <Textarea rows={10} value={formattedResultText} readOnly className="font-mono" />
           {resultOutputs.length > 0 && (
@@ -83,9 +85,7 @@ export function AutomationScriptRunResultPanel({
                       variant="secondary"
                       onClick={() => void handleOpenOutputPath(output.path)}
                     >
-                      <FolderOpen className="h-3.5 w-3.5" />
-                      打开文件夹
-                    </Button>
+                      <FolderOpen className="h-3.5 w-3.5" />{tr("browser.components.AutomationScriptPublicApiModalView.text.3120403")}</Button>
                   </div>
                 ))}
               </div>

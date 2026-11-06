@@ -1,3 +1,4 @@
+import { tr } from '../../../shared/i18n'
 import type { BrowserCore, BrowserCoreExtended, BrowserCoreInput, BrowserCoreValidateResult } from '../types'
 import { getBindings, getMockCores, setMockCores } from './runtime'
 
@@ -50,9 +51,9 @@ export async function setDefaultBrowserCore(coreId: string): Promise<boolean> {
 export async function validateBrowserCorePath(corePath: string): Promise<BrowserCoreValidateResult> {
   const bindings: any = await getBindings()
   if (bindings?.BrowserCoreValidate) {
-    return (await bindings.BrowserCoreValidate(corePath)) || { valid: false, message: '验证失败' }
+    return (await bindings.BrowserCoreValidate(corePath)) || { valid: false, message: tr("browser.api.cores.message.31231e7") }
   }
-  return { valid: true, message: '路径有效（模拟）' }
+  return { valid: true, message: tr("browser.api.cores.message.4631661") }
 }
 
 export async function fetchCoreExtendedInfo(): Promise<BrowserCoreExtended[]> {

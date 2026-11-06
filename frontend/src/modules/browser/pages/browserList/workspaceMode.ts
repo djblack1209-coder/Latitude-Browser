@@ -1,9 +1,11 @@
+import { getLocale } from '../../../../shared/i18n'
+import { tr } from '../../../../shared/i18n'
 import type { BrowserProfile } from '../../types'
 
 export type BrowserWorkspaceMode = 'all' | 'recent' | 'attention' | 'templates'
 
 export interface BrowserProfileActivity {
-  label: '最近启动' | '最近停止'
+  label: string
   timestamp: string
   time: number
 }
@@ -27,10 +29,10 @@ export function getBrowserProfileActivity(profile: BrowserProfile): BrowserProfi
   const stopTime = parseActivityTime(profile.lastStopAt)
 
   if (startTime !== null && profile.lastStartAt) {
-    candidates.push({ label: '最近启动', timestamp: profile.lastStartAt, time: startTime })
+    candidates.push({ label: tr("browser.pages.BrowserDetailPage.text.3a82007"), timestamp: profile.lastStartAt, time: startTime })
   }
   if (stopTime !== null && profile.lastStopAt) {
-    candidates.push({ label: '最近停止', timestamp: profile.lastStopAt, time: stopTime })
+    candidates.push({ label: tr("browser.pages.BrowserDetailPage.text.ad1d579"), timestamp: profile.lastStopAt, time: stopTime })
   }
 
   return candidates.sort((a, b) => b.time - a.time)[0] || null
@@ -45,15 +47,15 @@ export function compareBrowserProfilesByRecent(a: BrowserProfile, b: BrowserProf
   }
   if (activityA && !activityB) return -1
   if (!activityA && activityB) return 1
-  return a.profileName.localeCompare(b.profileName, 'zh-CN', { numeric: true })
+  return a.profileName.localeCompare(b.profileName, getLocale(), { numeric: true })
 }
 
 export function formatBrowserProfileActivity(profile: BrowserProfile): string {
   const activity = getBrowserProfileActivity(profile)
-  if (!activity) return '暂无启动或停止记录'
+  if (!activity) return tr("browser.pages.browserList.workspaceMode.formatBrowserProfileActivity.d07b04f")
 
   const date = new Date(activity.timestamp)
-  return `${activity.label} ${date.toLocaleString('zh-CN')}`
+  return `${activity.label} ${date.toLocaleString(getLocale())}`
 }
 
 export function getBrowserProfileAttentionReasons(
@@ -64,14 +66,14 @@ export function getBrowserProfileAttentionReasons(
   const lastError = profile.lastError?.trim()
   const runtimeWarning = profile.runtimeWarning?.trim()
 
-  if (lastError) reasons.push(`错误：${lastError}`)
-  if (runtimeWarning) reasons.push(`运行警告：${runtimeWarning}`)
-  if (!profile.userDataDir?.trim()) reasons.push('用户数据目录缺失')
-  if (!hasResolvedCore) reasons.push('未找到可用浏览器内核')
+  if (lastError) reasons.push(tr("browser.pages.browserList.workspaceMode.getBrowserProfileAttentionReasons.ff9d961", [lastError]))
+  if (runtimeWarning) reasons.push(tr("browser.pages.browserList.workspaceMode.getBrowserProfileAttentionReasons.4594a36", [runtimeWarning]))
+  if (!profile.userDataDir?.trim()) reasons.push(tr("browser.pages.browserList.workspaceMode.getBrowserProfileAttentionReasons.85c4099"))
+  if (!hasResolvedCore) reasons.push(tr("browser.pages.browserList.workspaceMode.getBrowserProfileAttentionReasons.7557b87"))
 
   return reasons
 }
 
 export function hasReusableFingerprintConfig(profile: BrowserProfile): boolean {
-  return profile.fingerprintArgs.some((argument) => argument.trim().length > 0)
+  return (profile.fingerprintArgs || []).some((argument) => argument.trim().length > 0)
 }

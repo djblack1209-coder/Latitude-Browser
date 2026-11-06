@@ -1,3 +1,4 @@
+import { tr, useLocale } from '../../../shared/i18n'
 import { PlusSquare, Upload } from "lucide-react";
 import { Button } from "../../../shared/components";
 import { SignalEmptyState, TerminalPanel } from "../../../shared/components/SignalPrimitives";
@@ -30,33 +31,29 @@ export function AutomationCardsSection({
   onRunAutomationScript,
   onOpenPublicApi,
 }: AutomationCardsSectionProps) {
+  useLocale()
+
   const scriptMap = new Map(scripts.map((script) => [script.id, script]));
   const selectedScriptIdSet = new Set(selectedScriptIds);
 
   return (
     <TerminalPanel
-      title="SCRIPT REGISTRY"
-      meta={<span className="font-mono tabular-nums">{selectedScriptIds.length} SELECTED / {cards.length} TOTAL</span>}
+      title={tr("browser.pages.AutomationCardsSection.title.da72dc3")}
+      meta={<span className="tabular-nums">{tr("browser.components.BrowserListWidgets.text.17f3287")}{selectedScriptIds.length}{tr("browser.pages.AutomationCardsSection.text.6ae797b")}{cards.length}</span>}
     >
       {loading ? (
-        <div className="px-6 py-12 text-center font-mono text-xs text-[var(--color-text-muted)]" role="status">
-          LOADING SCRIPT INDEX...
-        </div>
+        <div className="px-6 py-12 text-center text-xs text-[var(--color-text-muted)]" role="status">{tr("browser.pages.AutomationCardsSection.text.235fa40")}</div>
       ) : cards.length === 0 ? (
         <SignalEmptyState
           symbol="code"
-          title="还没有自动化脚本"
-          description="新建一套脚本，或从本地目录、文件与 Git 仓库导入。"
+          title={tr("browser.pages.AutomationCardsSection.title.bd8bb93")}
+
           action={(
             <div className="flex flex-wrap justify-center gap-2">
               <Button size="sm" onClick={onCreate}>
-                <PlusSquare className="h-4 w-4" aria-hidden="true" />
-                新建脚本
-              </Button>
+                <PlusSquare className="h-4 w-4" aria-hidden="true" />{tr("browser.pages.AutomationCardsSection.text.c4ffd3d")}</Button>
               <Button size="sm" variant="secondary" onClick={onImport}>
-                <Upload className="h-4 w-4" aria-hidden="true" />
-                导入脚本
-              </Button>
+                <Upload className="h-4 w-4" aria-hidden="true" />{tr("browser.pages.AutomationCardsSection.text.c6a5788")}</Button>
             </div>
           )}
         />

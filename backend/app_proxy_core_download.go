@@ -273,11 +273,11 @@ func normalizeProxyCoreTarget(goos string, goarch string) (proxyCoreTarget, erro
 func normalizeProxyCoreSpec(core string) (proxyCoreSpec, error) {
 	switch strings.ToLower(strings.TrimSpace(core)) {
 	case "", "xray":
-		return proxyCoreSpec{Core: "xray", Repo: "XTLS/Xray-core", DisplayName: "Xray", BinaryBase: "xray", ConfigKey: "xray", Version: "v26.3.27"}, nil
+		return proxyCoreSpec{Core: "xray", Repo: "XTLS/Xray-core", DisplayName: "Xray", BinaryBase: "xray", ConfigKey: "xray", Version: "v26.10.31"}, nil
 	case "mihomo", "clash", "clash-meta":
-		return proxyCoreSpec{Core: "mihomo", Repo: "MetaCubeX/mihomo", DisplayName: "Mihomo", BinaryBase: "mihomo", ConfigKey: "clash", Version: "v1.19.27"}, nil
+		return proxyCoreSpec{Core: "mihomo", Repo: "MetaCubeX/mihomo", DisplayName: "Mihomo", BinaryBase: "mihomo", ConfigKey: "clash", Version: "v1.19.33"}, nil
 	case "sing-box", "singbox":
-		return proxyCoreSpec{Core: "sing-box", Repo: "SagerNet/sing-box", DisplayName: "sing-box", BinaryBase: "sing-box", ConfigKey: "sing-box", Version: "v1.13.13"}, nil
+		return proxyCoreSpec{Core: "sing-box", Repo: "SagerNet/sing-box", DisplayName: "sing-box", BinaryBase: "sing-box", ConfigKey: "sing-box", Version: "v1.14.4"}, nil
 	default:
 		return proxyCoreSpec{}, fmt.Errorf("不支持的代理内核: %s", core)
 	}

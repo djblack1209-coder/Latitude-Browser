@@ -1,3 +1,4 @@
+import { tr, useLocale, localized } from '../../../../shared/i18n'
 import { useState } from 'react'
 
 import { Button, Modal } from '../../../../shared/components'
@@ -10,15 +11,15 @@ interface ProxyPoolUsageGuideModalProps {
   onClose: () => void
 }
 
-const usageTabs: Array<{ value: UsageGuideTab; label: string; hint: string }> = [
-  { value: 'clash', label: 'Clash 订阅 / YAML', hint: '订阅拉取或粘贴 YAML' },
-  { value: 'direct', label: 'HTTP / SOCKS5', hint: '单层代理导入' },
-  { value: 'ipfly', label: '特定渠道', hint: '渠道落地说明' },
-]
+const usageTabs: Array<{ value: UsageGuideTab; label: string; hint: string }> = localized(() => ([
+  { value: 'clash', label: tr("browser.components.ProxyImportModalView.text.7aa93f5"), hint: tr("browser.pages.proxyPool.ProxyPoolUsageGuideModal.hint.47f3347") },
+  { value: 'direct', label: tr("ui.modules.browser.pages.proxyPool.ProxyPoolUsageGuideModal.label.3947166"), hint: tr("browser.pages.proxyPool.ProxyPoolUsageGuideModal.hint.4ed2d43") },
+  { value: 'ipfly', label: tr("browser.pages.proxyPool.ProxyPoolUsageGuideModal.label.c0142ab"), hint: tr("browser.pages.proxyPool.ProxyPoolUsageGuideModal.hint.d2c0c3e") },
+]))
 
-const channelDetailTabs: Array<{ value: ChannelDetailTab; label: string; hint: string }> = [
-  { value: 'ipfly', label: 'IPFLY 落地', hint: 'VPN 出口 + IPFLY 链式代理' },
-]
+const channelDetailTabs: Array<{ value: ChannelDetailTab; label: string; hint: string }> = localized(() => ([
+  { value: 'ipfly', label: tr("browser.pages.proxyPool.ProxyPoolUsageGuideModal.label.3d11f10"), hint: tr("browser.pages.proxyPool.ProxyPoolUsageGuideModal.hint.9116ff2") },
+]))
 
 const clashYAML = `proxies:
   - name: hk-vless
@@ -32,50 +33,25 @@ const clashYAML = `proxies:
     ws-opts:
       path: /proxy`
 
-const directJSON = `{
-  "name": "hk-socks5",
-  "group": "海外出口",
-  "protocol": "socks5",
-  "server": "ep.example.com",
-  "port": "6616",
-  "username": "账号",
-  "password": "密码"
-}`
 
-const directLines = `http://账号:密码@gw.example.com:8080
-https://账号:密码@gw.example.com:8443
-socks5://账号:密码@ep.example.com:6616`
 
-const ipflyJSON = `{
-  "name": "IPFLY-落地",
-  "group": "",
-  "localPort": "",
-  "first": {
-    "protocol": "socks5",
-    "server": "127.0.0.1",
-    "port": "7890",
-    "username": "",
-    "password": ""
-  },
-  "second": {
-    "protocol": "socks5",
-    "server": "ep.ipflygates.com",
-    "port": "6616",
-    "username": "IPFLY账号",
-    "password": "IPFLY密码"
-  }
-}`
+
+const directJSON = () => tr("browser.pages.proxyPool.ProxyPoolUsageGuideModal.message.33bb52d")
+const directLines = () => tr("browser.pages.proxyPool.ProxyPoolUsageGuideModal.message.2bd390a")
+const ipflyJSON = () => tr("browser.pages.proxyPool.ProxyPoolUsageGuideModal.message.90b4986")
 
 export function ProxyPoolUsageGuideModal({ open, onClose }: ProxyPoolUsageGuideModalProps) {
+  useLocale()
+
   const [activeTab, setActiveTab] = useState<UsageGuideTab>('ipfly')
 
   return (
     <Modal
       open={open}
       onClose={onClose}
-      title="代理池使用说明"
+      title={tr("browser.pages.proxyPool.ProxyPoolUsageGuideModal.title.89ea43c")}
       width="920px"
-      footer={<Button onClick={onClose}>知道了</Button>}
+      footer={<Button onClick={onClose}>{tr("browser.pages.BrowserEditPage.text.cb63c62")}</Button>}
     >
       <div className="space-y-4">
         <div className="grid grid-cols-3 gap-2 rounded-2xl bg-[var(--color-bg-secondary)] p-1">
@@ -107,30 +83,32 @@ export function ProxyPoolUsageGuideModal({ open, onClose }: ProxyPoolUsageGuideM
 }
 
 function ClashGuide() {
+  useLocale()
+
   return (
     <div className="space-y-3">
       <div className="grid gap-3 sm:grid-cols-3">
-        <GuideCard title="1. 获取内容" text="填订阅 URL 后点击从 URL 获取；无法直连时选择已有代理拉取。" />
-        <GuideCard title="2. 检查 YAML" text="文本里必须有 proxies 列表，每个节点至少包含 name、type、server、port。" />
-        <GuideCard title="3. 解析写入" text="解析后先看节点数量和名称，再确认导入到代理池。" />
+        <GuideCard title={tr("browser.pages.proxyPool.ProxyPoolUsageGuideModal.title.5a6c01a")} text={tr("browser.pages.proxyPool.ProxyPoolUsageGuideModal.text.96b0718")} />
+        <GuideCard title={tr("browser.pages.proxyPool.ProxyPoolUsageGuideModal.title.c722a6e")} text={tr("browser.pages.proxyPool.ProxyPoolUsageGuideModal.text.046f597")} />
+        <GuideCard title={tr("browser.pages.proxyPool.ProxyPoolUsageGuideModal.title.ebb0287")} text={tr("browser.pages.proxyPool.ProxyPoolUsageGuideModal.text.b138f91")} />
       </div>
       <div className="grid gap-3 lg:grid-cols-[0.95fr_1.05fr]">
         <InfoPanel
-          title="支持内容"
+          title={tr("browser.pages.proxyPool.ProxyPoolUsageGuideModal.title.a531714")}
           items={[
-            '完整 Clash 订阅地址，可直连拉取，也可借助代理拉取。',
-            '完整 Clash YAML，或只包含 proxies 的 YAML 片段。',
-            '常见节点类型按当前连接栈解析；xray 栈和 mihomo 栈不自动混用。',
+            tr("browser.pages.proxyPool.ProxyPoolUsageGuideModal.ClashGuide.a85eb05"),
+            tr("browser.pages.proxyPool.ProxyPoolUsageGuideModal.ClashGuide.88593b0"),
+            tr("browser.pages.proxyPool.ProxyPoolUsageGuideModal.ClashGuide.79ec41e"),
           ]}
         />
         <CodeBlock value={clashYAML} />
       </div>
       <InfoPanel
-        title="导入前检查"
+        title={tr("browser.pages.proxyPool.ProxyPoolUsageGuideModal.title.65b10b6")}
         items={[
-          '订阅拉取失败时，先换“拉取代理”，不要把订阅 URL 当 YAML 粘贴。',
-          '节点重名会影响后续识别，导入前给订阅来源或节点名称做区分。',
-          '解析为空时，直接检查 YAML 缩进、proxies 拼写、port 是否是数字。',
+          tr("browser.pages.proxyPool.ProxyPoolUsageGuideModal.ClashGuide.2269da3"),
+          tr("browser.pages.proxyPool.ProxyPoolUsageGuideModal.ClashGuide.986cb97"),
+          tr("browser.pages.proxyPool.ProxyPoolUsageGuideModal.ClashGuide.abc6d43"),
         ]}
       />
     </div>
@@ -138,40 +116,44 @@ function ClashGuide() {
 }
 
 function DirectGuide() {
+  useLocale()
+
   return (
     <div className="space-y-3">
       <div className="grid gap-3 sm:grid-cols-3">
-        <GuideCard title="1. 单个导入" text="用表单填写协议、地址、端口、账号密码；留空文本辅助。" />
-        <GuideCard title="2. 批量导入" text="在文本辅助填 JSON、JSON 数组或多行代理 URL，再点击应用文本或解析。" />
-        <GuideCard title="3. 写入代理池" text="解析后确认名称、分组和数量，再保存到代理池。" />
+        <GuideCard title={tr("browser.pages.proxyPool.ProxyPoolUsageGuideModal.title.009d0a0")} text={tr("browser.pages.proxyPool.ProxyPoolUsageGuideModal.text.016589a")} />
+        <GuideCard title={tr("browser.pages.proxyPool.ProxyPoolUsageGuideModal.title.865c558")} text={tr("browser.pages.proxyPool.ProxyPoolUsageGuideModal.text.d362f8f")} />
+        <GuideCard title={tr("browser.pages.proxyPool.ProxyPoolUsageGuideModal.title.0cfc7c7")} text={tr("browser.pages.proxyPool.ProxyPoolUsageGuideModal.text.d230dcf")} />
       </div>
       <div className="grid gap-3 lg:grid-cols-[0.95fr_1.05fr]">
         <InfoPanel
-          title="字段规则"
+          title={tr("browser.pages.proxyPool.ProxyPoolUsageGuideModal.title.b8c63ae")}
           items={[
-            '表单地址只填域名或 IP，不带 http://、https://、socks5://。',
-            '文本 URL 必须带协议头，格式是 协议://账号:密码@地址:端口。',
-            '支持 http、https、socks5；密码有值时账号也必须填写。',
+            tr("browser.pages.proxyPool.ProxyPoolUsageGuideModal.DirectGuide.ca6203b"),
+            tr("browser.pages.proxyPool.ProxyPoolUsageGuideModal.DirectGuide.8172670"),
+            tr("browser.pages.proxyPool.ProxyPoolUsageGuideModal.DirectGuide.0dfd85b"),
           ]}
         />
-        <CodeBlock value={directJSON} />
+        <CodeBlock value={directJSON()} />
       </div>
       <div className="grid gap-3 lg:grid-cols-[0.95fr_1.05fr]">
         <InfoPanel
-          title="批量文本"
+          title={tr("browser.pages.proxyPool.ProxyPoolUsageGuideModal.title.6470a2c")}
           items={[
-            '每行一个代理 URL，空行会忽略。',
-            '以 # 或 // 开头的行会忽略，可用来临时注释。',
-            '需要分组时用 JSON 的 group 字段；纯 URL 行不带分组。',
+            tr("browser.pages.proxyPool.ProxyPoolUsageGuideModal.DirectGuide.b9d4bfe"),
+            tr("browser.pages.proxyPool.ProxyPoolUsageGuideModal.DirectGuide.962d2be"),
+            tr("browser.pages.proxyPool.ProxyPoolUsageGuideModal.DirectGuide.dbf01d2"),
           ]}
         />
-        <CodeBlock value={directLines} />
+        <CodeBlock value={directLines()} />
       </div>
     </div>
   )
 }
 
 function IPFLYGuide() {
+  useLocale()
+
   const [activeDetailTab, setActiveDetailTab] = useState<ChannelDetailTab>('ipfly')
 
   return (
@@ -198,25 +180,23 @@ function IPFLYGuide() {
       {activeDetailTab === 'ipfly' && (
         <>
       <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-amber-900">
-        <div className="text-sm font-semibold">IPFLY 在大陆网络下使用链式代理落地</div>
-        <div className="mt-2 text-xs leading-5">
-          第一层填本机 VPN / Mihomo 出口，第二层填 IPFLY 网关。流量路径：浏览器 → xray → 本机 VPN → IPFLY → 目标网站。
-        </div>
+        <div className="text-sm font-semibold">{tr("browser.pages.proxyPool.ProxyPoolUsageGuideModal.text.a7ae3d4")}</div>
+        <div className="mt-2 text-xs leading-5">{tr("browser.pages.proxyPool.ProxyPoolUsageGuideModal.text.b3762e6")}</div>
       </div>
       <div className="grid gap-3 lg:grid-cols-4">
-        <GuideCard title="1. 开本机 VPN" text="确认 127.0.0.1:7890 可出海外。" />
-        <GuideCard title="2. 导入链式代理" text="第一层填本机出口，第二层填 IPFLY。" />
-        <GuideCard title="3. 调检测超时" text="测速目标 timeoutMs 建议 10000。" />
-        <GuideCard title="4. 绑定浏览器" text="IP 健康通过后再分配给实例。" />
+        <GuideCard title={tr("browser.pages.proxyPool.ProxyPoolUsageGuideModal.title.dadb13c")} text={tr("browser.pages.proxyPool.ProxyPoolUsageGuideModal.text.60be964")} />
+        <GuideCard title={tr("browser.pages.proxyPool.ProxyPoolUsageGuideModal.title.dfc6fb9")} text={tr("browser.pages.proxyPool.ProxyPoolUsageGuideModal.text.4c9234d")} />
+        <GuideCard title={tr("browser.pages.proxyPool.ProxyPoolUsageGuideModal.title.6763209")} text={tr("browser.pages.proxyPool.ProxyPoolUsageGuideModal.text.ef9615e")} />
+        <GuideCard title={tr("browser.pages.proxyPool.ProxyPoolUsageGuideModal.title.90799df")} text={tr("browser.pages.proxyPool.ProxyPoolUsageGuideModal.text.607e9c3")} />
       </div>
       <div className="grid gap-3 lg:grid-cols-[0.9fr_1.1fr]">
         <div className="rounded-xl border border-[var(--color-border-muted)] bg-[var(--color-bg-primary)] p-4 text-xs leading-6 text-[var(--color-text-secondary)]">
-          <div className="font-semibold text-[var(--color-text-primary)]">字段填写</div>
-          <div className="mt-2 font-mono">第一层：socks5://127.0.0.1:7890</div>
-          <div className="font-mono">第二层：socks5://账号:密码@ep.ipflygates.com:6616</div>
-          <div className="mt-2">账号密码用 IPFLY 后台给出的值替换。</div>
+          <div className="font-semibold text-[var(--color-text-primary)]">{tr("browser.pages.proxyPool.ProxyPoolUsageGuideModal.text.f8282e3")}</div>
+          <div className="mt-2 font-mono">{tr("browser.pages.proxyPool.ProxyPoolUsageGuideModal.text.95c5693")}</div>
+          <div className="font-mono">{tr("browser.pages.proxyPool.ProxyPoolUsageGuideModal.text.e18bce4")}</div>
+          <div className="mt-2">{tr("browser.pages.proxyPool.ProxyPoolUsageGuideModal.text.fa9184b")}</div>
         </div>
-        <CodeBlock value={ipflyJSON} />
+        <CodeBlock value={ipflyJSON()} />
       </div>
         </>
       )}
@@ -225,6 +205,8 @@ function IPFLYGuide() {
 }
 
 function GuideCard({ title, text }: { title: string; text: string }) {
+  useLocale()
+
   return (
     <div className="rounded-xl border border-[var(--color-border-muted)] bg-[var(--color-bg-primary)] p-4">
       <div className="text-sm font-semibold text-[var(--color-text-primary)]">{title}</div>
@@ -234,6 +216,8 @@ function GuideCard({ title, text }: { title: string; text: string }) {
 }
 
 function InfoPanel({ title, items }: { title: string; items: string[] }) {
+  useLocale()
+
   return (
     <div className="rounded-xl border border-[var(--color-border-muted)] bg-[var(--color-bg-primary)] p-4">
       <div className="text-sm font-semibold text-[var(--color-text-primary)]">{title}</div>
@@ -250,6 +234,8 @@ function InfoPanel({ title, items }: { title: string; items: string[] }) {
 }
 
 function CodeBlock({ value }: { value: string }) {
+  useLocale()
+
   return (
     <pre className="max-h-72 overflow-auto whitespace-pre-wrap break-words rounded-xl bg-[var(--color-bg-muted)] p-4 text-xs leading-5 text-[var(--color-text-secondary)]">
       {value}

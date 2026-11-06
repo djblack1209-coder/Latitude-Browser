@@ -1,3 +1,4 @@
+import { tr, useLocale } from '../../../../../shared/i18n'
 import { Copy } from 'lucide-react'
 import { Badge, Button, Card } from '../../../../../shared/components'
 import type { AutomationDemoSession } from '../../../demoSession'
@@ -14,12 +15,14 @@ export function LaunchResponsePanel({
   demoResponseText,
   onCopyResponse,
 }: LaunchResponsePanelProps) {
-  const displayResponseText = demoResponseText || '{\n  "hint": "先运行一次右侧案例"\n}'
+  useLocale()
+
+  const displayResponseText = demoResponseText || tr("browser.pages.launchApiDocs.panels.LaunchResponsePanel.LaunchResponsePanel.584367b")
 
   return (
     <Card
-      title="最近响应"
-      subtitle="调试响应"
+      title={tr("browser.pages.launchApiDocs.panels.LaunchResponsePanel.title.132ea49")}
+
       className="bg-[var(--color-bg-elevated)] shadow-[var(--shadow-sm)]"
       actions={(
         <Button
@@ -28,19 +31,14 @@ export function LaunchResponsePanel({
           onClick={onCopyResponse}
           disabled={!demoResponseText}
         >
-          <Copy className="w-3.5 h-3.5" />
-          复制 JSON
-        </Button>
+          <Copy className="w-3.5 h-3.5" />{tr("browser.pages.launchApiDocs.panels.LaunchResponsePanel.text.651cff2")}</Button>
       )}
     >
       <div className="space-y-2">
         <div className="flex items-center justify-between gap-2">
-          <p className="text-sm font-medium text-[var(--color-text-primary)]">
-            最近一次联动结果
-          </p>
+          <p className="text-sm font-medium text-[var(--color-text-primary)]">{tr("browser.pages.launchApiDocs.panels.LaunchResponsePanel.text.d4a9222")}</p>
           {demoSession.lastResult && (
-            <Badge variant={demoSession.lastResult.ok ? 'success' : 'error'} size="sm" dot>
-              HTTP {demoSession.lastResult.status || '-'}
+            <Badge variant={demoSession.lastResult.ok ? "success" : "error"} size="sm" dot>{tr("ui.modules.browser.pages.launchApiDocs.panels.LaunchResponsePanel.label.f40b27d")}{demoSession.lastResult.status || '-'}
             </Badge>
           )}
         </div>

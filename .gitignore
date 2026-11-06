@@ -66,6 +66,7 @@ docs/*
 !docs/proxy-connector-stacks.md
 !docs/showcase/
 !docs/showcase/*.md
+!docs/showcase/remit-race.source.html
 DEPLOYMENT_GUIDE.md
 plan.md
 pic/
@@ -138,3 +139,6 @@ accounts.yml
 
 # Local backups
 .local-backup/
+
+# Browser automation output; formal showcase images live in images/showcase.
+.playwright-mcp/

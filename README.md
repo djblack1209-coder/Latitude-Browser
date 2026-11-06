@@ -1,105 +1,99 @@
-<p align="center"><img src="images/showcase/hero.svg" alt="Latitude Browser — A local workspace for isolated browser environments" width="100%" /></p>
+<div align="center">
+  <img src="build/appicon.png" width="76" alt="Latitude Browser 应用图标" />
+  <h1>Latitude Browser</h1>
+  <p>隔离浏览器环境，明确连接路径，在本地完成自动化。</p>
+  <p><strong>2.1.0 · Fieldwork</strong> · 简体中文 / English · Go / Wails / React</p>
+  <p><a href="README.en.md">English</a> · <a href="https://github.com/djblack1209-coder/Latitude-Browser/releases">下载</a> · <a href="docs/showcase/ENGINEERING.md">工程导览</a> · <a href="LICENSE-SCOPE.md">非商业许可</a></p>
+</div>
 
-<p align="center"><strong>把独立浏览器环境、代理连接与自动化，放进一个本地工作台。</strong><br />A local desktop workspace for browser profiles, proxy routing, and automation.</p>
+![Latitude Browser 2.1.0 中文原生工作区](images/showcase/fieldwork-workspace-zh.png)
 
-<p align="center">
-  <a href="https://github.com/djblack1209-coder/Latitude-Browser/actions/workflows/ci.yml"><img src="https://github.com/djblack1209-coder/Latitude-Browser/actions/workflows/ci.yml/badge.svg" alt="CI status on GitHub Actions" /></a>
-  <a href="LICENSE-SCOPE.md"><img src="https://img.shields.io/badge/license-Noncommercial-DBC493?style=flat-square" alt="Noncommercial license; see scope and third-party exceptions" /></a>
-  <img src="https://img.shields.io/badge/Go-Wails_v2-00ADD8?style=flat-square" alt="Go and Wails v2" />
-  <img src="https://img.shields.io/badge/React-TypeScript-61DAFB?style=flat-square" alt="React and TypeScript" />
-  <img src="https://img.shields.io/badge/storage-local_SQLite-95E8B5?style=flat-square" alt="Local SQLite storage" />
-</p>
+Latitude Browser 把浏览器实例、代理连接、内核、扩展和自动化放在同一个桌面工作区。适合需要多个独立浏览器环境、重复验证网页流程和管理本地脚本的非商业使用场景。
 
-<p align="center">简体中文 · <a href="README.en.md">English</a> · <a href="docs/showcase/ENGINEERING.md">工程导览</a> · <a href="docs/showcase/DEMO.md">五分钟演示</a> · <a href="ROADMAP.md">Roadmap</a></p>
+上图来自正式安装路径的 macOS App，使用独立 QA 数据；四个展示实例是真实创建的测试配置。截图中的运行实例使用 Chrome 157，没有私人账号或生产代理。截图来源与验收边界见[演示说明](docs/showcase/DEMO.md)。
 
-## 为什么做 Latitude
+## 一个工作区，从配置到运行
 
-调试多个身份、地区或站点环境时，浏览器配置、代理客户端和脚本往往分散在不同工具里。Latitude 将它们组织为可命名、可检索、可单独启动的浏览器实例，适合本地 Web 测试、环境复现和可信脚本自动化。
+| 能力 | 可以完成什么 |
+| --- | --- |
+| 实例管理 | 创建、编辑、复制、分组、标签、检索、批量启动/停止、回收站与迁移包 |
+| 内核选择 | 多内核登记、扫描、下载与实例绑定；保留已有 Chrome 148 默认配置，157 作为可选项 |
+| 代理连接 | 直连、代理池、链式代理、测速与出口诊断；明确选择当前连接栈 |
+| 自动化 | 本地脚本、执行记录、Launch API、运行会话与 CDP 接入 |
+| 本地资产 | 扩展、书签、Cookie、快照、配置备份与恢复 |
+| 桌面体验 | 中英文即时切换、表格/卡片视图、⌘/Ctrl K 快捷启动、可跳过启动层、直接退出 |
 
-本项目基于 [black-ant/Ant-Browser](https://github.com/black-ant/Ant-Browser) 持续改造。Latitude 的工作包括终端风格界面、分步环境配置、连接栈与网络状态处理、macOS 安装入口及工程验证。它不是从零编写的 Chromium 内核；[工程导览](docs/showcase/ENGINEERING.md) 区分上游基础、可追溯的改动和后续工作。
+**连接栈按选择执行。** `xray` 是 Xray + sing-box 组合：Xray 处理 vmess/vless/trojan/shadowsocks/链式代理等，sing-box 处理 hysteria2/tuic/anytls 等。`mihomo` 是独立栈；启动、测速、诊断和下载不会自动跨栈混用。详见[连接栈约定](docs/proxy-connector-stacks.md)。
 
-## 看一眼工作台
+普通 Chrome 不实现补丁内核的全部指纹能力。内核由用户独立安装；现有实例绑定不会因界面升级被改写。Tor 保留为需要自行配置运行时的实验功能。
 
-<img src="images/showcase/workspace.png" alt="Latitude Browser 深色实例工作台，展示四个虚构测试环境" width="100%" />
+## Fieldwork 界面
 
-<p align="center"><sub>当前代码的浏览器 UI 预览，使用虚构演示数据；不是已启动浏览器、真实代理出口或桌面集成测试的证明。</sub></p>
+黑色画布、荧光绿操作色、淡紫定位图和清晰的分层面板，覆盖导航、实例列表、表单、设置、弹窗与状态栏。点阵图是静态导航意象；运行数量和连接栈来自应用状态。启动层很短，可直接跳过，并遵守减弱动态效果设置。
 
-<details>
-<summary><strong>查看分步配置与连接栈</strong></summary>
+退出不再弹出警告或确认框；原生关闭直接进入受管进程清理，完成后退出。渲染异常提供恢复入口，空指纹参数不会使实例列表变成空白。
 
-<img src="images/showcase/setup.png" alt="环境自动配置：网络入口、设备基线、指纹策略、确认并创建" width="100%" />
+![原生 App 中保留的 Chrome 148 默认项与 Chrome 157 可选项](images/showcase/fieldwork-cores-en.png)
 
-<img src="images/showcase/connectors.png" alt="连接栈设置：Xray 加 sing-box 组合栈与独立 Mihomo 栈" width="100%" />
+## 安装与第一次运行
 
-</details>
+从[Releases](https://github.com/djblack1209-coder/Latitude-Browser/releases)选择已经发布的平台包。仓库当前版本为 2.1.0；本轮生成并验收了本地 macOS arm64 包，尚未另外创建 2.1.0 GitHub Release。
 
-## 可以做什么
+macOS 只保留一个正式入口：`/Applications/Latitude Browser.app`，Bundle ID 为 `com.latitude.browser.desktop`。启动后在“资产 → 内核”登记或下载内核，再创建实例并选择网络入口。现有安装保留原数据和内核默认项。可写状态位于 `~/Library/Application Support/latitude-browser`。
 
-| 能力 | 使用方式 | 实现入口 |
-| --- | --- | --- |
-| 独立浏览器实例 | 管理配置目录、启动参数、标签与代理绑定 | [实例管理](backend/internal/browser/profile_store.go) |
-| 分步配置 | 从网络入口、设备基线到指纹策略，最后确认创建 | [AutoConfigPage](frontend/src/modules/browser/pages/AutoConfigPage.tsx) |
-| 两套连接栈 | 明确选择 Xray + sing-box 或独立 Mihomo | [连接栈约定](docs/proxy-connector-stacks.md) |
-| 启动与诊断 | 组织启动计划，检查运行状态并报告错误 | [启动准备](backend/app_instance_start_prepare.go) |
-| 本地自动化 | 通过脚本包与本地 API 驱动自己的测试流程 | [脚本包说明](backend/internal/automation/demo-library/README.md) |
-| 本地数据管理 | SQLite 配置、备份与恢复入口 | [备份入口](backend/app_backup_entry.go) |
+本地包使用 ad-hoc 签名，未进行 Developer ID 签名或公证。Windows/Linux 的构建入口保留在源码中，本次没有完成这些平台的实机验收。
 
-配置隔离不等于安全沙箱，也不保证匿名性或绕过站点检测。自动化脚本以当前用户权限执行，仅运行自己检查并信任的代码。
+## 从源码构建
 
-## 快速开始
-
-### 先看界面
-
-需要 Node.js 22 与 npm。请先阅读[许可范围](LICENSE-SCOPE.md)。
+使用 `go.mod` 声明的 Go 版本、Node.js 22.12+、Python 3；macOS 还需 Xcode Command Line Tools。Wails CLI 版本与 `go.mod` 对齐：
 
 ```bash
-git clone --depth 1 https://github.com/djblack1209-coder/Latitude-Browser.git
-cd Latitude-Browser/frontend
-npm ci
+go install github.com/wailsapp/wails/v2/cmd/wails@v2.17.1
+npm --prefix frontend ci
+npm --prefix frontend run build:clean
+wails build -s
+```
+
+完整 macOS 分发包：
+
+```bash
+bash publish/mac/publish-mac.sh --arch arm64
+python3 publish/mac/artifact_contract.py validate \
+  --manifest publish/output/manifest-macos-arm64.json --arch arm64
+```
+
+构建产物在 `publish/output/`。打包脚本验证代理运行时、图标、签名与应用标识，将临时 `.app` 放入 `.noindex` 目录并移除 `build/bin` 的构建副本；验收始终从 `/Applications` 启动。更多说明见 [macOS](publish/mac/README.md) 与 [Linux](publish/linux/README.md)。
+
+只查看界面：
+
+```bash
+cd frontend
 npm run demo
 ```
 
-打开终端显示的本地地址（默认 `http://127.0.0.1:5218`）。`demo` 显式开启仅限开发环境的模拟状态，并显示提示；普通启动或生产构建缺少桌面服务时会停止业务操作。预览不会启动桌面浏览器进程；实际启动、代理和本地文件操作需要 Wails 桌面运行时。仓库包含固定版本的代理二进制，首次克隆体积较大。
+这是带有“Mock data”提示的开发预览，不等于浏览器、代理或自动化真实运行。
 
-### 开发与检查
-
-从仓库根目录运行：
+## 验证与工程入口
 
 ```bash
-npm --prefix frontend run build:clean
 npm --prefix frontend test
-go test ./...
+go test ./backend/...
 python3 tools/check-showcase.py
 ```
 
-Go 工具链固定为 `go.mod` 中的 1.26.8；CI 使用同一版本。桌面开发还需要 Wails v2.12.0 和各系统的原生依赖，参见 [Wails 官方安装说明](https://wails.io/docs/gettingstarted/installation)。Windows 入口为 `bat\dev.bat`；[macOS 构建说明](publish/mac/README.md) 与 [Linux 构建说明](publish/linux/README.md) 单独维护。macOS 正式安装入口为 `/Applications/Latitude Browser.app`。
+2.1.0 已完成 121 项前端测试、后端测试、中英文 15 个主要页面巡检，以及正式安装 App 的语言切换、真实标签页读回、打开地址和直接退出验证。Chrome 157 在隔离数据中通过启动、导航、后退和标签页开关检查；现有 Chrome 148 的 CDP 就绪检查仍失败，保留为待办，没有自动切换默认项。完整记录见[本轮结果](LATITUDE-APP-REDESIGN-RESULT-2026-11-06.md)。
 
-**目前没有本仓库发布的可下载 Release。** Windows/Linux/macOS 有相应实现与打包入口；这不表示各平台都完成了本轮原生验收。macOS 签名、公证及跨平台发布仍列在 [Roadmap](ROADMAP.md)。
+| 路径 | 内容 |
+| --- | --- |
+| `frontend/` | React / TypeScript 界面、语言层与共享组件 |
+| `backend/` | 实例、连接栈、SQLite、资产、自动化和启动服务 |
+| `publish/`、`tools/runtime/` | 平台打包、运行时来源与完整性校验 |
+| `docs/` | [工程导览](docs/showcase/ENGINEERING.md)、[演示](docs/showcase/DEMO.md)、连接栈与历史决策 |
+| `images/showcase/` | 可追溯的实际界面截图 |
+| `website/` | 独立网站工作区；本轮 App 重设计未修改或发布网站 |
 
-## 从哪里读代码
+[更新日志](CHANGELOG.md) · [设计约定](DESIGN.md) · [贡献](CONTRIBUTING.md) · [安全](SECURITY.md) · [后续方向](ROADMAP.md)
 
-```text
-frontend/src/                 React 页面、状态与桌面桥接
-backend/                     Wails API 与应用用例编排
-backend/internal/browser/    实例、内核、配置与浏览器进程
-backend/internal/proxy/      连接栈、协议转换、检测与桥接进程
-backend/internal/automation/ 本地脚本运行时
-backend/internal/database/   SQLite 持久化
-publish/                     平台打包与运行时版本清单
-```
+## 许可与来源
 
-[工程导览](docs/showcase/ENGINEERING.md) 包含架构图、请求路径、设计取舍和可复核的提交；[后端修复说明](docs/showcase/HARDENING.md) 记录数据一致性、API/CDP 认证、下载校验和进程生命周期的回归依据；[演示指南](docs/showcase/DEMO.md) 给出从界面到代码的讲解顺序。
-
-## 参与和支持
-
-欢迎提交可复现的 [Bug](https://github.com/djblack1209-coder/Latitude-Browser/issues/new?template=bug_report.yml)、使用建议或文档改进。请先阅读 [贡献指南](CONTRIBUTING.md)；敏感问题参见 [安全说明](SECURITY.md)。
-
-如果这个工作台对你有帮助，欢迎点一颗 **Star**，或分享你的使用场景。具体反馈会帮助决定下一步优先完善什么。
-
-## 免费使用与许可
-
-感谢 [Ant-Browser](https://github.com/black-ant/Ant-Browser) 的项目基础，以及 [fingerprint-chromium](https://github.com/adryfish/fingerprint-chromium)、[Wails](https://github.com/wailsapp/wails)、[Xray-core](https://github.com/XTLS/Xray-core)、[sing-box](https://github.com/SagerNet/sing-box) 和 [Mihomo](https://github.com/MetaCubeX/mihomo)。
-
-本仓库维护者有权许可的原创贡献采用 [PolyForm Noncommercial 1.0.0](LICENSE)：**非商业用途免费，不授予商业使用权**。带有禁止商用限制，因此准确称为“源码可见”，不宣称是 OSI 定义的开源软件。具体适用范围见 [LICENSE-SCOPE](LICENSE-SCOPE.md)。
-
-上游 Ant-Browser 仍未附独立 LICENSE，维护者的授权不能代替上游授权。Xray、sing-box、Mihomo 等第三方组件保留其原有许可证及权利，不受本仓库的非商业限制重新约束。来源记录见[迁移说明](docs/plan/source-migration-and-license.md)，第三方归属见 [NOTICE](third_party/NOTICE.md)。
+维护者有权许可的原创贡献采用 **PolyForm Noncommercial 1.0.0：不授予商业使用权**。本项目使用 source-available 表述。历史上游代码与第三方组件保留各自权利和通知；请一并阅读 [LICENSE](LICENSE)、[许可范围](LICENSE-SCOPE.md) 与[第三方声明](third_party/NOTICE.md)。不将维护者的许可解释为对全部上游历史或第三方组件的重新授权。

@@ -1,4 +1,5 @@
-import clsx from 'clsx'
+import { AsciiMeter } from './AsciiMeter'
+import { tr, useLocale } from '../i18n'
 
 type ProgressStatus = 'normal' | 'success' | 'error' | 'warning'
 
@@ -15,26 +16,13 @@ interface ProgressProps extends ProgressA11yProps {
   className?: string
 }
 
-const statusColors = {
-  normal: 'bg-[var(--color-accent)]',
-  success: 'bg-[var(--color-success)]',
-  error: 'bg-[var(--color-error)]',
-  warning: 'bg-[var(--color-warning)]',
-}
-
-const sizeStyles = {
-  sm: 'h-1',
-  md: 'h-2',
-  lg: 'h-3',
-}
-
 function normalizePercent(percent: number) {
   if (!Number.isFinite(percent)) return undefined
   return Math.min(100, Math.max(0, percent))
 }
 
 function resolveProgressName(ariaLabel?: string, ariaLabelledBy?: string) {
-  return ariaLabel ?? (ariaLabelledBy ? undefined : '进度')
+  return ariaLabel ?? (ariaLabelledBy ? undefined : tr("ui.components.Progress.resolveProgressName.acf014b"))
 }
 
 export function Progress({
@@ -46,33 +34,11 @@ export function Progress({
   'aria-label': ariaLabel,
   'aria-labelledby': ariaLabelledBy,
 }: ProgressProps) {
+  useLocale()
+
   const validPercent = normalizePercent(percent)
 
-  return (
-    <div className={clsx('flex items-center gap-3', className)}>
-      <div
-        role="progressbar"
-        aria-label={resolveProgressName(ariaLabel, ariaLabelledBy)}
-        aria-labelledby={ariaLabelledBy}
-        aria-valuemin={0}
-        aria-valuemax={100}
-        aria-valuenow={validPercent}
-        className={clsx('flex-1 bg-[var(--color-bg-muted)] rounded-full overflow-hidden', sizeStyles[size])}
-      >
-        {validPercent !== undefined && (
-          <div
-            className={clsx('h-full origin-left transition-transform duration-300 rounded-full', statusColors[status])}
-            style={{ transform: `scaleX(${validPercent / 100})` }}
-          />
-        )}
-      </div>
-      {showInfo && (
-        <span className="text-sm text-[var(--color-text-muted)] min-w-[3ch] text-right">
-          {validPercent === undefined ? '—' : `${validPercent}%`}
-        </span>
-      )}
-    </div>
-  )
+  return <div data-size={size} data-status={status} className={className}><AsciiMeter value={validPercent ?? null} label={resolveProgressName(ariaLabel, ariaLabelledBy) || tr('common.loading')} showValue={showInfo} /></div>
 }
 
 // 圆形进度条
@@ -93,6 +59,8 @@ export function CircleProgress({
   'aria-label': ariaLabel,
   'aria-labelledby': ariaLabelledBy,
 }: CircleProgressProps) {
+  useLocale()
+
   const validPercent = normalizePercent(percent)
   const radius = (size - strokeWidth) / 2
   const circumference = 2 * Math.PI * radius

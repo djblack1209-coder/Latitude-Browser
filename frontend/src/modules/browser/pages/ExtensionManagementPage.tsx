@@ -1,5 +1,7 @@
+import { AssetScopeTabs } from './AssetScopeTabs'
+import { tr, sourceText, useLocale } from '../../../shared/i18n'
 import { useEffect, useMemo, useState } from 'react'
-import { toast } from '../../../shared/components'
+import { Modal, toast } from '../../../shared/components'
 import type { BrowserExtension, BrowserExtensionLookupResult, BrowserProxy } from '../types'
 import {
   deleteBrowserExtension,
@@ -23,8 +25,11 @@ import { DownloadDirectoryInstallModal, ExtensionHistoryModal, ExtensionProfileL
 import { EXTENSION_HISTORY_LIMIT, buildChromeWebStoreQueryURL, createExtensionHistoryRecord, extensionStoreURL, loadExtensionDownloadProxyPreference, loadExtensionHistory, saveExtensionDownloadProxyPreference, saveExtensionHistory, type ExtensionHistoryRecord } from './extensionManagementUtils'
 
 export function ExtensionManagementPage() {
+  const uiLocale = useLocale()
+
   const [items, setItems] = useState<BrowserExtension[]>([])
   const [query, setQuery] = useState('')
+  const [installOpen, setInstallOpen] = useState(false)
   const [lookup, setLookup] = useState<BrowserExtensionLookupResult | null>(null)
   const [loading, setLoading] = useState(false)
   const [querying, setQuerying] = useState(false)
@@ -49,10 +54,10 @@ export function ExtensionManagementPage() {
   const [lastLookupProxyLabel, setLastLookupProxyLabel] = useState('')
   const [limitExtension, setLimitExtension] = useState<BrowserExtension | null>(null)
 
-  const installedIds = useMemo(() => new Set(items.map((item) => item.extensionId)), [items])
+  const installedIds = useMemo(() => new Set(items.map((item) => item.extensionId)), [items, uiLocale])
   const selectedProxy = useMemo(
     () => proxies.find((proxy) => proxy.proxyId === selectedProxyId),
-    [proxies, selectedProxyId],
+    [proxies, selectedProxyId, uiLocale],
   )
   const downloadProxyConfig = useProxy ? selectedProxy?.proxyConfig || '' : ''
 
@@ -61,7 +66,7 @@ export function ExtensionManagementPage() {
     try {
       setItems(await fetchBrowserExtensions())
     } catch (error: any) {
-      toast.error(error?.message || '加载插件失败')
+      toast.error(error?.message || tr("browser.pages.ExtensionManagementPage.ExtensionManagementPage.4e73dc6"))
     } finally {
       setLoading(false)
     }
@@ -99,16 +104,16 @@ export function ExtensionManagementPage() {
     })
   }
 
-  const currentProxyLabel = () => (useProxy && selectedProxy ? `使用代理：${selectedProxy.proxyName || selectedProxy.proxyId}` : '直连')
+  const currentProxyLabel = () => (useProxy && selectedProxy ? tr("browser.pages.ExtensionManagementPage.ExtensionManagementPage.9e48cf8", [selectedProxy.proxyName || selectedProxy.proxyId]) : tr("browser.pages.AutoConfigPage.direct.a7dd3b6"))
 
   const handleLookup = async () => {
     const value = query.trim()
     if (!value) {
-      toast.warning('请输入插件 ID 或 Chrome Web Store 链接')
+      toast.warning(tr("browser.pages.ExtensionManagementModals.text.272faaf"))
       return
     }
     if (useProxy && !downloadProxyConfig) {
-      toast.warning('请先选择可用的下载代理')
+      toast.warning(tr("browser.pages.ExtensionManagementPage.ExtensionManagementPage.dd04af3"))
       return
     }
     setQuerying(true)
@@ -116,7 +121,7 @@ export function ExtensionManagementPage() {
       const result = await lookupBrowserExtension(value, downloadProxyConfig, useProxy)
       setLookup(result)
       const proxyLabel = currentProxyLabel()
-      setLastLookupProxyLabel(useProxy && selectedProxy ? proxyLabel : '直连查询')
+      setLastLookupProxyLabel(useProxy && selectedProxy ? proxyLabel : tr("browser.pages.ExtensionManagementPage.ExtensionManagementPage.c6e00ec"))
       appendHistory({
         action: 'lookup',
         query: value,
@@ -139,9 +144,9 @@ export function ExtensionManagementPage() {
         storeUrl: buildChromeWebStoreQueryURL(value),
         proxyLabel: currentProxyLabel(),
         ok: false,
-        message: error?.message || '查询插件失败',
+        message: error?.message || tr("browser.pages.ExtensionManagementPage.ExtensionManagementPage.cd476e7"),
       })
-      toast.error(error?.message || '查询插件失败')
+      toast.error(error?.message || tr("browser.pages.ExtensionManagementPage.ExtensionManagementPage.cd476e7"))
     } finally {
       setQuerying(false)
     }
@@ -156,7 +161,7 @@ export function ExtensionManagementPage() {
     try {
       setManualFiles(await listBrowserExtensionManualDownloadFiles())
     } catch (error: any) {
-      toast.error(error?.message || '扫描下载目录失败')
+      toast.error(error?.message || tr("browser.pages.ExtensionManagementPage.ExtensionManagementPage.d92acd7"))
     } finally {
       setManualFileLoading(false)
     }
@@ -165,7 +170,7 @@ export function ExtensionManagementPage() {
   const handleOpenManualInstall = async () => {
     const target = lookup?.extensionId || query.trim()
     if (!target) {
-      toast.warning('请输入插件 ID 或 Chrome Web Store 链接')
+      toast.warning(tr("browser.pages.ExtensionManagementModals.text.272faaf"))
       return
     }
     setManualOpen(true)
@@ -175,7 +180,7 @@ export function ExtensionManagementPage() {
       void refreshManualFiles()
     } catch (error: any) {
       setManualGuide(null)
-      toast.error(error?.message || '生成手动安装信息失败')
+      toast.error(error?.message || tr("browser.pages.ExtensionManagementPage.ExtensionManagementPage.facb340"))
     } finally {
       setManualLoading(false)
     }
@@ -185,7 +190,7 @@ export function ExtensionManagementPage() {
     try {
       await openBrowserExtensionManualDownloadDir()
     } catch (error: any) {
-      toast.error(error?.message || '打开下载目录失败')
+      toast.error(error?.message || tr("browser.pages.ExtensionManagementPage.ExtensionManagementPage.163a5e9"))
     }
   }
 
@@ -195,7 +200,7 @@ export function ExtensionManagementPage() {
       await openBrowserExtensionManualDownloadDir()
       await refreshManualFiles()
     } catch (error: any) {
-      toast.error(error?.message || '打开下载目录失败')
+      toast.error(error?.message || tr("browser.pages.ExtensionManagementPage.ExtensionManagementPage.163a5e9"))
     }
   }
 
@@ -210,11 +215,11 @@ export function ExtensionManagementPage() {
         name: installed.name || '',
         version: installed.version || '',
         storeUrl: installed.sourceUrl || '',
-        proxyLabel: '手动下载目录',
+        proxyLabel: tr("browser.pages.ExtensionManagementPage.proxyLabel.c80e854"),
         ok: true,
-        message: '导入成功',
+        message: tr("browser.pages.ExtensionManagementPage.message.425516b"),
       })
-      toast.success(`已导入 ${installed.name || installed.extensionId}`)
+      toast.success(tr("browser.pages.ExtensionManagementPage.ExtensionManagementPage.34e9481", [installed.name || installed.extensionId]))
       setManualOpen(false)
       setDownloadDirOpen(false)
       await refresh()
@@ -226,11 +231,11 @@ export function ExtensionManagementPage() {
         name: '',
         version: '',
         storeUrl: '',
-        proxyLabel: '手动下载目录',
+        proxyLabel: tr("browser.pages.ExtensionManagementPage.proxyLabel.c80e854"),
         ok: false,
-        message: error?.message || '导入插件失败',
+        message: error?.message || tr("browser.pages.ExtensionManagementPage.ExtensionManagementPage.fff89eb"),
       })
-      toast.error(error?.message || '导入插件失败')
+      toast.error(error?.message || tr("browser.pages.ExtensionManagementPage.ExtensionManagementPage.fff89eb"))
     } finally {
       setManualImportingFileName('')
     }
@@ -240,7 +245,7 @@ export function ExtensionManagementPage() {
     const target = lookup?.extensionId || query.trim()
     if (!target) return
     if (useProxy && !downloadProxyConfig) {
-      toast.warning('请先选择可用的下载代理')
+      toast.warning(tr("browser.pages.ExtensionManagementPage.ExtensionManagementPage.dd04af3"))
       return
     }
     setInstalling(true)
@@ -255,9 +260,9 @@ export function ExtensionManagementPage() {
         storeUrl: installed.sourceUrl || buildChromeWebStoreQueryURL(target),
         proxyLabel: currentProxyLabel(),
         ok: true,
-        message: '安装成功',
+        message: tr("browser.pages.ExtensionManagementPage.message.055c684"),
       })
-      toast.success(`已安装 ${installed.name || installed.extensionId}`)
+      toast.success(tr("browser.pages.ExtensionManagementPage.ExtensionManagementPage.78f32ce", [installed.name || installed.extensionId]))
       setLookup(null)
       setLastLookupProxyLabel('')
       setQuery('')
@@ -272,9 +277,9 @@ export function ExtensionManagementPage() {
         storeUrl: lookup?.storeUrl || buildChromeWebStoreQueryURL(target),
         proxyLabel: currentProxyLabel(),
         ok: false,
-        message: error?.message || '安装插件失败',
+        message: error?.message || tr("browser.pages.ExtensionManagementPage.ExtensionManagementPage.bccf98b"),
       })
-      toast.error(error?.message || '安装插件失败')
+      toast.error(error?.message || tr("browser.pages.ExtensionManagementPage.ExtensionManagementPage.bccf98b"))
     } finally {
       setInstalling(false)
     }
@@ -288,33 +293,33 @@ export function ExtensionManagementPage() {
         : await installBrowserExtensionLocalDirectory()
       appendHistory({
         action: 'import',
-        query: mode === 'file' ? '本地插件包' : '本地插件目录',
+        query: mode === 'file' ? tr("browser.pages.ExtensionManagementPage.ExtensionManagementPage.845e892") : tr("browser.pages.ExtensionManagementPage.ExtensionManagementPage.023baed"),
         extensionId: installed.extensionId || '',
         name: installed.name || '',
         version: installed.version || '',
         storeUrl: installed.sourceUrl || '',
-        proxyLabel: '本地导入',
+        proxyLabel: tr("browser.pages.ExtensionManagementPage.proxyLabel.8d9d869"),
         ok: true,
-        message: '导入成功',
+        message: tr("browser.pages.ExtensionManagementPage.message.425516b"),
       })
-      toast.success(`已导入 ${installed.name || installed.extensionId}`)
+      toast.success(tr("browser.pages.ExtensionManagementPage.ExtensionManagementPage.34e9481", [installed.name || installed.extensionId]))
       await refresh()
     } catch (error: any) {
-      const message = error?.message || '导入插件失败'
-      if (!message.includes('已取消')) {
+      const message = error?.message || tr("browser.pages.ExtensionManagementPage.ExtensionManagementPage.fff89eb")
+      if (!message.includes(sourceText("browser.pages.ExtensionManagementPage.ExtensionManagementPage.a5ffdc9"))) {
         appendHistory({
           action: 'import',
-          query: mode === 'file' ? '本地插件包' : '本地插件目录',
+          query: mode === 'file' ? tr("browser.pages.ExtensionManagementPage.ExtensionManagementPage.845e892") : tr("browser.pages.ExtensionManagementPage.ExtensionManagementPage.023baed"),
           extensionId: '',
           name: '',
           version: '',
           storeUrl: '',
-          proxyLabel: '本地导入',
+          proxyLabel: tr("browser.pages.ExtensionManagementPage.proxyLabel.8d9d869"),
           ok: false,
           message,
         })
       }
-      if (!message.includes('已取消')) toast.error(message)
+      if (!message.includes(sourceText("browser.pages.ExtensionManagementPage.ExtensionManagementPage.a5ffdc9"))) toast.error(message)
     } finally {
       setImporting('none')
     }
@@ -322,7 +327,7 @@ export function ExtensionManagementPage() {
 
   const handleUpdateExtension = async (item: BrowserExtension) => {
     if (useProxy && !downloadProxyConfig) {
-      toast.warning('请先选择可用的下载代理')
+      toast.warning(tr("browser.pages.ExtensionManagementPage.ExtensionManagementPage.dd04af3"))
       return
     }
     setUpdatingId(item.extensionId)
@@ -337,11 +342,11 @@ export function ExtensionManagementPage() {
         storeUrl: installed.sourceUrl || buildChromeWebStoreQueryURL(item.extensionId),
         proxyLabel: currentProxyLabel(),
         ok: true,
-        message: item.version && installed.version && item.version !== installed.version ? `已更新 ${item.version} → ${installed.version}` : '更新完成',
+        message: item.version && installed.version && item.version !== installed.version ? tr("browser.pages.ExtensionManagementPage.ExtensionManagementPage.1c6d6cd", [item.version, installed.version]) : tr("browser.pages.ExtensionManagementPage.ExtensionManagementPage.1304c2e"),
       })
       toast.success(item.version && installed.version && item.version !== installed.version
-        ? `已更新到 v${installed.version}`
-        : '插件已重新安装')
+        ? tr("browser.pages.ExtensionManagementPage.ExtensionManagementPage.59936ff", [installed.version])
+        : tr("browser.pages.ExtensionManagementPage.ExtensionManagementPage.49710f1"))
       await refresh()
     } catch (error: any) {
       appendHistory({
@@ -353,9 +358,9 @@ export function ExtensionManagementPage() {
         storeUrl: extensionStoreURL(item) || buildChromeWebStoreQueryURL(item.extensionId),
         proxyLabel: currentProxyLabel(),
         ok: false,
-        message: error?.message || '更新插件失败',
+        message: error?.message || tr("browser.pages.ExtensionManagementPage.ExtensionManagementPage.530519d"),
       })
-      toast.error(error?.message || '更新插件失败')
+      toast.error(error?.message || tr("browser.pages.ExtensionManagementPage.ExtensionManagementPage.530519d"))
     } finally {
       setUpdatingId('')
     }
@@ -368,7 +373,7 @@ export function ExtensionManagementPage() {
       const updated = await setBrowserExtensionEnabled(item.extensionId, !item.enabled)
       setItems((current) => current.map((entry) => entry.extensionId === updated.extensionId ? updated : entry))
     } catch (error: any) {
-      toast.error(error?.message || '更新插件状态失败')
+      toast.error(error?.message || tr("browser.pages.ExtensionManagementPage.ExtensionManagementPage.14aa4dd"))
     } finally {
       setBusyId('')
       setBusyAction('')
@@ -376,15 +381,15 @@ export function ExtensionManagementPage() {
   }
 
   const handleDelete = async (item: BrowserExtension) => {
-    if (!window.confirm(`删除插件「${item.name || item.extensionId}」？`)) return
+    if (!window.confirm(tr("browser.pages.ExtensionManagementPage.ExtensionManagementPage.050a22b", [item.name || item.extensionId]))) return
     setBusyId(item.extensionId)
     setBusyAction('delete')
     try {
       await deleteBrowserExtension(item.extensionId)
       setItems((current) => current.filter((entry) => entry.extensionId !== item.extensionId))
-      toast.success('插件已删除')
+      toast.success(tr("browser.pages.ExtensionManagementPage.ExtensionManagementPage.c447f39"))
     } catch (error: any) {
-      toast.error(error?.message || '删除插件失败')
+      toast.error(error?.message || tr("browser.pages.ExtensionManagementPage.ExtensionManagementPage.9b1eab6"))
     } finally {
       setBusyId('')
       setBusyAction('')
@@ -401,12 +406,12 @@ export function ExtensionManagementPage() {
   const handleClearHistory = () => {
     setHistoryRecords([])
     saveExtensionHistory([])
-    toast.success('历史已清空')
+    toast.success(tr("browser.pages.ExtensionManagementPage.ExtensionManagementPage.a4a8f9c"))
   }
 
   const proxyButtonText = useProxy
-    ? `下载代理：${selectedProxy?.proxyName || selectedProxyId || '未选择'}`
-    : '下载代理'
+    ? tr("browser.pages.ExtensionManagementPage.ExtensionManagementPage.e1b65c9", [selectedProxy?.proxyName || selectedProxyId || tr("browser.pages.ExtensionManagementPage.ExtensionManagementPage.53e2db7")])
+    : tr("browser.pages.ExtensionManagementCards.text.22eff2b")
 
   return (
     <div className="apple-page space-y-4">
@@ -426,11 +431,12 @@ export function ExtensionManagementPage() {
         onImportDirectory={() => void handleImportLocal('directory')}
         onOpenDownloadDirectory={() => void handleOpenDownloadDirectoryInstall()}
         onRefresh={refresh}
+        onOpenInstall={() => setInstallOpen(true)}
       />
 
       <ProxyPickerModal
         open={proxyModalOpen}
-        title="选择下载代理"
+        title={tr("browser.pages.ExtensionManagementPage.title.c8407e1")}
         currentProxyId={useProxy ? selectedProxyId : proxies.find((item) => item.proxyConfig === 'direct://')?.proxyId || ''}
         onClose={() => setProxyModalOpen(false)}
         onSelect={(proxy) => {
@@ -508,6 +514,8 @@ export function ExtensionManagementPage() {
         onImportFile={(fileName) => void handleImportManualFile(fileName)}
       />
 
+      <AssetScopeTabs />
+      <Modal open={installOpen} onClose={() => setInstallOpen(false)} title={tr("extensions.install")} width="840px">
       <ExtensionInstallCard
         query={query}
         lookup={lookup}
@@ -524,6 +532,7 @@ export function ExtensionManagementPage() {
         onOpenProxy={() => setProxyModalOpen(true)}
         onInstall={() => void handleInstall()}
       />
+      </Modal>
 
       <InstalledExtensionsList
         items={items}

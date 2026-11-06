@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n'
 import type { ReactNode } from 'react'
 import { FileCode2, Fingerprint, FolderOpen, Network, Terminal } from 'lucide-react'
 import clsx from 'clsx'
@@ -5,23 +6,22 @@ import clsx from 'clsx'
 export type SignalTone = 'neutral' | 'accent' | 'success' | 'warning' | 'danger'
 
 interface WorkspaceHeaderProps {
-  eyebrow: string
+  /** Compatibility metadata; decorative route codes are no longer displayed. */
   title: string
-  description?: ReactNode
   actions?: ReactNode
   children?: ReactNode
   className?: string
 }
 
 /** Shared page grammar: orient, show state, then offer an action. */
-export function WorkspaceHeader({ eyebrow, title, description, actions, children, className }: WorkspaceHeaderProps) {
+export function WorkspaceHeader({ title, actions, children, className }: WorkspaceHeaderProps) {
+  useLocale()
+
   return (
     <header className={clsx('signal-page-header', className)}>
       <div className="signal-page-heading">
         <div className="min-w-0">
-          <p className="signal-eyebrow"><span aria-hidden="true">/</span> {eyebrow}</p>
           <h1>{title}</h1>
-          {description && <div className="signal-page-description">{description}</div>}
         </div>
         {actions && <div className="signal-page-actions">{actions}</div>}
       </div>
@@ -39,6 +39,8 @@ export interface TelemetryItem {
 
 /** Only accepts the caller's measurements; never invents samples or percentages. */
 export function TelemetryStrip({ items, className }: { items: TelemetryItem[]; className?: string }) {
+  useLocale()
+
   return (
     <dl className={clsx('signal-telemetry', className)}>
       {items.map(({ label, value, detail, tone = 'neutral' }) => (
@@ -64,24 +66,23 @@ const emptyIcons = {
 
 export function SignalEmptyState({
   title,
-  description,
   action,
   symbol = 'files',
 }: {
   title: string
-  description?: string
   action?: ReactNode
   symbol?: keyof typeof emptyIcons
 }) {
+  useLocale()
+
   const Icon = emptyIcons[symbol]
   return (
     <div className="signal-empty-state">
       <div className="signal-empty-glyph" aria-hidden="true">
-        <span>[</span><Icon size={26} strokeWidth={1.25} /><span>]</span>
+        <Icon size={26} strokeWidth={1.5} />
       </div>
       <div className="min-w-0">
         <h3>{title}</h3>
-        {description && <p>{description}</p>}
         {action && <div className="mt-4 flex flex-wrap gap-2">{action}</div>}
       </div>
     </div>
@@ -95,6 +96,8 @@ export function TerminalPanel({ title, meta, children, className }: {
   children: ReactNode
   className?: string
 }) {
+  useLocale()
+
   return (
     <section className={clsx('signal-terminal', className)} aria-label={title}>
       <div className="signal-terminal-heading">

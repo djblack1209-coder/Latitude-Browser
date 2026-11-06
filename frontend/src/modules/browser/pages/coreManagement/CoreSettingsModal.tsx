@@ -1,3 +1,4 @@
+import { tr, useLocale } from '../../../../shared/i18n'
 import type { Dispatch, SetStateAction } from 'react'
 import { Button, FormItem, Input, Modal, Switch, Textarea } from '../../../../shared/components'
 import type { CoreSettingsForm } from '../coreManagement.types'
@@ -12,64 +13,66 @@ interface CoreSettingsModalProps {
 }
 
 export function CoreSettingsModal({ open, form, saving, setForm, onClose, onSave }: CoreSettingsModalProps) {
+  useLocale()
+
   return (
     <Modal
       open={open}
       onClose={onClose}
-      title="编辑全局设置"
+      title={tr("browser.pages.coreManagement.CoreSettingsModal.title.1436e9a")}
       width="550px"
       footer={
         <>
-          <Button variant="secondary" onClick={onClose}>取消</Button>
-          <Button onClick={onSave} loading={saving}>保存</Button>
+          <Button variant="secondary" onClick={onClose}>{tr("App.CloseConfirmModal.4d0b468")}</Button>
+          <Button onClick={onSave} loading={saving}>{tr("browser.components.BrowserListLayout.text.fadf24d")}</Button>
         </>
       }
     >
       <div className="space-y-4">
-        <FormItem label="用户数据根目录">
+        <FormItem label={tr("browser.components.BrowserListLayout.label.5b23d25")}>
           <Input
             value={form.userDataRoot}
             onChange={e => setForm(prev => ({ ...prev, userDataRoot: e.target.value }))}
-            placeholder="例如：data"
+            placeholder={tr("browser.pages.coreManagement.CoreSettingsModal.placeholder.ab3ee0f")}
           />
         </FormItem>
-        <FormItem label="默认指纹参数">
+        <FormItem label={tr("browser.components.BrowserListLayout.label.51c2e53")}>
           <Textarea
             value={form.defaultFingerprintArgs}
             onChange={e => setForm(prev => ({ ...prev, defaultFingerprintArgs: e.target.value }))}
             rows={4}
-            placeholder="每行一个参数，如 --fingerprint-brand=Chrome"
+            placeholder={tr("browser.pages.coreManagement.CoreSettingsModal.placeholder.cd72308")}
           />
         </FormItem>
-        <FormItem label="默认启动参数">
+        <FormItem label={tr("browser.components.BrowserListLayout.label.0b1e606")}>
           <Textarea
             value={form.defaultLaunchArgs}
             onChange={e => setForm(prev => ({ ...prev, defaultLaunchArgs: e.target.value }))}
             rows={4}
-            placeholder="每行一个参数，如 --disable-sync"
+            placeholder={tr("browser.pages.coreManagement.CoreSettingsModal.placeholder.d66ec18")}
           />
         </FormItem>
-        <FormItem label="默认启动页面" hint="每行一个 URL，留空则启动时不自动打开页面">
+        <FormItem label={tr("browser.components.BrowserListLayout.label.d97e30a")} consequence={tr("browser.components.BrowserSettingsModal.hint.c8e2f04")}>
           <Textarea
             value={form.defaultStartUrls}
             onChange={e => setForm(prev => ({ ...prev, defaultStartUrls: e.target.value }))}
             rows={4}
-            placeholder="启动 URL"
+            placeholder={tr("browser.components.BrowserListLayout.placeholder.64515b5")}
           />
         </FormItem>
-        <FormItem label="轻启动模式" hint="先起空白页，实例就绪后再打开默认页面">
+        <FormItem label={tr("browser.components.BrowserListLayout.label.e6ab791")}>
           <div className="flex items-center justify-between rounded-lg border border-[var(--color-border-default)] px-3 py-2">
-            <span className="text-sm text-[var(--color-text-primary)]">延后打开启动页</span>
+            <span className="text-sm text-[var(--color-text-primary)]">{tr("browser.components.BrowserListLayout.text.2d1a8ea")}</span>
             <Switch
               checked={form.lightStartEnabled}
               onChange={checked => setForm(prev => ({ ...prev, lightStartEnabled: checked }))}
             />
           </div>
         </FormItem>
-        <FormItem label="默认恢复历史标签" hint="实例选择跟随内核时使用；不影响启动页和启动书签。实例未覆盖时，下次启动恢复之前的标签页和窗口。">
+        <FormItem label={tr("browser.components.BrowserListLayout.label.48e49d9")}>
           <div className="flex items-center justify-between rounded-lg border border-[var(--color-border-default)] px-3 py-2">
             <div>
-              <p className="text-sm text-[var(--color-text-primary)]">内核默认</p>
+              <p className="text-sm text-[var(--color-text-primary)]">{tr("browser.components.BrowserListLayout.text.1fe4dd2")}</p>
             </div>
             <Switch
               checked={form.restoreLastSession}
@@ -78,7 +81,7 @@ export function CoreSettingsModal({ open, form, saving, setForm, onClose, onSave
           </div>
         </FormItem>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
-          <FormItem label="启动就绪超时（毫秒）">
+          <FormItem label={tr("browser.components.BrowserListLayout.label.1d9b89e")}>
             <Input
               type="number"
               min={1000}
@@ -88,7 +91,7 @@ export function CoreSettingsModal({ open, form, saving, setForm, onClose, onSave
               placeholder="3000"
             />
           </FormItem>
-          <FormItem label="启动稳定窗口（毫秒）">
+          <FormItem label={tr("browser.components.BrowserListLayout.label.adb3f5b")}>
             <Input
               type="number"
               min={0}

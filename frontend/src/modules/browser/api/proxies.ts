@@ -1,3 +1,4 @@
+import { tr } from '../../../shared/i18n'
 import type { BrowserProxy, ProxyBridgeWarmupResult, ProxyConnectorPreflightResult, ProxyCoreDownloadInfoResult, ProxyCoreStatusResult, ProxyIPHealthResult, ProxyLocationResolveResult, ProxySpeedTestResult } from '../types'
 import { normalizeProxyCoreStatus } from '../utils/proxyCoreStatus'
 import { getBindings, getGoApp, getMockProxies, nowISOString, setMockProxies } from './runtime'
@@ -11,15 +12,15 @@ export interface ClashImportURLResult {
 }
 
 const DESKTOP_BRIDGE_UNAVAILABLE_CODE = 'DESKTOP_BRIDGE_UNAVAILABLE'
-const DESKTOP_BRIDGE_UNAVAILABLE_MESSAGE = '当前为浏览器预览，桌面桥接不可用；请启动 Latitude Browser 桌面应用后重试'
+const DESKTOP_BRIDGE_UNAVAILABLE_MESSAGE = tr("browser.api.proxies.message.f8c99a1")
 
-function unavailableSpeedResult(proxyId: string, operation = '测速'): ProxySpeedTestResult {
+function unavailableSpeedResult(proxyId: string, operation = tr("browser.api.proxies.unavailableSpeedResult.304d8c0")): ProxySpeedTestResult {
   return {
     proxyId,
     ok: false,
     latencyMs: 0,
     engine: 'preview',
-    error: `${operation}需要 Latitude Browser 桌面桥接`,
+    error: tr("browser.api.proxies.error.4a889cc", [operation]),
     stage: 'bridge_failed',
     code: DESKTOP_BRIDGE_UNAVAILABLE_CODE,
     targetUrl: '',
@@ -148,7 +149,7 @@ export async function fetchClashImportFromURL(targetURL: string, proxyId = ''): 
     )
   }
 
-  throw new Error('当前环境不支持 URL 导入 Clash 配置')
+  throw new Error(tr("browser.api.proxies.fetchClashImportFromURL.091e9d5"))
 }
 
 export async function saveBrowserProxies(proxies: BrowserProxy[]): Promise<boolean> {
@@ -172,39 +173,39 @@ export async function validateProxyConfig(proxyConfig: string, proxyId: string):
 export async function testProxyConnectivity(proxyId: string, proxyConfig: string): Promise<ProxySpeedTestResult> {
   const bindings: any = await getBindings()
   if (bindings?.TestProxyConnectivity) {
-    return (await bindings.TestProxyConnectivity(proxyId, proxyConfig)) || { proxyId, ok: false, latencyMs: 0, engine: 'unknown', error: '调用失败' }
+    return (await bindings.TestProxyConnectivity(proxyId, proxyConfig)) || { proxyId, ok: false, latencyMs: 0, engine: 'unknown', error: tr("browser.api.proxies.error.1d1d877") }
   }
-  return unavailableSpeedResult(proxyId, '连通性测试')
+  return unavailableSpeedResult(proxyId, tr("browser.api.proxies.testProxyConnectivity.8d9abd7"))
 }
 
 export async function testProxyRealConnectivity(proxyId: string): Promise<ProxySpeedTestResult> {
   const bindings: any = await getBindings()
   if (bindings?.TestProxyRealConnectivity) {
-    return (await bindings.TestProxyRealConnectivity(proxyId)) || { proxyId, ok: false, latencyMs: 0, engine: 'unknown', error: '调用失败' }
+    return (await bindings.TestProxyRealConnectivity(proxyId)) || { proxyId, ok: false, latencyMs: 0, engine: 'unknown', error: tr("browser.api.proxies.error.1d1d877") }
   }
-  return unavailableSpeedResult(proxyId, '真实连通性测试')
+  return unavailableSpeedResult(proxyId, tr("browser.api.proxies.testProxyRealConnectivity.5701480"))
 }
 
 export async function testProxyRealConnectivityWithConfig(proxyId: string, proxyConfig: string): Promise<ProxySpeedTestResult> {
   const bindings: any = await getBindings()
   if (bindings?.TestProxyRealConnectivityWithConfig) {
-    return (await bindings.TestProxyRealConnectivityWithConfig(proxyId, proxyConfig)) || { proxyId, ok: false, latencyMs: 0, engine: 'unknown', error: '调用失败' }
+    return (await bindings.TestProxyRealConnectivityWithConfig(proxyId, proxyConfig)) || { proxyId, ok: false, latencyMs: 0, engine: 'unknown', error: tr("browser.api.proxies.error.1d1d877") }
   }
 
   // Keep compatibility with a desktop runtime whose generated App.js has not yet
   // been regenerated after the backend binding was added.
   const goApp = getGoApp()
   if (goApp?.TestProxyRealConnectivityWithConfig) {
-    return (await goApp.TestProxyRealConnectivityWithConfig(proxyId, proxyConfig)) || { proxyId, ok: false, latencyMs: 0, engine: 'unknown', error: '调用失败' }
+    return (await goApp.TestProxyRealConnectivityWithConfig(proxyId, proxyConfig)) || { proxyId, ok: false, latencyMs: 0, engine: 'unknown', error: tr("browser.api.proxies.error.1d1d877") }
   }
 
-  return unavailableSpeedResult(proxyId, '真实连通性测试')
+  return unavailableSpeedResult(proxyId, tr("browser.api.proxies.testProxyRealConnectivity.5701480"))
 }
 
 export async function browserProxyTestSpeed(proxyId: string): Promise<ProxySpeedTestResult> {
   const bindings: any = await getBindings()
   if (bindings?.BrowserProxyTestSpeed) {
-    return (await bindings.BrowserProxyTestSpeed(proxyId)) || { proxyId, ok: false, latencyMs: 0, engine: 'unknown', error: '调用失败' }
+    return (await bindings.BrowserProxyTestSpeed(proxyId)) || { proxyId, ok: false, latencyMs: 0, engine: 'unknown', error: tr("browser.api.proxies.error.1d1d877") }
   }
   return unavailableSpeedResult(proxyId)
 }
@@ -242,7 +243,7 @@ export async function browserProxyWarmupBridge(proxyId: string): Promise<ProxyBr
       engine: '',
       socksUrl: '',
       latencyMs: 0,
-      error: '调用失败',
+      error: tr("browser.api.proxies.error.1d1d877"),
     }
   }
   return unavailableWarmupResult(proxyId)
@@ -257,7 +258,7 @@ export async function browserProxyWarmupBridgeWithConfig(proxyId: string, proxyC
       engine: '',
       socksUrl: '',
       latencyMs: 0,
-      error: '调用失败',
+      error: tr("browser.api.proxies.error.1d1d877"),
     }
   }
   return browserProxyWarmupBridge(proxyId)
@@ -279,7 +280,7 @@ export async function browserProxyCheckIPHealth(proxyId: string): Promise<ProxyI
         proxyId,
         ok: false,
         source: 'ip_health',
-        error: '调用失败',
+        error: tr("browser.api.proxies.error.1d1d877"),
         ip: '',
         fraudScore: 0,
         isResidential: false,
@@ -305,7 +306,7 @@ export async function browserProxyResolveLocation(proxyId: string): Promise<Prox
       ok: false,
       auto: false,
       source: 'location',
-      error: '调用失败',
+      error: tr("browser.api.proxies.error.1d1d877"),
       ip: '',
       country: '',
       region: '',
@@ -352,7 +353,7 @@ export async function browserProxyConnectorPreflight(connectorType = '', goos = 
     requiredCores: connectorType.trim().toLowerCase() === 'mihomo' ? ['mihomo'] : ['xray', 'sing-box'],
     missingCores: [],
     cores: [],
-    message: '未连接后端',
+    message: tr("browser.api.proxies.message.2de16c7"),
     available: false,
   }
   const bindings: any = await getBindings()
@@ -380,20 +381,20 @@ export async function browserProxyCoreStatus(core: string, goos: string, goarch:
   const bindings: any = await getBindings()
   if (bindings?.BrowserProxyCoreStatus) {
     const result = await bindings.BrowserProxyCoreStatus({ core, goos, goarch })
-    if (!result) return fallback('状态查询失败')
+    if (!result) return fallback(tr("browser.api.proxies.browserProxyCoreStatus.64e9487"))
     return { ...normalizeProxyCoreStatus(result), available: result.available !== false }
   }
-  return fallback('未连接后端')
+  return fallback(tr("browser.api.proxies.message.2de16c7"))
 }
 
 export async function browserProxyCoreDownloadInfo(core: string, goos: string, goarch: string, proxyConfig = ''): Promise<ProxyCoreDownloadInfoResult> {
   const bindings: any = await getBindings()
   if (bindings?.BrowserProxyCoreDownloadInfo) {
     return (await bindings.BrowserProxyCoreDownloadInfo({ core, goos, goarch, proxyConfig })) || {
-      core, goos, goarch, version: '', repo: '', releaseUrl: '', downloadUrl: '', assetName: '', installDir: '', binaryName: '', message: '下载信息查询失败',
+      core, goos, goarch, version: '', repo: '', releaseUrl: '', downloadUrl: '', assetName: '', installDir: '', binaryName: '', message: tr("browser.api.proxies.message.9cafc85"),
     }
   }
-  return { core, goos, goarch, version: '', repo: '', releaseUrl: '', downloadUrl: '', assetName: '', installDir: '', binaryName: '', message: '未连接后端' }
+  return { core, goos, goarch, version: '', repo: '', releaseUrl: '', downloadUrl: '', assetName: '', installDir: '', binaryName: '', message: tr("browser.api.proxies.message.2de16c7") }
 }
 
 export async function browserProxyCoreOpenLocal(core: string, goos: string, goarch: string): Promise<boolean> {

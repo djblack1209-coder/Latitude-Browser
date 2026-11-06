@@ -1,3 +1,4 @@
+import { tr, useLocale } from '../../../shared/i18n'
 import { Button, FormItem, Input, Modal, Select } from "../../../shared/components";
 import { AUTOMATION_SCRIPT_TYPE_OPTIONS, type AutomationScriptType } from "../automationScripts";
 import type { ImportMode } from "./AutomationPage.helpers";
@@ -23,11 +24,13 @@ export function CreateAutomationScriptModal({
   onCreateNameChange,
   onCreateTypeChange,
 }: CreateAutomationScriptModalProps) {
+  useLocale()
+
   return (
       <Modal
         open={open}
         onClose={onClose}
-        title="新建脚本"
+        title={tr("browser.pages.AutomationCardsSection.text.c4ffd3d")}
         width="460px"
         footer={
           <>
@@ -35,27 +38,23 @@ export function CreateAutomationScriptModal({
               variant="secondary"
               onClick={onClose}
               disabled={busyAction !== "none"}
-            >
-              取消
-            </Button>
+            >{tr("App.CloseConfirmModal.4d0b468")}</Button>
             <Button
               onClick={() => void onCreate()}
               loading={busyAction === "create"}
-            >
-              创建
-            </Button>
+            >{tr("browser.components.GroupTreeNav.text.fcbd093")}</Button>
           </>
         }
       >
         <div className="space-y-4">
-          <FormItem label="脚本名称">
+          <FormItem label={tr("browser.components.AutomationScriptHistoryModal.label.22dfd39")}>
             <Input
               value={createName}
               onChange={(event) => onCreateNameChange(event.target.value)}
-              placeholder="例如：接管页面并截图"
+              placeholder={tr("browser.pages.AutomationPageModals.placeholder.acc6a09")}
             />
           </FormItem>
-          <FormItem label="脚本类型">
+          <FormItem label={tr("browser.components.AutomationScriptHistoryModal.label.f1574ac")}>
             <Select
               value={createType}
               options={AUTOMATION_SCRIPT_TYPE_OPTIONS}
@@ -102,11 +101,13 @@ export function ImportAutomationScriptModal({
   onGitRefChange,
   onGitScriptPathChange,
 }: ImportAutomationScriptModalProps) {
+  useLocale()
+
   return (
       <Modal
         open={open}
         onClose={onClose}
-        title="导入脚本"
+        title={tr("browser.pages.AutomationCardsSection.text.c6a5788")}
         width="720px"
         footer={
           <>
@@ -114,27 +115,23 @@ export function ImportAutomationScriptModal({
               variant="secondary"
               onClick={onClose}
               disabled={busyAction !== "none"}
-            >
-              取消
-            </Button>
+            >{tr("App.CloseConfirmModal.4d0b468")}</Button>
             {importMode === "git" ? (
               <Button
                 onClick={() => void onImport()}
                 loading={busyAction === "import"}
-              >
-                导入
-              </Button>
+              >{tr("browser.components.BrowserListLayout.text.60e2bca")}</Button>
             ) : null}
           </>
         }
       >
         <div className="space-y-4">
-          <p className="text-sm text-[var(--color-text-secondary)]">仅导入你信任并检查过的脚本。脚本可读取本机文件、访问网络并执行系统命令；TypeScript 导入构建也会运行本地构建工具。</p>
+          <p className="text-sm text-[var(--color-text-secondary)]">{tr("browser.pages.AutomationPageModals.text.cc350fb")}</p>
           <div className="flex flex-wrap gap-2">
             {[
-              { value: "local", label: "本地", disabled: false },
-              { value: "git", label: "Git（进行中）", disabled: false },
-              { value: "script-library", label: "脚本库（计划中）", disabled: true },
+              { value: "local", label: tr("browser.pages.AutomationPageModals.label.e8666c3"), disabled: false },
+              { value: "git", label: tr("browser.pages.AutomationPageModals.label.9538296"), disabled: false },
+              { value: "script-library", label: tr("browser.pages.AutomationPageModals.label.2da19da"), disabled: true },
             ].map((item) => (
               <Button
                 key={item.value}
@@ -159,25 +156,19 @@ export function ImportAutomationScriptModal({
                 variant="secondary"
                 onClick={() => void onImportLocalFile()}
                 loading={busyAction === "import"}
-              >
-                选择 ZIP / 文件
-              </Button>
+              >{tr("browser.pages.AutomationPageModals.text.388b026")}</Button>
               <Button
                 variant="secondary"
                 onClick={() => void onImportLocalDirectory()}
                 loading={busyAction === "import"}
-              >
-                选择文件夹
-              </Button>
+              >{tr("browser.pages.AutomationPageModals.text.ed35809")}</Button>
             </div>
           ) : null}
 
           {importMode === "git" ? (
             <div className="space-y-4">
-              <div className="text-sm text-[var(--color-text-secondary)]">
-                会先拉取仓库，再把脚本快照导入当前项目。可以只填一个脚本子目录，系统只扫描那个目录；不填时才会按仓库根目录解析。若入口是 `.ts/.cts/.mts`，需要设置页已开启 TypeScript 导入构建。
-              </div>
-              <FormItem label="仓库地址">
+              <div className="text-sm text-[var(--color-text-secondary)]">{tr("browser.pages.AutomationPageModals.text.28c50c8")}</div>
+              <FormItem label={tr("browser.pages.AutomationPageModals.label.6b470c4")}>
                 <Input
                   value={gitURL}
                   onChange={(event) => onGitURLChange(event.target.value)}
@@ -185,18 +176,18 @@ export function ImportAutomationScriptModal({
                 />
               </FormItem>
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                <FormItem label="分支 / Tag / Commit">
+                <FormItem label={tr("browser.pages.AutomationPageModals.label.37c4215")}>
                   <Input
                     value={gitRef}
                     onChange={(event) => onGitRefChange(event.target.value)}
-                    placeholder="main"
+                    placeholder={tr("ui.modules.browser.pages.AutomationPageModals.label.b28b7af")}
                   />
                 </FormItem>
-                <FormItem label="脚本路径">
+                <FormItem label={tr("browser.pages.AutomationPageModals.label.f25c4ec")}>
                   <Input
                     value={gitScriptPath}
                     onChange={(event) => onGitScriptPathChange(event.target.value)}
-                    placeholder="scripts/demo（留空=仓库根目录）"
+                    placeholder={tr("browser.pages.AutomationPageModals.placeholder.dcbd165")}
                   />
                 </FormItem>
               </div>

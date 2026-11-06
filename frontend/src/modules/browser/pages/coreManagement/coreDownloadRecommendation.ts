@@ -1,6 +1,9 @@
+import { tr } from '../../../../shared/i18n'
 export const FINGERPRINT_CHROMIUM_RELEASES_URL = 'https://github.com/adryfish/fingerprint-chromium/releases'
 
 const FINGERPRINT_CHROMIUM_LATEST_RELEASE_API_URL = 'https://api.github.com/repos/adryfish/fingerprint-chromium/releases/latest'
+export const CHROME_STABLE_RELEASES_URL = 'https://googlechromelabs.github.io/chrome-for-testing/'
+const CHROME_STABLE_API_URL = 'https://googlechromelabs.github.io/chrome-for-testing/last-known-good-versions-with-downloads.json'
 
 type CoreDownloadPlatform = 'windows' | 'linux' | 'darwin' | ''
 type CoreDownloadArch = 'amd64' | 'arm64' | ''
@@ -40,9 +43,9 @@ const archiveSuffixes = ['.zip', '.tar.xz', '.txz', '.tar.gz', '.tgz', '.tar.bz2
 
 function normalizePlatform(value: string | undefined): CoreDownloadPlatform {
   const text = (value || '').trim().toLowerCase()
+  if (text.includes('darwin') || text.includes('mac')) return 'darwin'
   if (text.includes('win')) return 'windows'
   if (text.includes('linux')) return 'linux'
-  if (text.includes('darwin') || text.includes('mac')) return 'darwin'
   return ''
 }
 
@@ -72,8 +75,8 @@ export function resolveCoreDownloadTarget(env: CoreDownloadRuntimeEnvironment | 
 }
 
 function formatTargetLabel(platform: CoreDownloadPlatform, arch: CoreDownloadArch): string {
-  const platformLabel = platform === 'windows' ? 'Windows' : platform === 'linux' ? 'Linux' : platform === 'darwin' ? 'macOS' : '未知系统'
-  const archLabel = arch || '未知架构'
+  const platformLabel = platform === 'windows' ? 'Windows' : platform === 'linux' ? 'Linux' : platform === 'darwin' ? 'macOS' : tr("browser.pages.coreManagement.coreDownloadRecommendation.formatTargetLabel.4cac14f")
+  const archLabel = arch || tr("browser.pages.coreManagement.coreDownloadRecommendation.formatTargetLabel.b130e8c")
   return `${platformLabel} / ${archLabel}`
 }
 
@@ -127,12 +130,24 @@ export async function fetchCoreDownloadRecommendation(
   signal?: AbortSignal,
 ): Promise<CoreDownloadRecommendation | null> {
   const target = resolveCoreDownloadTarget(env)
+  // The patched upstream has no macOS assets. macOS uses Google's stable
+  // engine explicitly; its stock Chromium does not implement fingerprint flags.
+  if (target.platform === 'darwin') {
+    const response = await fetch(CHROME_STABLE_API_URL, { signal })
+    if (!response.ok) throw new Error(tr("browser.pages.coreManagement.coreDownloadRecommendation.fetchCoreDownloadRecommendation.658a223", [response.status]))
+    const data = await response.json() as { channels: { Stable: { version: string; downloads: { chrome: { platform: string; url: string }[] } } } }
+    const stable = data.channels.Stable
+    const platform = target.arch === 'arm64' ? 'mac-arm64' : target.arch === 'amd64' ? 'mac-x64' : ''
+    const asset = stable.downloads.chrome.find(item => item.platform === platform)
+    if (!asset) return null
+    return { target, releaseTag: stable.version, assetName: `Chrome Stable ${stable.version}`, downloadUrl: asset.url, releasesUrl: CHROME_STABLE_RELEASES_URL, namePlaceholder: `chrome-${stable.version.split('.')[0]}` }
+  }
   const response = await fetch(FINGERPRINT_CHROMIUM_LATEST_RELEASE_API_URL, {
     headers: { Accept: 'application/vnd.github+json' },
     signal,
   })
   if (!response.ok) {
-    throw new Error(`GitHub Releases 请求失败: ${response.status}`)
+    throw new Error(tr("browser.pages.coreManagement.coreDownloadRecommendation.fetchCoreDownloadRecommendation.53b2e94", [response.status]))
   }
   const release = await response.json() as GitHubReleaseResponse
   const asset = pickReleaseAsset(release.assets || [], target)
@@ -146,6 +161,6 @@ export async function fetchCoreDownloadRecommendation(
     assetName: asset.name,
     downloadUrl: asset.browser_download_url,
     releasesUrl: release.html_url || FINGERPRINT_CHROMIUM_RELEASES_URL,
-    namePlaceholder: majorVersion ? `例如: chrome-${majorVersion}` : '例如: chrome-latest',
+    namePlaceholder: majorVersion ? tr("browser.pages.coreManagement.coreDownloadRecommendation.fetchCoreDownloadRecommendation.e0b3450", [majorVersion]) : tr("browser.pages.coreManagement.CoreDownloadModal.CoreDownloadModal.eff6f43"),
   }
 }

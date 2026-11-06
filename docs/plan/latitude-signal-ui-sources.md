@@ -1,4 +1,8 @@
-# Latitude Signal UI：复用来源与许可证边界
+# Latitude Signal UI：历史复用来源与许可证边界
+
+> 2.1.0（2026-11-06）当前界面为 Fieldwork，视觉参考为 AXON、Particle Self、ASCII Studio 和 Cyber Layer 的公开预览。完整原词因登录门槛待补，用户已确认按公开预览继续。当前令牌、原创 SVG 与参考迁移见 [DESIGN.md](../../DESIGN.md)；本文下方只保留历史来源与许可证记录。
+
+> 2.0.0（2026-11-06）已改用 Terminal 界面，删除 Globe、RadarSpinner、COBE 与图表展示。本文保留旧实现的来源记录；当前组件、字体、运行时和许可证见 [第三方声明](../../third_party/NOTICE.md)。
 
 > 核查日期：2026-09-06 UTC / 2026-09-07 SGT。本文只记录已经实现的 Signal UI、精确来源和分发边界。
 

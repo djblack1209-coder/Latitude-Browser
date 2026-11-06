@@ -7,6 +7,7 @@ import (
 	"ant-chrome/backend/internal/config"
 	"ant-chrome/backend/internal/database"
 	"ant-chrome/backend/internal/launchcode"
+	"ant-chrome/backend/internal/locale"
 	"ant-chrome/backend/internal/logger"
 	"ant-chrome/backend/internal/proxy"
 	"context"
@@ -30,6 +31,7 @@ func (a *App) startup(ctx context.Context) {
 		return
 	}
 	a.config = cfg
+	locale.Set(cfg.App.Language)
 	a.applyRuntimeConfig(cfg.Runtime)
 
 	log := a.startupInitLogger(ctx, cfg)

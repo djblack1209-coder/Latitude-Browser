@@ -1,3 +1,4 @@
+import { sourceText, tr } from '../../../../shared/i18n'
 import type {
   BrowserProxy,
   ProxyCheckDiagnostic,
@@ -70,33 +71,33 @@ function inferFailureStage(error: string): ProxyDiagnosticStage {
   const value = error.toLowerCase()
   if (!value) return 'failed'
   if (
-    value.includes('不支持') ||
+    value.includes(sourceText("browser.pages.proxyPool.ProxyPoolTableCard.text.ef8274b")) ||
     value.includes('unsupported') ||
-    value.includes('不可由当前') ||
+    value.includes(sourceText("browser.pages.proxyPool.diagnostics.inferFailureStage.3835406")) ||
     value.includes('connector') ||
-    value.includes('连接栈') ||
+    value.includes(sourceText("config.navigation.config.name.624647e")) ||
     value.includes('mihomo-only') ||
     value.includes('xray-only')
   ) return 'unsupported'
   if (
-    value.includes('内核') ||
+    value.includes(sourceText("browser.pages.BrowserDetailPage.text.8f190c5")) ||
     value.includes('core') ||
     value.includes('xray') && (value.includes('not found') || value.includes('missing')) ||
     value.includes('sing-box') && (value.includes('not found') || value.includes('missing')) ||
     value.includes('mihomo') && (value.includes('not found') || value.includes('missing'))
   ) return 'core_missing'
   if (
-    value.includes('配置') ||
+    value.includes(sourceText("browser.components.BrowserProfilesPanel.title.d7d7ce7")) ||
     value.includes('config') ||
-    value.includes('解析') ||
+    value.includes(sourceText("browser.components.ProxyImportModalView.text.af57b02")) ||
     value.includes('parse') ||
-    value.includes('为空') ||
+    value.includes(sourceText("browser.pages.proxyPool.diagnostics.inferFailureStage.c7478bb")) ||
     value.includes('empty')
   ) return 'config_invalid'
-  if (value.includes('桥接') || value.includes('bridge') || value.includes('端口') || value.includes('listen')) return 'bridge_failed'
-  if (value.includes('timeout') || value.includes('超时') || value.includes('deadline exceeded') || value.includes('i/o timeout')) return 'timeout'
-  if (value.includes('目标') || value.includes('target') || value.includes('http status')) return 'target_failed'
-  if (value.includes('网络') || value.includes('network') || value.includes('connection refused') || value.includes('dns')) return 'network_failed'
+  if (value.includes(sourceText("browser.pages.proxyPool.diagnostics.inferFailureStage.a76b678")) || value.includes('bridge') || value.includes(sourceText("browser.components.ProxyImportModal.title.6cbb733")) || value.includes('listen')) return 'bridge_failed'
+  if (value.includes('timeout') || value.includes(sourceText("browser.pages.proxyPool.ProxyPoolTableCard.text.ff06c24")) || value.includes('deadline exceeded') || value.includes('i/o timeout')) return 'timeout'
+  if (value.includes(sourceText("browser.pages.proxyPool.ProxyPoolModals.text.941f083")) || value.includes('target') || value.includes('http status')) return 'target_failed'
+  if (value.includes(sourceText("settings.components.SettingsSectionNav.label.0cbda6b")) || value.includes('network') || value.includes('connection refused') || value.includes('dns')) return 'network_failed'
   return 'failed'
 }
 
@@ -116,7 +117,7 @@ function inferCode(stage: ProxyDiagnosticStage, error: string): string {
   if (stage === 'target_failed') return 'TARGET_FAILED'
   if (stage === 'network_failed') return 'NETWORK_FAILED'
   if (value.includes('eof')) return 'CONNECTION_EOF'
-  if (value.includes('refused') || value.includes('拒绝')) return 'CONNECTION_REFUSED'
+  if (value.includes('refused') || value.includes(sourceText("browser.pages.proxyPool.diagnostics.inferCode.03e210a"))) return 'CONNECTION_REFUSED'
   return 'CHECK_FAILED'
 }
 
@@ -160,7 +161,7 @@ export function normalizeProxyDiagnostic(
     proxyId: clean(payload.proxyId) || clean(nested.proxyId) || fallback.proxyId,
     stage,
     code,
-    message: stage === 'success' ? '测速通过' : shortMessage(error, failureMessage(stage)),
+    message: stage === 'success' ? tr("browser.pages.proxyPool.diagnostics.normalizeProxyDiagnostic.0617254") : shortMessage(error, failureMessage(stage)),
     error,
     engine: engine || undefined,
     targetUrl: targetUrl || undefined,
@@ -173,20 +174,20 @@ export function normalizeProxyDiagnostic(
 
 function failureMessage(stage: ProxyDiagnosticStage): string {
   switch (stage) {
-    case 'not_tested': return '尚未执行测速'
-    case 'queued': return '等待测速任务'
-    case 'testing': return '正在执行测速'
-    case 'config_invalid': return '代理配置无法解析'
-    case 'core_missing': return '当前连接栈缺少所需内核'
-    case 'bridge_failed': return '本地代理桥接未建立'
-    case 'network_failed': return '代理网络连接失败'
-    case 'target_failed': return '测速目标未返回有效响应'
-    case 'unsupported': return '当前连接栈不支持该节点协议'
-    case 'timeout': return '测速请求超时'
-    case 'stale': return '结果来自旧连接栈或旧配置'
-    case 'expired': return '结果已超过有效期'
-    case 'success': return '测速通过'
-    default: return '测速失败'
+    case 'not_tested': return tr("browser.pages.proxyPool.diagnostics.failureMessage.2aed42c")
+    case 'queued': return tr("browser.pages.proxyPool.diagnostics.failureMessage.dfad5e3")
+    case 'testing': return tr("browser.pages.proxyPool.diagnostics.failureMessage.0aff467")
+    case 'config_invalid': return tr("browser.pages.proxyPool.diagnostics.failureMessage.0330dcb")
+    case 'core_missing': return tr("browser.pages.proxyPool.diagnostics.failureMessage.5d551b9")
+    case 'bridge_failed': return tr("browser.pages.proxyPool.diagnostics.failureMessage.eeef3ae")
+    case 'network_failed': return tr("browser.pages.proxyPool.diagnostics.failureMessage.12a0c11")
+    case 'target_failed': return tr("browser.pages.proxyPool.diagnostics.failureMessage.47958c8")
+    case 'unsupported': return tr("browser.pages.proxyPool.diagnostics.failureMessage.4c7ee7f")
+    case 'timeout': return tr("browser.pages.proxyPool.diagnostics.failureMessage.c046795")
+    case 'stale': return tr("browser.pages.proxyPool.diagnostics.failureMessage.475b74b")
+    case 'expired': return tr("browser.pages.proxyPool.diagnostics.failureMessage.b92523d")
+    case 'success': return tr("browser.pages.proxyPool.diagnostics.normalizeProxyDiagnostic.0617254")
+    default: return tr("browser.components.BrowserProfilesPanel.ProxyInlineActions.efe2c8c")
   }
 }
 
@@ -240,7 +241,7 @@ export function applyDiagnosticFreshness(
       stage: 'expired',
       code: 'RESULT_EXPIRED',
       expired: true,
-      message: '结果已超过 12 小时有效期',
+      message: tr("browser.pages.proxyPool.diagnostics.message.23781ba"),
     }
   }
   return diagnostic
@@ -248,20 +249,20 @@ export function applyDiagnosticFreshness(
 
 export function diagnosticStageLabel(stage?: ProxyDiagnosticStage): string {
   switch (stage) {
-    case 'not_tested': return '未检测'
-    case 'queued': return '排队中'
-    case 'testing': return '检测中'
-    case 'config_invalid': return '配置无效'
-    case 'core_missing': return '缺少内核'
-    case 'bridge_failed': return '桥接失败'
-    case 'network_failed': return '网络失败'
-    case 'target_failed': return '目标失败'
-    case 'unsupported': return '不支持'
-    case 'timeout': return '超时'
-    case 'stale': return '旧结果'
-    case 'expired': return '已过期'
-    case 'success': return '通过'
-    default: return '失败'
+    case 'not_tested': return tr("browser.pages.proxyPool.diagnostics.diagnosticStageLabel.90b7498")
+    case 'queued': return tr("browser.pages.proxyPool.diagnostics.diagnosticStageLabel.4dcbbcf")
+    case 'testing': return tr("browser.pages.proxyPool.diagnostics.diagnosticStageLabel.769ff6f")
+    case 'config_invalid': return tr("browser.pages.proxyPool.diagnostics.diagnosticStageLabel.5572391")
+    case 'core_missing': return tr("browser.pages.proxyPool.diagnostics.diagnosticStageLabel.885d934")
+    case 'bridge_failed': return tr("browser.pages.proxyPool.diagnostics.diagnosticStageLabel.149c7cc")
+    case 'network_failed': return tr("browser.pages.proxyPool.diagnostics.diagnosticStageLabel.928299b")
+    case 'target_failed': return tr("browser.pages.proxyPool.diagnostics.diagnosticStageLabel.9cc0778")
+    case 'unsupported': return tr("browser.pages.proxyPool.ProxyPoolTableCard.text.ef8274b")
+    case 'timeout': return tr("browser.pages.proxyPool.ProxyPoolTableCard.text.ff06c24")
+    case 'stale': return tr("browser.pages.proxyPool.diagnostics.diagnosticStageLabel.f4c9e96")
+    case 'expired': return tr("browser.pages.proxyPool.diagnostics.diagnosticStageLabel.1354374")
+    case 'success': return tr("browser.pages.proxyPool.diagnostics.diagnosticStageLabel.dcc4233")
+    default: return tr("browser.components.AutomationScriptHistoryModal.getRunStatusLabel.3e3c806")
   }
 }
 

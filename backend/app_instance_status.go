@@ -3,7 +3,9 @@ package backend
 import (
 	"ant-chrome/backend/internal/browser"
 	"fmt"
+	"net/http"
 	"strings"
+	"time"
 
 	"ant-chrome/backend/internal/logger"
 
@@ -132,9 +134,39 @@ func (a *App) BrowserInstanceOpenUrl(profileId string, targetUrl string) (bool, 
 	return true, nil
 }
 
-func (a *App) BrowserInstanceGetTabs(profileId string) []BrowserTab {
-	return []BrowserTab{
-		{TabId: "tab-1", Title: "新标签页", Url: "about:blank", Active: true},
-		{TabId: "tab-2", Title: "示例站点", Url: "https://example.com", Active: false},
+func (a *App) BrowserInstanceGetTabs(profileId string) ([]BrowserTab, error) {
+	a.browserMgr.Mutex.Lock()
+	profile, exists := a.browserMgr.Profiles[strings.TrimSpace(profileId)]
+	if !exists {
+		a.browserMgr.Mutex.Unlock()
+		return nil, fmt.Errorf("profile not found")
 	}
+	running, ready, port := profile.Running, profile.DebugReady, profile.DebugPort
+	a.browserMgr.Mutex.Unlock()
+	if !running {
+		return []BrowserTab{}, nil
+	}
+	if !ready || port <= 0 {
+		return nil, fmt.Errorf("Tab discovery requires a ready debug connection")
+	}
+	return readBrowserTabs(&http.Client{Timeout: 2 * time.Second}, port)
+}
+
+func readBrowserTabs(client *http.Client, port int) ([]BrowserTab, error) {
+	var targets []struct {
+		ID    string `json:"id"`
+		Type  string `json:"type"`
+		Title string `json:"title"`
+		URL   string `json:"url"`
+	}
+	if err := fetchBrowserDebugJSON(client, port, "/json/list", &targets); err != nil {
+		return nil, fmt.Errorf("Tab discovery failed: %w", err)
+	}
+	tabs := make([]BrowserTab, 0, len(targets))
+	for _, target := range targets {
+		if target.Type == "page" && target.ID != "" {
+			tabs = append(tabs, BrowserTab{TabId: target.ID, Title: target.Title, Url: target.URL})
+		}
+	}
+	return tabs, nil
 }

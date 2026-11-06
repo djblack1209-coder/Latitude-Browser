@@ -1,3 +1,4 @@
+import { tr, localized } from '../shared/i18n'
 export interface NavItem {
   name: string
   path: string
@@ -17,57 +18,57 @@ export interface NavSection {
  *
  * query 参数驱动真实的筛选、排序和分区；复用页面实现，但不再只是预留入口。
  */
-export const navigationConfig: NavSection[] = [
+export const navigationConfig: NavSection[] = localized(() => ([
   {
-    title: '置顶入口',
+    title: tr("config.navigation.config.title.2b5216a"),
     items: [
       {
-        name: '自动配置',
+        name: tr("config.navigation.config.name.716e01f"),
         path: '/browser/auto-config',
         icon: 'Wand2',
-        description: '按网络、设备与指纹快速创建实例',
+        description: tr("config.navigation.config.description.c644120"),
       },
     ],
   },
   {
-    title: '工作台',
+    title: tr("config.navigation.config.title.8483cd2"),
     items: [
-      { name: '实例', path: '/browser/list', icon: 'LayoutDashboard' },
-      { name: '最近活动', path: '/browser/list?sort=recent', icon: 'Clock3' },
-      { name: '待处理', path: '/browser/list?status=attention', icon: 'AlertTriangle' },
+      { name: tr("config.navigation.config.name.69fffaf"), path: '/browser/list', icon: 'LayoutDashboard' },
+      { name: tr("config.navigation.config.name.8764fbc"), path: '/browser/list?sort=recent', icon: 'Clock3' },
+      { name: tr("config.navigation.config.name.59a9eb4"), path: '/browser/list?status=attention', icon: 'AlertTriangle' },
     ],
   },
   {
-    title: '网络与代理',
+    title: tr("config.navigation.config.title.c082ff0"),
     items: [
-      { name: '代理池', path: '/browser/proxy-pool', icon: 'Globe' },
-      { name: '连接栈', path: '/settings?section=connectors', icon: 'Network' },
+      { name: tr("config.navigation.config.name.9830ee8"), path: '/browser/proxy-pool', icon: 'Globe' },
+      { name: tr("config.navigation.config.name.624647e"), path: '/settings?section=connectors', icon: 'Network' },
       { name: 'Tor', path: '/settings?section=tor', icon: 'Shield' },
-      { name: '网络诊断', path: '/browser/logs?view=network', icon: 'Radar' },
+      { name: tr("config.navigation.config.name.afddb5c"), path: '/browser/logs?view=network', icon: 'Radar' },
     ],
   },
   {
-    title: '指纹资产',
+    title: tr("config.navigation.config.title.6f67c26"),
     items: [
-      { name: '指纹模板', path: '/browser/list?view=templates', icon: 'Fingerprint' },
-      { name: '浏览器内核', path: '/browser/cores', icon: 'Cpu' },
-      { name: '插件包', path: '/browser/extensions', icon: 'Blocks' },
-      { name: '书签与标签', path: '/browser/bookmarks', icon: 'Bookmark' },
+      { name: tr("config.navigation.config.name.eab679e"), path: '/browser/list?view=templates', icon: 'Fingerprint' },
+      { name: tr("config.navigation.config.name.a709cd9"), path: '/browser/cores', icon: 'Cpu' },
+      { name: tr("config.navigation.config.name.09440f1"), path: '/browser/extensions', icon: 'Blocks' },
+      { name: tr("config.navigation.config.name.9d1d2a1"), path: '/browser/bookmarks', icon: 'Bookmark' },
     ],
   },
   {
-    title: '自动化',
+    title: tr("config.navigation.config.title.90e4e9b"),
     items: [
-      { name: '自动化脚本', path: '/browser/automation', icon: 'Bot' },
-      { name: '运行记录', path: '/browser/logs?view=runs', icon: 'ScrollText' },
+      { name: tr("config.navigation.config.name.b9a14be"), path: '/browser/automation', icon: 'Bot' },
+      { name: tr("config.navigation.config.name.24fb424"), path: '/browser/logs?view=runs', icon: 'ScrollText' },
     ],
   },
   {
-    title: '系统',
+    title: tr("config.navigation.config.title.1a1f6df"),
     items: [
-      { name: '设置', path: '/settings', icon: 'Settings' },
-      { name: '文档中心', path: '/system/docs', icon: 'BookOpenText' },
-      { name: '日志与诊断', path: '/browser/logs', icon: 'FileText' },
+      { name: tr("config.navigation.config.name.7debf9c"), path: '/settings', icon: 'Settings' },
+      { name: tr("config.navigation.config.name.4bdf236"), path: '/system/docs', icon: 'BookOpenText' },
+      { name: tr("config.navigation.config.name.53a41da"), path: '/browser/logs', icon: 'FileText' },
     ],
   },
-]
+]))

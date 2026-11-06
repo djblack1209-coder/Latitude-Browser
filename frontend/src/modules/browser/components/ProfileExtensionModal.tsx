@@ -1,3 +1,4 @@
+import { tr, useLocale } from '../../../shared/i18n'
 import { useEffect, useMemo, useState } from 'react'
 import { Button, Modal, toast } from '../../../shared/components'
 import type { BrowserExtension, BrowserProfile } from '../types'
@@ -14,13 +15,15 @@ interface ProfileExtensionModalProps {
 }
 
 export function ProfileExtensionModal({ open, profile, onClose }: ProfileExtensionModalProps) {
+  const uiLocale = useLocale()
+
   const [extensions, setExtensions] = useState<BrowserExtension[]>([])
   const [configured, setConfigured] = useState(false)
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
 
-  const selectedSet = useMemo(() => new Set(selectedIds), [selectedIds])
+  const selectedSet = useMemo(() => new Set(selectedIds), [selectedIds, uiLocale])
 
   useEffect(() => {
     if (!open || !profile) return
@@ -33,7 +36,7 @@ export function ProfileExtensionModal({ open, profile, onClose }: ProfileExtensi
       setConfigured(settings.configured)
       setSelectedIds(settings.extensionIds)
     }).catch((error: any) => {
-      toast.error(error?.message || '加载实例插件配置失败')
+      toast.error(error?.message || tr("browser.components.ProfileExtensionModal.ProfileExtensionModal.0a6befa"))
     }).finally(() => setLoading(false))
   }, [open, profile])
 
@@ -49,10 +52,10 @@ export function ProfileExtensionModal({ open, profile, onClose }: ProfileExtensi
     setSaving(true)
     try {
       await saveBrowserProfileExtensionSettings(profile.profileId, selectedIds, configured)
-      toast.success('实例插件配置已保存')
+      toast.success(tr("browser.components.ProfileExtensionModal.ProfileExtensionModal.94da314"))
       onClose()
     } catch (error: any) {
-      toast.error(error?.message || '保存实例插件配置失败')
+      toast.error(error?.message || tr("browser.components.ProfileExtensionModal.ProfileExtensionModal.4a992fe"))
     } finally {
       setSaving(false)
     }
@@ -62,18 +65,18 @@ export function ProfileExtensionModal({ open, profile, onClose }: ProfileExtensi
     <Modal
       open={open}
       onClose={onClose}
-      title={profile ? `插件配置：${profile.profileName}` : '插件配置'}
+      title={profile ? tr("browser.components.ProfileExtensionModal.ProfileExtensionModal.c9bb3af", [profile.profileName]) : tr("browser.components.ProfileExtensionModal.ProfileExtensionModal.3a36815")}
       width="640px"
       footer={(
         <>
-          <Button variant="secondary" onClick={onClose}>取消</Button>
-          <Button onClick={handleSave} loading={saving} disabled={loading}>保存</Button>
+          <Button variant="secondary" onClick={onClose}>{tr("App.CloseConfirmModal.4d0b468")}</Button>
+          <Button onClick={handleSave} loading={saving} disabled={loading}>{tr("browser.components.BrowserListLayout.text.fadf24d")}</Button>
         </>
       )}
     >
       <div className="space-y-3">
         <label className="flex items-center justify-between rounded-xl border border-[var(--color-border-default)] bg-[var(--color-bg-muted)] px-3 py-2">
-          <span className="text-sm text-[var(--color-text-primary)]">单独配置此实例</span>
+          <span className="text-sm text-[var(--color-text-primary)]">{tr("browser.components.ProfileExtensionModal.text.a2b75bc")}</span>
           <input
             type="checkbox"
             checked={configured}
@@ -83,9 +86,7 @@ export function ProfileExtensionModal({ open, profile, onClose }: ProfileExtensi
         </label>
 
         {!configured ? (
-          <div className="rounded-xl border border-dashed border-[var(--color-border-default)] bg-[var(--color-bg-muted)] px-4 py-5 text-sm text-[var(--color-text-muted)]">
-            当前实例继承全局已启用插件。打开单独配置后，只加载下方勾选的插件。
-          </div>
+          <div className="rounded-xl border border-dashed border-[var(--color-border-default)] bg-[var(--color-bg-muted)] px-4 py-5 text-sm text-[var(--color-text-muted)]">{tr("browser.components.ProfileExtensionModal.text.d9efae8")}</div>
         ) : null}
 
         <div className="max-h-[360px] space-y-2 overflow-auto pr-1">
@@ -102,7 +103,7 @@ export function ProfileExtensionModal({ open, profile, onClose }: ProfileExtensi
                 <div className="flex flex-wrap items-center gap-2 text-sm font-medium text-[var(--color-text-primary)]">
                   <span>{extension.name || extension.extensionId}</span>
                   {extension.version ? <span className="text-xs font-normal text-[var(--color-text-muted)]">v{extension.version}</span> : null}
-                  {!extension.enabled ? <span className="rounded bg-[var(--color-bg-muted)] px-1.5 py-0.5 text-xs text-[var(--color-text-muted)]">全局停用</span> : null}
+                  {!extension.enabled ? <span className="rounded bg-[var(--color-bg-muted)] px-1.5 py-0.5 text-xs text-[var(--color-text-muted)]">{tr("browser.components.ProfileExtensionModal.text.082afa3")}</span> : null}
                 </div>
                 <div className="mt-1 break-all font-mono text-xs text-[var(--color-text-muted)]">{extension.extensionId}</div>
               </div>
@@ -110,9 +111,7 @@ export function ProfileExtensionModal({ open, profile, onClose }: ProfileExtensi
           ))}
 
           {extensions.length === 0 ? (
-            <div className="rounded-xl border border-dashed border-[var(--color-border-default)] bg-[var(--color-bg-muted)] px-4 py-6 text-center text-sm text-[var(--color-text-muted)]">
-              还没有安装插件，请先到插件包管理页面导入。
-            </div>
+            <div className="rounded-xl border border-dashed border-[var(--color-border-default)] bg-[var(--color-bg-muted)] px-4 py-6 text-center text-sm text-[var(--color-text-muted)]">{tr("browser.components.ProfileExtensionModal.text.9b8d74c")}</div>
           ) : null}
         </div>
       </div>

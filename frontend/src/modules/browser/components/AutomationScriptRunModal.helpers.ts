@@ -1,3 +1,5 @@
+import { getLocale } from '../../../shared/i18n'
+import { tr } from '../../../shared/i18n'
 import { toast } from "../../../shared/components";
 import {
   applyAutomationScriptPublicAPIVariables,
@@ -16,17 +18,17 @@ export function validateJsonObjectText(
 ): string {
   const normalized = text.trim();
   if (!normalized) {
-    return required ? `${label}不能为空` : "";
+    return required ? tr("browser.components.AutomationScriptRunModal.helpers.validateJsonObjectText.b9a1417", [label]) : "";
   }
 
   try {
     const parsed = JSON.parse(normalized);
     if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
-      return `${label}必须是 JSON 对象`;
+      return tr("browser.components.AutomationScriptRunModal.helpers.validateJsonObjectText.3b2b82d", [label]);
     }
     return "";
   } catch {
-    return `${label}不是合法 JSON`;
+    return tr("browser.components.AutomationScriptRunModal.helpers.validateJsonObjectText.f0416d3", [label]);
   }
 }
 
@@ -40,7 +42,7 @@ export function formatDateTime(value?: string): string {
     return value;
   }
 
-  return date.toLocaleString("zh-CN", { hour12: false });
+  return date.toLocaleString(getLocale(), { hour12: false });
 }
 
 export function formatDuration(durationMs?: number): string {
@@ -124,11 +126,11 @@ export function parseRunResultOutputs(resultText?: string): ResultOutputEntry[] 
 function formatRunResultOutputLabel(key: string): string {
   switch (key) {
     case "outputPath":
-      return "输出文件";
+      return tr("browser.components.AutomationScriptRunModal.helpers.formatRunResultOutputLabel.c903bdc");
     case "screenshotPath":
-      return "截图文件";
+      return tr("browser.components.AutomationScriptPublicApiModal.helpers.formatPublicApiOutputLabel.2e8ad36");
     case "artifacts":
-      return "导出文件";
+      return tr("browser.components.AutomationScriptPublicApiModal.helpers.formatPublicApiOutputLabel.c2cd73b");
     default:
       return key;
   }
@@ -157,7 +159,7 @@ export async function copyToClipboard(text: string, successMessage: string) {
     await navigator.clipboard.writeText(text);
     toast.success(successMessage);
   } catch {
-    toast.error("复制失败");
+    toast.error(tr("browser.components.AutomationScriptPublicApiModal.helpers.copyText.f2c6b51"));
   }
 }
 
@@ -402,7 +404,7 @@ export function filterSelectableProfiles(profiles: BrowserProfile[]): Selectable
       if (left.running !== right.running) {
         return left.running ? -1 : 1;
       }
-      return left.profileName.localeCompare(right.profileName, "zh-CN");
+      return left.profileName.localeCompare(right.profileName, getLocale());
     });
 }
 
@@ -445,17 +447,17 @@ export function buildSelectableProfileOptions(profiles: SelectableProfile[]) {
 
 function formatSelectableProfileStatus(profile: SelectableProfile): string {
   if (profile.running && profile.debugReady && profile.debugPort > 0) {
-    return "可连接";
+    return tr("browser.components.AutomationScriptRunModal.helpers.formatSelectableProfileStatus.0bee7b5");
   }
   if (profile.running) {
-    return "启动中";
+    return tr("browser.components.AutomationScriptRunModal.helpers.formatSelectableProfileStatus.7e0798c");
   }
-  return "未启动，执行时自动启动";
+  return tr("browser.components.AutomationScriptRunModal.helpers.formatSelectableProfileStatus.4555db5");
 }
 
 export function sortTemplateProfiles(profiles: BrowserProfile[]) {
   return [...profiles].sort((left, right) =>
-    left.profileName.localeCompare(right.profileName, "zh-CN"),
+    left.profileName.localeCompare(right.profileName, getLocale()),
   );
 }
 

@@ -1,3 +1,4 @@
+import { tr } from '../../../shared/i18n'
 import { useEffect, useRef, useState, type Dispatch, type SetStateAction } from "react";
 import { toast } from "../../../shared/components";
 import { fetchBrowserProfiles, fetchGroups } from "../api";
@@ -72,7 +73,7 @@ export function useAutomationScriptRunProfiles({
     (profile) => profile.launchCode,
     (profile) =>
       profile.profileName
-        ? `${profile.launchCode || "未设 Code"} · ${profile.profileName}`
+        ? `${profile.launchCode || tr("browser.components.useAutomationScriptRunProfiles.useAutomationScriptRunProfiles.892bb08")} · ${profile.profileName}`
         : profile.profileId,
   );
   const profileIdSuggestions = buildProfileSuggestions(
@@ -91,7 +92,7 @@ export function useAutomationScriptRunProfiles({
         ? `${profile.launchCode} · ${profile.profileId}`
         : profile.profileId,
   );
-  const groupOptions = [{ value: "", label: "不限制" }, ...buildGroupOptions(groups)];
+  const groupOptions = [{ value: "", label: tr("browser.components.useAutomationScriptRunProfiles.label.204f25f") }, ...buildGroupOptions(groups)];
   const syncDemoSessionFromProfile = (
     profile: SelectableProfile,
     actionLabel: string,
@@ -161,7 +162,7 @@ export function useAutomationScriptRunProfiles({
           setSelectorText(nextSelectorText);
         }
         if (!keepManualSelector) {
-          syncDemoSessionFromProfile(nextSelectedProfile, "选择实例");
+          syncDemoSessionFromProfile(nextSelectedProfile, tr("browser.components.AutomationInstanceSelector.AutomationInstanceSelector.1e75bfe"));
         }
       }
       setCreateDraft((current) => {
@@ -182,7 +183,7 @@ export function useAutomationScriptRunProfiles({
     } catch (error: unknown) {
       if (showError) {
         const message =
-          error instanceof Error ? error.message : "实例列表刷新失败";
+          error instanceof Error ? error.message : tr("browser.components.useAutomationScriptRunProfiles.useAutomationScriptRunProfiles.8e696ad");
         toast.error(message);
       }
     } finally {
@@ -262,7 +263,7 @@ export function useAutomationScriptRunProfiles({
     }
 
     setSelectorText(buildDemoSelectorText(profile.launchCode));
-    syncDemoSessionFromProfile(profile, "选择实例");
+    syncDemoSessionFromProfile(profile, tr("browser.components.AutomationInstanceSelector.AutomationInstanceSelector.1e75bfe"));
   };
 
   const handleLaunchCodeChange = (code: string) => {
@@ -272,7 +273,7 @@ export function useAutomationScriptRunProfiles({
       availableProfiles.find((item) => item.launchCode === launchCode) || null;
     setSelectedProfileId(profile?.profileId || "");
     if (profile) {
-      syncDemoSessionFromProfile(profile, "填写实例 Code");
+      syncDemoSessionFromProfile(profile, tr("browser.components.useAutomationScriptRunProfiles.useAutomationScriptRunProfiles.347ed09"));
     }
   };
 
@@ -283,7 +284,7 @@ export function useAutomationScriptRunProfiles({
       availableProfiles.find((item) => item.launchCode === launchCode) || null;
     setSelectedProfileId(profile?.profileId || "");
     if (profile) {
-      syncDemoSessionFromProfile(profile, "填写 selector");
+      syncDemoSessionFromProfile(profile, tr("browser.components.useAutomationScriptRunProfiles.useAutomationScriptRunProfiles.5432f57"));
     }
   };
 
@@ -293,7 +294,7 @@ export function useAutomationScriptRunProfiles({
     }
 
     setSelectorText(buildDemoSelectorText(selectedProfile.launchCode));
-    syncDemoSessionFromProfile(selectedProfile, "选择实例");
+    syncDemoSessionFromProfile(selectedProfile, tr("browser.components.AutomationInstanceSelector.AutomationInstanceSelector.1e75bfe"));
   };
 
 

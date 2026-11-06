@@ -1,3 +1,4 @@
+import { tr } from '../../../shared/i18n'
 import { getGoApp } from './runtime'
 
 export interface BrowserPlatformCapabilities {
@@ -8,10 +9,10 @@ export interface BrowserPlatformCapabilities {
 
 export async function fetchBrowserPlatformCapabilities(): Promise<BrowserPlatformCapabilities> {
   const app = getGoApp()
-  if (!app) return { platform: 'development', memoryHardLimit: false, memoryHardLimitReason: '开发模拟模式不提供实例内存硬限制。' }
+  if (!app) return { platform: 'development', memoryHardLimit: false, memoryHardLimitReason: tr("browser.api.platform.memoryHardLimitReason.484a090") }
   const result = await app.BrowserPlatformCapabilities()
   if (typeof result?.platform !== 'string' || typeof result?.memoryHardLimit !== 'boolean') {
-    throw new Error('桌面服务未返回有效的平台能力，操作未执行。')
+    throw new Error(tr("browser.api.platform.fetchBrowserPlatformCapabilities.e6b1712"))
   }
   return result
 }

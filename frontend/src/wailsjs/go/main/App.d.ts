@@ -292,7 +292,11 @@ export function GetProxyCheckSettings():Promise<config.ProxyCheckConfig>;
 
 export function GetRunningInstances():Promise<Array<browser.Profile>>;
 
+export function GetSystemLocale():Promise<string>;
+
 export function GetTorStatus():Promise<backend.TorRuntimeStatus>;
+
+export function GetUILanguage():Promise<string>;
 
 export function InstallAutomationRuntime():Promise<Record<string, any>>;
 
@@ -329,6 +333,8 @@ export function SaveProxyCheckSettings(arg1:config.ProxyCheckConfig):Promise<voi
 export function SetLogLevel(arg1:string):Promise<void>;
 
 export function SetTorRuntimePath(arg1:string):Promise<backend.TorRuntimeStatus>;
+
+export function SetUILanguage(arg1:string):Promise<void>;
 
 export function StartInstance(arg1:string):Promise<browser.Profile>;
 

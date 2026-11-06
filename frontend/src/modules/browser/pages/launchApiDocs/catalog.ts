@@ -1,3 +1,4 @@
+import { tr, localized } from '../../../../shared/i18n'
 import type { AutomationDemoActionKey } from '../../demoSession'
 import { DEFAULT_API_AUTH, DEFAULT_LAUNCH_BASE_URL } from '../../launchContext'
 import {
@@ -39,119 +40,119 @@ export interface LaunchDocGroup {
   items: LaunchDocItem[]
 }
 
-export const DOC_GROUPS: LaunchDocGroup[] = [
+export const DOC_GROUPS: LaunchDocGroup[] = localized(() => ([
   {
     id: 'tutorial',
-    label: '使用教程',
+    label: tr("browser.pages.launchApiDocs.LaunchDocsHeader.label.e63e0a7"),
     items: [
       {
         id: 'tutorial-basic',
-        label: '基础使用',
-        summary: '应用上手流程、菜单入口和最小接口链路。',
-        content: DOC_TUTORIAL,
+        label: tr("browser.pages.launchApiDocs.catalog.label.480eb10"),
+        summary: tr("browser.pages.launchApiDocs.catalog.summary.bb6d69d"),
+        content: DOC_TUTORIAL(),
       },
       {
         id: 'tutorial-skill',
-        label: 'SKILL 使用',
-        summary: 'OpenClaw 接入 Latitude Browser 的安装、提问模板和稳定使用规则。',
-        content: DOC_SKILL_USAGE,
+        label: tr("browser.pages.launchApiDocs.catalog.label.4d4eca1"),
+        summary: tr("browser.pages.launchApiDocs.catalog.summary.09ffadb"),
+        content: DOC_SKILL_USAGE(),
       },
       {
         id: 'tutorial-flow',
-        label: '操作流程',
-        summary: '按步骤串起内核、代理、实例和接口调用。',
-        content: DOC_OPERATION_FLOW,
+        label: tr("browser.pages.launchApiDocs.catalog.label.1c23cec"),
+        summary: tr("browser.pages.launchApiDocs.catalog.summary.4592a9e"),
+        content: DOC_OPERATION_FLOW(),
       },
     ],
   },
   {
     id: 'changelog',
-    label: '更新日志',
+    label: tr("browser.pages.launchApiDocs.catalog.label.1853684"),
     items: [
       {
         id: 'changelog-versions',
-        label: '版本更新',
-        summary: '按大版本查看主要变化。',
-        content: DOC_CHANGELOG,
+        label: tr("browser.pages.launchApiDocs.catalog.label.ca95761"),
+        summary: tr("browser.pages.launchApiDocs.catalog.summary.3e1fbc2"),
+        content: DOC_CHANGELOG(),
       },
     ],
   },
   {
     id: 'core',
-    label: '内核介绍',
+    label: tr("browser.pages.launchApiDocs.LaunchDocsHeader.label.aa4fbf4"),
     items: [
       {
         id: 'core-management',
-        label: '内核渠道与用法',
-        summary: '内核下载来源、目录结构和应用内使用方式。',
-        content: DOC_CORE_INTRO,
+        label: tr("browser.pages.launchApiDocs.catalog.label.dd49422"),
+        summary: tr("browser.pages.launchApiDocs.catalog.summary.e0bfff8"),
+        content: DOC_CORE_INTRO(),
       },
     ],
   },
   {
     id: 'proxy',
-    label: '代理介绍',
+    label: tr("browser.pages.launchApiDocs.LaunchDocsHeader.label.58933ad"),
     items: [
       {
         id: 'proxy-usage',
-        label: '代理池使用',
-        summary: '代理类型、导入方式和实例绑定建议。',
-        content: DOC_PROXY_INTRO,
+        label: tr("browser.pages.launchApiDocs.catalog.label.6978de0"),
+        summary: tr("browser.pages.launchApiDocs.catalog.summary.ad01a16"),
+        content: DOC_PROXY_INTRO(),
       },
     ],
   },
   {
     id: 'extension',
-    label: '插件介绍',
+    label: tr("browser.pages.launchApiDocs.catalog.label.baf18c7"),
     items: [
       {
         id: 'extension-usage',
-        label: '插件包管理',
-        summary: '插件安装、实例限制、分组选择和单实例配置。',
-        content: DOC_EXTENSION_INTRO,
+        label: tr("browser.pages.launchApiDocs.catalog.label.a7bd3c1"),
+        summary: tr("browser.pages.launchApiDocs.catalog.summary.ea69b52"),
+        content: DOC_EXTENSION_INTRO(),
       },
     ],
   },
   {
     id: 'api',
-    label: '接口介绍',
+    label: tr("browser.pages.launchApiDocs.catalog.label.8ed9318"),
     items: [
       {
         id: 'api-overview',
-        label: '接口总览',
-        summary: '认证、选择规则和全部对外接口索引。',
-        content: DOC_API_OVERVIEW,
+        label: tr("browser.pages.launchApiDocs.LaunchDocsHeader.label.9421c6f"),
+        summary: tr("browser.pages.launchApiDocs.catalog.summary.b039fed"),
+        content: DOC_API_OVERVIEW(),
       },
       {
         id: 'api-profiles-launch',
-        label: '实例与启动',
-        summary: '实例配置、按 Code 启动和参数化启动。',
-        content: DOC_API_PROFILES_LAUNCH,
+        label: tr("browser.pages.launchApiDocs.catalog.label.e8a0724"),
+        summary: tr("browser.pages.launchApiDocs.catalog.summary.42a9d6d"),
+        content: DOC_API_PROFILES_LAUNCH(),
       },
       {
         id: 'api-runtime',
-        label: '运行态与接管',
-        summary: 'runtime session、活动实例和统一 CDP 入口。',
-        content: DOC_API_RUNTIME,
+        label: tr("browser.pages.launchApiDocs.catalog.label.659adb1"),
+        summary: tr("browser.pages.launchApiDocs.catalog.summary.c33d9ac"),
+        content: DOC_API_RUNTIME(),
       },
       {
         id: 'api-automation',
-        label: '脚本自动化',
-        summary: '自动化接口总览、字段规则和调用顺序。',
-        content: DOC_API_AUTOMATION,
+        label: tr("browser.pages.launchApiDocs.catalog.label.16c9a4e"),
+        summary: tr("browser.pages.launchApiDocs.catalog.summary.e4a2cf9"),
+        content: DOC_API_AUTOMATION(),
       },
       {
         id: 'api-support',
-        label: '排障与日志',
-        summary: '调用日志、常见错误码和排查顺序。',
-        content: DOC_API_SUPPORT,
+        label: tr("browser.pages.launchApiDocs.catalog.label.c8a2369"),
+        summary: tr("browser.pages.launchApiDocs.catalog.summary.0687040"),
+        content: DOC_API_SUPPORT(),
       },
     ],
   },
-]
+]))
 
-const DOC_ITEMS = DOC_GROUPS.flatMap((group) => group.items)
-const HIDDEN_DOC_ITEMS: LaunchDocItem[] = getStructuredApiHiddenDocItems()
+const DOC_ITEMS = localized(() => DOC_GROUPS.flatMap((group) => group.items))
+const HIDDEN_DOC_ITEMS: LaunchDocItem[] = localized(() => getStructuredApiHiddenDocItems())
 
 export function getDefaultDoc(): LaunchDocItem {
   return DOC_GROUPS[0].items[0]

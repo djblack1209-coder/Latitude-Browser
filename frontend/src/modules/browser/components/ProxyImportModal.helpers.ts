@@ -1,4 +1,5 @@
-import yaml from 'js-yaml'
+import { tr } from '../../../shared/i18n'
+import * as yaml from 'js-yaml'
 import type { BrowserProxy } from '../types'
 import { CHAIN_SOCKS5_PREFIX, type ChainImportForm, type ChainHopForm, type ChainSocks5Config, type ChainSocks5HopConfig, type ClashProxy, type DirectImportForm, type ImportCandidate, type ProxyDisplayInfo } from './ProxyImportModal.types'
 
@@ -158,7 +159,7 @@ function normalizeLooseClashImportText(raw: string): string {
 export function parseClashImportText(raw: string): ClashProxy[] {
   const input = raw.trim()
   if (!input) {
-    throw new Error('请输入 YAML 内容')
+    throw new Error(tr("browser.components.ProxyImportModal.helpers.parseClashImportText.b136d0c"))
   }
 
   const attempts = [input]
@@ -181,9 +182,9 @@ export function parseClashImportText(raw: string): ClashProxy[] {
   }
 
   if (lastError && typeof lastError === 'object' && lastError !== null && 'message' in lastError) {
-    throw new Error(String((lastError as { message?: string }).message || '解析失败'))
+    throw new Error(String((lastError as { message?: string }).message || tr("browser.components.ProxyImportModal.helpers.parseClashImportText.0a95106")))
   }
-  throw new Error('无效的 YAML 格式，需要包含 proxies 数组')
+  throw new Error(tr("browser.components.ProxyImportModal.helpers.parseClashImportText.ab6dfcd"))
 }
 
 function normalizeDirectProxyConfig(raw: string): string {
@@ -202,7 +203,7 @@ function resolveDirectProxyName(rawName: string, scheme: string, server: string,
   const name = rawName.trim()
   const fallbackName = server
     ? `${scheme.toUpperCase()}-${server}${port > 0 ? `:${port}` : ''}`
-    : `导入代理 ${index + 1}`
+    : tr("browser.components.ProxyImportModal.helpers.resolveDirectProxyName.5712901", [index + 1])
   const finalName = name || fallbackName
   return prefix ? `${prefix}-${finalName}` : finalName
 }
@@ -219,29 +220,29 @@ function formatDirectProxyHost(raw: string): string {
 export function buildDirectImportCandidate(form: DirectImportForm): ImportCandidate {
   const serverInput = form.server.trim()
   if (!serverInput) {
-    throw new Error('请输入代理地址')
+    throw new Error(tr("browser.components.ProxyImportModal.helpers.buildDirectImportCandidate.e568d77"))
   }
   if (/^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//.test(serverInput)) {
-    throw new Error('代理地址只需要填写主机名或 IP，不需要协议头')
+    throw new Error(tr("browser.components.ProxyImportModal.helpers.buildDirectImportCandidate.1defaea"))
   }
 
   const portInput = form.port.trim()
   if (!portInput) {
-    throw new Error('请输入代理端口')
+    throw new Error(tr("browser.components.ProxyImportModal.helpers.buildDirectImportCandidate.42880dd"))
   }
   if (!/^\d+$/.test(portInput)) {
-    throw new Error('代理端口必须为数字')
+    throw new Error(tr("browser.components.ProxyImportModal.helpers.buildDirectImportCandidate.951cf39"))
   }
 
   const port = Number(portInput)
   if (port < 1 || port > 65535) {
-    throw new Error('代理端口必须在 1-65535 之间')
+    throw new Error(tr("browser.components.ProxyImportModal.helpers.buildDirectImportCandidate.9058228"))
   }
 
   const username = form.username.trim()
   const password = form.password
   if (password && !username) {
-    throw new Error('填写密码时请同时填写账号')
+    throw new Error(tr("browser.components.ProxyImportModal.helpers.buildDirectImportCandidate.d8c921f"))
   }
 
   const auth = username
@@ -253,11 +254,11 @@ export function buildDirectImportCandidate(form: DirectImportForm): ImportCandid
   try {
     parsedURL = new URL(rawConfig)
   } catch {
-    throw new Error('请输入有效的代理地址')
+    throw new Error(tr("browser.components.ProxyImportModal.helpers.buildDirectImportCandidate.f727921"))
   }
 
   if (!parsedURL.hostname) {
-    throw new Error('请输入有效的代理地址')
+    throw new Error(tr("browser.components.ProxyImportModal.helpers.buildDirectImportCandidate.f727921"))
   }
 
   const normalizedConfig = normalizeDirectProxyConfig(parsedURL.toString()).replace(/\/$/, '')
@@ -274,29 +275,29 @@ export function buildChainImportCandidate(form: ChainImportForm): ImportCandidat
     const protocol = hop.protocol === 'socks5' ? 'socks5' : 'http'
     const server = hop.server.trim()
     if (!server) {
-      throw new Error(`请输入${label}代理地址`)
+      throw new Error(tr("browser.components.ProxyImportModal.helpers.buildChainImportCandidate.ee16748", [label]))
     }
     if (/^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//.test(server)) {
-      throw new Error(`${label}代理地址只需要填写主机名或 IP，不需要协议头`)
+      throw new Error(tr("browser.components.ProxyImportModal.helpers.buildChainImportCandidate.98d8e5a", [label]))
     }
 
     const portInput = hop.port.trim()
     if (!portInput) {
-      throw new Error(`请输入${label}代理端口`)
+      throw new Error(tr("browser.components.ProxyImportModal.helpers.buildChainImportCandidate.2221a30", [label]))
     }
     if (!/^\d+$/.test(portInput)) {
-      throw new Error(`${label}代理端口必须为数字`)
+      throw new Error(tr("browser.components.ProxyImportModal.helpers.buildChainImportCandidate.5b261b4", [label]))
     }
 
     const port = Number(portInput)
     if (!Number.isInteger(port) || port < 1 || port > 65535) {
-      throw new Error(`${label}代理端口必须在 1-65535 之间`)
+      throw new Error(tr("browser.components.ProxyImportModal.helpers.buildChainImportCandidate.4683711", [label]))
     }
 
     const username = hop.username.trim()
     const password = hop.password
     if (password && !username) {
-      throw new Error(`${label}填写密码时请同时填写账号`)
+      throw new Error(tr("browser.components.ProxyImportModal.helpers.buildChainImportCandidate.94a80f7", [label]))
     }
 
     return {
@@ -310,16 +311,16 @@ export function buildChainImportCandidate(form: ChainImportForm): ImportCandidat
 
   const localPortInput = form.localPort.trim()
   if (localPortInput && !/^\d+$/.test(localPortInput)) {
-    throw new Error('本地监听端口必须为数字')
+    throw new Error(tr("browser.components.ProxyImportModal.helpers.buildChainImportCandidate.f444691"))
   }
   const localPort = localPortInput ? Number(localPortInput) : 0
   if (localPortInput && (!Number.isInteger(localPort) || localPort < 1 || localPort > 65535)) {
-    throw new Error('本地监听端口必须在 1-65535 之间')
+    throw new Error(tr("browser.components.ProxyImportModal.helpers.buildChainImportCandidate.50dbe6e"))
   }
 
   const payload: ChainSocks5Config = {
-    first: parseHop('第一层', form.first),
-    second: parseHop('第二层', form.second),
+    first: parseHop(tr("browser.components.ProxyImportModal.helpers.buildChainImportCandidate.059b5ee"), form.first),
+    second: parseHop(tr("browser.components.ProxyImportModal.helpers.buildChainImportCandidate.482605a"), form.second),
     localPort: localPort > 0 ? localPort : undefined,
   }
 
@@ -327,13 +328,13 @@ export function buildChainImportCandidate(form: ChainImportForm): ImportCandidat
   const proxyConfig = `${CHAIN_SOCKS5_PREFIX}${encodedPayload}`
 
   return {
-    proxyName: form.proxyName.trim() || `链式代理-${payload.first.server}-${payload.second.server}`,
+    proxyName: form.proxyName.trim() || tr("browser.components.ProxyImportModal.helpers.buildChainImportCandidate.597a3b0", [payload.first.server, payload.second.server]),
     proxyConfig,
   }
 }
 
 function resolveImportedProxyName(proxy: ClashProxy, index: number, prefix: string): string {
-  const rawName = (proxy.name || '').trim() || `导入代理 ${index + 1}`
+  const rawName = (proxy.name || '').trim() || tr("browser.components.ProxyImportModal.helpers.resolveDirectProxyName.5712901", [index + 1])
   return prefix ? `${prefix}-${rawName}` : rawName
 }
 

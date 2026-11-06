@@ -1,6 +1,6 @@
+import { useLocale } from '../../../shared/i18n'
 import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { TelemetryStrip } from '../../../shared/components/SignalPrimitives'
 import { useLaunchContext } from '../hooks/useLaunchContext'
 import {
   DOC_GROUPS,
@@ -23,13 +23,15 @@ import {
 } from './launchApiDocs/structuredApiDocs'
 
 export function LaunchApiDocsPage() {
+  useLocale()
+
   const [searchParams, setSearchParams] = useSearchParams()
   const requestedDoc = searchParams.get('doc')?.trim() || ''
   const [activeId, setActiveId] = useState<string | null>(() => {
     const doc = requestedDoc ? findDocById(requestedDoc) : null
     return doc?.id || null
   })
-  const { launchBaseUrl, launchServerReady, launchContextLoading, apiAuth } = useLaunchContext()
+  const { launchBaseUrl, apiAuth } = useLaunchContext()
 
   const activeDoc = activeId ? findDocById(activeId) : null
   const { previous, next } = activeDoc && !isStructuredApiEndpointDocId(activeDoc.id)
@@ -79,7 +81,6 @@ export function LaunchApiDocsPage() {
   const renderedContent = activeDoc
     ? renderDocWithLaunchContext(activeDoc.content, launchBaseUrl, apiAuth.header)
     : ''
-  const docCount = DOC_GROUPS.reduce((count, group) => count + group.items.length, 0)
 
   return (
     <LaunchDocsLayout
@@ -96,27 +97,7 @@ export function LaunchApiDocsPage() {
       header={null}
       content={(
         <div className="apple-page space-y-6">
-          <TelemetryStrip items={[
-            {
-              label: '服务端点',
-              value: <code className="font-mono text-xs">{launchBaseUrl}</code>,
-              detail: launchContextLoading ? '正在读取服务状态' : launchServerReady ? 'Launch API 已就绪' : 'Launch API 未就绪',
-              tone: launchContextLoading ? 'neutral' : launchServerReady ? 'success' : 'warning',
-            },
-            {
-              label: '认证',
-              value: apiAuth.enabled ? '已启用' : '未启用',
-              detail: apiAuth.enabled ? apiAuth.header : '请求无需 API Key',
-              tone: apiAuth.enabled ? 'accent' : 'neutral',
-            },
-            {
-              label: '当前文档',
-              value: activeDoc?.label || '文档中心',
-              detail: activeDoc?.id || 'technical-docs-center',
-              tone: activeDoc ? 'accent' : 'neutral',
-            },
-            { label: '文档节点', value: docCount, detail: `${DOC_GROUPS.length} 个目录分组`, tone: 'neutral' },
-          ]} />
+
 
           {activeDoc ? (
             activeDoc.id === 'tutorial-flow'

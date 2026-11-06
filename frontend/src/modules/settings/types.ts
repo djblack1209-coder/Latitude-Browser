@@ -1,3 +1,4 @@
+import { tr, localized } from '../../shared/i18n'
 // Settings 模块类型定义
 
 export interface AppSettings {
@@ -7,7 +8,7 @@ export interface AppSettings {
   appDescription: string
 
   // 外观设置
-  theme: 'light' | 'dark' | 'system'
+  theme: 'dark' | 'dark' | 'system'
   primaryColor: string
   language: string
 
@@ -27,12 +28,12 @@ export interface AppSettings {
   gcPercent: number
 }
 
-export const defaultSettings: AppSettings = {
+export const defaultSettings: AppSettings = localized(() => ({
   appName: 'Latitude Browser',
-  appDescription: '面向多账号隔离、代理绑定和本地环境管理的隐私浏览器工作台',
-  theme: 'light',
-  primaryColor: '#3B82F6',
-  language: 'zh-CN',
+  appDescription: tr("config.projectBase.config.description.6a15bf5"),
+  theme: 'dark',
+  primaryColor: 'var(--accent)',
+  language: 'system',
   enableNotifications: true,
   enableAutoSave: true,
   autoSaveInterval: 30,
@@ -42,4 +43,4 @@ export const defaultSettings: AppSettings = {
   logLevel: 'info',
   maxMemoryMB: 1024,
   gcPercent: 100,
-}
+}))

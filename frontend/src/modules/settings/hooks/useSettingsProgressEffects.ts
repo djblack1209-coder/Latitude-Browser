@@ -1,3 +1,5 @@
+import { getLocale } from '../../../shared/i18n'
+import { tr } from '../../../shared/i18n'
 import { useEffect } from 'react'
 import type { Dispatch, RefObject, SetStateAction } from 'react'
 
@@ -13,7 +15,7 @@ type SettingsActionLoading = 'none' | 'init' | 'export' | 'import-reset' | 'impo
 interface UseSettingsProgressEffectsOptions {
   actionLoading: SettingsActionLoading
   exportLogs: BackupExportLogItem[]
-  exportLogsRef: RefObject<HTMLDivElement>
+  exportLogsRef: RefObject<HTMLDivElement | null>
   importProgress: BackupExportProgress | null
   setAutomationProgress: Dispatch<SetStateAction<AutomationRuntimeProgress | null>>
   setAutomationState: Dispatch<SetStateAction<AutomationState>>
@@ -36,7 +38,7 @@ function normalizeBackupProgress(payload: BackupExportProgress | null | undefine
   const entryTotal = Number.isFinite(payload.entryTotal) ? Math.max(0, Math.round(payload.entryTotal || 0)) : 0
   const timestamp = typeof payload.timestamp === 'string' && payload.timestamp.trim()
     ? payload.timestamp.trim()
-    : new Date().toLocaleTimeString('zh-CN', { hour12: false })
+    : new Date().toLocaleTimeString(getLocale(), { hour12: false })
 
   return {
     phase,
@@ -57,7 +59,7 @@ function normalizeAutomationProgress(payload: AutomationRuntimeProgress | null |
 
   const phase = typeof payload.phase === 'string' ? payload.phase : 'checking'
   const progress = Number.isFinite(payload.progress) ? Math.max(0, Math.min(100, Math.round(payload.progress))) : 0
-  const message = typeof payload.message === 'string' && payload.message.trim() ? payload.message.trim() : '正在准备自动化运行时...'
+  const message = typeof payload.message === 'string' && payload.message.trim() ? payload.message.trim() : tr("settings.SettingsPage.message.3c30c96")
   const component = typeof payload.component === 'string' ? payload.component.trim() : ''
 
   return {
@@ -84,7 +86,7 @@ export function useSettingsProgressEffects({
 
   useEffect(() => {
     const onExportProgress = (payload: BackupExportProgress) => {
-      const next = normalizeBackupProgress(payload, 'writing', '正在导出...')
+      const next = normalizeBackupProgress(payload, 'writing', tr("settings.hooks.useSettingsProgressEffects.useSettingsProgressEffects.3d67f26"))
       if (!next) {
         return
       }
@@ -119,7 +121,7 @@ export function useSettingsProgressEffects({
 
   useEffect(() => {
     const onImportProgress = (payload: BackupExportProgress) => {
-      const next = normalizeBackupProgress(payload, 'importing', '正在加载配置...')
+      const next = normalizeBackupProgress(payload, 'importing', tr("settings.hooks.useSettingsProgressEffects.useSettingsProgressEffects.85c307d"))
       if (!next) {
         return
       }
@@ -171,7 +173,7 @@ export function useSettingsProgressEffects({
       setImportState({
         inProgress: true,
         progress: importProgress?.progress ?? 0,
-        message: importProgress?.message || '正在加载配置...',
+        message: importProgress?.message || tr("settings.hooks.useSettingsProgressEffects.useSettingsProgressEffects.85c307d"),
       })
       return
     }

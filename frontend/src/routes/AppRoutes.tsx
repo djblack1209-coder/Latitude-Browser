@@ -1,17 +1,11 @@
+import { useLocale } from '../shared/i18n'
+import { useEffect } from 'react'
 import { Navigate, Route, Routes } from "react-router-dom";
 import { lazyNamed } from "./lazyNamed";
 
 const SettingsPage = lazyNamed(
   () => import("../modules/settings/SettingsPage"),
   "SettingsPage",
-);
-const ProfilePage = lazyNamed(
-  () => import("../modules/profile/ProfilePage"),
-  "ProfilePage",
-);
-const ChartsPage = lazyNamed(
-  () => import("../modules/charts/ChartsPage"),
-  "ChartsPage",
 );
 const BrowserListPage = lazyNamed(
   () => import("../modules/browser/pages/BrowserListPage"),
@@ -71,12 +65,15 @@ const AutomationScriptDetailPage = lazyNamed(
 );
 
 export function AppRoutes() {
+  useLocale()
+
+  useEffect(() => { window.__LATITUDE_READY__ = true; window.dispatchEvent(new Event('latitude:ready')) }, [])
   return (
     <Routes>
       <Route path="/" element={<Navigate to="/browser/list" replace />} />
-      <Route path="/charts" element={<ChartsPage />} />
+      <Route path="/charts" element={<Navigate to="/browser/list" replace />} />
       <Route path="/settings" element={<SettingsPage />} />
-      <Route path="/profile" element={<ProfilePage />} />
+      <Route path="/profile" element={<Navigate to="/settings?section=about" replace />} />
       <Route path="/browser/list" element={<BrowserListPage />} />
       <Route path="/browser/auto-config" element={<AutoConfigPage />} />
       <Route path="/browser/detail/:id" element={<BrowserDetailPage />} />

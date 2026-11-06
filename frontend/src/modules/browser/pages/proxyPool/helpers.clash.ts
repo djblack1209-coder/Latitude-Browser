@@ -1,4 +1,5 @@
-import yaml from 'js-yaml'
+import { tr } from '../../../../shared/i18n'
+import * as yaml from 'js-yaml'
 import type { BrowserProxy } from '../../types'
 import type { ClashProxy, ImportCandidate, ProxyDisplayInfo } from './helpers.types'
 import { BUILTIN_PROXIES } from './helpers.types'
@@ -22,7 +23,7 @@ export function parseProxyInfo(proxyConfig: string): { type: string; server: str
   if (chain) {
     const firstHop = `${chain.first.server}:${chain.first.port}`
     const secondHop = `${chain.second.server}:${chain.second.port}`
-    return { type: '链式', server: `${firstHop} → ${secondHop}`, port: chain.second.port }
+    return { type: tr("browser.pages.proxyPool.helpers.clash.type.efd9e49"), server: `${firstHop} → ${secondHop}`, port: chain.second.port }
   }
 
   const urlMatch = cfg.match(/^([a-zA-Z0-9+\-]+):\/\//)
@@ -130,7 +131,7 @@ function normalizeLooseClashImportText(raw: string): string {
 export function parseClashImportText(raw: string): ClashProxy[] {
   const input = raw.trim()
   if (!input) {
-    throw new Error('请输入 YAML 内容')
+    throw new Error(tr("browser.components.ProxyImportModal.helpers.parseClashImportText.b136d0c"))
   }
 
   const attempts = [input]
@@ -153,9 +154,9 @@ export function parseClashImportText(raw: string): ClashProxy[] {
   }
 
   if (lastError && typeof lastError === 'object' && lastError !== null && 'message' in lastError) {
-    throw new Error(String((lastError as { message?: string }).message || '解析失败'))
+    throw new Error(String((lastError as { message?: string }).message || tr("browser.components.ProxyImportModal.helpers.parseClashImportText.0a95106")))
   }
-  throw new Error('无效的 YAML 格式，需要包含 proxies 数组')
+  throw new Error(tr("browser.components.ProxyImportModal.helpers.parseClashImportText.ab6dfcd"))
 }
 
 export function buildImportCandidatesFromClash(parsedProxies: ClashProxy[], prefix: string): ImportCandidate[] {
@@ -191,6 +192,6 @@ export function nextProxyID(): string {
 }
 
 export function resolveImportedProxyName(proxy: ClashProxy, index: number, prefix: string): string {
-  const rawName = (proxy.name || '').trim() || `导入代理 ${index + 1}`
+  const rawName = (proxy.name || '').trim() || tr("browser.components.ProxyImportModal.helpers.resolveDirectProxyName.5712901", [index + 1])
   return prefix ? `${prefix}-${rawName}` : rawName
 }

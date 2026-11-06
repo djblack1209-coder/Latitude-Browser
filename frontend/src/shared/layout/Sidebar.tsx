@@ -1,248 +1,45 @@
 import { useEffect, useState } from 'react'
-import { Link, useLocation } from 'react-router-dom'
-import {
-  Activity,
-  Blocks,
-  BookOpenText,
-  Bookmark,
-  Bot,
-  ChevronLeft,
-  ChevronRight,
-  Clock3,
-  Cpu,
-  FileText,
-  Fingerprint,
-  Globe,
-  LayoutDashboard,
-  MoreHorizontal,
-  Network,
-  Radar,
-  ScrollText,
-  Settings,
-  Shield,
-  AlertTriangle,
-  Wand2,
-  type LucideIcon,
-} from 'lucide-react'
-import clsx from 'clsx'
+import { NavLink, useLocation } from 'react-router-dom'
+import { LayoutDashboard, Globe, Bot, Blocks, ScrollText, BookOpenText, Settings, PanelLeftClose, PanelLeftOpen, ArrowUpRight } from 'lucide-react'
 import { useLayoutStore } from '../../store/layoutStore'
-import { projectConfig, navigationConfig, type NavItem } from '../../config'
-import logoImage from '../../resources/images/logo.png'
+import { tr, useLocale, type MessageKey } from '../i18n'
+import { LatitudeMark } from './LatitudeMark'
 
-const iconMap: Record<string, LucideIcon> = {
-  Activity,
-  Blocks,
-  BookOpenText,
-  Bookmark,
-  Bot,
-  Clock3,
-  Cpu,
-  FileText,
-  Fingerprint,
-  Globe,
-  LayoutDashboard,
-  Network,
-  Radar,
-  ScrollText,
-  Settings,
-  Shield,
-  AlertTriangle,
-  Wand2,
-}
-
-function getIcon(iconName: string): LucideIcon {
-  return iconMap[iconName] || LayoutDashboard
-}
-
-function getRouteTarget(path: string) {
-  const [pathname, search = ''] = path.split('?')
-  return { pathname, search: search ? `?${search}` : '' }
-}
-
-const allNavItems = navigationConfig.flatMap((section) => section.items)
-const findNavItem = (path: string, fallbackName: string): NavItem => {
-  return allNavItems.find((item) => item.path === path) || {
-    name: fallbackName,
-    path,
-    icon: 'LayoutDashboard',
-  }
-}
-
-// Keep the shell quiet: the four destinations users visit most often stay visible,
-// while specialist tools remain one deliberate step away under “更多”.
-const primaryItems: NavItem[] = [
-  { ...findNavItem('/browser/list', '实例'), name: '实例' },
-  { ...findNavItem('/browser/proxy-pool', '代理池') },
-  { ...findNavItem('/browser/automation', '自动化'), name: '自动化' },
+const items: { key: MessageKey; path: string; icon: typeof Globe }[] = [
+  { key: 'nav.instances', path: '/browser/list', icon: LayoutDashboard },
+  { key: 'nav.proxies', path: '/browser/proxy-pool', icon: Globe },
+  { key: 'nav.automation', path: '/browser/automation', icon: Bot },
+  { key: 'nav.assets', path: '/browser/cores', icon: Blocks },
+  { key: 'nav.logs', path: '/browser/logs', icon: ScrollText },
+  { key: 'nav.docs', path: '/system/docs', icon: BookOpenText },
+  { key: 'nav.settings', path: '/settings', icon: Settings },
 ]
 
-const setupItem = { ...findNavItem('/browser/auto-config', '自动配置') }
-const settingsItem = { ...findNavItem('/settings', '设置') }
-const primaryPaths = new Set(primaryItems.map((item) => item.path))
-const secondarySections = navigationConfig.map(section => ({
-  ...section,
-  items: section.items.filter(item => !primaryPaths.has(item.path) && item.path !== setupItem.path && item.path !== settingsItem.path),
-})).filter(section => section.items.length)
-const secondaryItems = secondarySections.flatMap(section => section.items)
-
-function isItemActive(location: ReturnType<typeof useLocation>, item: NavItem) {
-  const { pathname: itemPath, search: itemSearch } = getRouteTarget(item.path)
-  const isPathActive = location.pathname === itemPath || (itemPath !== '/' && location.pathname.startsWith(`${itemPath}/`))
-  if (!isPathActive) return false
-  const actual = new URLSearchParams(location.search)
-  const expected = new URLSearchParams(itemSearch)
-  // The footer link represents the general settings surface. Keep it active
-  // while browsing the general/runtime/storage sections, but let the
-  // specialist connector and Tor entries own their routes.
-  if (itemPath === '/settings' && !itemSearch) {
-    const section = actual.get('section')
-    return section === null || section === 'general' || section === 'runtime' || section === 'storage'
-  }
-  const viewKeys = ['view', 'sort', 'status', 'section']
-  return viewKeys.every(key => actual.get(key) === expected.get(key))
-}
-
-function SidebarItem({ item, active, collapsed, emphasized, code }: { item: NavItem; active: boolean; collapsed: boolean; emphasized?: boolean; code?: string }) {
-  const Icon = getIcon(item.icon)
-
-  return (
-    <Link
-      to={item.path}
-      title={collapsed ? item.name : item.description || item.name}
-      className={clsx(
-        'signal-nav-item group relative flex h-9 items-center rounded-md text-[13px] transition-[background-color,color] duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)]',
-        collapsed ? 'justify-center px-2' : 'gap-3 px-3',
-        active
-          ? 'signal-nav-active bg-[var(--color-accent-muted)] font-medium text-[var(--color-text-primary)]'
-          : emphasized
-            ? 'bg-[var(--color-bg-muted)]/60 text-[var(--color-text-primary)] hover:bg-[var(--color-accent-muted)]'
-            : 'text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-muted)] hover:text-[var(--color-text-primary)]',
-      )}
-      aria-current={active ? 'page' : undefined}
-    >
-      <Icon
-        className={clsx(
-          'h-4 w-4 shrink-0',
-          active || emphasized ? 'text-[var(--color-accent)]' : 'text-[var(--color-text-muted)] group-hover:text-[var(--color-text-secondary)]',
-        )}
-        strokeWidth={active || emphasized ? 2 : 1.7}
-        aria-hidden="true"
-      />
-      {!collapsed && <><span className="min-w-0 flex-1 truncate">{item.name}</span>{code && <span className="signal-nav-code" aria-hidden="true">{code}</span>}</>}
-    </Link>
-  )
-}
-
 export function Sidebar() {
+  useLocale()
   const location = useLocation()
   const { sidebarCollapsed, toggleSidebar } = useLayoutStore()
-  const [compactViewport, setCompactViewport] = useState(() => window.matchMedia('(max-width: 700px)').matches)
-  const collapsed = sidebarCollapsed || compactViewport
+  const [compact, setCompact] = useState(() => matchMedia('(max-width: 1100px)').matches)
   useEffect(() => {
-    const media = window.matchMedia('(max-width: 700px)')
-    const onChange = () => setCompactViewport(media.matches)
-    media.addEventListener('change', onChange)
-    return () => media.removeEventListener('change', onChange)
+    const media = matchMedia('(max-width: 1100px)')
+    const change = () => setCompact(media.matches)
+    media.addEventListener('change', change)
+    return () => media.removeEventListener('change', change)
   }, [])
-  const hasActiveSecondary = secondaryItems.some((item) => isItemActive(location, item))
-  const [moreOpen, setMoreOpen] = useState(hasActiveSecondary)
-
-  useEffect(() => {
-    if (hasActiveSecondary) setMoreOpen(true)
-  }, [hasActiveSecondary])
-
-  return (
-    <aside
-      className={clsx(
-        'signal-sidebar flex h-screen shrink-0 flex-col border-r border-[var(--color-border-default)]',
-        collapsed ? 'w-14 sm:w-16' : 'w-[232px]',
-      )}
-    >
-      <div className={clsx('signal-brand flex h-14 shrink-0 items-center', collapsed ? 'justify-center px-2' : 'px-4')}>
-        <Link
-          to="/browser/list"
-          className={clsx(
-            'group flex min-w-0 items-center rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)]',
-            collapsed ? 'justify-center' : 'gap-2.5',
-          )}
-          aria-label="返回实例总览"
-        >
-          <span className="relative flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-md border border-[var(--color-border-strong)] bg-[var(--color-bg-elevated)]">
-            <img
-              src={logoImage}
-              alt="Latitude Browser"
-              className="h-full w-full object-cover brightness-125"
-              onError={(event) => {
-                event.currentTarget.style.display = 'none'
-                event.currentTarget.parentElement?.classList.add('fallback-logo')
-              }}
-            />
-            <span className="fallback-content hidden text-xs font-semibold text-[var(--color-accent)]">
-              {projectConfig.shortName.charAt(0)}
-            </span>
-          </span>
-          {!collapsed && (
-            <span className="min-w-0 truncate text-[13px] font-semibold tracking-[-0.01em] text-[var(--color-text-primary)]">
-              {projectConfig.name}
-            </span>
-          )}
-        </Link>
-      </div>
-
-      <nav className="min-h-0 flex-1 overflow-y-auto px-2 py-3" aria-label="主导航">
-        <div className="space-y-1">
-          <SidebarItem item={setupItem} active={isItemActive(location, setupItem)} collapsed={collapsed} emphasized code="00" />
-          <div className="my-3 h-px bg-[var(--color-border-muted)]" aria-hidden="true" />
-          {primaryItems.map((item, index) => (
-            <SidebarItem key={item.path} item={item} active={isItemActive(location, item)} collapsed={collapsed} code={`0${index + 1}`} />
-          ))}
-        </div>
-
-        <div className="mt-4">
-          <button
-            type="button"
-            onClick={() => setMoreOpen((open) => !open)}
-            className={clsx(
-              'flex h-8 w-full items-center rounded-md text-[11px] font-medium uppercase tracking-[0.12em] text-[var(--color-text-muted)] transition-[background-color,color] duration-150 hover:bg-[var(--color-bg-muted)] hover:text-[var(--color-text-secondary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)]',
-              collapsed ? 'justify-center px-2' : 'gap-3 px-3',
-            )}
-            aria-expanded={moreOpen}
-            aria-controls="sidebar-secondary-nav"
-            aria-label={moreOpen ? '收起更多入口' : '展开更多入口'}
-            title={moreOpen ? '收起更多入口' : '展开更多入口'}
-          >
-            <MoreHorizontal className="h-4 w-4 shrink-0" aria-hidden="true" />
-            {!collapsed && <span>更多</span>}
-          </button>
-          {moreOpen && (
-            <div id="sidebar-secondary-nav" className="mt-1 space-y-3">
-              {secondarySections.map((section, index) => (
-                <div key={section.title} className="space-y-0.5">
-                  {!collapsed && <p className="signal-nav-section"><span aria-hidden="true">{String(index + 1).padStart(2, '0')}</span>{section.title}</p>}
-                  {section.items.map(item => <SidebarItem key={item.path} item={item} active={isItemActive(location, item)} collapsed={collapsed} />)}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </nav>
-
-      <div className="shrink-0 border-t border-[var(--color-border-muted)] px-2.5 py-2">
-        <SidebarItem item={settingsItem} active={isItemActive(location, settingsItem)} collapsed={collapsed} />
-        {!compactViewport && <button
-          type="button"
-          onClick={toggleSidebar}
-          className={clsx(
-            'mt-1 flex h-8 items-center rounded-md text-[var(--color-text-muted)] transition-[background-color,color] duration-150 hover:bg-[var(--color-bg-muted)] hover:text-[var(--color-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)]',
-            collapsed ? 'w-full justify-center' : 'w-full gap-3 px-3',
-          )}
-          title={collapsed ? '展开侧边栏' : '收起侧边栏'}
-          aria-label={collapsed ? '展开侧边栏' : '收起侧边栏'}
-        >
-          {collapsed ? <ChevronRight className="h-4 w-4" /> : <><ChevronLeft className="h-4 w-4" /><span className="text-xs">收起</span></>}
-        </button>}
-        {!collapsed && <div className="signal-sidebar-footer"><span aria-hidden="true" />LOCAL WORKSPACE</div>}
-      </div>
-    </aside>
-  )
+  const collapsed = compact || sidebarCollapsed
+  return <aside className="terminal-sidebar" data-collapsed={collapsed}>
+    <NavLink to="/browser/list" className="latitude-brand" aria-label="Latitude Browser">
+      <LatitudeMark />{!collapsed && <span>Latitude<span className="latitude-brand-sub">Browser</span></span>}
+    </NavLink>
+    {!collapsed && <div className="latitude-nav-caption">{tr('shell.workspace')}</div>}
+    <nav aria-label={tr('shell.workspace')}>
+      {items.map(({ key, path, icon: Icon }, index) => <NavLink key={key} to={path} title={tr(key)} aria-label={collapsed ? tr(key) : undefined} className={({ isActive }) => `terminal-nav-item ${index === 5 ? 'terminal-nav-bottom' : ''} ${isActive || (key === 'nav.assets' && ['/browser/extensions','/browser/bookmarks','/browser/tags'].includes(location.pathname)) ? 'is-active' : ''}`}>
+        <Icon size={18} strokeWidth={1.5} aria-hidden="true" />{!collapsed && <><span>{tr(key)}</span><span className="latitude-nav-indicator" aria-hidden="true" /></>}
+      </NavLink>)}
+    </nav>
+    {!collapsed && <NavLink to="/settings?section=storage" className="latitude-local-note"><span className="latitude-local-dot" /><span>{tr('shell.localWorkspace')}</span><ArrowUpRight size={13} aria-hidden="true" /></NavLink>}
+    <button className="terminal-sidebar-toggle" type="button" onClick={toggleSidebar} disabled={compact} title={tr(collapsed ? 'nav.expand' : 'nav.collapse')} aria-label={tr(collapsed ? 'nav.expand' : 'nav.collapse')}>
+      {collapsed ? <PanelLeftOpen size={16} /> : <><PanelLeftClose size={16} /><span>{tr('nav.collapse')}</span></>}
+    </button>
+  </aside>
 }

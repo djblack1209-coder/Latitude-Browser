@@ -1,3 +1,4 @@
+import { tr, localized } from '../../../shared/i18n'
 export type AutomationScriptType = "playwright-cdp" | "launch-api";
 
 export type AutomationScriptStatus = "draft" | "ready" | "disabled";
@@ -117,27 +118,27 @@ export const AUTOMATION_SCRIPT_TYPE_OPTIONS: Array<{
   value: AutomationScriptType;
   label: string;
 }> = [
-  { value: "playwright-cdp", label: "Playwright CDP" },
-  { value: "launch-api", label: "Launch API" },
+  { value: "playwright-cdp", label: tr("ui.modules.browser.automationScripts.definitions.label.ceb770f") },
+  { value: "launch-api", label: tr("ui.modules.browser.automationScripts.definitions.label.6c42827") },
 ];
 
 export const AUTOMATION_SCRIPT_STATUS_OPTIONS: Array<{
   value: AutomationScriptStatus;
   label: string;
-}> = [
-  { value: "draft", label: "草稿" },
-  { value: "ready", label: "可用" },
-  { value: "disabled", label: "停用" },
-];
+}> = localized(() => ([
+  { value: "draft", label: tr("browser.automationScripts.definitions.label.0f43681") },
+  { value: "ready", label: tr("browser.automationScripts.definitions.label.e91365c") },
+  { value: "disabled", label: tr("browser.automationScripts.definitions.label.d989e55") },
+]));
 
 export const AUTOMATION_SCRIPT_TARGET_MODE_OPTIONS: Array<{
   value: AutomationScriptTargetMode;
   label: string;
-}> = [
-  { value: "manual", label: "传入实例" },
-  { value: "existing", label: "传入实例" },
-  { value: "create", label: "按模板新建实例" },
-  { value: "rotate", label: "按条件轮询实例" },
-];
+}> = localized(() => ([
+  { value: "manual", label: tr("browser.automationScripts.definitions.label.6a30362") },
+  { value: "existing", label: tr("browser.automationScripts.definitions.label.6a30362") },
+  { value: "create", label: tr("browser.automationScripts.definitions.label.30a1e27") },
+  { value: "rotate", label: tr("browser.automationScripts.definitions.label.f86b018") },
+]));
 
 export const DUAL_INSTANCE_RUNTIME_SCRIPT_ID = "dual-instance-runtime-switch";

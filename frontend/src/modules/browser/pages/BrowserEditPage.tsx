@@ -1,3 +1,5 @@
+import { translateMessage } from '../../../shared/i18n'
+import { tr, useLocale, localized } from '../../../shared/i18n'
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { ChevronDown, ChevronUp, FolderOpen, HelpCircle, Layers, Network, RadioTower, ShieldCheck } from 'lucide-react'
@@ -15,11 +17,11 @@ import { fetchBrowserPlatformCapabilities, type BrowserPlatformCapabilities } fr
 
 const fallbackLowLaunchArgs = ['--disable-sync', '--no-first-run']
 const directProxyID = '__direct__'
-const RESTORE_LAST_SESSION_OPTIONS = [
-  { value: '', label: '跟随内核默认' },
-  { value: 'enabled', label: '开启：恢复历史标签' },
-  { value: 'disabled', label: '关闭：不恢复历史标签' },
-]
+const RESTORE_LAST_SESSION_OPTIONS = localized(() => ([
+  { value: '', label: tr("browser.pages.BrowserEditPage.label.783deb6") },
+  { value: 'enabled', label: tr("browser.pages.BrowserEditPage.label.8cf2e69") },
+  { value: 'disabled', label: tr("browser.pages.BrowserEditPage.label.c58f7b0") },
+]))
 type ProxySourceMode = 'pool' | 'local'
 type BrowserNetworkMode = NonNullable<BrowserProfileInput['networkMode']>
 type BrowserProfileEditForm = BrowserProfileInput & { networkMode: BrowserNetworkMode; lastLaunchArgs?: string[] }
@@ -107,10 +109,12 @@ function matchStatus(expected: unknown, actual: unknown, mode: FingerprintMatchM
 }
 
 function FingerprintCheckRow({ label, expected, actual, mode }: { label: string; expected?: unknown; actual: unknown; mode?: FingerprintMatchMode }) {
+  useLocale()
+
   const status = matchStatus(expected, actual, mode)
-  const statusText = status === 'match' ? '一致' : status === 'version_compatible' ? '口径匹配' : status === 'mismatch' ? '不一致' : status === 'not_configured' ? '未设期望' : '观察值'
+  const statusText = status === 'match' ? tr("browser.pages.BrowserEditPage.FingerprintCheckRow.5ab754e") : status === 'version_compatible' ? tr("browser.pages.BrowserEditPage.FingerprintCheckRow.cafdc76") : status === 'mismatch' ? tr("browser.pages.BrowserEditPage.FingerprintCheckRow.ea88dc5") : status === 'not_configured' ? tr("browser.pages.BrowserEditPage.FingerprintCheckRow.afab75a") : tr("browser.pages.BrowserEditPage.FingerprintCheckRow.362f77b")
   const statusClass = status === 'match' || status === 'version_compatible'
-    ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+    ? 'bg-[var(--color-success)]/10 text-[var(--color-success)] border-[var(--color-success)]/30'
     : status === 'mismatch'
       ? 'bg-amber-50 text-amber-700 border-amber-200'
       : 'bg-slate-50 text-slate-600 border-slate-200'
@@ -125,35 +129,39 @@ function FingerprintCheckRow({ label, expected, actual, mode }: { label: string;
 }
 
 function FingerprintDisplayRow({ label, actual }: { label: string; actual: unknown }) {
+  useLocale()
+
   return <FingerprintCheckRow label={label} actual={actual} mode="display" />
 }
 
 
-const matrixStatusLabels: Record<string, string> = {
-  kept: '保留',
-  injected: '补齐',
-  inferred: '补齐',
-  converted: '转换',
-  removed: '清理',
-  disabled: '关闭',
-  overridden: '已覆盖',
-  not_effective: '实测无效',
-  pending: '待启动',
-  kept_legacy: '旧版保留',
-  kept_unconfirmed: '保守保留',
-  kept_unknown: '原样保留',
-}
+const matrixStatusLabels: Record<string, string> = localized(() => ({
+  kept: tr("browser.api.profiles.action.d046ac7"),
+  injected: tr("browser.pages.BrowserEditPage.injected.c7fc56b"),
+  inferred: tr("browser.pages.BrowserEditPage.injected.c7fc56b"),
+  converted: tr("browser.pages.BrowserEditPage.converted.8b7977d"),
+  removed: tr("browser.pages.BrowserEditPage.removed.907c394"),
+  disabled: tr("ui.components.Modal.aria_label.6c14bd7"),
+  overridden: tr("browser.pages.BrowserEditPage.overridden.8c3a268"),
+  not_effective: tr("browser.pages.BrowserEditPage.not_effective.01516e9"),
+  pending: tr("browser.pages.BrowserEditPage.pending.57a71e9"),
+  kept_legacy: tr("browser.pages.BrowserEditPage.kept_legacy.02caa5c"),
+  kept_unconfirmed: tr("browser.pages.BrowserEditPage.kept_unconfirmed.115395e"),
+  kept_unknown: tr("browser.pages.BrowserEditPage.kept_unknown.419ee42"),
+}))
 
 function matrixStatusClass(status: string): string {
   if (status === 'removed' || status === 'not_effective') return 'bg-red-50 text-red-700 border-red-200'
   if (status === 'disabled') return 'bg-slate-50 text-slate-600 border-slate-200'
   if (status === 'overridden') return 'bg-slate-50 text-slate-600 border-slate-200'
-  if (status === 'converted' || status === 'injected' || status === 'inferred') return 'bg-blue-50 text-blue-700 border-blue-200'
+  if (status === 'converted' || status === 'injected' || status === 'inferred') return 'bg-[var(--color-accent-muted)] text-[var(--color-accent)] border-[var(--color-accent-border)]'
   if (status === 'kept_unconfirmed' || status === 'kept_unknown' || status === 'pending') return 'bg-amber-50 text-amber-700 border-amber-200'
-  return 'bg-emerald-50 text-emerald-700 border-emerald-200'
+  return 'bg-[var(--color-success)]/10 text-[var(--color-success)] border-[var(--color-success)]/30'
 }
 
 function FingerprintMatrixRow({ row }: { row: BrowserFingerprintCapabilityRow }) {
+  useLocale()
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-[120px_88px_minmax(0,1fr)] gap-2 px-3 py-2 border-b border-[var(--color-border)] last:border-b-0 text-sm">
       <div className="font-medium text-[var(--color-text-primary)]">{row.capability}</div>
@@ -166,9 +174,9 @@ function FingerprintMatrixRow({ row }: { row: BrowserFingerprintCapabilityRow })
         <div className="text-xs text-[var(--color-text-secondary)]">{row.action || '-'}</div>
         {(row.inputArg || row.runtimeArg) && (
           <div className="font-mono text-xs break-all text-[var(--color-text-muted)]">
-            {row.inputArg && <span>配置：{row.inputArg}</span>}
+            {row.inputArg && <span>{tr("browser.pages.BrowserEditPage.text.8cfa741")}{row.inputArg}</span>}
             {row.inputArg && row.runtimeArg && row.inputArg !== row.runtimeArg && <span className="mx-1">→</span>}
-            {row.runtimeArg && row.inputArg !== row.runtimeArg && <span>运行：{row.runtimeArg}</span>}
+            {row.runtimeArg && row.inputArg !== row.runtimeArg && <span>{tr("browser.pages.BrowserEditPage.text.c070e2e")}{row.runtimeArg}</span>}
           </div>
         )}
         {row.note && <div className="text-xs text-[var(--color-text-muted)]">{row.note}</div>}
@@ -178,22 +186,21 @@ function FingerprintMatrixRow({ row }: { row: BrowserFingerprintCapabilityRow })
 }
 
 function FingerprintMatrixReport({ report }: { report: BrowserFingerprintCapabilityReport | null }) {
+  useLocale()
+
   if (!report) {
     return (
-      <div className="mt-4 rounded-lg border border-[var(--color-border)] px-3 py-2 text-sm text-[var(--color-text-muted)]">
-        正在读取指纹适配矩阵
-      </div>
+      <div className="mt-4 rounded-lg border border-[var(--color-border)] px-3 py-2 text-sm text-[var(--color-text-muted)]">{tr("browser.pages.BrowserEditPage.text.23f30c4")}</div>
     )
   }
-  const versionText = report.chromeVersion ? `Chrome ${report.chromeVersion}` : '内核版本未知'
+  const versionText = report.chromeVersion ? `Chrome ${report.chromeVersion}` : tr("browser.pages.BrowserEditPage.FingerprintMatrixReport.f0a805d")
   const rows = report.rows || []
   return (
     <div className="mt-4 rounded-lg border border-[var(--color-border)] overflow-hidden">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-1 px-3 py-2 border-b border-[var(--color-border)] bg-[var(--color-bg-hover)]">
-        <div className="text-sm font-medium text-[var(--color-text-primary)]">版本适配矩阵</div>
+        <div className="text-sm font-medium text-[var(--color-text-primary)]">{tr("browser.pages.BrowserEditPage.text.626994d")}</div>
         <div className="text-xs text-[var(--color-text-muted)]">
-          {versionText} · 配置 {report.rawArgs?.length || 0} 项 · 运行 {report.launchArgs?.length || 0} 项
-        </div>
+          {versionText}{tr("browser.pages.BrowserEditPage.text.f779c1e")}{report.rawArgs?.length || 0}{tr("browser.pages.BrowserEditPage.text.44367fd")}{report.launchArgs?.length || 0}{tr("browser.components.BrowserProfileCopyForm.text.12de8e1")}</div>
       </div>
       {report.warnings?.length > 0 && (
         <div className="px-3 py-2 border-b border-[var(--color-border)] bg-amber-50 text-xs text-amber-700 space-y-1">
@@ -205,7 +212,7 @@ function FingerprintMatrixReport({ report }: { report: BrowserFingerprintCapabil
           {rows.map((row, index) => <FingerprintMatrixRow key={`${row.capability}-${row.inputArg}-${index}`} row={row} />)}
         </div>
       ) : (
-        <div className="px-3 py-2 text-sm text-[var(--color-text-muted)]">没有需要转换的指纹参数</div>
+        <div className="px-3 py-2 text-sm text-[var(--color-text-muted)]">{tr("browser.pages.BrowserEditPage.text.5020125")}</div>
       )}
     </div>
   )
@@ -239,6 +246,8 @@ function resolvePoolProxySelection(
 }
 
 export function BrowserEditPage() {
+  useLocale()
+
   const { id } = useParams()
   const navigate = useNavigate()
   const isCreate = id === 'new'
@@ -405,7 +414,7 @@ export function BrowserEditPage() {
   const handleNetworkModeChange = (mode: BrowserNetworkMode) => {
     if (mode === formData.networkMode) return
     if (profileRunning) {
-      toast.warning('实例运行中不能切换网络模式，请先停止实例')
+      toast.warning(tr("browser.pages.BrowserEditPage.BrowserEditPage.4a567d6"))
       return
     }
     if (mode === 'tor' && hasConfiguredProxy) {
@@ -434,14 +443,14 @@ export function BrowserEditPage() {
   }
 
   const handleSave = async () => {
-    if (!platformCapabilities) { toast.error('平台能力尚未就绪，请重新打开页面后重试'); return }
+    if (!platformCapabilities) { toast.error(tr("browser.pages.BrowserEditPage.BrowserEditPage.42a569e")); return }
     if (!platformCapabilities.memoryHardLimit && (formData.memoryLimitMb || 0) > 0) {
-      toast.error('当前系统不支持实例内存硬限制，请先显式设为不限制'); return
+      toast.error(tr("browser.pages.BrowserEditPage.BrowserEditPage.4c970c3")); return
     }
     const resolvedProxyId = isTorMode ? '' : proxyMode === 'pool' ? (formData.proxyId || '').trim() : ''
     const resolvedProxyConfig = isTorMode ? '' : proxyMode === 'local' ? (formData.proxyConfig || '').trim() : ''
     if (!isTorMode && proxyMode === 'local' && !resolvedProxyConfig) {
-      setSaveError('请输入本地代理地址')
+      setSaveError(tr("browser.pages.BrowserEditPage.BrowserEditPage.6b9edac"))
       return
     }
 
@@ -475,21 +484,21 @@ export function BrowserEditPage() {
       if (!isTorMode) {
         const validation = await validateProxyConfig(payload.proxyConfig, payload.proxyId)
         if (!validation.supported) {
-          setSaveError(validation.errorMsg || '代理配置无效')
+          setSaveError(validation.errorMsg || tr("browser.pages.AutoConfigPage.AutoConfigPage.3adabf7"))
           return
         }
       }
       if (isCreate) {
         await createBrowserProfile(payload)
-        toast.success('配置已创建')
+        toast.success(tr("browser.pages.BrowserEditPage.BrowserEditPage.34c0d9d"))
       } else if (id) {
         await updateBrowserProfile(id, payload)
-        toast.success('配置已更新')
+        toast.success(tr("browser.pages.BrowserEditPage.BrowserEditPage.712f66a"))
       }
       setIsDirty(false)
       navigate('/browser/list')
     } catch (error: any) {
-      setSaveError(typeof error === 'string' ? error : error?.message || '保存失败')
+      setSaveError(typeof error === 'string' ? error : error?.message || tr("browser.components.BrowserSettingsModal.BrowserSettingsModal.40525a7"))
     } finally {
       setSaving(false)
     }
@@ -501,7 +510,7 @@ export function BrowserEditPage() {
 
   const handleApplyProxyLocation = async () => {
     if (isTorMode || proxyMode !== 'pool' || !formData.proxyId || formData.proxyId === directProxyID) {
-      toast.error('请选择代理池中的非直连节点')
+      toast.error(tr("browser.pages.BrowserEditPage.BrowserEditPage.a1fe0e7"))
       return
     }
     setLocationResolving(true)
@@ -510,14 +519,14 @@ export function BrowserEditPage() {
       const result = await browserProxyResolveLocation(formData.proxyId)
       setLocationResult(result)
       if (!result.ok || !result.lang || !result.timezone) {
-        toast.error(result.error || '无法根据代理 IP 匹配定位')
+        toast.error(result.error || tr("browser.pages.BrowserEditPage.BrowserEditPage.11071a6"))
         return
       }
       const nextArgs = applyLocaleToFingerprintArgs(formData.fingerprintArgs, result.lang, result.timezone)
       handleChange('fingerprintArgs', nextArgs)
-      toast.success(`已设置 ${result.lang} / ${result.timezone}`)
+      toast.success(tr("browser.pages.BrowserEditPage.BrowserEditPage.c44178f", [result.lang, result.timezone]))
     } catch (error: unknown) {
-      toast.error((error as Error)?.message || '代理定位失败')
+      toast.error((error as Error)?.message || tr("browser.pages.BrowserEditPage.BrowserEditPage.ccd3ab8"))
     } finally {
       setLocationResolving(false)
     }
@@ -525,11 +534,11 @@ export function BrowserEditPage() {
 
   const handleFingerprintCheck = async () => {
     if (isCreate || !id) {
-      toast.warning('请先保存实例，再启动后自测')
+      toast.warning(tr("browser.pages.BrowserEditPage.BrowserEditPage.780757e"))
       return
     }
     if (isDirty) {
-      toast.warning('当前有未保存修改，请先保存后再自测')
+      toast.warning(tr("browser.pages.BrowserEditPage.BrowserEditPage.cb733b2"))
       return
     }
     setFingerprintChecking(true)
@@ -538,7 +547,7 @@ export function BrowserEditPage() {
       setFingerprintCheckResult(result)
       setFingerprintCheckOpen(true)
     } catch (error: unknown) {
-      toast.error((error as Error)?.message || '指纹自测失败')
+      toast.error((error as Error)?.message || tr("browser.pages.BrowserEditPage.BrowserEditPage.b4d626c"))
     } finally {
       setFingerprintChecking(false)
     }
@@ -546,11 +555,11 @@ export function BrowserEditPage() {
 
   const handleOpenFingerprintPage = async () => {
     if (isCreate || !id) {
-      toast.warning('请先保存实例，再打开检测页')
+      toast.warning(tr("browser.pages.BrowserEditPage.BrowserEditPage.66c7747"))
       return
     }
     if (isDirty) {
-      toast.warning('当前有未保存修改，请先保存后再检测')
+      toast.warning(tr("browser.pages.BrowserEditPage.BrowserEditPage.9f48e7d"))
       return
     }
     setFingerprintPageOpening(true)
@@ -559,9 +568,9 @@ export function BrowserEditPage() {
       if (profile?.lastLaunchArgs) {
         setFormData(prev => ({ ...prev, lastLaunchArgs: profile.lastLaunchArgs || [] }))
       }
-      toast.success('已在目标浏览器打开指纹检测页')
+      toast.success(tr("browser.pages.BrowserEditPage.BrowserEditPage.dab724a"))
     } catch (error: unknown) {
-      toast.error((error as Error)?.message || '打开指纹检测页失败')
+      toast.error((error as Error)?.message || tr("browser.pages.BrowserEditPage.BrowserEditPage.32f438c"))
     } finally {
       setFingerprintPageOpening(false)
     }
@@ -572,13 +581,13 @@ export function BrowserEditPage() {
 
   const handleOpenUserDataDir = async () => {
     if (!formData.userDataDir.trim()) {
-      toast.error('请先输入用户数据目录')
+      toast.error(tr("browser.pages.BrowserEditPage.BrowserEditPage.0e4d872"))
       return
     }
     try {
       await openUserDataDir(formData.userDataDir)
     } catch (error: unknown) {
-      toast.error((error as Error)?.message || '打开目录失败')
+      toast.error((error as Error)?.message || tr("browser.components.AutomationScriptPublicApiModal.AutomationScriptPublicApiModal.6651d08"))
     }
   }
 
@@ -604,96 +613,96 @@ export function BrowserEditPage() {
   return (
     <div className="space-y-5 animate-fade-in">
       <WorkspaceHeader
-        eyebrow={isCreate ? 'INSTANCE / SETUP' : 'INSTANCE / EDIT'}
-        title={isCreate ? '新建实例' : '编辑实例'}
-        description="基础、网络与指纹参数。"
+
+        title={isCreate ? tr("browser.components.BrowserListLayout.text.9c614ae") : tr("browser.pages.BrowserEditPage.BrowserEditPage.f2885b7")}
+
         actions={(
           <>
-            <Button variant="secondary" size="sm" onClick={handleBack}>返回列表</Button>
-            <Button size="sm" onClick={handleSave} loading={saving} disabled={!platformCapabilities || (!platformCapabilities.memoryHardLimit && (formData.memoryLimitMb || 0) > 0)}>保存配置</Button>
+            <Button variant="secondary" size="sm" onClick={handleBack}>{tr("browser.pages.AutomationScriptDetailPage.text.53505b1")}</Button>
+            <Button size="sm" onClick={handleSave} loading={saving} disabled={!platformCapabilities || (!platformCapabilities.memoryHardLimit && (formData.memoryLimitMb || 0) > 0)}>{tr("browser.pages.BrowserEditPage.text.817af18")}</Button>
           </>
         )}
       />
 
-      <Card title="基础配置">
+      <Card title={tr("browser.components.BrowserListLayout.aria_label.5095009")}>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <FormItem label="配置名称" required>
-            <Input value={formData.profileName} onChange={e => handleChange('profileName', e.target.value)} placeholder="请输入配置名称" />
+          <FormItem label={tr("browser.pages.BrowserEditPage.label.a5f08c1")} required>
+            <Input value={formData.profileName} onChange={e => handleChange('profileName', e.target.value)} placeholder={tr("browser.pages.BrowserEditPage.placeholder.10729fa")} />
           </FormItem>
-          <FormItem label="用户数据目录（留空自动生成）">
+          <FormItem label={tr("browser.pages.BrowserEditPage.label.1f69ba0")}>
             <div className="flex gap-2">
               <Input
                 value={formData.userDataDir}
                 onChange={e => handleChange('userDataDir', e.target.value)}
-                placeholder="留空自动生成"
+                placeholder={tr("browser.pages.BrowserEditPage.placeholder.a0c413a")}
                 className="flex-1"
               />
-              <Button variant="secondary" size="sm" onClick={handleOpenUserDataDir} title="在资源管理器中打开">
+              <Button variant="secondary" size="sm" onClick={handleOpenUserDataDir} title={tr("browser.pages.BrowserEditPage.title.4a23c68")}>
                 <FolderOpen className="w-4 h-4" />
               </Button>
             </div>
           </FormItem>
-          <FormItem label="内核">
+          <FormItem label={tr("browser.pages.BrowserDetailPage.text.8f190c5")}>
             <Select
               value={formData.coreId}
               onChange={e => handleChange('coreId', e.target.value)}
               options={
                 cores.length > 0 ? [
-                  { value: '', label: defaultCore ? `使用默认 (${defaultCore.coreName})` : '使用默认内核' },
+                  { value: '', label: defaultCore ? tr("browser.pages.BrowserEditPage.BrowserEditPage.a14b9f8", [defaultCore.coreName]) : tr("browser.pages.BrowserEditPage.BrowserEditPage.4aa12fc") },
                   ...cores.map(c => ({ value: c.coreId, label: c.coreName })),
                 ] : [
-                  { value: '', label: '暂无内核，请添加内核' }
+                  { value: '', label: tr("browser.pages.BrowserEditPage.label.9a115eb") }
                 ]
               }
             />
           </FormItem>
-          <FormItem label="历史标签">
+          <FormItem label={tr("browser.pages.BrowserEditPage.label.9206210")}>
             <Select
               value={formData.restoreLastSession || ''}
               onChange={e => handleChange('restoreLastSession', e.target.value)}
               options={RESTORE_LAST_SESSION_OPTIONS}
             />
           </FormItem>
-          <FormItem label="最大内存 MB">
+          <FormItem label={tr("browser.pages.BrowserEditPage.label.22baeee")}>
             <Input
               type="number"
               min="0"
               step="128"
               value={String(formData.memoryLimitMb || 0)}
               onChange={e => handleChange('memoryLimitMb', Math.max(0, Math.floor(Number(e.target.value) || 0)))}
-              placeholder="0 表示不限制"
+              placeholder={tr("browser.pages.BrowserEditPage.placeholder.19b148c")}
               disabled={!platformCapabilities?.memoryHardLimit}
             />
-            {!platformCapabilities?.memoryHardLimit && <p className="mt-1 text-xs text-[var(--color-text-muted)]">{platformCapabilities?.memoryHardLimitReason || '正在读取平台能力…'}</p>}
+            {!platformCapabilities?.memoryHardLimit && <p className="mt-1 text-xs text-[var(--color-text-muted)]">{translateMessage(platformCapabilities?.memoryHardLimitReason) || tr("browser.pages.BrowserEditPage.BrowserEditPage.b3b7da7")}</p>}
             {platformCapabilities && !platformCapabilities.memoryHardLimit && (formData.memoryLimitMb || 0) > 0 && (
               <div className="mt-2 text-sm text-[var(--color-warning)]">
-                <p>原配置的 {formData.memoryLimitMb} MB 已保留。此限制在当前系统不可用，需清零后才能保存。</p>
-                <Button size="sm" variant="secondary" onClick={() => handleChange('memoryLimitMb', 0)}>设为不限制</Button>
+                <p>{tr("browser.pages.BrowserEditPage.text.484e72e")}{formData.memoryLimitMb}{tr("browser.pages.BrowserEditPage.text.8980ddb")}</p>
+                <Button size="sm" variant="secondary" onClick={() => handleChange('memoryLimitMb', 0)}>{tr("browser.pages.BrowserEditPage.text.e30b290")}</Button>
               </div>
             )}
           </FormItem>
-          <FormItem label="标签">
+          <FormItem label={tr("browser.pages.BrowserDetailPage.text.ae0a7af")}>
             <TagInput
               value={formData.tags}
               onChange={tags => handleChange('tags', tags)}
               suggestions={allTags}
-              placeholder="输入标签后按回车，支持从已有标签选择"
+              placeholder={tr("browser.pages.BrowserEditPage.placeholder.9b3a85f")}
             />
           </FormItem>
-          <FormItem label="分组">
+          <FormItem label={tr("browser.components.GroupTreeNav.text.97d8a6c")}>
             <GroupSelector
               groups={groups}
               value={formData.groupId || ''}
               onChange={groupId => handleChange('groupId', groupId)}
-              placeholder="未分组"
+              placeholder={tr("browser.components.GroupTreeNav.text.8de957a")}
               className="w-full"
             />
           </FormItem>
         </div>
       </Card>
 
-      <Card title="网络模式" subtitle={profileRunning ? '实例运行中，停止后可切换' : '保存不会自动切换网络模式'}>
-        <div className="grid gap-3 md:grid-cols-2" role="radiogroup" aria-label="实例网络模式">
+      <Card title={tr("browser.pages.BrowserDetailPage.text.8f26543")} >
+        <div className="grid gap-3 md:grid-cols-2" role="radiogroup" aria-label={tr("browser.pages.BrowserEditPage.aria_label.261ff01")}>
           <button
             type="button"
             role="radio"
@@ -710,8 +719,8 @@ export function BrowserEditPage() {
               <Network className="h-4 w-4" aria-hidden="true" />
             </span>
             <span>
-              <span className="block text-sm font-semibold text-[var(--color-text-primary)]">常规网络</span>
-              <span className="mt-1 block text-xs leading-5 text-[var(--color-text-muted)]">继续使用代理池、本地代理或旧版直连项，由当前 Xray 组合栈或 Mihomo 栈处理。</span>
+              <span className="block text-sm font-semibold text-[var(--color-text-primary)]">{tr("browser.pages.BrowserDetailPage.BrowserDetailPage.e4d38f8")}</span>
+              <span className="mt-1 block text-xs leading-5 text-[var(--color-text-muted)]">{tr("browser.pages.BrowserEditPage.text.6367acc")}</span>
             </span>
           </button>
           <button
@@ -730,32 +739,30 @@ export function BrowserEditPage() {
               <RadioTower className="h-4 w-4" aria-hidden="true" />
             </span>
             <span>
-              <span className="flex flex-wrap items-center gap-2 text-sm font-semibold text-[var(--color-text-primary)]">
-                Tor TCP 路由
-                <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-[var(--color-warning)]">实验性</span>
+              <span className="flex flex-wrap items-center gap-2 text-sm font-semibold text-[var(--color-text-primary)]">{tr("browser.pages.BrowserEditPage.text.0369caf")}<span className="font-mono text-[10px]   text-[var(--color-warning)]">{tr("browser.components.BrowserProfilesPanel.text.2600d79")}</span>
               </span>
-              <span className="mt-1 block text-xs leading-5 text-[var(--color-text-muted)]">使用独立受管 Tor 运行时，不与常规代理、代理链或直连项混用。</span>
+              <span className="mt-1 block text-xs leading-5 text-[var(--color-text-muted)]">{tr("browser.pages.BrowserEditPage.text.7934418")}</span>
             </span>
           </button>
         </div>
         {isTorMode && <TorModeNotice className="mt-4" />}
       </Card>
 
-      <Card title="代理与定位" subtitle={isTorMode ? 'Tor 模式锁定常规代理' : '配置出口与定位'}>
+      <Card title={tr("browser.pages.BrowserEditPage.title.43833da")} >
         <div className={`grid grid-cols-1 gap-4 lg:grid-cols-[220px_minmax(0,1fr)] lg:items-start ${isTorMode ? 'opacity-55' : ''}`}>
-          <FormItem label="代理来源">
+          <FormItem label={tr("browser.pages.AutoConfigPage.aria_label.d03acac")}>
             <Select
               value={proxyMode}
               onChange={e => handleProxyModeChange(e.target.value as ProxySourceMode)}
               disabled={isTorMode}
               options={[
-                { value: 'pool', label: '代理池' },
-                { value: 'local', label: '本地代理' },
+                { value: 'pool', label: tr("config.navigation.config.name.9830ee8") },
+                { value: 'local', label: tr("browser.pages.BrowserEditPage.label.f268438") },
               ]}
             />
           </FormItem>
           {proxyMode === 'pool' ? (
-            <FormItem label="代理地址选择">
+            <FormItem label={tr("browser.pages.BrowserEditPage.label.67007e6")}>
               <div className="flex flex-col sm:flex-row gap-2">
                 <Select
                   value={formData.proxyId}
@@ -764,11 +771,11 @@ export function BrowserEditPage() {
                   options={
                     proxies.length > 0
                       ? proxies.map(p => ({ value: p.proxyId, label: p.proxyName || p.proxyId }))
-                      : [{ value: '', label: '暂无代理，请先到代理池创建' }]
+                      : [{ value: '', label: tr("browser.pages.BrowserEditPage.label.5e6e538") }]
                   }
                   className="flex-1 min-w-0"
                 />
-                <Button variant="secondary" size="sm" className="shrink-0" onClick={() => setProxyPickerOpen(true)} title="按分组选择代理" disabled={isTorMode}>
+                <Button variant="secondary" size="sm" className="shrink-0" onClick={() => setProxyPickerOpen(true)} title={tr("browser.pages.BrowserEditPage.title.6644e64")} disabled={isTorMode}>
                   <Layers className="w-4 h-4" />
                 </Button>
                 <Button
@@ -778,20 +785,18 @@ export function BrowserEditPage() {
                   onClick={handleApplyProxyLocation}
                   loading={locationResolving}
                   disabled={isTorMode || !formData.proxyId || formData.proxyId === directProxyID}
-                >
-                  按代理匹配定位
-                </Button>
+                >{tr("browser.pages.BrowserEditPage.text.55742d3")}</Button>
               </div>
               {locationResult && (
                 <div className="mt-2 text-xs text-[var(--color-text-muted)]">
                   {locationResult.ok
-                    ? `出口 ${locationResult.ip || '-'} · ${[locationResult.country, locationResult.region, locationResult.city].filter(Boolean).join(' / ') || '-'} · ${locationResult.lang} · ${locationResult.timezone}`
-                    : locationResult.error || '未匹配到定位'}
+                    ? tr("browser.pages.BrowserEditPage.BrowserEditPage.2d92340", [locationResult.ip || '-', [locationResult.country, locationResult.region, locationResult.city].filter(Boolean).join(' / ') || '-', locationResult.lang, locationResult.timezone])
+                    : locationResult.error || tr("browser.pages.BrowserEditPage.BrowserEditPage.a03e302")}
                 </div>
               )}
             </FormItem>
           ) : (
-            <FormItem label="本地代理地址" hint="支持 http://、https://、socks5://">
+            <FormItem label={tr("browser.pages.BrowserEditPage.label.553a8c2")}>
               <Input
                 value={formData.proxyConfig}
                 onChange={e => handleChange('proxyConfig', e.target.value)}
@@ -803,10 +808,10 @@ export function BrowserEditPage() {
         </div>
         <p className="mt-2 text-xs text-[var(--color-text-muted)]">
           {isTorMode
-            ? 'Tor 模式不会读取或保存这里的代理项，切回常规网络后需要重新确认出口。'
+            ? tr("browser.pages.BrowserEditPage.BrowserEditPage.93d494b")
             : proxyMode === 'pool'
-              ? `当前使用代理池节点${selectedPoolProxy?.proxyName ? `：${selectedPoolProxy.proxyName}` : '。'}`
-              : '本地代理不会进入代理池，只对当前实例保存生效。'}
+              ? tr("browser.pages.BrowserEditPage.BrowserEditPage.dcdd703", [selectedPoolProxy?.proxyName ? `：${selectedPoolProxy.proxyName}` : '。'])
+              : tr("browser.pages.BrowserEditPage.BrowserEditPage.7554300")}
         </p>
       </Card>
 
@@ -820,7 +825,7 @@ export function BrowserEditPage() {
       />
 
       <Card
-        title="指纹配置"
+        title={tr("browser.pages.BrowserEditPage.title.ae00ea3")}
         actions={(
           <>
             <Button
@@ -828,8 +833,8 @@ export function BrowserEditPage() {
               variant="secondary"
               size="sm"
               onClick={() => setFingerprintMatrixOpen(true)}
-              title="查看版本适配矩阵"
-              aria-label="查看版本适配矩阵"
+              title={tr("browser.pages.BrowserEditPage.title.ed6ff23")}
+              aria-label={tr("browser.pages.BrowserEditPage.title.ed6ff23")}
             >
               <HelpCircle className="w-4 h-4" />
             </Button>
@@ -839,9 +844,7 @@ export function BrowserEditPage() {
               onClick={handleOpenFingerprintPage}
               loading={fingerprintPageOpening}
               disabled={isCreate}
-            >
-              浏览器内检测
-            </Button>
+            >{tr("browser.pages.BrowserEditPage.text.5522fdc")}</Button>
             <Button
               variant="secondary"
               size="sm"
@@ -849,9 +852,7 @@ export function BrowserEditPage() {
               loading={fingerprintChecking}
               disabled={isCreate}
             >
-              <ShieldCheck className="w-4 h-4" />
-              自测当前实例
-            </Button>
+              <ShieldCheck className="w-4 h-4" />{tr("browser.pages.BrowserEditPage.text.1440787")}</Button>
           </>
         )}
       >
@@ -868,7 +869,7 @@ export function BrowserEditPage() {
           onClick={() => setLaunchArgsOpen(current => !current)}
         >
           <span className="inline-flex items-center gap-2 text-sm font-semibold text-[var(--color-text-primary)]">
-            <span>高级启动参数</span>
+            <span>{tr("browser.pages.BrowserEditPage.text.5f7a0a1")}</span>
             <span
               role="button"
               tabIndex={0}
@@ -884,7 +885,7 @@ export function BrowserEditPage() {
                   setLaunchArgsHelpOpen(true)
                 }
               }}
-              aria-label="查看高级启动参数说明"
+              aria-label={tr("browser.pages.BrowserEditPage.aria_label.5539328")}
             >
               <HelpCircle className="h-4 w-4" />
             </span>
@@ -894,9 +895,7 @@ export function BrowserEditPage() {
         {launchArgsOpen && (
           <div className="space-y-3 border-t border-[var(--color-border-muted)] px-5 pb-5 pt-4">
             {isTorMode && (
-              <p className="rounded-sm border border-[var(--color-warning)]/40 bg-[var(--color-warning)]/5 px-3 py-2 text-xs leading-5 text-[var(--color-text-secondary)]">
-                Tor 模式下，代理、DNS、QUIC、WebRTC 与扩展开关等托管参数会由后端移除或覆盖；其余启动参数仍会按正常流程提交。
-              </p>
+              <p className="rounded-sm border border-[var(--color-warning)]/40 bg-[var(--color-warning)]/5 px-3 py-2 text-xs leading-5 text-[var(--color-text-secondary)]">{tr("browser.pages.BrowserEditPage.text.1f933ae")}</p>
             )}
             <Textarea
               value={launchArgsText}
@@ -906,7 +905,7 @@ export function BrowserEditPage() {
             />
             {!isCreate && formData.lastLaunchArgs && formData.lastLaunchArgs.length > 0 && (
               <div className="rounded-lg border border-[var(--color-border)] overflow-hidden">
-                <div className="px-3 py-2 text-xs font-medium text-[var(--color-text-muted)] border-b border-[var(--color-border)]">上次实际启动参数</div>
+                <div className="px-3 py-2 text-xs font-medium text-[var(--color-text-muted)] border-b border-[var(--color-border)]">{tr("browser.pages.BrowserEditPage.text.c16ed5d")}</div>
                 <Textarea
                   value={formData.lastLaunchArgs.join('\n')}
                   readOnly
@@ -922,25 +921,25 @@ export function BrowserEditPage() {
       <Modal
         open={launchArgsHelpOpen}
         onClose={() => setLaunchArgsHelpOpen(false)}
-        title="高级启动参数说明"
+        title={tr("browser.pages.BrowserEditPage.title.23e6109")}
         width="920px"
-        footer={<Button variant="secondary" onClick={() => setLaunchArgsHelpOpen(false)}>关闭</Button>}
+        footer={<Button variant="secondary" onClick={() => setLaunchArgsHelpOpen(false)}>{tr("ui.components.Modal.aria_label.6c14bd7")}</Button>}
       >
         <div className="rounded-lg border border-[var(--color-border)] overflow-hidden">
           <div className="grid grid-cols-[220px_minmax(0,1fr)_minmax(180px,0.7fr)] gap-3 px-3 py-2 text-xs font-medium text-[var(--color-text-muted)] border-b border-[var(--color-border)] bg-[var(--color-bg-hover)]">
-            <div>参数</div>
-            <div>含义</div>
-            <div>示例</div>
+            <div>{tr("browser.components.FingerprintPanel.text.749d765")}</div>
+            <div>{tr("browser.pages.BrowserEditPage.text.104d11e")}</div>
+            <div>{tr("browser.automationScripts.createAutomationScriptDraft.30fd4ed")}</div>
           </div>
           {[
-            ['--disable-sync', '关闭 Chrome 同步，减少账号和同步服务干扰。', '--disable-sync'],
-            ['--no-first-run', '跳过首次运行向导，启动更干净。', '--no-first-run'],
-            ['--start-maximized', '启动后最大化窗口；会影响窗口大小检测口径。', '--start-maximized'],
-            ['--disable-background-networking', '减少后台网络请求；可能影响部分 Chrome 服务。', '--disable-background-networking'],
-            ['--disable-features=<list>', '关闭指定 Chromium Feature；仅在明确知道影响时使用。', '--disable-features=Translate'],
-            ['--enable-features=<list>', '开启指定 Chromium Feature；仅在明确知道影响时使用。', '--enable-features=NetworkService'],
-            ['不建议手填', '指纹、代理、用户数据目录、调试端口属于托管参数，会由页面配置和后端启动流程生成。', '--user-data-dir / --proxy-server / --remote-debugging-port'],
-            ['上次实际启动参数', '只读记录，展示最终启动 Chrome 的完整参数，可用于排查后端自动补齐内容。', '下方只读区域'],
+            ['--disable-sync', tr("browser.pages.BrowserEditPage.BrowserEditPage.8cf3d25"), '--disable-sync'],
+            ['--no-first-run', tr("browser.pages.BrowserEditPage.BrowserEditPage.9527aa0"), '--no-first-run'],
+            ['--start-maximized', tr("browser.pages.BrowserEditPage.BrowserEditPage.e9a1c6f"), '--start-maximized'],
+            ['--disable-background-networking', tr("browser.pages.BrowserEditPage.BrowserEditPage.e1c2b04"), '--disable-background-networking'],
+            ['--disable-features=<list>', tr("browser.pages.BrowserEditPage.BrowserEditPage.876c06c"), '--disable-features=Translate'],
+            ['--enable-features=<list>', tr("browser.pages.BrowserEditPage.BrowserEditPage.b13b3e7"), '--enable-features=NetworkService'],
+            [tr("browser.pages.BrowserEditPage.BrowserEditPage.06c23c1"), tr("browser.pages.BrowserEditPage.BrowserEditPage.6c885b1"), '--user-data-dir / --proxy-server / --remote-debugging-port'],
+            [tr("browser.pages.BrowserEditPage.text.c16ed5d"), tr("browser.pages.BrowserEditPage.BrowserEditPage.3101354"), tr("browser.pages.BrowserEditPage.BrowserEditPage.cdc8728")],
           ].map(([arg, meaning, example]) => (
             <div key={arg} className="grid grid-cols-[220px_minmax(0,1fr)_minmax(180px,0.7fr)] gap-3 px-3 py-2 text-xs border-b last:border-b-0 border-[var(--color-border)]">
               <code className="break-all text-[var(--color-text-primary)]">{arg}</code>
@@ -955,15 +954,15 @@ export function BrowserEditPage() {
         open={torSwitchConfirmOpen}
         onClose={() => setTorSwitchConfirmOpen(false)}
         onConfirm={() => applyNetworkMode('tor')}
-        title="切换到 Tor TCP 路由？"
+        title={tr("browser.pages.BrowserEditPage.title.5a89a98")}
         content={(
           <div className="space-y-2 text-sm leading-6">
-            <p>当前代理池、本地代理或直连项将被清空，保存后无法自动恢复。</p>
-            <p className="text-[var(--color-text-muted)]">Tor 是独立的实验性传输，不会与现有代理链混用。</p>
+            <p>{tr("browser.pages.BrowserEditPage.text.e3743bf")}</p>
+            <p className="text-[var(--color-text-muted)]">{tr("browser.pages.BrowserEditPage.text.4396d3b")}</p>
           </div>
         )}
-        confirmText="清空并切换"
-        cancelText="保留当前网络"
+        confirmText={tr("browser.pages.BrowserEditPage.confirmText.ba71e4b")}
+        cancelText={tr("browser.pages.BrowserEditPage.cancelText.34e7a9c")}
         danger
       />
 
@@ -971,71 +970,71 @@ export function BrowserEditPage() {
         open={leaveConfirm}
         onClose={() => setLeaveConfirm(false)}
         onConfirm={() => navigate('/browser/list')}
-        title="放弃未保存的更改？"
-        content="当前页面有未保存的修改，离开后将丢失这些更改。"
-        confirmText="放弃并离开"
-        cancelText="继续编辑"
+        title={tr("browser.pages.BrowserEditPage.title.dcd163d")}
+        content={tr("browser.pages.BrowserEditPage.content.1ddd52b")}
+        confirmText={tr("browser.pages.BrowserEditPage.confirmText.af75487")}
+        cancelText={tr("browser.pages.BrowserEditPage.cancelText.3a481bc")}
         danger
       />
 
       <Modal
         open={fingerprintCheckOpen}
         onClose={() => setFingerprintCheckOpen(false)}
-        title="指纹自测结果"
+        title={tr("browser.pages.BrowserEditPage.title.5cf071c")}
         width="860px"
       >
         {fingerprintCheckResult ? (
           <div className="space-y-4">
             <div className="grid grid-cols-[120px_minmax(0,1fr)_minmax(0,1fr)_70px] gap-3 text-xs font-medium text-[var(--color-text-muted)] border-b border-[var(--color-border)] pb-2">
-              <div>项目</div>
-              <div>配置值</div>
-              <div>实际值</div>
-              <div>状态</div>
+              <div>{tr("browser.pages.BrowserEditPage.text.22336e6")}</div>
+              <div>{tr("browser.pages.BrowserEditPage.text.73de586")}</div>
+              <div>{tr("browser.pages.BrowserEditPage.text.336e5c7")}</div>
+              <div>{tr("browser.components.AutomationScriptHistoryModal.text.62e951a")}</div>
             </div>
             <div>
-              <FingerprintCheckRow label="语言" expected={fingerprintCheckResult.expected.language} actual={fingerprintCheckResult.runtime.language} />
-              <FingerprintCheckRow label="语言列表" expected={fingerprintCheckResult.expected.acceptLanguage} actual={fingerprintCheckResult.runtime.languages} />
-              <FingerprintCheckRow label="时区" expected={fingerprintCheckResult.expected.timezone} actual={fingerprintCheckResult.runtime.timezone} />
-              <FingerprintCheckRow label="CPU 核心" expected={fingerprintCheckResult.expected.hardwareConcurrency} actual={fingerprintCheckResult.runtime.hardwareConcurrency} />
-              <FingerprintDisplayRow label="设备内存" actual={fingerprintCheckResult.runtime.deviceMemory} />
-              <FingerprintDisplayRow label="颜色深度" actual={fingerprintCheckResult.runtime.colorDepth} />
-              <FingerprintDisplayRow label="触控点" actual={fingerprintCheckResult.runtime.maxTouchPoints} />
-              <FingerprintDisplayRow label="Do Not Track" actual={fingerprintCheckResult.runtime.doNotTrack} />
-              <FingerprintCheckRow label="窗口大小" expected={fingerprintCheckResult.expected.windowSize} actual={`${fingerprintCheckResult.runtime.outerWidth},${fingerprintCheckResult.runtime.outerHeight}`} />
-              <FingerprintCheckRow label="平台" expected={fingerprintCheckResult.expected.platform} actual={fingerprintCheckResult.runtime.platform} mode="platform" />
-              <FingerprintCheckRow label="品牌版本" expected={fingerprintCheckResult.expected.brandVersion} actual={fingerprintCheckResult.runtime.userAgent} mode="browser-version" />
-              <FingerprintCheckRow label="系统版本" expected={fingerprintCheckResult.expected.platformVersion} actual={fingerprintCheckResult.runtime.userAgent} mode="platform-version" />
+              <FingerprintCheckRow label={tr("browser.components.FingerprintPanel.label.cd99b22")} expected={fingerprintCheckResult.expected.language} actual={fingerprintCheckResult.runtime.language} />
+              <FingerprintCheckRow label={tr("browser.components.FingerprintPanel.label.0778870")} expected={fingerprintCheckResult.expected.acceptLanguage} actual={fingerprintCheckResult.runtime.languages} />
+              <FingerprintCheckRow label={tr("browser.components.FingerprintPanel.label.fb2a23d")} expected={fingerprintCheckResult.expected.timezone} actual={fingerprintCheckResult.runtime.timezone} />
+              <FingerprintCheckRow label={tr("browser.pages.BrowserEditPage.label.dfa837e")} expected={fingerprintCheckResult.expected.hardwareConcurrency} actual={fingerprintCheckResult.runtime.hardwareConcurrency} />
+              <FingerprintDisplayRow label={tr("browser.pages.AutoConfigPage.label.063c974")} actual={fingerprintCheckResult.runtime.deviceMemory} />
+              <FingerprintDisplayRow label={tr("browser.pages.BrowserEditPage.label.6063a04")} actual={fingerprintCheckResult.runtime.colorDepth} />
+              <FingerprintDisplayRow label={tr("browser.pages.AutoConfigPage.label.e8e82c9")} actual={fingerprintCheckResult.runtime.maxTouchPoints} />
+              <FingerprintDisplayRow label={tr("ui.modules.browser.pages.BrowserEditPage.label.2c25376")} actual={fingerprintCheckResult.runtime.doNotTrack} />
+              <FingerprintCheckRow label={tr("browser.copyOptions.label.a599946")} expected={fingerprintCheckResult.expected.windowSize} actual={`${fingerprintCheckResult.runtime.outerWidth},${fingerprintCheckResult.runtime.outerHeight}`} />
+              <FingerprintCheckRow label={tr("browser.components.FingerprintPanel.label.e4b9d69")} expected={fingerprintCheckResult.expected.platform} actual={fingerprintCheckResult.runtime.platform} mode="platform" />
+              <FingerprintCheckRow label={tr("browser.components.FingerprintPanel.label.7fc28d3")} expected={fingerprintCheckResult.expected.brandVersion} actual={fingerprintCheckResult.runtime.userAgent} mode="browser-version" />
+              <FingerprintCheckRow label={tr("browser.components.FingerprintPanel.label.735f889")} expected={fingerprintCheckResult.expected.platformVersion} actual={fingerprintCheckResult.runtime.userAgent} mode="platform-version" />
               <FingerprintCheckRow label="UA" expected={fingerprintCheckResult.expected.brand} actual={fingerprintCheckResult.runtime.userAgent} mode="contains" />
-              <FingerprintDisplayRow label="UA Data" actual={fingerprintCheckResult.runtime.userAgentData} />
-              <FingerprintCheckRow label="Webdriver" expected={false} actual={fingerprintCheckResult.runtime.webdriver} />
-              <FingerprintDisplayRow label="屏幕" actual={`${fingerprintCheckResult.runtime.screenWidth}x${fingerprintCheckResult.runtime.screenHeight} depth ${fingerprintCheckResult.runtime.colorDepth} @ ${fingerprintCheckResult.runtime.devicePixelRatio}`} />
-              <FingerprintDisplayRow label="WebGL Vendor" actual={fingerprintCheckResult.runtime.webglVendor} />
-              <FingerprintDisplayRow label="WebGL Renderer" actual={fingerprintCheckResult.runtime.webglRenderer} />
-              <FingerprintDisplayRow label="Canvas Hash" actual={fingerprintCheckResult.runtime.canvasHash} />
-              <FingerprintDisplayRow label="Audio Hash" actual={fingerprintCheckResult.runtime.audioHash} />
-              <FingerprintDisplayRow label="ClientRects Hash" actual={fingerprintCheckResult.runtime.clientRectsHash} />
-              <FingerprintDisplayRow label="媒体设备数量" actual={fingerprintCheckResult.runtime.mediaDeviceCount} />
-              <FingerprintDisplayRow label="Canvas 噪声" actual={fingerprintCheckResult.expected.canvasNoise ? '已配置' : '未配置'} />
-              <FingerprintDisplayRow label="Audio 噪声" actual="不作为期望" />
-              <FingerprintDisplayRow label="ClientRects 噪声" actual={fingerprintCheckResult.expected.clientRectsNoise ? '已配置' : '未配置'} />
-              <FingerprintDisplayRow label="字体列表" actual="不作为期望" />
-              <FingerprintDisplayRow label="插件" actual={fingerprintCheckResult.runtime.plugins} />
-              <FingerprintDisplayRow label="种子" actual={fingerprintCheckResult.expected.seed || '未显式设置'} />
-              <FingerprintDisplayRow label="排除伪装" actual={fingerprintCheckResult.expected.disableSpoofing || '无'} />
-              <FingerprintDisplayRow label="WebRTC" actual={fingerprintCheckResult.expected.webrtcPolicy || '未显式设置'} />
+              <FingerprintDisplayRow label={tr("ui.modules.browser.pages.BrowserEditPage.label.3785547")} actual={fingerprintCheckResult.runtime.userAgentData} />
+              <FingerprintCheckRow label={tr("ui.modules.browser.pages.BrowserEditPage.label.9b5a6b0")} expected={false} actual={fingerprintCheckResult.runtime.webdriver} />
+              <FingerprintDisplayRow label={tr("browser.pages.AutoConfigPage.label.c68cb70")} actual={`${fingerprintCheckResult.runtime.screenWidth}x${fingerprintCheckResult.runtime.screenHeight} depth ${fingerprintCheckResult.runtime.colorDepth} @ ${fingerprintCheckResult.runtime.devicePixelRatio}`} />
+              <FingerprintDisplayRow label={tr("ui.modules.browser.pages.BrowserEditPage.label.ee034e1")} actual={fingerprintCheckResult.runtime.webglVendor} />
+              <FingerprintDisplayRow label={tr("ui.modules.browser.pages.BrowserEditPage.label.2c5168f")} actual={fingerprintCheckResult.runtime.webglRenderer} />
+              <FingerprintDisplayRow label={tr("ui.modules.browser.pages.BrowserEditPage.label.ee69145")} actual={fingerprintCheckResult.runtime.canvasHash} />
+              <FingerprintDisplayRow label={tr("ui.modules.browser.pages.BrowserEditPage.label.e032078")} actual={fingerprintCheckResult.runtime.audioHash} />
+              <FingerprintDisplayRow label={tr("ui.modules.browser.pages.BrowserEditPage.label.ca96076")} actual={fingerprintCheckResult.runtime.clientRectsHash} />
+              <FingerprintDisplayRow label={tr("browser.pages.BrowserEditPage.label.6a9c87c")} actual={fingerprintCheckResult.runtime.mediaDeviceCount} />
+              <FingerprintDisplayRow label={tr("browser.components.FingerprintPanel.label.cc178ca")} actual={fingerprintCheckResult.expected.canvasNoise ? tr("browser.pages.BrowserEditPage.BrowserEditPage.dc7cd22") : tr("browser.pages.BrowserEditPage.BrowserEditPage.63595e9")} />
+              <FingerprintDisplayRow label={tr("browser.pages.BrowserEditPage.label.5201834")} actual={tr("browser.pages.BrowserEditPage.actual.c5e4129")} />
+              <FingerprintDisplayRow label={tr("browser.components.FingerprintPanel.label.df61775")} actual={fingerprintCheckResult.expected.clientRectsNoise ? tr("browser.pages.BrowserEditPage.BrowserEditPage.dc7cd22") : tr("browser.pages.BrowserEditPage.BrowserEditPage.63595e9")} />
+              <FingerprintDisplayRow label={tr("browser.pages.BrowserEditPage.label.96ff7b7")} actual={tr("browser.pages.BrowserEditPage.actual.c5e4129")} />
+              <FingerprintDisplayRow label={tr("browser.components.BrowserProfilesPanel.text.76fcd73")} actual={fingerprintCheckResult.runtime.plugins} />
+              <FingerprintDisplayRow label={tr("browser.pages.BrowserEditPage.label.49e8096")} actual={fingerprintCheckResult.expected.seed || tr("browser.pages.BrowserEditPage.BrowserEditPage.1e69a15")} />
+              <FingerprintDisplayRow label={tr("browser.pages.BrowserEditPage.label.c7a9c28")} actual={fingerprintCheckResult.expected.disableSpoofing || tr("browser.pages.BrowserEditPage.BrowserEditPage.7207774")} />
+              <FingerprintDisplayRow label={tr("ui.modules.browser.pages.BrowserEditPage.label.d45467f")} actual={fingerprintCheckResult.expected.webrtcPolicy || tr("browser.pages.BrowserEditPage.BrowserEditPage.1e69a15")} />
             </div>
           </div>
         ) : (
-          <div className="text-sm text-[var(--color-text-muted)]">暂无自测结果</div>
+          <div className="text-sm text-[var(--color-text-muted)]">{tr("browser.pages.BrowserEditPage.text.d014c55")}</div>
         )}
       </Modal>
 
       <Modal
         open={fingerprintMatrixOpen}
         onClose={() => setFingerprintMatrixOpen(false)}
-        title="版本适配矩阵"
+        title={tr("browser.pages.BrowserEditPage.text.626994d")}
         width="980px"
-        footer={<Button variant="secondary" onClick={() => setFingerprintMatrixOpen(false)}>关闭</Button>}
+        footer={<Button variant="secondary" onClick={() => setFingerprintMatrixOpen(false)}>{tr("ui.components.Modal.aria_label.6c14bd7")}</Button>}
       >
         <FingerprintMatrixReport report={fingerprintMatrix} />
       </Modal>
@@ -1043,11 +1042,11 @@ export function BrowserEditPage() {
       <Modal
         open={!!saveError}
         onClose={() => setSaveError('')}
-        title="保存失败"
+        title={tr("browser.components.BrowserSettingsModal.BrowserSettingsModal.40525a7")}
         width="420px"
-        footer={<Button onClick={() => setSaveError('')}>知道了</Button>}
+        footer={<Button onClick={() => setSaveError('')}>{tr("browser.pages.BrowserEditPage.text.cb63c62")}</Button>}
       >
-        <div className="text-[var(--color-text-secondary)]">{saveError}</div>
+        <div className="text-[var(--color-text-secondary)]">{translateMessage(saveError)}</div>
       </Modal>
     </div>
   )

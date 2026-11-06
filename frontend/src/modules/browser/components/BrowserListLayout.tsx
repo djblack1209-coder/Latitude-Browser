@@ -1,9 +1,10 @@
-import { useEffect, useRef, useState } from 'react'
+import { translateMessage } from '../../../shared/i18n'
+import { tr, useLocale } from '../../../shared/i18n'
 import { Link } from 'react-router-dom'
-import { Archive, CheckCircle, ChevronRight, ChevronUp, Edit2, LayoutGrid, List, MoreHorizontal, Plus, RefreshCw, Sliders, Star, Trash2, Upload, XCircle } from 'lucide-react'
+import { LatitudeField } from '../../../shared/layout/LatitudeField'
+import { CheckCircle, Edit2, Plus, RefreshCw, Sliders, Star, Trash2, Upload, XCircle, LayoutGrid, List, Archive } from 'lucide-react'
 
 import { Button, Card, FormItem, Input, Modal, Switch, Table, Textarea } from '../../../shared/components'
-import { TelemetryStrip, WorkspaceHeader } from '../../../shared/components/SignalPrimitives'
 import type { TableColumn } from '../../../shared/components/Table'
 
 import type { BrowserCore, BrowserCoreInput, BrowserGroupWithCount, BrowserProxy, BrowserSettings } from '../types'
@@ -40,222 +41,46 @@ interface BrowserListHeaderProps {
   onViewModeChange: (next: BrowserViewMode) => void
 }
 
-function HeaderUtilityMenu({
-  onOpenSettings,
-  onOpenTrash,
-  onImportProfiles,
-  onOpenBackup,
-  importingProfiles,
-}: {
-  onOpenSettings: () => void
-  onOpenTrash: () => void
-  onImportProfiles: () => void
-  onOpenBackup: () => void
-  importingProfiles: boolean
-}) {
-  const [open, setOpen] = useState(false)
-  const menuRef = useRef<HTMLDivElement>(null)
+export function BrowserListHeader({ profileCount, filteredProfileCount, runningCount, attentionCount, viewMode, onViewModeChange, onOpenBackup, filters, onFiltersChange, proxies, cores, groups, allTags, headerCollapsed, onToggleHeaderCollapsed, onRefresh, onOpenSettings, onOpenTrash, onImportProfiles, importingProfiles = false }: BrowserListHeaderProps) {
+  useLocale()
 
-  useEffect(() => {
-    if (!open) return
-    const handlePointerDown = (event: MouseEvent) => {
-      if (!menuRef.current?.contains(event.target as Node)) setOpen(false)
-    }
-    document.addEventListener('mousedown', handlePointerDown)
-    return () => document.removeEventListener('mousedown', handlePointerDown)
-  }, [open])
-
-  const runAndClose = (handler: () => void) => {
-    handler()
-    setOpen(false)
-  }
-
-  const itemClass = 'flex w-full items-center gap-2 rounded-sm px-2.5 py-2 text-left text-xs text-[var(--color-text-secondary)] transition-[background-color,color] duration-150 hover:bg-[var(--color-bg-muted)] hover:text-[var(--color-text-primary)] focus:outline-none focus:ring-1 focus:ring-[var(--color-accent)] disabled:cursor-not-allowed disabled:opacity-50'
-
-  return (
-    <div ref={menuRef} className="relative">
-      <button
-        type="button"
-        onClick={() => setOpen((value) => !value)}
-        aria-expanded={open}
-        aria-haspopup="menu"
-        aria-label="管理实例"
-        title="管理"
-        className="inline-flex h-8 items-center gap-1.5 rounded-sm px-2 text-xs text-[var(--color-text-secondary)] transition-[background-color,color] duration-150 hover:bg-[var(--color-bg-muted)] hover:text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
-      >
-        <MoreHorizontal className="h-4 w-4" aria-hidden="true" />
-        <span className="hidden sm:inline">管理</span>
-      </button>
-      {open && (
-        <div role="menu" aria-label="实例管理" className="absolute right-0 top-full z-30 mt-2 w-40 rounded-sm border border-[var(--color-border-default)] bg-[var(--color-bg-elevated)] p-1 shadow-[var(--shadow-sm)]">
-          <button type="button" role="menuitem" className={itemClass} onClick={() => runAndClose(onOpenSettings)}>
-            <Sliders className="h-3.5 w-3.5" aria-hidden="true" />
-            基础配置
-          </button>
-          <button type="button" role="menuitem" className={itemClass} onClick={() => runAndClose(onOpenTrash)}>
-            <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
-            回收站
-          </button>
-          <button type="button" role="menuitem" className={itemClass} onClick={() => runAndClose(onImportProfiles)} disabled={importingProfiles}>
-            {importingProfiles ? <RefreshCw className="h-3.5 w-3.5 animate-spin" aria-hidden="true" /> : <Upload className="h-3.5 w-3.5" aria-hidden="true" />}
-            {importingProfiles ? '导入中' : '导入实例'}
-          </button>
-          <button type="button" role="menuitem" className={itemClass} onClick={() => runAndClose(onOpenBackup)}>
-            <Archive className="h-3.5 w-3.5" aria-hidden="true" />
-            备份与恢复
-          </button>
-        </div>
-      )}
-    </div>
-  )
-}
-
-export function BrowserListHeader({
-  workspaceMode,
-  profileCount,
-  filteredProfileCount,
-  hasActiveFilters,
-  runningCount,
-  attentionCount,
-  fingerprintSourceCount,
-  recentRecordedCount,
-  headerCollapsed,
-  viewMode,
-  proxies,
-  cores,
-  groups,
-  allTags,
-  filters,
-  onFiltersChange,
-  onToggleHeaderCollapsed,
-  onRefresh,
-  onOpenSettings,
-  onOpenTrash,
-  onImportProfiles,
-  onOpenBackup,
-  importingProfiles = false,
-  onViewModeChange,
-}: BrowserListHeaderProps) {
-  const pageCopy: Record<BrowserWorkspaceMode, { eyebrow: string; title: string; description: string }> = {
-    all: {
-      eyebrow: 'INSTANCE WORKSPACE',
-      title: '实例',
-      description: '启动、筛选与维护浏览器实例。',
-    },
-    recent: {
-      eyebrow: 'INSTANCE WORKSPACE / RECENT',
-      title: '最近活动',
-      description: '按最近启动或停止时间排序。',
-    },
-    attention: {
-      eyebrow: 'INSTANCE WORKSPACE / ATTENTION',
-      title: '待处理',
-      description: '仅显示异常、缺目录或缺可用内核的实例。',
-    },
-    templates: {
-      eyebrow: 'INSTANCE WORKSPACE / FINGERPRINT',
-      title: '指纹来源',
-      description: '从现有实例复用已保存的指纹参数。',
-    },
-  }
-  const copy = pageCopy[workspaceMode]
-  const telemetryItems = workspaceMode === 'templates'
-    ? [
-        { label: '可复用来源', value: fingerprintSourceCount, detail: '来自现有实例配置', tone: 'accent' as const },
-        { label: '当前显示', value: filteredProfileCount, detail: hasActiveFilters ? '已叠加筛选条件' : '指纹来源视图' },
-        { label: '运行中', value: runningCount, detail: '全部实例', tone: runningCount > 0 ? 'success' as const : 'neutral' as const },
-        { label: '实例总数', value: profileCount },
-      ]
-    : workspaceMode === 'recent'
-      ? [
-          { label: '有使用记录', value: recentRecordedCount, detail: '来自启动或停止时间', tone: 'accent' as const },
-          { label: '当前显示', value: filteredProfileCount, detail: hasActiveFilters ? '已叠加筛选条件' : '按最近记录排序' },
-          { label: '运行中', value: runningCount, detail: '全部实例', tone: runningCount > 0 ? 'success' as const : 'neutral' as const },
-          { label: '实例总数', value: profileCount },
-        ]
-      : [
-          { label: workspaceMode === 'attention' ? '需要处理' : '实例总数', value: workspaceMode === 'attention' ? attentionCount : profileCount, tone: attentionCount > 0 ? 'warning' as const : 'neutral' as const },
-          { label: '当前显示', value: filteredProfileCount, detail: hasActiveFilters ? '已叠加筛选条件' : workspaceMode === 'attention' ? '按诊断依据筛选' : '未叠加筛选条件' },
-          { label: '运行中', value: runningCount, detail: '全部实例', tone: runningCount > 0 ? 'success' as const : 'neutral' as const },
-          { label: workspaceMode === 'attention' ? '实例总数' : '需要处理', value: workspaceMode === 'attention' ? profileCount : attentionCount, tone: attentionCount > 0 ? 'warning' as const : 'neutral' as const },
-        ]
-
-  const actions = (
-    <div className="browser-list-actions flex flex-wrap items-center justify-end gap-1.5">
-      <Link to="/browser/edit/new">
-        <Button size="sm" className="px-3.5">
-          <Plus className="h-4 w-4" />新建实例
-        </Button>
-      </Link>
-      <div className="mx-1 hidden h-5 w-px bg-[var(--color-border-muted)] sm:block" aria-hidden="true" />
-      <HeaderUtilityMenu
-        onOpenSettings={onOpenSettings}
-        onOpenTrash={onOpenTrash}
-        onImportProfiles={onImportProfiles}
-        onOpenBackup={onOpenBackup}
-        importingProfiles={importingProfiles}
-      />
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={onToggleHeaderCollapsed}
-        aria-label={headerCollapsed ? '显示筛选' : '隐藏筛选'}
-        title={headerCollapsed ? '显示筛选' : '隐藏筛选'}
-        className="px-2"
-      >
-        {headerCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
-        <span className="hidden sm:inline">筛选</span>
-      </Button>
-      <Button variant="ghost" size="sm" onClick={onRefresh} aria-label="刷新实例" title="刷新" className="px-2">
-        <RefreshCw className="h-4 w-4" />
-      </Button>
-      <div className="ml-1 flex items-center rounded-sm border border-[var(--color-border-default)] bg-[var(--color-bg-muted)]/50 p-0.5" role="group" aria-label="视图模式">
-        <button
-          type="button"
-          aria-label="卡片视图"
-          aria-pressed={viewMode === 'card'}
-          className={`rounded-sm p-1.5 text-[var(--color-text-muted)] transition-[background-color,color,transform] duration-150 active:translate-y-px hover:text-[var(--color-text-primary)] ${viewMode === 'card' ? 'bg-[var(--color-bg-surface)] text-[var(--color-accent)] shadow-[var(--shadow-xs)]' : ''}`}
-          onClick={() => onViewModeChange('card')}
-          title="卡片视图"
-        >
-          <LayoutGrid className="h-4 w-4" />
-        </button>
-        <button
-          type="button"
-          aria-label="表格视图"
-          aria-pressed={viewMode === 'table'}
-          className={`rounded-sm p-1.5 text-[var(--color-text-muted)] transition-[background-color,color,transform] duration-150 active:translate-y-px hover:text-[var(--color-text-primary)] ${viewMode === 'table' ? 'bg-[var(--color-bg-surface)] text-[var(--color-accent)] shadow-[var(--shadow-xs)]' : ''}`}
-          onClick={() => onViewModeChange('table')}
-          title="表格视图"
-        >
-          <List className="h-4 w-4" />
-        </button>
+  return <>
+    <section className="latitude-overview" aria-labelledby="instances-heading">
+      <div className="latitude-overview-copy">
+        <h1 id="instances-heading">{tr('nav.instances')}</h1>
+        <p>{tr('shell.instancesHint')}</p>
+        <dl className="latitude-overview-stats">
+          <div><dd>{profileCount}</dd><dt>{tr('shell.total')}</dt></div>
+          <div className="is-running"><dd>{runningCount}</dd><dt>{tr('shell.active')}</dt></div>
+          <div className={attentionCount ? 'needs-attention' : ''}><dd>{attentionCount}</dd><dt>{tr('shell.attention')}</dt></div>
+        </dl>
       </div>
+      <LatitudeField />
+    </section>
+    <section className="latitude-instance-workspace" aria-label={tr('shell.allInstances')}>
+      <div className="latitude-instance-heading">
+        <h2>{tr('shell.allInstances')}<span className="latitude-count">{filteredProfileCount}</span></h2>
+        <div className="latitude-view-toggle" role="group" aria-label={tr('nav.instances')}>
+          <button type="button" onClick={() => onViewModeChange('table')} aria-pressed={viewMode === 'table'} aria-label={tr('shell.viewTable')} title={tr('shell.viewTable')}><List size={14} /></button>
+          <button type="button" onClick={() => onViewModeChange('card')} aria-pressed={viewMode === 'card'} aria-label={tr('shell.viewCards')} title={tr('shell.viewCards')}><LayoutGrid size={14} /></button>
+        </div>
+      </div>
+      <div className="terminal-instance-tools">
+    <Input aria-label={tr("browser.components.BrowserListLayout.aria_label.9bf64db")} placeholder={tr("browser.components.BrowserListLayout.placeholder.3934546")} value={filters.keyword || filters.kwSearch} onChange={event => onFiltersChange({ ...filters, keyword: event.target.value, kwSearch: '' })} className="max-w-sm" />
+    <div className="relative">
+      <Button variant="secondary" size="sm" onClick={onToggleHeaderCollapsed} aria-expanded={!headerCollapsed}><Sliders size={14} />{tr("browser.components.BrowserListLayout.text.dcce9a1")}</Button>
+      {!headerCollapsed && <div className="terminal-filter-popover"><InstanceFilterBar hideSearch filters={filters} onChange={onFiltersChange} proxies={proxies} cores={cores} groups={groups} allTags={allTags} /><div className="flex gap-3 mt-3"><Link to="/browser/list?sort=recent">{tr("config.navigation.config.name.8764fbc")}</Link><Link to="/browser/list?status=attention">{tr("config.navigation.config.name.59a9eb4")}</Link><Link to="/browser/list?view=templates">{tr("browser.components.BrowserListLayout.text.7526121")}</Link></div></div>}
     </div>
-  )
-
-  return (
-    <>
-      <WorkspaceHeader
-        eyebrow={copy.eyebrow}
-        title={copy.title}
-        description={copy.description}
-        actions={actions}
-        className="browser-list-header"
-      />
-      <TelemetryStrip items={telemetryItems} className="browser-list-telemetry" />
-      {!headerCollapsed && (
-        <InstanceFilterBar
-          filters={filters}
-          onChange={onFiltersChange}
-          proxies={proxies}
-          cores={cores}
-          allTags={allTags}
-          groups={groups}
-        />
-      )}
-    </>
-  )
+    <Button variant="ghost" size="sm" onClick={onRefresh} aria-label={tr("browser.components.BrowserListLayout.aria_label.78eaf8d")} title={tr("browser.components.AutomationRuntimeSnapshot.text.38108ea")}><RefreshCw size={14} /></Button>
+    <div className="flex-1" />
+    <Button variant="ghost" size="sm" onClick={onOpenSettings} aria-label={tr("browser.components.BrowserListLayout.aria_label.5095009")} title={tr("browser.components.BrowserListLayout.aria_label.5095009")}><Sliders size={14} /></Button>
+    <Button variant="ghost" size="sm" onClick={onOpenBackup} aria-label={tr('ui.layout.Topbar.getPageLabel.ac9b001')} title={tr('ui.layout.Topbar.getPageLabel.ac9b001')}><Archive size={14} /></Button>
+    <Button variant="ghost" size="sm" onClick={onOpenTrash} aria-label={tr("browser.components.BrowserListLayout.aria_label.64ea875")} title={tr("browser.components.BrowserListLayout.aria_label.64ea875")}><Trash2 size={14} /></Button>
+    <Button variant="secondary" size="sm" onClick={onImportProfiles} loading={importingProfiles}><Upload size={14} />{tr("browser.components.BrowserListLayout.text.60e2bca")}</Button>
+    <Link to="/browser/auto-config"><Button size="sm"><Plus size={14} />{tr("browser.components.BrowserListLayout.text.9c614ae")}</Button></Link>
+      </div>
+    </section>
+  </>
 }
 
 interface BrowserListSettingsModalProps {
@@ -297,29 +122,31 @@ export function BrowserListSettingsModal({
   onDeleteCore,
   onSetDefaultCore,
 }: BrowserListSettingsModalProps) {
+  useLocale()
+
   const coreColumns: TableColumn<BrowserCore>[] = [
-    { key: 'coreName', title: '名称' },
-    { key: 'corePath', title: '路径' },
+    { key: 'coreName', title: tr("browser.components.BrowserListLayout.title.1be7ae4") },
+    { key: 'corePath', title: tr("browser.components.BrowserListLayout.title.9132e08") },
     {
       key: 'isDefault',
-      title: '默认',
+      title: tr("browser.api.runtime.message.c8d09cf"),
       render: (value) => (value ? <Star className="h-4 w-4 fill-[var(--color-warning)] text-[var(--color-warning)]" /> : null),
     },
     {
       key: 'actions',
-      title: '操作',
+      title: tr("browser.components.AutomationScriptHistoryModal.text.f3ea6d3"),
       align: 'right',
       render: (_, record) => (
         <div className="flex justify-end gap-1">
           {!record.isDefault && (
-            <Button size="sm" variant="ghost" onClick={() => onSetDefaultCore(record.coreId)} aria-label={`设为默认内核：${record.coreName}`} title="设为默认">
+            <Button size="sm" variant="ghost" onClick={() => onSetDefaultCore(record.coreId)} aria-label={tr("browser.components.BrowserListLayout.BrowserListSettingsModal.03a3d64", [record.coreName])} title={tr("browser.components.BrowserListLayout.title.536a009")}>
               <Star className="w-4 h-4" />
             </Button>
           )}
-          <Button size="sm" variant="ghost" onClick={() => onEditCore(record)} aria-label={`编辑内核：${record.coreName}`} title="编辑">
+          <Button size="sm" variant="ghost" onClick={() => onEditCore(record)} aria-label={tr("browser.components.BrowserListLayout.BrowserListSettingsModal.623926f", [record.coreName])} title={tr("browser.components.BrowserListLayout.title.a7f814c")}>
             <Edit2 className="w-4 h-4" />
           </Button>
-          <Button size="sm" variant="ghost" onClick={() => onDeleteCore(record.coreId)} aria-label={`删除内核：${record.coreName}`} title="删除">
+          <Button size="sm" variant="ghost" onClick={() => onDeleteCore(record.coreId)} aria-label={tr("browser.components.BrowserListLayout.BrowserListSettingsModal.45e8cd6", [record.coreName])} title={tr("browser.components.BrowserListLayout.title.3755f56")}>
             <Trash2 className="w-4 h-4" />
           </Button>
         </div>
@@ -331,23 +158,22 @@ export function BrowserListSettingsModal({
     <Modal
       open={open}
       onClose={onClose}
-      title="基础配置"
+      title={tr("browser.components.BrowserListLayout.aria_label.5095009")}
       width="700px"
       footer={
         <>
-          <Button variant="secondary" onClick={onClose}>取消</Button>
-          <Button onClick={onSave} loading={savingSettings}>保存</Button>
+          <Button variant="secondary" onClick={onClose}>{tr("App.CloseConfirmModal.4d0b468")}</Button>
+          <Button onClick={onSave} loading={savingSettings}>{tr("browser.components.BrowserListLayout.text.fadf24d")}</Button>
         </>
       }
     >
       <div className="space-y-6">
         <div>
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-[var(--color-text-primary)]">内核管理</span>
+            <span className="text-sm font-medium text-[var(--color-text-primary)]">{tr("browser.components.BrowserListLayout.text.6de3e8f")}</span>
             <div className="flex gap-2">
               <Button size="sm" onClick={onAddCore}>
-                <Plus className="w-4 h-4" />新增内核
-              </Button>
+                <Plus className="w-4 h-4" />{tr("browser.components.BrowserListLayout.text.c5ae8df")}</Button>
             </div>
           </div>
           <Card padding="none">
@@ -355,14 +181,14 @@ export function BrowserListSettingsModal({
           </Card>
         </div>
 
-        <FormItem label="用户数据根目录">
+        <FormItem label={tr("browser.components.BrowserListLayout.label.5b23d25")}>
           <Input
             value={settings.userDataRoot}
             onChange={(event) => onSettingsChange({ userDataRoot: event.target.value })}
-            placeholder="data"
+            placeholder={tr("ui.modules.browser.components.BrowserListLayout.label.a17c9aa")}
           />
         </FormItem>
-        <FormItem label="默认指纹参数" hint="每行一个参数">
+        <FormItem label={tr("browser.components.BrowserListLayout.label.51c2e53")}>
           <Textarea
             value={fingerprintText}
             onChange={(event) => onFingerprintTextChange(event.target.value)}
@@ -370,7 +196,7 @@ export function BrowserListSettingsModal({
             placeholder="--fingerprint-brand=Chrome"
           />
         </FormItem>
-        <FormItem label="默认启动参数" hint="每行一个参数">
+        <FormItem label={tr("browser.components.BrowserListLayout.label.0b1e606")}>
           <Textarea
             value={launchText}
             onChange={(event) => onLaunchTextChange(event.target.value)}
@@ -378,27 +204,27 @@ export function BrowserListSettingsModal({
             placeholder="--disable-sync"
           />
         </FormItem>
-        <FormItem label="默认启动页面" hint="每行一个 URL，留空则启动时不再自动打开页面">
+        <FormItem label={tr("browser.components.BrowserListLayout.label.d97e30a")} consequence={tr("browser.components.BrowserListLayout.hint.3f773d0")}>
           <Textarea
             value={startUrlsText}
             onChange={(event) => onStartUrlsTextChange(event.target.value)}
             rows={4}
-            placeholder="启动 URL"
+            placeholder={tr("browser.components.BrowserListLayout.placeholder.64515b5")}
           />
         </FormItem>
-        <FormItem label="轻启动模式" hint="先起空白页，实例就绪后再打开默认页面">
+        <FormItem label={tr("browser.components.BrowserListLayout.label.e6ab791")}>
           <div className="flex items-center justify-between rounded-md border border-[var(--color-border-default)] px-3 py-2">
-            <span className="text-sm text-[var(--color-text-primary)]">延后打开启动页</span>
+            <span className="text-sm text-[var(--color-text-primary)]">{tr("browser.components.BrowserListLayout.text.2d1a8ea")}</span>
             <Switch
               checked={settings.lightStartEnabled}
               onChange={(checked) => onSettingsChange({ lightStartEnabled: checked })}
             />
           </div>
         </FormItem>
-        <FormItem label="默认恢复历史标签" hint="实例选择跟随内核时使用；不影响启动页和启动书签。实例未覆盖时，下次启动恢复之前的标签页和窗口。">
+        <FormItem label={tr("browser.components.BrowserListLayout.label.48e49d9")}>
           <div className="flex items-center justify-between rounded-md border border-[var(--color-border-default)] px-3 py-2">
             <div>
-              <p className="text-sm text-[var(--color-text-primary)]">内核默认</p>
+              <p className="text-sm text-[var(--color-text-primary)]">{tr("browser.components.BrowserListLayout.text.1fe4dd2")}</p>
             </div>
             <Switch
               checked={settings.restoreLastSession}
@@ -407,7 +233,7 @@ export function BrowserListSettingsModal({
           </div>
         </FormItem>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
-          <FormItem label="启动就绪超时（毫秒）">
+          <FormItem label={tr("browser.components.BrowserListLayout.label.1d9b89e")}>
             <Input
               type="number"
               min={1000}
@@ -421,7 +247,7 @@ export function BrowserListSettingsModal({
               placeholder="3000"
             />
           </FormItem>
-          <FormItem label="启动稳定窗口（毫秒）">
+          <FormItem label={tr("browser.components.BrowserListLayout.label.adb3f5b")}>
             <Input
               type="number"
               min={0}
@@ -462,41 +288,43 @@ export function BrowserCoreEditorModal({
   onValidate,
   onCoreFormChange,
 }: BrowserCoreEditorModalProps) {
+  useLocale()
+
   return (
     <Modal
       open={open}
       onClose={onClose}
-      title={coreForm.coreId ? '编辑内核' : '新增内核'}
+      title={coreForm.coreId ? tr("browser.components.BrowserListLayout.BrowserCoreEditorModal.7863964") : tr("browser.components.BrowserListLayout.text.c5ae8df")}
       width="500px"
       footer={
         <>
-          <Button variant="secondary" onClick={onClose}>取消</Button>
-          <Button onClick={onSave} loading={savingCore}>保存</Button>
+          <Button variant="secondary" onClick={onClose}>{tr("App.CloseConfirmModal.4d0b468")}</Button>
+          <Button onClick={onSave} loading={savingCore}>{tr("browser.components.BrowserListLayout.text.fadf24d")}</Button>
         </>
       }
     >
       <div className="space-y-4">
-        <FormItem label="内核名称" required>
+        <FormItem label={tr("browser.components.BrowserListLayout.label.01e4c4a")} required>
           <Input
             value={coreForm.coreName}
             onChange={(event) => onCoreFormChange({ coreName: event.target.value })}
-            placeholder="Chrome 142"
+            placeholder={tr("ui.modules.browser.components.BrowserListLayout.label.88e29b5")}
           />
         </FormItem>
-        <FormItem label="内核路径" required>
+        <FormItem label={tr("browser.components.BrowserListLayout.label.a1d450e")} required>
           <div className="flex gap-2">
             <Input
               value={coreForm.corePath}
               onChange={(event) => onCoreFormChange({ corePath: event.target.value })}
-              placeholder="chrome 或 D:/browsers/chrome-120"
+              placeholder={tr("browser.components.BrowserListLayout.placeholder.a5c344f")}
               className="flex-1"
             />
-            <Button variant="secondary" onClick={onValidate}>验证</Button>
+            <Button variant="secondary" onClick={onValidate}>{tr("browser.components.BrowserListLayout.text.80144e2")}</Button>
           </div>
           {coreValidation && (
             <div className={`mt-1 flex items-center gap-1 text-sm ${coreValidation.valid ? 'text-[var(--color-success)]' : 'text-[var(--color-error)]'}`}>
               {coreValidation.valid ? <CheckCircle className="w-4 h-4" /> : <XCircle className="w-4 h-4" />}
-              {coreValidation.message}
+              {translateMessage(coreValidation.message)}
             </div>
           )}
         </FormItem>

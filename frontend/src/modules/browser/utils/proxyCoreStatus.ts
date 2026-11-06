@@ -1,3 +1,4 @@
+import { tr } from '../../../shared/i18n'
 import type { ProxyCoreState, ProxyCoreStatusResult } from '../types'
 
 /**
@@ -59,9 +60,9 @@ export function normalizeProxyCoreStatus(status: Partial<ProxyCoreStatusResult> 
 export type ProxyCoreStatusKind = ProxyCoreState
 
 const GENERIC_PROXY_CORE_STATUS_MESSAGES = new Set([
-  '已启用', '已配置', '已安装', '已下载', '已就绪',
-  '未安装', '未下载', '当前内核未找到',
-  '状态不可用', '未连接后端',
+  tr("browser.components.AutomationScriptPublicApiModalView.AutomationScriptPublicApiModalView.25d2843"), tr("browser.pages.BrowserEditPage.BrowserEditPage.dc7cd22"), tr("browser.automationRuntime.getAutomationRuntimeBadgeText.eb88ff5"), tr("browser.utils.proxyCoreStatus.message.0c95515"), tr("browser.automationRuntime.getAutomationRuntimeBadgeText.f2afde8"),
+  tr("browser.utils.proxyCoreStatus.message.6f7dc94"), tr("browser.utils.proxyCoreStatus.message.01984cf"), tr("browser.utils.proxyCoreStatus.message.1e6ff46"),
+  tr("browser.utils.proxyCoreStatus.message.cb63728"), tr("browser.api.proxies.message.2de16c7"),
 ])
 
 export function proxyCoreStatusKind(status: Partial<ProxyCoreStatusResult> | null | undefined): ProxyCoreStatusKind {
@@ -78,11 +79,11 @@ export function proxyCoreStatusKind(status: Partial<ProxyCoreStatusResult> | nul
 
 export function proxyCoreStatusLabel(status: Partial<ProxyCoreStatusResult> | null | undefined): string {
   switch (proxyCoreStatusKind(status)) {
-    case 'ready': return '已就绪'
-    case 'installed': return '已安装'
-    case 'downloaded': return '已下载'
-    case 'missing': return '缺失'
-    case 'unavailable': return '状态不可用'
+    case 'ready': return tr("browser.automationRuntime.getAutomationRuntimeBadgeText.f2afde8")
+    case 'installed': return tr("browser.automationRuntime.getAutomationRuntimeBadgeText.eb88ff5")
+    case 'downloaded': return tr("browser.utils.proxyCoreStatus.message.0c95515")
+    case 'missing': return tr("browser.utils.proxyCoreStatus.proxyCoreStatusLabel.2fe9b75")
+    case 'unavailable': return tr("browser.utils.proxyCoreStatus.message.cb63728")
   }
 }
 
@@ -96,14 +97,14 @@ export function proxyCoreStatusDetail(status: Partial<ProxyCoreStatusResult> | n
   const kind = proxyCoreStatusKind(normalized)
   const message = normalized.message
   if (!message) {
-    return kind === 'missing' && normalized.active ? '当前连接栈需要该内核' : ''
+    return kind === 'missing' && normalized.active ? tr("browser.utils.proxyCoreStatus.proxyCoreStatusDetail.798a128") : ''
   }
 
   // A bridge can pair any of these generic state messages with the boolean
   // fields. They are never useful as a second detail column, regardless of
   // which field won during normalization.
   if (GENERIC_PROXY_CORE_STATUS_MESSAGES.has(message)) {
-    return kind === 'missing' && normalized.active ? '当前连接栈需要该内核' : ''
+    return kind === 'missing' && normalized.active ? tr("browser.utils.proxyCoreStatus.proxyCoreStatusDetail.798a128") : ''
   }
   return message
 }

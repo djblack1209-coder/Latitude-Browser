@@ -27,8 +27,8 @@ async function productionApi() {
     build: { write: false, minify: true, rollupOptions: { input: entry, preserveEntrySignatures: 'strict', output: { format: 'es', inlineDynamicImports: true } } },
   })
   const chunk = result.output.find(item => item.type === 'chunk' && item.isEntry)
-  // Vite/Rollup freezes this namespace, unlike the esbuild-only fixtures above.
-  assert.match(chunk.code, /Object\.freeze\(/)
+  // Exercise the actual production namespace; Rolldown's representation
+  // differs from Rollup while the bridge behavior must remain the same.
   return import('data:text/javascript;base64,' + Buffer.from(chunk.code + `\n// ${Math.random()}`).toString('base64'))
 }
 
@@ -114,10 +114,10 @@ test('page boundary hides business controls when unavailable and labels developm
   }
   bridge(null)
   const production = await load({DEV:false})
-  assert.match(production, /桌面服务尚未就绪/)
+  assert.match(production, /Desktop service not ready yet/)
   assert.doesNotMatch(production, /dangerous business action/)
   const mock = await load({DEV:true,VITE_ENABLE_DEV_MOCK:'true'})
-  assert.match(mock, /开发模拟模式/)
+  assert.match(mock, /Mock data/)
   assert.match(mock, /dangerous business action/)
   bridge({})
   const desktop = await load({DEV:false})

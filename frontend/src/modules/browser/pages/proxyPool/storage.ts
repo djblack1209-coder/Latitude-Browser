@@ -1,3 +1,4 @@
+import { sourceText } from '../../../../shared/i18n'
 import type { ProxyCheckDiagnostic, ProxyIPHealthResult } from '../../types'
 
 import type { ClashProxy } from './helpers'
@@ -129,8 +130,8 @@ export function writeGlobalRefreshConfig(enabled: boolean, intervalM: number) {
 export function toLatencyValue(ok: boolean, latencyMs: number, error?: string): number {
   if (ok) return latencyMs
   const message = (error || '').toLowerCase()
-  if (message.includes('不支持')) return -3
-  if (message.includes('timeout') || message.includes('超时') || message.includes('deadline exceeded') || message.includes('i/o timeout')) return -2
+  if (message.includes(sourceText("browser.pages.proxyPool.ProxyPoolTableCard.text.ef8274b"))) return -3
+  if (message.includes('timeout') || message.includes(sourceText("browser.pages.proxyPool.ProxyPoolTableCard.text.ff06c24")) || message.includes('deadline exceeded') || message.includes('i/o timeout')) return -2
   return -4
 }
 

@@ -1,3 +1,5 @@
+import { translateMessage } from '../i18n'
+import { tr, useLocale } from '../i18n'
 import { ReactNode } from 'react'
 import { CheckCircle, XCircle, AlertCircle, Info, X } from 'lucide-react'
 import clsx from 'clsx'
@@ -37,31 +39,36 @@ export function Alert({
   showIcon = true,
   className,
 }: AlertProps) {
+  useLocale()
+
   const Icon = icons[type]
 
   return (
     <div
+      role={type === 'error' ? "alert" : "status"}
       className={clsx(
-        'flex gap-3 p-4 rounded-lg border',
+        'signal-alert flex gap-3 p-4 border',
         styles[type],
         className
       )}
     >
-      {showIcon && <Icon className="w-5 h-5 flex-shrink-0 mt-0.5" />}
-      
+      {showIcon && <Icon aria-hidden="true" className="w-5 h-5 flex-shrink-0 mt-0.5" />}
+
       <div className="flex-1 min-w-0">
         {title && (
-          <h4 className="font-semibold mb-1">{title}</h4>
+          <h4 className="font-semibold mb-1 text-[var(--color-text-primary)]">{title}</h4>
         )}
         <div className="text-sm text-[var(--color-text-secondary)]">
-          {message}
+          {translateMessage(message)}
         </div>
       </div>
 
       {closable && (
         <button
+          type="button"
+          aria-label={tr("ui.components.Alert.aria_label.c620893")}
           onClick={onClose}
-          className="p-0.5 rounded hover:bg-black/10 transition-colors flex-shrink-0"
+          className="signal-dismiss flex-shrink-0"
         >
           <X className="w-4 h-4" />
         </button>

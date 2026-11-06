@@ -1,3 +1,4 @@
+import { tr, useLocale } from '../../../../shared/i18n'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { FolderOpen } from 'lucide-react'
@@ -7,26 +8,26 @@ import { openProjectRoot } from '../../api/filesystem'
 import { LaunchDocsCodeBlock } from './LaunchDocsCodeBlock'
 
 export function LaunchDocsMarkdownContent({ content, docId }: { content: string; docId?: string }) {
+  useLocale()
+
   const showProjectRootAction = docId === 'tutorial-skill'
 
   return (
     <article className="max-w-[78ch] space-y-4">
       {showProjectRootAction ? (
         <div className="flex flex-wrap items-center justify-between gap-3 border-y border-[var(--color-border-default)] bg-[var(--color-bg-surface)] px-3 py-2.5">
-          <span className="text-sm text-[var(--color-text-secondary)]">安装命令默认相对项目根目录执行。</span>
+          <span className="text-sm text-[var(--color-text-secondary)]">{tr("browser.pages.launchApiDocs.LaunchDocsMarkdownContent.text.ed02976")}</span>
           <Button
             size="sm"
             variant="secondary"
             onClick={() => {
               void openProjectRoot().catch((error: any) => {
-                toast.error(error?.message || '打开根目录失败')
+                toast.error(error?.message || tr("browser.pages.launchApiDocs.LaunchDocsMarkdownContent.LaunchDocsMarkdownContent.e1502ea"))
               })
             }}
-            title="在文件管理器中打开项目根目录"
+            title={tr("browser.pages.launchApiDocs.LaunchDocsMarkdownContent.title.07fcbe8")}
           >
-            <FolderOpen className="h-4 w-4" aria-hidden="true" />
-            打开根目录
-          </Button>
+            <FolderOpen className="h-4 w-4" aria-hidden="true" />{tr("browser.pages.launchApiDocs.LaunchDocsMarkdownContent.text.083a3b6")}</Button>
         </div>
       ) : null}
 
@@ -34,7 +35,7 @@ export function LaunchDocsMarkdownContent({ content, docId }: { content: string;
         remarkPlugins={[remarkGfm]}
         components={{
           h1: ({ children }) => (
-            <h1 className="mb-5 border-b border-[var(--color-border-default)] pb-4 text-2xl font-semibold tracking-tight text-[var(--color-text-primary)]">
+            <h1 className="remit-doc-title mb-5 border-b border-[var(--color-border-default)] pb-4 text-2xl font-semibold tracking-tight text-[var(--color-text-primary)]">
               {children}
             </h1>
           ),
@@ -84,7 +85,7 @@ export function LaunchDocsMarkdownContent({ content, docId }: { content: string;
             <thead className="border-b border-[var(--color-border-default)] bg-[var(--color-bg-surface)]">{children}</thead>
           ),
           th: ({ children }) => (
-            <th className="px-3 py-2.5 text-left font-mono text-[10px] font-semibold uppercase tracking-[0.15em] text-[var(--color-text-muted)]">{children}</th>
+            <th className="px-3 py-2.5 text-left font-mono text-[10px] font-semibold   text-[var(--color-text-muted)]">{children}</th>
           ),
           td: ({ children }) => (
             <td className="border-t border-[var(--color-border-muted)] px-3 py-2.5 leading-6 text-[var(--color-text-secondary)]">{children}</td>

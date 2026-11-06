@@ -1,8 +1,10 @@
+import { getLocale, translateMessage } from '../../../shared/i18n'
+import { tr, useLocale, localized } from '../../../shared/i18n'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ChevronDown, RefreshCw, RotateCcw, Trash2 } from 'lucide-react'
 import { useSearchParams } from 'react-router-dom'
 import { Badge, Button, toast } from '../../../shared/components'
-import { SignalEmptyState, TelemetryStrip, TerminalPanel, WorkspaceHeader } from '../../../shared/components/SignalPrimitives'
+import { SignalEmptyState, TerminalPanel, WorkspaceHeader } from '../../../shared/components/SignalPrimitives'
 import './network-pages.css'
 
 interface LogEntry {
@@ -52,29 +54,29 @@ const RUN_METHOD_PREFIXES = [
   'BrowserInstanceRestart',
 ]
 
-const VIEW_CONFIG: Record<LogView, { eyebrow: string; title: string; description: string; terminalTitle: string; emptyTitle: string }> = {
+const VIEW_CONFIG: Record<LogView, { eyebrow: string; title: string; description: string; terminalTitle: string; emptyTitle: string }> = localized(() => ({
   all: {
     eyebrow: 'RUNTIME / LOGS',
-    title: '日志与诊断',
-    description: '查看内存缓冲中的运行日志。',
-    terminalTitle: '应用内存缓冲 · 全部日志',
-    emptyTitle: '当前没有应用日志',
+    title: tr("config.navigation.config.name.53a41da"),
+    description: tr("browser.pages.BrowserLogsPage.description.9515b69"),
+    terminalTitle: tr("browser.pages.BrowserLogsPage.terminalTitle.c9f518a"),
+    emptyTitle: tr("browser.pages.BrowserLogsPage.emptyTitle.03c5a70"),
   },
   network: {
     eyebrow: 'NETWORK / DIAGNOSTICS',
-    title: '网络诊断日志',
-    description: '筛选代理组件日志；不代表泄漏检测结果。',
-    terminalTitle: '应用内存缓冲 · 网络类别',
-    emptyTitle: '当前没有网络类别日志',
+    title: tr("browser.pages.BrowserLogsPage.title.99d823c"),
+    description: tr("browser.pages.BrowserLogsPage.description.3d3b216"),
+    terminalTitle: tr("browser.pages.BrowserLogsPage.terminalTitle.45d5a57"),
+    emptyTitle: tr("browser.pages.BrowserLogsPage.emptyTitle.1fee0dc"),
   },
   runs: {
     eyebrow: 'AUTOMATION / RUNS',
-    title: '运行相关日志',
-    description: '筛选自动化与实例运行日志。',
-    terminalTitle: '应用内存缓冲 · 运行类别',
-    emptyTitle: '当前没有运行类别日志',
+    title: tr("browser.pages.BrowserLogsPage.title.b0613f0"),
+    description: tr("browser.pages.BrowserLogsPage.description.7cb895a"),
+    terminalTitle: tr("browser.pages.BrowserLogsPage.terminalTitle.53a0d37"),
+    emptyTitle: tr("browser.pages.BrowserLogsPage.emptyTitle.ecf289f"),
   },
-}
+}))
 
 function resolveLogView(value: string | null): LogView {
   if (value === 'network' || value === 'runs') return value
@@ -119,7 +121,7 @@ function serializeFields(fields?: Record<string, unknown>) {
   try {
     return JSON.stringify(redactKnownSensitiveFields(fields))
   } catch {
-    return '[字段无法序列化]'
+    return tr("browser.pages.BrowserLogsPage.serializeFields.c63ac3d")
   }
 }
 
@@ -128,7 +130,7 @@ function formatFields(fields?: Record<string, unknown>) {
   try {
     return JSON.stringify(redacted, null, 2)
   } catch {
-    return '[字段无法序列化]'
+    return tr("browser.pages.BrowserLogsPage.serializeFields.c63ac3d")
   }
 }
 
@@ -144,24 +146,26 @@ function levelVariant(level: string): 'default' | 'info' | 'warning' | 'error' {
 async function fetchLogs(): Promise<LogEntry[]> {
   const app = (globalThis as any).go?.main?.App
   if (!app || typeof app.GetAppLogs !== 'function') {
-    throw new Error('日志桥接尚未就绪')
+    throw new Error(tr("browser.pages.BrowserLogsPage.fetchLogs.db5d414"))
   }
   const bindings: any = await import('../../../wailsjs/go/main/App')
   const entries = await bindings.GetAppLogs()
-  if (!Array.isArray(entries)) throw new Error('日志数据格式异常')
+  if (!Array.isArray(entries)) throw new Error(tr("browser.pages.BrowserLogsPage.fetchLogs.66eb8d2"))
   return entries
 }
 
 async function clearLogs() {
   const app = (globalThis as any).go?.main?.App
   if (!app || typeof app.ClearAppLogs !== 'function') {
-    throw new Error('日志桥接尚未就绪')
+    throw new Error(tr("browser.pages.BrowserLogsPage.fetchLogs.db5d414"))
   }
   const bindings: any = await import('../../../wailsjs/go/main/App')
   await bindings.ClearAppLogs()
 }
 
 export function BrowserLogsPage() {
+  const uiLocale = useLocale()
+
   const [searchParams] = useSearchParams()
   const view = resolveLogView(searchParams.get('view'))
   const viewConfig = VIEW_CONFIG[view]
@@ -208,7 +212,7 @@ export function BrowserLogsPage() {
       setLastLoadedAt(new Date())
     } catch (error) {
       if (requestId !== latestLoadIdRef.current) return
-      setReadError(error instanceof Error ? error.message : '读取日志失败')
+      setReadError(error instanceof Error ? error.message : tr("browser.pages.BrowserLogsPage.BrowserLogsPage.aa2684e"))
     } finally {
       if (!silent) {
         manualLoadCountRef.current = Math.max(0, manualLoadCountRef.current - 1)
@@ -242,10 +246,10 @@ export function BrowserLogsPage() {
       method: getMethod(entry),
       duration: getDuration(entry),
       serializedFields: serializeFields(entry.fields),
-    })), [logs, view])
+    })), [logs, view, uiLocale])
 
-  const components = useMemo(() => Array.from(new Set(viewRows.map(row => row.entry.component).filter(Boolean))).sort(), [viewRows])
-  const methods = useMemo(() => Array.from(new Set(viewRows.map(row => row.method).filter(Boolean))).sort(), [viewRows])
+  const components = useMemo(() => Array.from(new Set(viewRows.map(row => row.entry.component).filter(Boolean))).sort(), [viewRows, uiLocale])
+  const methods = useMemo(() => Array.from(new Set(viewRows.map(row => row.method).filter(Boolean))).sort(), [viewRows, uiLocale])
 
   const filteredRows = useMemo(() => viewRows.filter(row => {
     const { entry, method, duration, serializedFields } = row
@@ -268,7 +272,7 @@ export function BrowserLogsPage() {
     const fieldQuery = fieldKeyword.trim().toLowerCase()
     if (fieldQuery && !fieldText.includes(fieldQuery)) return false
     return true
-  }), [componentFilter, durationMin, fieldKeyword, keyword, levelFilter, methodFilter, quickFilter, timeFrom, timeTo, viewRows])
+  }), [componentFilter, durationMin, fieldKeyword, keyword, levelFilter, methodFilter, quickFilter, timeFrom, timeTo, viewRows, uiLocale])
 
   useEffect(() => {
     if (autoScroll) scrollLogsToBottom('auto')
@@ -288,10 +292,10 @@ export function BrowserLogsPage() {
       setLogs([])
       setReadError('')
       initialScrollDoneRef.current = false
-      toast.success('内存日志已清空')
+      toast.success(tr("browser.pages.BrowserLogsPage.BrowserLogsPage.a1850d5"))
     } catch (error) {
-      const message = error instanceof Error ? error.message : '清空日志失败'
-      toast.error(`${message}，已保留当前记录`)
+      const message = error instanceof Error ? error.message : tr("browser.pages.BrowserLogsPage.BrowserLogsPage.2e0e7f9")
+      toast.error(tr("browser.pages.BrowserLogsPage.BrowserLogsPage.a32e7cf", [message]))
     } finally {
       setClearing(false)
     }
@@ -311,18 +315,16 @@ export function BrowserLogsPage() {
 
   const advancedFilterCount = [componentFilter !== 'ALL', methodFilter !== 'ALL', !!fieldKeyword, !!durationMin, !!timeFrom, !!timeTo]
     .filter(Boolean).length
-  const errors = viewRows.filter(row => row.entry.level === 'ERROR').length
-  const warnings = viewRows.filter(row => row.entry.level === 'WARN').length
   const lastReadLabel = lastLoadedAt
-    ? lastLoadedAt.toLocaleTimeString('zh-CN', { hour12: false })
-    : '尚未成功读取'
+    ? lastLoadedAt.toLocaleTimeString(getLocale(), { hour12: false })
+    : tr("browser.pages.BrowserLogsPage.BrowserLogsPage.988836e")
 
   return (
     <div className="network-page network-logs-page space-y-4">
       <WorkspaceHeader
-        eyebrow={viewConfig.eyebrow}
+
         title={viewConfig.title}
-        description={viewConfig.description}
+
         className="network-workspace-header"
         actions={(
           <>
@@ -331,145 +333,112 @@ export function BrowserLogsPage() {
                 type="checkbox"
                 checked={autoRefresh}
                 onChange={event => setAutoRefresh(event.target.checked)}
-                aria-label="自动刷新日志"
+                aria-label={tr("browser.pages.BrowserLogsPage.aria_label.8b57086")}
               />
               <span className="network-auto-refresh-track" aria-hidden="true"><span /></span>
               <span className="network-auto-refresh-copy">
-                <strong>自动刷新</strong>
-                <small>{autoRefresh ? '每 3 秒' : '已暂停'}</small>
+                <strong>{tr("browser.pages.BrowserLogsPage.text.297a7ec")}</strong>
+                <small>{autoRefresh ? tr("browser.pages.BrowserLogsPage.BrowserLogsPage.ca4e0b3") : tr("browser.pages.BrowserLogsPage.BrowserLogsPage.fcbae46")}</small>
               </span>
             </label>
             <Button variant="secondary" size="sm" onClick={() => void load()} loading={loading} className="gap-1.5">
-              <RefreshCw className="h-3.5 w-3.5" aria-hidden="true" />
-              刷新
-            </Button>
+              <RefreshCw className="h-3.5 w-3.5" aria-hidden="true" />{tr("browser.components.AutomationRuntimeSnapshot.text.38108ea")}</Button>
             <Button variant="secondary" size="sm" onClick={() => void handleClear()} loading={clearing} className="gap-1.5">
-              <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
-              清空
-            </Button>
+              <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />{tr("browser.pages.BrowserLogsPage.text.84fcd70")}</Button>
           </>
         )}
       >
-        <TelemetryStrip
-          className="network-telemetry-strip"
-          items={[
-            {
-              label: '当前类别',
-              value: viewRows.length,
-              detail: `内存缓冲共 ${logs.length} 条`,
-              tone: viewRows.length > 0 ? 'accent' : 'neutral',
-            },
-            {
-              label: '筛选显示',
-              value: filteredRows.length,
-              detail: filteredRows.length === viewRows.length ? '未排除类别内记录' : `已排除 ${viewRows.length - filteredRows.length} 条`,
-            },
-            {
-              label: '错误',
-              value: errors,
-              detail: 'ERROR 级别记录',
-              tone: errors > 0 ? 'danger' : 'neutral',
-            },
-            {
-              label: '警告',
-              value: warnings,
-              detail: 'WARN 级别记录',
-              tone: warnings > 0 ? 'warning' : 'neutral',
-            },
-          ]}
-        />
+
       </WorkspaceHeader>
 
-      <section className="network-log-controls" aria-label="日志筛选">
+      <section className="network-log-controls" aria-label={tr("browser.pages.BrowserLogsPage.aria_label.c8082c8")}>
         <div className="network-log-filter-row">
-          <div className="network-filter-buttons" aria-label="按日志级别筛选">
+          <div className="network-filter-buttons" aria-label={tr("browser.pages.BrowserLogsPage.aria_label.03ca0fa")}>
             {LEVELS.map(level => (
               <button
                 type="button"
                 key={level}
                 onClick={() => setLevelFilter(level)}
                 aria-pressed={levelFilter === level}
-                data-active={levelFilter === level ? 'true' : 'false'}
+                data-active={levelFilter === level ? "true" : "false"}
               >
                 {level}
               </button>
             ))}
           </div>
-          <div className="network-filter-buttons network-quick-filters" aria-label="快速筛选">
+          <div className="network-filter-buttons network-quick-filters" aria-label={tr("browser.pages.BrowserLogsPage.aria_label.582419b")}>
             {([
-              ['ALL', '全部'],
-              ['ERRORS', '只看异常'],
-              ['SLOW', '慢调用'],
-              ['FRONTEND', '前端操作'],
-              ['BACKEND', '后端组件'],
+              ['ALL', tr("browser.components.GroupTreeNav.text.778fc8f")],
+              ['ERRORS', tr("browser.pages.BrowserLogsPage.BrowserLogsPage.768e7f1")],
+              ['SLOW', tr("browser.pages.BrowserLogsPage.BrowserLogsPage.923101c")],
+              ['FRONTEND', tr("browser.pages.BrowserLogsPage.BrowserLogsPage.3d9fa23")],
+              ['BACKEND', tr("browser.pages.BrowserLogsPage.BrowserLogsPage.13cfabd")],
             ] as Array<[QuickFilter, string]>).map(([value, label]) => (
               <button
                 type="button"
                 key={value}
                 onClick={() => setQuickFilter(value)}
                 aria-pressed={quickFilter === value}
-                data-active={quickFilter === value ? 'true' : 'false'}
+                data-active={quickFilter === value ? "true" : "false"}
               >
                 {label}
               </button>
             ))}
           </div>
-          <span className="network-log-count">{filteredRows.length} / {viewRows.length} 条</span>
+          <span className="network-log-count">{filteredRows.length} / {viewRows.length}{tr("browser.pages.BrowserLogsPage.text.eb8c2d5")}</span>
         </div>
 
         <div className="network-log-search-row">
           <label className="network-field network-log-search">
-            <span>搜索</span>
+            <span>{tr("browser.pages.BrowserLogsPage.text.f040908")}</span>
             <input
               value={keyword}
               onChange={event => setKeyword(event.target.value)}
-              placeholder="消息、组件、方法或字段"
+              placeholder={tr("browser.pages.BrowserLogsPage.placeholder.64ee559")}
             />
           </label>
           <label className="network-auto-scroll-control">
             <input type="checkbox" checked={autoScroll} onChange={event => setAutoScroll(event.target.checked)} />
-            <span>跟随最新日志</span>
+            <span>{tr("browser.pages.BrowserLogsPage.text.43abbba")}</span>
           </label>
           <Button variant="ghost" size="sm" onClick={resetFilters} className="gap-1.5">
-            <RotateCcw className="h-3.5 w-3.5" aria-hidden="true" />
-            重置筛选
-          </Button>
+            <RotateCcw className="h-3.5 w-3.5" aria-hidden="true" />{tr("browser.pages.BrowserLogsPage.text.b63e282")}</Button>
         </div>
 
         <details className="network-advanced-filters">
           <summary>
-            <span><ChevronDown className="h-3.5 w-3.5" aria-hidden="true" />高级筛选</span>
-            <span>{advancedFilterCount > 0 ? `${advancedFilterCount} 项已启用` : '按组件、方法、字段、耗时与时间过滤'}</span>
+            <span><ChevronDown className="h-3.5 w-3.5" aria-hidden="true" />{tr("browser.pages.BrowserLogsPage.text.6ac0ea8")}</span>
+            <span>{advancedFilterCount > 0 ? tr("browser.pages.BrowserLogsPage.BrowserLogsPage.f15c6df", [advancedFilterCount]) : tr("browser.pages.BrowserLogsPage.BrowserLogsPage.eaa62e1")}</span>
           </summary>
           <div className="network-advanced-filter-grid">
             <label className="network-field">
-              <span>组件</span>
+              <span>{tr("browser.pages.BrowserLogsPage.text.7359f06")}</span>
               <select value={componentFilter} onChange={event => setComponentFilter(event.target.value)}>
-                <option value="ALL">全部组件</option>
+                <option value="ALL">{tr("browser.pages.BrowserLogsPage.text.b5e6890")}</option>
                 {components.map(component => <option key={component} value={component}>{component}</option>)}
               </select>
             </label>
             <label className="network-field">
-              <span>方法</span>
+              <span>{tr("browser.pages.BrowserLogsPage.text.b77e2ac")}</span>
               <select value={methodFilter} onChange={event => setMethodFilter(event.target.value)}>
-                <option value="ALL">全部方法</option>
+                <option value="ALL">{tr("browser.pages.BrowserLogsPage.text.08d8d0e")}</option>
                 {methods.map(method => <option key={method} value={method}>{method}</option>)}
               </select>
             </label>
             <label className="network-field">
-              <span>字段内容</span>
-              <input value={fieldKeyword} onChange={event => setFieldKeyword(event.target.value)} placeholder="搜索结构化字段" />
+              <span>{tr("browser.pages.BrowserLogsPage.text.404fab0")}</span>
+              <input value={fieldKeyword} onChange={event => setFieldKeyword(event.target.value)} placeholder={tr("browser.pages.BrowserLogsPage.placeholder.117d30c")} />
             </label>
             <label className="network-field">
-              <span>最小耗时</span>
-              <input type="number" min="0" value={durationMin} onChange={event => setDurationMin(event.target.value)} placeholder="毫秒" />
+              <span>{tr("browser.pages.BrowserLogsPage.text.4377ddf")}</span>
+              <input type="number" min="0" value={durationMin} onChange={event => setDurationMin(event.target.value)} placeholder={tr("browser.pages.BrowserLogsPage.placeholder.f3c3d56")} />
             </label>
             <label className="network-field">
-              <span>开始时间</span>
+              <span>{tr("browser.pages.BrowserLogsPage.text.e8868af")}</span>
               <input type="datetime-local" value={timeFrom} onChange={event => setTimeFrom(event.target.value)} />
             </label>
             <label className="network-field">
-              <span>结束时间</span>
+              <span>{tr("browser.components.AutomationScriptHistoryModal.label.a0bb9f4")}</span>
               <input type="datetime-local" value={timeTo} onChange={event => setTimeTo(event.target.value)} />
             </label>
           </div>
@@ -479,40 +448,40 @@ export function BrowserLogsPage() {
       <TerminalPanel
         title={viewConfig.terminalTitle}
         className="network-log-terminal"
-        meta={<span>{readError ? '读取失败，保留上次结果' : `最近读取 ${lastReadLabel}`}</span>}
+        meta={<span>{readError ? tr("browser.pages.BrowserLogsPage.BrowserLogsPage.442d940") : tr("browser.pages.BrowserLogsPage.BrowserLogsPage.f90ae4a", [lastReadLabel])}</span>}
       >
         {readError && (
           <div className="network-log-error" role="alert">
-            <strong>日志读取失败</strong>
-            <span>{readError}。{logs.length > 0 ? '下方仍显示最后一次成功读取的记录。' : '当前没有可显示的缓存记录。'}</span>
+            <strong>{tr("browser.pages.BrowserLogsPage.text.e855c69")}</strong>
+            <span>{translateMessage(readError)}。{logs.length > 0 ? tr("browser.pages.BrowserLogsPage.BrowserLogsPage.ebcb354") : tr("browser.pages.BrowserLogsPage.BrowserLogsPage.25fc8cd")}</span>
           </div>
         )}
         <div ref={logContainerRef} className="network-log-viewport">
           {loading && logs.length === 0 ? (
-            <SignalEmptyState symbol="logs" title="正在读取日志" description="等待应用内存缓冲返回记录。" />
+            <SignalEmptyState symbol="logs" title={tr("browser.pages.BrowserLogsPage.title.3534e6f")}  />
           ) : readError && logs.length === 0 ? (
             <SignalEmptyState
               symbol="logs"
-              title="无法读取日志"
-              description={readError}
-              action={<Button size="sm" variant="secondary" onClick={() => void load()}>重新读取</Button>}
+              title={tr("browser.pages.BrowserLogsPage.title.3ec024d")}
+
+              action={<Button size="sm" variant="secondary" onClick={() => void load()}>{tr("browser.pages.AutoConfigPage.text.7784972")}</Button>}
             />
           ) : filteredRows.length === 0 ? (
             <SignalEmptyState
               symbol="logs"
-              title={viewRows.length === 0 ? viewConfig.emptyTitle : '没有匹配当前筛选的日志'}
-              description={viewRows.length === 0 ? '新的匹配记录写入内存缓冲后会出现在这里。' : '调整级别、快速筛选或高级条件后再试。'}
-              action={viewRows.length > 0 ? <Button size="sm" variant="secondary" onClick={resetFilters}>清除筛选</Button> : undefined}
+              title={viewRows.length === 0 ? viewConfig.emptyTitle : tr("browser.pages.BrowserLogsPage.BrowserLogsPage.1addc7f")}
+
+              action={viewRows.length > 0 ? <Button size="sm" variant="secondary" onClick={resetFilters}>{tr("browser.components.BrowserProfilesPanel.text.4bbc4e5")}</Button> : undefined}
             />
           ) : (
             <table className="network-log-table">
               <thead>
                 <tr>
-                  <th aria-label="行号">#</th>
-                  <th>时间</th>
-                  <th>级别</th>
-                  <th>组件</th>
-                  <th>消息</th>
+                  <th aria-label={tr("browser.pages.BrowserLogsPage.aria_label.f81e575")}>#</th>
+                  <th>{tr("browser.pages.BrowserLogsPage.text.89b4aa6")}</th>
+                  <th>{tr("browser.pages.BrowserLogsPage.text.2548499")}</th>
+                  <th>{tr("browser.pages.BrowserLogsPage.text.7359f06")}</th>
+                  <th>{tr("browser.pages.BrowserLogsPage.text.dc6de3f")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -523,10 +492,10 @@ export function BrowserLogsPage() {
                       <td className="network-log-line">{String(line).padStart(3, '0')}</td>
                       <td className="network-log-time">{entry.time}</td>
                       <td><Badge variant={levelVariant(entry.level)} className="network-log-level">{entry.level}</Badge></td>
-                      <td className="network-log-component" title={entry.component}>{entry.component || 'Unknown'}</td>
+                      <td className="network-log-component" title={entry.component}>{entry.component || tr("ui.modules.browser.pages.BrowserLogsPage.label.bc7819b")}</td>
                       <td className="network-log-message">
                         <div>
-                          <span>{entry.message}</span>
+                          <span>{translateMessage(entry.message)}</span>
                           {(method || duration > 0) && (
                             <span className="network-log-inline-meta">
                               {method && `method=${method}`}{method && duration > 0 ? ' ' : ''}{duration > 0 && `duration=${duration}ms`}
@@ -535,7 +504,7 @@ export function BrowserLogsPage() {
                         </div>
                         {fieldCount > 0 && (
                           <details className="network-log-fields">
-                            <summary>结构化字段 {fieldCount}</summary>
+                            <summary>{tr("browser.pages.BrowserLogsPage.text.e8781df")}{fieldCount}</summary>
                             <pre>{formatFields(entry.fields)}</pre>
                           </details>
                         )}

@@ -1,3 +1,4 @@
+import { tr } from '../../../shared/i18n'
 import type { BrowserProfile } from "../types";
 import {
   AUTOMATION_SCRIPT_TARGET_MODE_OPTIONS,
@@ -98,19 +99,19 @@ function selectorSummaryParts(selector: AutomationScriptTargetSelector): string[
     parts.push(`Code=${selector.code}`);
   }
   if (selector.profileName) {
-    parts.push(`实例=${selector.profileName}`);
+    parts.push(tr("browser.automationScripts.targets.selectorSummaryParts.9005bb6", [selector.profileName]));
   }
   if (selector.profileId && !selector.code) {
-    parts.push(`实例ID=${selector.profileId}`);
+    parts.push(tr("browser.automationScripts.targets.selectorSummaryParts.be410b9", [selector.profileId]));
   }
   if (selector.groupId) {
-    parts.push(`分组=${selector.groupId}`);
+    parts.push(tr("browser.automationScripts.targets.selectorSummaryParts.ac6b2f4", [selector.groupId]));
   }
   if (selector.tags.length > 0) {
-    parts.push(`标签=${selector.tags.join(" / ")}`);
+    parts.push(tr("browser.automationScripts.targets.selectorSummaryParts.f49d809", [selector.tags.join(" / ")]));
   }
   if (selector.keywords.length > 0) {
-    parts.push(`关键字=${selector.keywords.join(" / ")}`);
+    parts.push(tr("browser.automationScripts.targets.selectorSummaryParts.576b6b1", [selector.keywords.join(" / ")]));
   }
   return parts;
 }
@@ -197,7 +198,7 @@ export function formatAutomationTargetIdentity(
     return parts.join(" · ");
   }
   if (profileId) {
-    return options?.includeProfileId ? profileId : `实例 ID ${profileId}`;
+    return options?.includeProfileId ? profileId : tr("browser.automationScripts.targets.formatAutomationTargetIdentity.d7cc672", [profileId]);
   }
 
   return options?.fallback || "-";
@@ -210,25 +211,25 @@ export function describeAutomationScriptTargetConfig(
     case "existing": {
       const parts = selectorSummaryParts(config.selector);
       return parts.length > 0
-        ? `传入实例：${parts.join(" · ")}`
-        : "传入实例";
+        ? tr("browser.automationScripts.targets.describeAutomationScriptTargetConfig.1a18079", [parts.join(" · ")])
+        : tr("browser.automationScripts.definitions.label.6a30362");
     }
     case "create": {
       const parts = selectorSummaryParts(config.templateSelector);
       const namePart = config.createNameTemplate
-        ? `命名=${config.createNameTemplate}`
+        ? tr("browser.automationScripts.targets.describeAutomationScriptTargetConfig.81519ac", [config.createNameTemplate])
         : "";
-      return ["按模板新建实例", ...parts, namePart]
+      return [tr("browser.automationScripts.definitions.label.30a1e27"), ...parts, namePart]
         .filter(Boolean)
         .join(" · ");
     }
     case "rotate": {
       const parts = selectorSummaryParts(config.selector);
       return parts.length > 0
-        ? `按条件轮询实例：${parts.join(" · ")}`
-        : "按条件轮询实例";
+        ? tr("browser.automationScripts.targets.describeAutomationScriptTargetConfig.84656be", [parts.join(" · ")])
+        : tr("browser.automationScripts.definitions.label.f86b018");
     }
     default:
-      return "传入实例";
+      return tr("browser.automationScripts.definitions.label.6a30362");
   }
 }

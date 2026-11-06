@@ -1,3 +1,4 @@
+import { tr } from '../../shared/i18n'
 import type { AutomationState } from '../settings/api'
 
 export function getAutomationRuntimeBadgeVariant(state: AutomationState): 'default' | 'success' | 'error' | 'warning' {
@@ -8,12 +9,12 @@ export function getAutomationRuntimeBadgeVariant(state: AutomationState): 'defau
 }
 
 export function getAutomationRuntimeBadgeText(state: AutomationState): string {
-  if (!state.settings.enabled) return '未启用'
-  if (state.status.installing) return '准备中'
-  if (state.status.ready) return '已就绪'
-  if (state.status.installed) return '已安装'
-  if (state.status.lastError) return '异常'
-  return '待准备'
+  if (!state.settings.enabled) return tr("browser.automationRuntime.getAutomationRuntimeBadgeText.8bb38ef")
+  if (state.status.installing) return tr("browser.automationRuntime.getAutomationRuntimeBadgeText.4f1f8aa")
+  if (state.status.ready) return tr("browser.automationRuntime.getAutomationRuntimeBadgeText.f2afde8")
+  if (state.status.installed) return tr("browser.automationRuntime.getAutomationRuntimeBadgeText.eb88ff5")
+  if (state.status.lastError) return tr("browser.automationRuntime.getAutomationRuntimeBadgeText.5caf279")
+  return tr("browser.automationRuntime.getAutomationRuntimeBadgeText.d5c8ade")
 }
 
 export function getAutomationNodeSource(state: AutomationState): string {
@@ -23,11 +24,11 @@ export function getAutomationNodeSource(state: AutomationState): string {
 export function getAutomationNodeSourceLabel(nodeSource: string): string {
   switch (nodeSource) {
     case 'system':
-      return '系统 Node'
+      return tr("browser.automationRuntime.getAutomationNodeSourceLabel.7bd4748")
     case 'bundled':
-      return '内置 Node'
+      return tr("browser.automationRuntime.getAutomationNodeSourceLabel.fb8ac1a")
     default:
-      return '自动选择'
+      return tr("browser.automationRuntime.getAutomationNodeSourceLabel.9741bc8")
   }
 }
 

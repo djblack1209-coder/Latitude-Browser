@@ -1,3 +1,4 @@
+import { tr, useLocale } from '../../../shared/i18n'
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { X } from 'lucide-react'
@@ -15,7 +16,9 @@ interface DropdownPosition {
   width: number
 }
 
-export function TagInput({ value, onChange, suggestions = [], placeholder = '输入标签后按回车' }: TagInputProps) {
+export function TagInput({ value, onChange, suggestions = [], placeholder = tr("browser.components.TagInput.TagInput.7be6e64") }: TagInputProps) {
+  useLocale()
+
   const [input, setInput] = useState('')
   const [showSuggestions, setShowSuggestions] = useState(false)
   const [position, setPosition] = useState<DropdownPosition | null>(null)
@@ -106,6 +109,7 @@ export function TagInput({ value, onChange, suggestions = [], placeholder = '输
             {tag}
             <button
               type="button"
+              aria-label={tr("tags.remove", [tag])}
               onClick={e => { e.stopPropagation(); removeTag(tag) }}
               className="hover:text-[var(--color-error)] transition-colors"
             >
@@ -114,6 +118,7 @@ export function TagInput({ value, onChange, suggestions = [], placeholder = '输
           </span>
         ))}
         <input
+          aria-label={tr("assets.tags")}
           ref={inputRef}
           value={input}
           onChange={e => { setInput(e.target.value); setShowSuggestions(true) }}

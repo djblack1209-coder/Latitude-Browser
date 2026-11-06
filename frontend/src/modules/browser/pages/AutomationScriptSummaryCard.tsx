@@ -1,3 +1,4 @@
+import { tr, useLocale } from '../../../shared/i18n'
 import { type KeyboardEvent, type ReactNode } from "react";
 import { Braces, Clipboard, Link, Pencil, Play } from "lucide-react";
 import { Button } from "../../../shared/components";
@@ -11,9 +12,11 @@ function ScriptCardField({
   label: string;
   children: ReactNode;
 }) {
+  useLocale()
+
   return (
     <div className="min-w-0 border-t border-[var(--color-border-muted)] px-3 py-2.5 first:border-t-0 md:border-l md:border-t-0 md:first:border-l-0">
-      <div className="font-mono text-[9px] font-semibold uppercase tracking-[0.14em] text-[var(--color-text-muted)]">
+      <div className="text-[11px] font-medium text-[var(--color-text-muted)]">
         {label}
       </div>
       <div className="mt-1 min-w-0 text-xs font-medium leading-5 text-[var(--color-text-primary)]">
@@ -38,6 +41,8 @@ export function AutomationScriptSummaryCard({
   selected?: boolean;
   onSelectedChange?: (selected: boolean) => void;
 }) {
+  useLocale()
+
   const interactive = typeof onOpen === "function";
   const selectable = typeof onSelectedChange === "function";
   const isInterfaceModeCard = card.scriptType === "launch-api";
@@ -62,12 +67,12 @@ export function AutomationScriptSummaryCard({
   return (
     <article
       role={selectable ? "checkbox" : interactive ? "button" : undefined}
-      aria-label={selectable ? `${selected ? "取消选择" : "选择"}脚本 ${card.title}` : interactive ? `打开脚本 ${card.title}` : undefined}
+      aria-label={selectable ? tr("browser.pages.AutomationScriptSummaryCard.AutomationScriptSummaryCard.f6e1c78", [selected ? tr("browser.pages.AutomationScriptSummaryCard.AutomationScriptSummaryCard.f02e943") : tr("browser.pages.AutomationScriptSummaryCard.AutomationScriptSummaryCard.70b2082"), card.title]) : interactive ? tr("browser.pages.AutomationScriptSummaryCard.AutomationScriptSummaryCard.3ceb332", [card.title]) : undefined}
       aria-checked={selectable ? selected : undefined}
       tabIndex={cardClickable ? 0 : undefined}
       onClick={cardClickable ? handleCardClick : undefined}
       onKeyDown={cardClickable ? handleKeyDown : undefined}
-      className={`group flex h-full min-w-0 flex-col overflow-hidden rounded-md border bg-[var(--color-bg-surface)] text-left transition-[border-color,background-color,transform] duration-150 active:translate-y-px ${
+      className={`signal-panel group flex h-full min-w-0 flex-col overflow-hidden rounded-md border bg-[var(--color-bg-surface)] text-left transition-[border-color,background-color,transform] duration-150 active:translate-y-px ${
         cardClickable
           ? "cursor-pointer hover:border-[var(--color-border-strong)] hover:bg-[var(--color-bg-subtle)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)]"
           : ""
@@ -81,7 +86,7 @@ export function AutomationScriptSummaryCard({
             onClick={(event) => event.stopPropagation()}
             onChange={(event) => onSelectedChange?.(event.currentTarget.checked)}
             className="mt-0.5 h-4 w-4 shrink-0 rounded border-[var(--color-border-strong)] accent-[var(--color-accent)]"
-            aria-label={`选择 ${card.title}`}
+            aria-label={tr("browser.pages.AutomationScriptSummaryCard.AutomationScriptSummaryCard.f49303a", [card.title])}
           />
         ) : (
           <span className={`mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full ${card.modeToneClass}`} aria-hidden="true" />
@@ -91,7 +96,7 @@ export function AutomationScriptSummaryCard({
             <h3 className="min-w-0 text-[15px] font-semibold leading-5 text-[var(--color-text-primary)]">
               {card.title}
             </h3>
-            <span className="shrink-0 font-mono text-[9px] uppercase tracking-[0.08em] text-[var(--color-text-muted)]">
+            <span className="shrink-0 text-[11px] text-[var(--color-text-muted)]">
               {card.versionLabel}
             </span>
           </div>
@@ -102,14 +107,14 @@ export function AutomationScriptSummaryCard({
       </div>
 
       <div className="grid border-y border-[var(--color-border-muted)] md:grid-cols-[118px_minmax(0,1fr)]">
-        <ScriptCardField label="执行模式">
+        <ScriptCardField label={tr("browser.pages.AutomationScriptSummaryCard.label.10f002e")}>
           <span className="inline-flex items-center gap-1.5">
             <span className={`h-1.5 w-1.5 rounded-full ${card.modeToneClass}`} aria-hidden="true" />
             {card.modeLabel}
           </span>
         </ScriptCardField>
-        <ScriptCardField label="目标 Code">
-          <code className="block truncate whitespace-nowrap font-mono text-[10.5px] tracking-[0.03em]" title={card.codeDisplay}>
+        <ScriptCardField label={tr("browser.pages.AutomationScriptSummaryCard.label.b172d89")}>
+          <code className="block truncate whitespace-nowrap font-mono text-[10.5px] " title={card.codeDisplay}>
             {card.codeDisplay}
           </code>
         </ScriptCardField>
@@ -124,7 +129,7 @@ export function AutomationScriptSummaryCard({
             event.stopPropagation();
             void copyToClipboard(card.primaryActionText, card.primaryActionSuccessMessage);
           }}
-          aria-label={`复制 ${card.title} 的 ${card.primaryActionLabel}`}
+          aria-label={tr("browser.pages.AutomationScriptSummaryCard.AutomationScriptSummaryCard.be646f4", [card.title, card.primaryActionLabel])}
         >
           <Clipboard className="h-3.5 w-3.5" aria-hidden="true" />
           {card.primaryActionLabel}
@@ -137,11 +142,9 @@ export function AutomationScriptSummaryCard({
             event.stopPropagation();
             void copyToClipboard(card.secondaryActionText, card.secondaryActionSuccessMessage);
           }}
-          aria-label={`复制 ${card.title} 的请求 JSON`}
+          aria-label={tr("browser.pages.AutomationScriptSummaryCard.AutomationScriptSummaryCard.3ab43fc", [card.title])}
         >
-          <Braces className="h-3.5 w-3.5" aria-hidden="true" />
-          JSON
-        </Button>
+          <Braces className="h-3.5 w-3.5" aria-hidden="true" />{tr("ui.modules.browser.pages.AutomationScriptSummaryCard.label.031a4e7")}</Button>
 
         <div className="ml-auto flex flex-wrap items-center gap-1.5">
           {isInterfaceModeCard ? (
@@ -154,11 +157,9 @@ export function AutomationScriptSummaryCard({
                   if (typeof onRunAPI === "function") onRunAPI();
                   else onRunScript?.();
                 }}
-                aria-label={`执行 ${card.title}`}
+                aria-label={tr("browser.pages.AutomationScriptSummaryCard.AutomationScriptSummaryCard.96510c2", [card.title])}
               >
-                <Play className="h-3.5 w-3.5" aria-hidden="true" />
-                执行
-              </Button>
+                <Play className="h-3.5 w-3.5" aria-hidden="true" />{tr("browser.pages.AutomationScriptSummaryCard.text.28febba")}</Button>
             ) : null
           ) : (
             <>
@@ -170,11 +171,9 @@ export function AutomationScriptSummaryCard({
                     event.stopPropagation();
                     onRunScript();
                   }}
-                  aria-label={`执行脚本 ${card.title}`}
+                  aria-label={tr("browser.pages.AutomationScriptSummaryCard.AutomationScriptSummaryCard.e7a016b", [card.title])}
                 >
-                  <Play className="h-3.5 w-3.5" aria-hidden="true" />
-                  执行
-                </Button>
+                  <Play className="h-3.5 w-3.5" aria-hidden="true" />{tr("browser.pages.AutomationScriptSummaryCard.text.28febba")}</Button>
               ) : null}
               {typeof onRunAPI === "function" ? (
                 <Button
@@ -185,10 +184,10 @@ export function AutomationScriptSummaryCard({
                     event.stopPropagation();
                     onRunAPI();
                   }}
-                  aria-label={`${card.publicAPIEnabled ? "执行接口" : "配置接口"} ${card.title}`}
+                  aria-label={`${card.publicAPIEnabled ? tr("browser.pages.AutomationScriptSummaryCard.AutomationScriptSummaryCard.8da5fa5") : tr("browser.pages.AutomationScriptSummaryCard.AutomationScriptSummaryCard.5d1bf23")} ${card.title}`}
                 >
                   {card.publicAPIEnabled ? <Play className="h-3.5 w-3.5" aria-hidden="true" /> : <Link className="h-3.5 w-3.5" aria-hidden="true" />}
-                  {card.publicAPIEnabled ? "接口" : "配置接口"}
+                  {card.publicAPIEnabled ? tr("browser.pages.AutomationScriptSummaryCard.AutomationScriptSummaryCard.8b48ee2") : tr("browser.pages.AutomationScriptSummaryCard.AutomationScriptSummaryCard.5d1bf23")}
                 </Button>
               ) : null}
             </>
@@ -202,11 +201,9 @@ export function AutomationScriptSummaryCard({
                 event.stopPropagation();
                 onOpen?.();
               }}
-              aria-label={`编辑 ${card.title}`}
+              aria-label={tr("browser.pages.AutomationScriptSummaryCard.AutomationScriptSummaryCard.77e8292", [card.title])}
             >
-              <Pencil className="h-3.5 w-3.5" aria-hidden="true" />
-              编辑
-            </Button>
+              <Pencil className="h-3.5 w-3.5" aria-hidden="true" />{tr("browser.components.BrowserListLayout.title.a7f814c")}</Button>
           ) : null}
         </div>
       </div>

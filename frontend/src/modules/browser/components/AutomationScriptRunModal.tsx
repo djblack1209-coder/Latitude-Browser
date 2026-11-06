@@ -1,3 +1,4 @@
+import { tr, useLocale } from '../../../shared/i18n'
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "../../../shared/components";
@@ -39,6 +40,8 @@ export function AutomationScriptRunModal({
   dirty = false,
   onClose,
 }: AutomationScriptRunModalProps) {
+  const uiLocale = useLocale()
+
   const navigate = useNavigate();
   const [selectorText, setSelectorText] = useState("");
   const [paramsText, setParamsText] = useState("");
@@ -68,7 +71,7 @@ export function AutomationScriptRunModal({
     !!script && !usesStoredTargetConfig && !isDualInstanceRuntimeScript;
   const publicAPIConfig = useMemo(
     () => (script ? resolveAutomationScriptPublicAPIConfig(script) : null),
-    [script],
+    [script, uiLocale],
   );
   const publicAPIVariables = publicAPIConfig?.variables || [];
   const usedPublicAPIVariableNames = useMemo(() => {
@@ -82,7 +85,7 @@ export function AutomationScriptRunModal({
         variableInputs,
       ).usedVariables,
     );
-  }, [publicAPIConfig, variableInputs]);
+  }, [publicAPIConfig, variableInputs, uiLocale]);
   const hasPublicAPIVariables = publicAPIVariables.length > 0;
   const hasUnusedPublicAPIVariables =
     hasPublicAPIVariables &&
@@ -174,10 +177,10 @@ export function AutomationScriptRunModal({
       script?.paramsText || paramsText,
     ).paramsText;
   };
-  const paramsLabel = isDualInstanceRuntimeScript ? "启动配置" : "运行参数";
+  const paramsLabel = isDualInstanceRuntimeScript ? tr("browser.components.AutomationScriptRunModal.AutomationScriptRunModal.46155bb") : tr("browser.components.AutomationScriptRunModal.AutomationScriptRunModal.b215c99");
   const paramsFieldLabel = isDualInstanceRuntimeScript
-    ? "浏览器列表 / 启动配置 JSON"
-    : "运行参数 JSON";
+    ? tr("browser.components.AutomationScriptRunModal.AutomationScriptRunModal.b8f2638")
+    : tr("browser.components.AutomationScriptRunModal.AutomationScriptRunModal.e5e7297");
   const paramsPlaceholder = isDualInstanceRuntimeScript
     ? `{
   "browsers": [
@@ -257,10 +260,10 @@ export function AutomationScriptRunModal({
     }
     if (script.targetConfig.mode === "create") {
       if (!createDraft.templateProfileId) {
-        return "先选择一个模板实例";
+        return tr("browser.components.AutomationScriptRunModal.AutomationScriptRunModal.797efe6");
       }
       if (!createDraft.profileName.trim()) {
-        return "先输入新实例名称";
+        return tr("browser.components.AutomationScriptRunModal.AutomationScriptRunModal.2548c93");
       }
     }
     if (script.targetConfig.mode === "rotate") {
@@ -273,7 +276,7 @@ export function AutomationScriptRunModal({
         selector.keywords.length === 0 &&
         selector.tags.length === 0
       ) {
-        return "先填写至少一个轮询条件";
+        return tr("browser.components.AutomationScriptRunModal.AutomationScriptRunModal.8ba37da");
       }
     }
     return "";
@@ -307,12 +310,12 @@ export function AutomationScriptRunModal({
       });
       setLastRun(run);
       if (run.status === "success") {
-        toast.success(run.summary || "脚本执行完成");
+        toast.success(run.summary || tr("browser.components.AutomationScriptRunModal.AutomationScriptRunModal.4038650"));
       } else {
-        toast.error(run.error || run.summary || "脚本执行失败");
+        toast.error(run.error || run.summary || tr("browser.components.AutomationScriptRunModal.AutomationScriptRunModal.5752e60"));
       }
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : "脚本执行失败";
+      const message = error instanceof Error ? error.message : tr("browser.components.AutomationScriptRunModal.AutomationScriptRunModal.5752e60");
       toast.error(message);
     } finally {
       setRunning(false);
@@ -335,7 +338,7 @@ export function AutomationScriptRunModal({
       ? ""
       : validateJsonObjectText(
           nextSelectorText,
-          "目标选择器",
+          tr("browser.components.AutomationScriptRunModal.AutomationScriptRunModal.53327e5"),
           script.type === "launch-api" &&
             !usesStoredTargetConfig &&
             !isDualInstanceRuntimeScript,
@@ -366,13 +369,13 @@ export function AutomationScriptRunModal({
       if (demoMode === "select" && selectedProfile) {
         nextSelectorText = buildDemoSelectorText(selectedProfile.launchCode);
         setSelectorText(nextSelectorText);
-        syncDemoSessionFromProfile(selectedProfile, "选择实例");
-        toast.success("已自动回填所选实例 selector");
+        syncDemoSessionFromProfile(selectedProfile, tr("browser.components.AutomationInstanceSelector.AutomationInstanceSelector.1e75bfe"));
+        toast.success(tr("browser.components.AutomationScriptRunModal.AutomationScriptRunModal.d587c4a"));
       } else {
         toast.warning(
           demoMode === "create"
-            ? "先创建一个实例，或填入可用 code"
-            : "先选择实例，或填入可用 Code",
+            ? tr("browser.components.AutomationScriptRunModal.AutomationScriptRunModal.40887c2")
+            : tr("browser.components.AutomationScriptRunModal.AutomationScriptRunModal.31d2c01"),
         );
         return;
       }
@@ -388,7 +391,7 @@ export function AutomationScriptRunModal({
       selectedProfile &&
       !selectorDetachedFromSelectedProfile
     ) {
-      syncDemoSessionFromProfile(selectedProfile, "选择实例");
+      syncDemoSessionFromProfile(selectedProfile, tr("browser.components.AutomationInstanceSelector.AutomationInstanceSelector.1e75bfe"));
     }
 
     await executeRun(nextSelectorText, nextParamsText);
@@ -413,7 +416,7 @@ export function AutomationScriptRunModal({
     try {
       await openCorePath(path);
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : "打开目录失败";
+      const message = error instanceof Error ? error.message : tr("browser.components.AutomationScriptPublicApiModal.AutomationScriptPublicApiModal.6651d08");
       toast.error(message);
     }
   };

@@ -1,3 +1,4 @@
+import { tr } from '../../../shared/i18n'
 import { useEffect, useRef, useState } from 'react'
 import { toast } from '../../../shared/components'
 import { fetchBrowserProfiles, type AutomationDemoResult } from '../api'
@@ -49,7 +50,7 @@ export function useAutomationDemoSession({
       return profiles
     } catch (error: unknown) {
       if (showError) {
-        const message = error instanceof Error ? error.message : '演示实例状态刷新失败'
+        const message = error instanceof Error ? error.message : tr("browser.hooks.useAutomationDemoSession.useAutomationDemoSession.729f3d8")
         toast.error(message)
       }
       return null

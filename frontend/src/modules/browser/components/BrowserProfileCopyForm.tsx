@@ -1,3 +1,4 @@
+import { tr, useLocale } from '../../../shared/i18n'
 import clsx from 'clsx'
 import { FormItem, Input } from '../../../shared/components'
 import {
@@ -23,6 +24,8 @@ export function BrowserProfileCopyForm({
   onCopyOptionsChange,
   autoFocusName = false,
 }: BrowserProfileCopyFormProps) {
+  useLocale()
+
   const setMode = (mode: BrowserProfileCopyOptions['mode']) => {
     onCopyOptionsChange({
       ...copyOptions,
@@ -49,23 +52,22 @@ export function BrowserProfileCopyForm({
     <div className="space-y-5">
       <div className="space-y-4">
         {sourceName ? (
-          <div className="rounded-lg border border-[var(--color-border-default)] bg-[var(--color-bg-secondary)] px-3 py-2 text-sm text-[var(--color-text-secondary)]">
-            源实例：{sourceName}
+          <div className="rounded-lg border border-[var(--color-border-default)] bg-[var(--color-bg-secondary)] px-3 py-2 text-sm text-[var(--color-text-secondary)]">{tr("browser.components.BrowserProfileCopyForm.text.0a5c5cc")}{sourceName}
           </div>
         ) : null}
 
-        <FormItem label="新实例名称" required>
+        <FormItem label={tr("browser.components.AutomationInstanceSelector.label.d1829a3")} required>
           <Input
             value={copyName}
             onChange={(event) => onCopyNameChange(event.target.value)}
-            placeholder="请输入新实例名称"
+            placeholder={tr("browser.components.BrowserProfileCopyForm.placeholder.20e5e6a")}
             autoFocus={autoFocusName}
           />
         </FormItem>
       </div>
 
       <div className="space-y-3">
-        <div className="text-sm font-medium text-[var(--color-text-secondary)]">复制方式</div>
+        <div className="text-sm font-medium text-[var(--color-text-secondary)]">{tr("browser.components.BrowserProfileCopyForm.text.d0d1268")}</div>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <label
             className={clsx(
@@ -83,8 +85,8 @@ export function BrowserProfileCopyForm({
               onChange={() => setMode('regular')}
             />
             <span className="min-w-0">
-              <span className="block text-sm font-medium text-[var(--color-text-primary)]">直接复制</span>
-              <span className="block text-xs text-[var(--color-text-muted)]">保持当前复制方式</span>
+              <span className="block text-sm font-medium text-[var(--color-text-primary)]">{tr("browser.components.BrowserProfileCopyForm.text.29fb0e8")}</span>
+              <span className="block text-xs text-[var(--color-text-muted)]">{tr("browser.components.BrowserProfileCopyForm.text.b6091b6")}</span>
             </span>
           </label>
 
@@ -104,8 +106,8 @@ export function BrowserProfileCopyForm({
               onChange={() => setMode('auto_fingerprint')}
             />
             <span className="min-w-0">
-              <span className="block text-sm font-medium text-[var(--color-text-primary)]">自动化指纹</span>
-              <span className="block text-xs text-[var(--color-text-muted)]">按勾选项自动处理</span>
+              <span className="block text-sm font-medium text-[var(--color-text-primary)]">{tr("browser.components.BrowserProfileCopyForm.text.67922d0")}</span>
+              <span className="block text-xs text-[var(--color-text-muted)]">{tr("browser.components.BrowserProfileCopyForm.text.0f9b509")}</span>
             </span>
           </label>
         </div>
@@ -115,11 +117,11 @@ export function BrowserProfileCopyForm({
             <FormItem
               label={
                 <span className="flex items-center justify-between gap-3">
-                  <span>自动化哪些指纹<span className="ml-0.5 text-[var(--color-error)]">*</span></span>
-                  <span className="text-xs font-normal text-[var(--color-text-muted)]">已选 {selectedAutomationCount} 项</span>
+                  <span>{tr("browser.components.BrowserProfileCopyForm.text.6e192c8")}<span className="ml-0.5 text-[var(--color-error)]">*</span></span>
+                  <span className="text-xs font-normal text-[var(--color-text-muted)]">{tr("browser.components.BrowserListWidgets.text.17f3287")}{selectedAutomationCount}{tr("browser.components.BrowserProfileCopyForm.text.12de8e1")}</span>
                 </span>
               }
-              error={automationInvalid ? '请至少勾选一项' : undefined}
+              error={automationInvalid ? tr("browser.components.BrowserProfileCopyForm.BrowserProfileCopyForm.50b4936") : undefined}
             >
               <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 xl:grid-cols-3">
                 {BROWSER_PROFILE_AUTOMATION_TARGET_OPTIONS.map((option) => {

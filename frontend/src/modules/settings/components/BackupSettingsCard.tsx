@@ -1,7 +1,9 @@
-import type { RefObject } from 'react'
+import { translateMessage } from '../../../shared/i18n'
+import { tr, useLocale } from '../../../shared/i18n'
+import { useState, type RefObject } from 'react'
 import { Download, RotateCcw, Upload } from 'lucide-react'
 
-import { Button, Card, Modal, Progress } from '../../../shared/components'
+import { Button, Card, Input, Modal, Progress } from '../../../shared/components'
 
 import type { BackupExportLogItem, BackupExportProgress } from '../progress'
 
@@ -11,14 +13,14 @@ interface BackupProgressPanelProps {
   progress: BackupExportProgress
   loadingLabel: string
   logs?: BackupExportLogItem[]
-  logsRef?: RefObject<HTMLDivElement>
+  logsRef?: RefObject<HTMLDivElement | null>
 }
 
 interface BackupSettingsCardProps {
   actionLoading: BackupActionLoading
   exportProgress: BackupExportProgress | null
   exportLogs: BackupExportLogItem[]
-  exportLogsRef: RefObject<HTMLDivElement>
+  exportLogsRef: RefObject<HTMLDivElement | null>
   onInitialize: () => void
   onExport: () => void
   onOpenImport: () => void
@@ -33,21 +35,21 @@ interface BackupImportModalProps {
 }
 
 function BackupProgressPanel({ progress, loadingLabel, logs = [], logsRef }: BackupProgressPanelProps) {
+  useLocale()
+
   return (
     <div className="rounded-md border border-[var(--color-border-default)] bg-[var(--color-bg-secondary)] px-3 py-2 space-y-2">
       <div className="flex items-center justify-between text-xs">
-        <span className="text-[var(--color-text-secondary)]">{progress.message}</span>
-        {progress.phase === 'error' && <span className="text-[var(--color-error)]">失败</span>}
-        {progress.phase === 'done' && <span className="text-[var(--color-success)]">完成</span>}
+        <span className="text-[var(--color-text-secondary)]">{translateMessage(progress.message)}</span>
+        {progress.phase === 'error' && <span className="text-[var(--color-error)]">{tr("browser.components.AutomationScriptHistoryModal.getRunStatusLabel.3e3c806")}</span>}
+        {progress.phase === 'done' && <span className="text-[var(--color-success)]">{tr("settings.components.BackupSettingsCard.text.33246f6")}</span>}
         {progress.phase !== 'done' && progress.phase !== 'error' && (
           <span className="text-[var(--color-text-muted)]">{loadingLabel}</span>
         )}
       </div>
       {(progress.componentName || progress.componentId || logsRef) && (
-        <div className="text-xs text-[var(--color-text-muted)]">
-          当前组件：
-          {' '}
-          {progress.componentName || progress.componentId || '准备中'}
+        <div className="text-xs text-[var(--color-text-muted)]">{tr("settings.components.BackupSettingsCard.text.fe4b83a")}{' '}
+          {progress.componentName || progress.componentId || tr("browser.automationRuntime.getAutomationRuntimeBadgeText.4f1f8aa")}
           {progress.entryIndex && progress.entryTotal
             ? `（${progress.entryIndex}/${progress.entryTotal}）`
             : ''}
@@ -56,17 +58,17 @@ function BackupProgressPanel({ progress, loadingLabel, logs = [], logsRef }: Bac
       <Progress
         percent={progress.progress}
         size="sm"
-        status={progress.phase === 'error' ? 'error' : progress.phase === 'done' ? 'success' : 'normal'}
+        status={progress.phase === 'error' ? "error" : progress.phase === 'done' ? "success" : "normal"}
       />
       {logsRef && (
         <div className="rounded border border-[var(--color-border-muted)] bg-[var(--color-bg-primary)] px-2 py-2">
           <div className="flex items-center justify-between text-xs mb-1">
-            <span className="text-[var(--color-text-secondary)]">导出日志</span>
-            <span className="text-[var(--color-text-muted)]">{logs.length} 条</span>
+            <span className="text-[var(--color-text-secondary)]">{tr("settings.components.BackupSettingsCard.text.252fed9")}</span>
+            <span className="text-[var(--color-text-muted)]">{logs.length}{tr("browser.pages.BrowserLogsPage.text.eb8c2d5")}</span>
           </div>
           <div ref={logsRef} className="max-h-36 overflow-y-auto pr-1 space-y-1">
             {logs.length === 0 && (
-              <p className="text-xs text-[var(--color-text-muted)]">等待导出日志...</p>
+              <p className="text-xs text-[var(--color-text-muted)]">{tr("settings.components.BackupSettingsCard.text.cd440ac")}</p>
             )}
             {logs.map(item => (
               <div key={item.id} className="text-xs leading-5 font-mono">
@@ -92,45 +94,48 @@ export function BackupSettingsCard({
   onExport,
   onOpenImport,
 }: BackupSettingsCardProps) {
+  useLocale()
+  const [resetOpen, setResetOpen] = useState(false)
+  const [resetInput, setResetInput] = useState('')
+  const resetWord = tr('settings.resetWord')
+
+
   return (
-    <Card title="配置备份与恢复" subtitle="初始化、导出、加载全量配置与浏览器数据" className="apple-section">
+    <Card title={tr("settings.components.BackupSettingsCard.title.2052e44")}  className="apple-section">
       <div className="space-y-3">
-        <p className="text-xs text-[var(--color-text-muted)]">
-          加载配置时可选择先初始化后全量恢复，或在现有数据上按规则判重合并。
-        </p>
+        <p className="text-xs text-[var(--color-text-muted)]">{tr("settings.components.BackupSettingsCard.text.a88f6ff")}</p>
         <div className="flex flex-wrap gap-2">
           <Button
             variant="danger"
             size="sm"
-            onClick={onInitialize}
+            onClick={() => { setResetInput(''); setResetOpen(true) }}
             loading={actionLoading === 'init'}
           >
-            <RotateCcw className="w-4 h-4" />
-            初始化系统
-          </Button>
+            <RotateCcw className="w-4 h-4" />{tr('settings.resetTitle')}</Button>
           <Button
             variant="secondary"
             size="sm"
             onClick={onExport}
             loading={actionLoading === 'export'}
           >
-            <Download className="w-4 h-4" />
-            导出配置
-          </Button>
+            <Download className="w-4 h-4" />{tr("settings.components.BackupSettingsCard.text.3d05c8a")}</Button>
           <Button size="sm" onClick={onOpenImport}>
-            <Upload className="w-4 h-4" />
-            加载配置
-          </Button>
+            <Upload className="w-4 h-4" />{tr("settings.components.BackupSettingsCard.text.3468706")}</Button>
         </div>
         {exportProgress && (
           <BackupProgressPanel
             progress={exportProgress}
-            loadingLabel="处理中"
+            loadingLabel={tr("settings.components.BackupSettingsCard.loadingLabel.fcb979e")}
             logs={exportLogs}
             logsRef={exportLogsRef}
           />
         )}
       </div>
+      <Modal open={resetOpen} onClose={() => { setResetOpen(false); setResetInput('') }} title={tr('settings.resetTitle')} footer={<><Button variant="secondary" onClick={() => setResetOpen(false)}>{tr('common.cancel')}</Button><Button variant="danger" disabled={resetInput !== resetWord || actionLoading !== 'none'} onClick={() => { if (resetInput === resetWord) { setResetOpen(false); setResetInput(''); onInitialize() } }}>{tr('settings.resetTitle')}</Button></>}>
+        <p className="mb-4 text-sm text-[var(--warn)]">{tr('settings.SettingsPage.GeneralSettingsPage.88bc6c9')}</p>
+        <label className="mb-2 block text-sm" htmlFor="reset-confirmation">{tr('settings.resetConfirm', [resetWord])}</label>
+        <Input id="reset-confirmation" value={resetInput} onChange={event => setResetInput(event.target.value)} autoComplete="off" spellCheck={false} />
+      </Modal>
     </Card>
   )
 }
@@ -142,6 +147,8 @@ export function BackupImportModal({
   onClose,
   onImport,
 }: BackupImportModalProps) {
+  useLocale()
+
   const importRunning = actionLoading === 'import-reset' || actionLoading === 'import-merge'
 
   return (
@@ -153,46 +160,36 @@ export function BackupImportModal({
         }
         onClose()
       }}
-      title="加载配置"
+      title={tr("settings.components.BackupSettingsCard.text.3468706")}
       width="520px"
       closable={!importRunning}
       footer={(
         <>
           {!importRunning && (
-            <Button variant="secondary" onClick={onClose}>
-              取消
-            </Button>
+            <Button variant="secondary" onClick={onClose}>{tr("App.CloseConfirmModal.4d0b468")}</Button>
           )}
           <Button
             variant="danger"
             onClick={() => onImport(true)}
             loading={actionLoading === 'import-reset'}
             disabled={actionLoading !== 'none' && actionLoading !== 'import-reset'}
-          >
-            是，先初始化后加载
-          </Button>
+          >{tr("settings.components.BackupSettingsCard.text.db0461c")}</Button>
           <Button
             onClick={() => onImport(false)}
             loading={actionLoading === 'import-merge'}
             disabled={actionLoading !== 'none' && actionLoading !== 'import-merge'}
-          >
-            否，直接加载并判重
-          </Button>
+          >{tr("settings.components.BackupSettingsCard.text.2cf70c2")}</Button>
         </>
       )}
     >
       <div className="space-y-3 text-sm text-[var(--color-text-secondary)]">
-        <p>是否先执行初始化再加载 ZIP 配置？</p>
-        <p className="text-xs text-[var(--color-text-muted)]">
-          选择“是”会先清空当前数据，再全量恢复；选择“否”会在现有数据上做判重合并。
-        </p>
+        <p>{tr("settings.components.BackupSettingsCard.text.2dcd5b6")}</p>
+        <p className="text-xs text-[var(--color-text-muted)]">{tr("settings.components.BackupSettingsCard.text.9bf782d")}</p>
         {importProgress && (
-          <BackupProgressPanel progress={importProgress} loadingLabel="加载中" />
+          <BackupProgressPanel progress={importProgress} loadingLabel={tr("ui.components.Loading.Loading.ce56f61")} />
         )}
         {importRunning && (
-          <p className="text-xs text-[var(--color-warning)]">
-            当前正在加载配置，弹窗不可关闭。若需中断，请直接关闭应用。
-          </p>
+          <p className="text-xs text-[var(--color-warning)]">{tr("settings.components.BackupSettingsCard.text.7bae2dd")}</p>
         )}
       </div>
     </Modal>

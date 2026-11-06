@@ -1,3 +1,4 @@
+import { tr, sourceText } from '../../../shared/i18n'
 import {
   AUTOMATION_SCRIPT_MANIFEST_VERSION,
   AUTOMATION_SCRIPT_PACKAGE_FORMAT,
@@ -9,9 +10,7 @@ import {
   normalizeAutomationScriptTargetConfig,
 } from "./targets";
 
-const BACKEND_BUILTIN_SCRIPT_PLACEHOLDER = `module.exports.run = async () => {
-  throw new Error('内置脚本源码由后端 demo-library 提供，请在桌面应用后端环境中加载或从脚本包导入。')
-}`;
+const BACKEND_BUILTIN_SCRIPT_PLACEHOLDER = sourceText("browser.automationScripts.builtins.message.fa6cf55");
 
 
 function nowIso(): string {
@@ -37,12 +36,12 @@ export function createNewsTxtScriptDraft(): AutomationScriptRecord {
     packageFormat: AUTOMATION_SCRIPT_PACKAGE_FORMAT,
     manifestVersion: AUTOMATION_SCRIPT_MANIFEST_VERSION,
     id: "news-query-txt",
-    name: "查询新闻并写 TXT",
-    description: "通过 Bing 搜索新闻关键词，提取结果并写入本地 txt 文件。",
+    name: tr("browser.automationScripts.builtins.name.691188f"),
+    description: tr("browser.automationScripts.builtins.description.0eb2af2"),
     type: "playwright-cdp",
     status: "ready",
     entryFile: "index.cjs",
-    tags: ["Playwright", "新闻", "TXT"],
+    tags: ["Playwright", tr("browser.automationScripts.builtins.createNewsTxtScriptDraft.76484b3"), "TXT"],
     selectorText: "",
     paramsText: `{
   "keyword": "OpenAI",
@@ -55,7 +54,7 @@ export function createNewsTxtScriptDraft(): AutomationScriptRecord {
 }`,
     scriptText: BACKEND_BUILTIN_SCRIPT_PLACEHOLDER,
     notes:
-      "脚本会优先使用 Bing 搜索真实新闻结果，并自动追加时间过滤、排除问答/聚合站点、回退查询词和质量校验；只有达到新闻质量门槛时才会判定成功，并把结果写入本地 txt。执行成功后可在结果里的 outputPath 找到文件。",
+      tr("browser.automationScripts.builtins.notes.74d704e"),
     targetConfig: normalizeAutomationScriptTargetConfig(null),
     publicAPI: createAutomationScriptPublicAPIConfig(),
     source: {
@@ -77,18 +76,18 @@ export function createDualInstanceRuntimeScriptDraft(): AutomationScriptRecord {
     packageFormat: AUTOMATION_SCRIPT_PACKAGE_FORMAT,
     manifestVersion: AUTOMATION_SCRIPT_MANIFEST_VERSION,
     id: DUAL_INSTANCE_RUNTIME_SCRIPT_ID,
-    name: "双实例启动与 Runtime 切换",
+    name: tr("browser.automationScripts.builtins.name.520164b"),
     description:
-      "通过 Launch API 分别启动两个实例，切换 Runtime 会话后交给 OpenClaw 执行。",
+      tr("browser.automationScripts.builtins.description.deb99c8"),
     type: "launch-api",
     status: "ready",
     entryFile: "index.cjs",
-    tags: ["Launch API", "OpenClaw", "双实例"],
+    tags: ["Launch API", "OpenClaw", tr("browser.automationScripts.builtins.createDualInstanceRuntimeScriptDraft.c1ad1e4")],
     selectorText: "",
     paramsText: buildDualInstanceRuntimeParamsText(),
     scriptText: buildDualInstanceRuntimeScriptText(),
     notes:
-      "先通过接口启动两个实例并切换 Runtime 会话；随后把实例信息交给 OpenClaw 执行自动化动作。",
+      tr("browser.automationScripts.builtins.notes.482fbc9"),
     targetConfig: normalizeAutomationScriptTargetConfig(null),
     publicAPI: createAutomationScriptPublicAPIConfig(),
     source: {
@@ -110,20 +109,20 @@ export function createWebImageGenerateDownloadScriptDraft(): AutomationScriptRec
     packageFormat: AUTOMATION_SCRIPT_PACKAGE_FORMAT,
     manifestVersion: AUTOMATION_SCRIPT_MANIFEST_VERSION,
     id: "web-image-generate-download",
-    name: "网页图片生成并下载",
+    name: tr("browser.automationScripts.builtins.name.6824a87"),
     description:
-      "打开 ChatGPT，发送图片生成消息，等待图片生成后下载图片。",
+      tr("browser.automationScripts.builtins.description.a869ea0"),
     type: "playwright-cdp",
     status: "draft",
     entryFile: "index.cjs",
-    tags: ["Playwright", "图片生成", "下载"],
+    tags: ["Playwright", tr("browser.automationScripts.builtins.createWebImageGenerateDownloadScriptDraft.1f6a9da"), tr("browser.automationScripts.builtins.createWebImageGenerateDownloadScriptDraft.2b9d013")],
     selectorText: "",
     paramsText: `{
   "prompt": "A cinematic browser mascot, premium product lighting"
 }`,
     scriptText: BACKEND_BUILTIN_SCRIPT_PLACEHOLDER,
     notes:
-      "脚本默认打开 ChatGPT，输入图片生成提示词并发送；页面选择器、下载文件名等由脚本内部默认值处理，公开接口只需要传实例、提示词和超时时间。",
+      tr("browser.automationScripts.builtins.notes.91eec68"),
     targetConfig: normalizeAutomationScriptTargetConfig(null),
     publicAPI: {
       ...createAutomationScriptPublicAPIConfig(),
@@ -142,19 +141,13 @@ export function createWebImageGenerateDownloadScriptDraft(): AutomationScriptRec
   },
   "timeoutMs": 300000
 }`,
-      responseBodyText: `{
-  "ok": true,
-  "status": "completed",
-  "summary": "图片已生成并下载。",
-  "outputPath": "\${artifactsDir}/generated-image.png",
-  "downloadAddress": "\${artifactsDir}/generated-image.png"
-}`,
+      responseBodyText: tr("browser.automationScripts.builtins.responseBodyText.19c2d1a"),
       variables: [
         {
           name: "prompt",
           defaultValue:
             "A cinematic browser mascot, premium product lighting",
-          description: "发送到 ChatGPT 的图片生成提示词。",
+          description: tr("browser.automationScripts.builtins.description.fc16a87"),
           required: true,
         },
       ],

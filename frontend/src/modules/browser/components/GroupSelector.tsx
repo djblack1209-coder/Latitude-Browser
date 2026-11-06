@@ -1,3 +1,4 @@
+import { tr, useLocale } from '../../../shared/i18n'
 import { useMemo } from 'react'
 import { Select } from '../../../shared/components'
 import type { BrowserGroup } from '../types'
@@ -33,8 +34,10 @@ function flattenGroups(groups: BrowserGroup[]): FlatGroup[] {
   return result
 }
 
-export function GroupSelector({ groups, value, onChange, placeholder = '选择分组', className = '' }: GroupSelectorProps) {
-  const flatGroups = useMemo(() => flattenGroups(groups), [groups])
+export function GroupSelector({ groups, value, onChange, placeholder = tr("browser.components.GroupSelector.GroupSelector.d3c0957"), className = '' }: GroupSelectorProps) {
+  const uiLocale = useLocale()
+
+  const flatGroups = useMemo(() => flattenGroups(groups), [groups, uiLocale])
   const options = useMemo(
     () => [
       { value: '', label: placeholder },
@@ -43,7 +46,7 @@ export function GroupSelector({ groups, value, onChange, placeholder = '选择�
         label: `${'　'.repeat(g.level)}${g.groupName}`,
       })),
     ],
-    [flatGroups, placeholder]
+    [flatGroups, placeholder, uiLocale]
   )
 
   return (

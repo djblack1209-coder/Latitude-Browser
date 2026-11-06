@@ -1,6 +1,7 @@
 package backend
 
 import (
+ "ant-chrome/backend/internal/locale"
 	"ant-chrome/backend/internal/browser"
 	"ant-chrome/backend/internal/config"
 	"ant-chrome/backend/internal/logger"
@@ -126,10 +127,10 @@ func (a *App) BrowserCoreImportLocal() (*BrowserCore, error) {
 	}
 
 	selectedPath, err := wailsruntime.OpenFileDialog(a.ctx, wailsruntime.OpenDialogOptions{
-		Title: "选择 Chrome 内核归档文件",
+		Title: locale.Text("error.backend.message.e82c4c39b8"),
 		Filters: []wailsruntime.FileFilter{
-			{DisplayName: "Chrome 内核归档 (" + browser.SupportedCoreArchiveDescription() + ")", Pattern: browser.SupportedCoreArchivePattern()},
-			{DisplayName: "所有文件 (*.*)", Pattern: "*.*"},
+			{DisplayName: locale.Text("error.backend.message.5ceb3069f0") + browser.SupportedCoreArchiveDescription() + ")", Pattern: browser.SupportedCoreArchivePattern()},
+			{DisplayName: locale.Text("error.backend.message.10236f887c"), Pattern: "*.*"},
 		},
 	})
 	if err != nil {
@@ -253,7 +254,7 @@ func (a *App) BrowserCoreImportLocalDirectory() (*BrowserCore, error) {
 	}
 
 	selectedDir, err := wailsruntime.OpenDirectoryDialog(a.ctx, wailsruntime.OpenDialogOptions{
-		Title: "选择已解压的 Chrome 内核目录",
+		Title: locale.Text("error.backend.message.8e4bc875bb"),
 	})
 	if err != nil {
 		return nil, err

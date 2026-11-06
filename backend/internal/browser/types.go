@@ -70,7 +70,7 @@ type Tab struct {
 	TabId  string `json:"tabId"`
 	Title  string `json:"title"`
 	Url    string `json:"url"`
-	Active bool   `json:"active"`
+	Active bool   `json:"active,omitempty"`
 }
 
 // Settings 浏览器全局设置

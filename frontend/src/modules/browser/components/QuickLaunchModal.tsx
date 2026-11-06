@@ -1,3 +1,5 @@
+import { getLocale } from '../../../shared/i18n'
+import { tr, useLocale } from '../../../shared/i18n'
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from 'react'
 import { Keyboard, Play, Search, Tag } from 'lucide-react'
 import { Badge, Button, Modal, toast } from '../../../shared/components'
@@ -10,9 +12,11 @@ interface QuickLaunchModalProps {
   onClose: () => void
 }
 
-import { buildSearchText, GROUP_ALL, GROUP_UNGROUPED, normalizeCode, normalizeText, pickPrimaryTag, UNTAGGED_LABEL, type GroupFilterOption, type ProfileTagSection } from './QuickLaunchModal.helpers'
+import { buildSearchText, GROUP_ALL, GROUP_UNGROUPED, normalizeCode, normalizeText, pickPrimaryTag, UNTAGGED_ID, UNTAGGED_LABEL, type GroupFilterOption, type ProfileTagSection } from './QuickLaunchModal.helpers'
 import { useQuickLaunchData } from './useQuickLaunchData'
 export function QuickLaunchModal({ open, onClose }: QuickLaunchModalProps) {
+  const uiLocale = useLocale()
+
   const [query, setQuery] = useState('')
   const [groupFilter, setGroupFilter] = useState(GROUP_ALL)
   const [selectedIndex, setSelectedIndex] = useState(0)
@@ -44,7 +48,7 @@ export function QuickLaunchModal({ open, onClose }: QuickLaunchModalProps) {
       map.set(group.groupId, group.groupName)
     })
     return map
-  }, [groups])
+  }, [groups, uiLocale])
 
   const groupOptions = useMemo<GroupFilterOption[]>(() => {
     const countMap = new Map<string, number>()
@@ -62,18 +66,18 @@ export function QuickLaunchModal({ open, onClose }: QuickLaunchModalProps) {
     for (const [key, count] of countMap.entries()) {
       if (key === GROUP_UNGROUPED) continue
       if (!options.some((item) => item.id === key)) {
-        options.push({ id: key, name: groupNameMap.get(key) || `分组 ${key}`, count })
+        options.push({ id: key, name: groupNameMap.get(key) || tr("browser.components.QuickLaunchModal.QuickLaunchModal.86f4898", [key]), count })
       }
     }
 
     options.push({
       id: GROUP_UNGROUPED,
-      name: '未分组',
+      name: tr("browser.components.GroupTreeNav.text.8de957a"),
       count: countMap.get(GROUP_UNGROUPED) || 0,
     })
 
     return options
-  }, [profiles, groups, groupNameMap])
+  }, [profiles, groups, groupNameMap, uiLocale])
 
   useEffect(() => {
     if (groupFilter === GROUP_ALL) return
@@ -88,13 +92,13 @@ export function QuickLaunchModal({ open, onClose }: QuickLaunchModalProps) {
       return profiles.filter((profile) => !(profile.groupId || '').trim())
     }
     return profiles.filter((profile) => (profile.groupId || '').trim() === groupFilter)
-  }, [profiles, groupFilter])
+  }, [profiles, groupFilter, uiLocale])
 
   const filteredProfiles = useMemo(() => {
     const q = normalizeText(query)
     if (!q) return groupFilteredProfiles
     return groupFilteredProfiles.filter((item) => buildSearchText(item).includes(q))
-  }, [groupFilteredProfiles, query])
+  }, [groupFilteredProfiles, query, uiLocale])
 
   useEffect(() => {
     if (filteredProfiles.length === 0) {
@@ -112,7 +116,7 @@ export function QuickLaunchModal({ open, onClose }: QuickLaunchModalProps) {
       map.set(profile.profileId, index)
     })
     return map
-  }, [filteredProfiles])
+  }, [filteredProfiles, uiLocale])
 
   const tagSections = useMemo<ProfileTagSection[]>(() => {
     if (!filteredProfiles.length) return []
@@ -127,13 +131,13 @@ export function QuickLaunchModal({ open, onClose }: QuickLaunchModalProps) {
     }
 
     const tags = Array.from(bucket.keys()).sort((a, b) => {
-      if (a === UNTAGGED_LABEL) return 1
-      if (b === UNTAGGED_LABEL) return -1
-      return a.localeCompare(b, 'zh-CN')
+      if (a === UNTAGGED_ID) return 1
+      if (b === UNTAGGED_ID) return -1
+      return a.localeCompare(b, getLocale())
     })
 
     return tags.map((tag) => ({ tag, items: bucket.get(tag)! }))
-  }, [filteredProfiles])
+  }, [filteredProfiles, uiLocale])
 
   useEffect(() => {
     if (tagSections.length === 0) {
@@ -209,11 +213,11 @@ export function QuickLaunchModal({ open, onClose }: QuickLaunchModalProps) {
     setStartingCode(normalized)
     try {
       const profile = await startBrowserInstanceByCode(normalized)
-      toast.success(profile?.running ? `实例「${profile.profileName}」已在运行` : `实例「${profile?.profileName || normalized}」已启动`)
+      toast.success(profile?.running ? tr("browser.components.QuickLaunchModal.QuickLaunchModal.a69f4dc", [profile.profileName]) : tr("browser.components.QuickLaunchModal.QuickLaunchModal.c84ee6a", [profile?.profileName || normalized]))
       onClose()
       return true
     } catch (error: any) {
-      const feedback = resolveActionFeedback(error, '按 Code 启动失败')
+      const feedback = resolveActionFeedback(error, tr("browser.components.QuickLaunchModal.QuickLaunchModal.9c6b1cb"))
       if (feedback.tone === 'warning') {
         toast.warning(feedback.message)
       } else {
@@ -227,7 +231,7 @@ export function QuickLaunchModal({ open, onClose }: QuickLaunchModalProps) {
 
   const startProfile = async (profile: BrowserProfile) => {
     if (!profile.launchCode) {
-      toast.error('该实例尚未分配 Code，请先在实例列表设置')
+      toast.error(tr("browser.components.QuickLaunchModal.QuickLaunchModal.4d81e5c"))
       return
     }
     await startByCode(profile.launchCode)
@@ -292,7 +296,7 @@ export function QuickLaunchModal({ open, onClose }: QuickLaunchModalProps) {
   }
 
   return (
-    <Modal open={open} onClose={onClose} title="快速启动浏览器" width="1120px">
+    <Modal open={open} onClose={onClose} title={tr("browser.components.QuickLaunchModal.title.08a38e5")} width="1120px">
       <div className="space-y-4" onKeyDown={onPanelKeyDown}>
         <div className="grid grid-cols-1 gap-3 lg:grid-cols-[minmax(300px,420px)_1fr] lg:items-center">
           <div className="flex items-center gap-2 rounded-lg border border-[var(--color-border-default)] px-3 bg-[var(--color-bg-surface)]">
@@ -301,7 +305,7 @@ export function QuickLaunchModal({ open, onClose }: QuickLaunchModalProps) {
               ref={inputRef}
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="输入 Code 或实例名 / 标签 / 关键字"
+              placeholder={tr("browser.components.QuickLaunchModal.placeholder.27bf043")}
               className="h-9 w-full border-0 bg-transparent text-sm text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] focus:outline-none px-0"
             />
             <Button
@@ -310,9 +314,7 @@ export function QuickLaunchModal({ open, onClose }: QuickLaunchModalProps) {
               loading={!!startingCode}
               onClick={() => void startByCode(query)}
               disabled={!query.trim()}
-            >
-              按Code启动
-            </Button>
+            >{tr("browser.components.QuickLaunchModal.text.f48c671")}</Button>
           </div>
 
           <div className="min-w-0 rounded-lg border border-[var(--color-border-default)] bg-[var(--color-bg-surface)] px-3 py-2">
@@ -329,8 +331,7 @@ export function QuickLaunchModal({ open, onClose }: QuickLaunchModalProps) {
                     ? 'bg-[var(--color-accent)] text-[var(--color-text-inverse)]'
                     : 'text-[var(--color-text-secondary)] bg-[var(--color-bg-secondary)] hover:bg-[var(--color-accent-muted)] hover:text-[var(--color-text-primary)]',
                 ].join(' ')}
-              >
-                全部分组（{profiles.length}）
+              >{tr("browser.components.QuickLaunchModal.text.7ff30b8")}{profiles.length}）
               </button>
               {groupOptions.map((option) => (
                 <button
@@ -357,9 +358,7 @@ export function QuickLaunchModal({ open, onClose }: QuickLaunchModalProps) {
         <div className="rounded-lg border border-[var(--color-border-default)] overflow-hidden">
           <div className="h-[520px] bg-[var(--color-bg-elevated)] flex">
             <aside className="w-52 shrink-0 border-r border-[var(--color-border-default)] bg-[var(--color-bg-surface)] p-2 overflow-y-auto">
-              <div className="px-2 py-2 text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wide">
-                标签导航
-              </div>
+              <div className="px-2 py-2 text-xs font-semibold text-[var(--color-text-muted)]  ">{tr("browser.components.QuickLaunchModal.text.3c002d6")}</div>
               <div className="space-y-1">
                 {tagSections.map(section => (
                   <button
@@ -375,7 +374,7 @@ export function QuickLaunchModal({ open, onClose }: QuickLaunchModalProps) {
                   >
                     <span className="inline-flex items-center gap-1.5 truncate text-sm">
                       <Tag className="w-3.5 h-3.5 shrink-0" />
-                      <span className="truncate">{section.tag}</span>
+                      <span className="truncate">{section.tag === UNTAGGED_ID ? UNTAGGED_LABEL() : section.tag}</span>
                     </span>
                     <span className="text-xs opacity-80">{section.items.length}</span>
                   </button>
@@ -385,9 +384,9 @@ export function QuickLaunchModal({ open, onClose }: QuickLaunchModalProps) {
 
             <div ref={sectionScrollRef} className="flex-1 overflow-y-auto p-4">
               {loading ? (
-                <div className="px-4 py-8 text-sm text-[var(--color-text-muted)] text-center">加载中...</div>
+                <div className="px-4 py-8 text-sm text-[var(--color-text-muted)] text-center">{tr("ui.components.Table.text.514c33a")}</div>
               ) : filteredProfiles.length === 0 ? (
-                <div className="px-4 py-8 text-sm text-[var(--color-text-muted)] text-center">没有匹配的实例</div>
+                <div className="px-4 py-8 text-sm text-[var(--color-text-muted)] text-center">{tr("browser.components.BrowserProfilesPanel.BrowserProfilesPanel.8e009f6")}</div>
               ) : (
                 <div className="space-y-4">
                   {tagSections.map((section) => (
@@ -400,9 +399,9 @@ export function QuickLaunchModal({ open, onClose }: QuickLaunchModalProps) {
                     >
                       <div className="flex items-center justify-between">
                         <h3 className="text-sm font-semibold text-[var(--color-text-primary)] inline-flex items-center gap-1.5">
-                          <Tag className="w-3.5 h-3.5" /> {section.tag}
+                          <Tag className="w-3.5 h-3.5" /> {section.tag === UNTAGGED_ID ? UNTAGGED_LABEL() : section.tag}
                         </h3>
-                        <span className="text-xs text-[var(--color-text-muted)]">{section.items.length} 个实例</span>
+                        <span className="text-xs text-[var(--color-text-muted)]">{section.items.length}{tr("browser.components.QuickLaunchModal.text.8f20853")}</span>
                       </div>
 
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -428,8 +427,8 @@ export function QuickLaunchModal({ open, onClose }: QuickLaunchModalProps) {
                                 <div className="min-w-0 flex-1">
                                   <div className="flex items-center gap-2 flex-wrap">
                                     <span className="text-sm font-medium text-[var(--color-text-primary)] truncate max-w-[180px]">{profile.profileName}</span>
-                                    <Badge variant={profile.running ? 'success' : 'warning'} size="sm" dot>
-                                      {profile.running ? '运行中' : '已停止'}
+                                    <Badge variant={profile.running ? "success" : "warning"} size="sm" dot>
+                                      {profile.running ? tr("browser.components.AutomationScriptHistoryModal.getRunStatusLabel.5942497") : tr("browser.components.InstanceFilterBar.label.75dddf5")}
                                     </Badge>
                                   </div>
 
@@ -439,7 +438,7 @@ export function QuickLaunchModal({ open, onClose }: QuickLaunchModalProps) {
                                         {profile.launchCode}
                                       </code>
                                     ) : (
-                                      <Badge size="sm" variant="warning">无 Code</Badge>
+                                      <Badge size="sm" variant="warning">{tr("browser.components.QuickLaunchModal.text.7b881b7")}</Badge>
                                     )}
                                   </div>
 
@@ -461,8 +460,7 @@ export function QuickLaunchModal({ open, onClose }: QuickLaunchModalProps) {
                                   }}
                                   disabled={!profile.launchCode}
                                 >
-                                  <Play className="w-3.5 h-3.5 fill-current" /> 启动
-                                </Button>
+                                  <Play className="w-3.5 h-3.5 fill-current" />{tr("browser.components.QuickLaunchModal.text.2d27a0f")}</Button>
                               </div>
                             </button>
                           )
@@ -479,9 +477,9 @@ export function QuickLaunchModal({ open, onClose }: QuickLaunchModalProps) {
         <div className="flex items-center justify-between text-xs text-[var(--color-text-muted)]">
           <div className="inline-flex items-center gap-1.5">
             <Keyboard className="w-3.5 h-3.5" />
-            <span>回车优先按输入 Code 启动；↑/↓ 按顺序切换卡片；Esc 关闭</span>
+            <span>{tr("browser.components.QuickLaunchModal.text.adaacef")}</span>
           </div>
-          <span>全局快捷键: Ctrl/Cmd + K</span>
+          <span>{tr("browser.components.QuickLaunchModal.text.501300e")}</span>
         </div>
       </div>
     </Modal>

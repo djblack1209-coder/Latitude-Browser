@@ -1,3 +1,4 @@
+import { tr } from '../../../../shared/i18n'
 import { useEffect, useState } from "react";
 import { toast } from "../../../../shared/components";
 import { fetchBrowserProfiles, fetchGroups } from "../../api";
@@ -53,7 +54,7 @@ export function useAutomationScriptDetailState(scriptId: string) {
       })
       .catch(() => {
         if (!disposed) {
-          toast.error("脚本加载失败");
+          toast.error(tr("browser.pages.automationScriptDetail.useAutomationScriptDetailState.useAutomationScriptDetailState.1fc2df8"));
         }
       })
       .finally(() => {

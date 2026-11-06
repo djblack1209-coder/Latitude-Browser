@@ -1,3 +1,4 @@
+import { tr } from '../../../shared/i18n'
 import type { BrowserCore, BrowserProfile, BrowserProxy, BrowserSettings } from '../types'
 
 export class DesktopBridgeError extends Error {
@@ -20,7 +21,7 @@ function requireDesktopApp(): any {
   const app = (globalThis as any).go?.main?.App
   if (app) return app
   if (isDevelopmentMockEnabled()) return null
-  throw new DesktopBridgeError('DESKTOP_BRIDGE_UNAVAILABLE', '桌面服务尚未就绪，操作未执行。请从 Latitude Browser 应用打开。')
+  throw new DesktopBridgeError('DESKTOP_BRIDGE_UNAVAILABLE', tr("browser.api.runtime.requireDesktopApp.70b5320"))
 }
 
 function checkedMethods<T extends object>(methods: T): T {
@@ -33,12 +34,12 @@ function checkedMethods<T extends object>(methods: T): T {
       const app = requireDesktopApp()
       const method = Reflect.get(methods, name, methods)
       if (typeof app?.[name] !== 'function' || typeof method !== 'function') {
-        throw new DesktopBridgeError('DESKTOP_METHOD_UNAVAILABLE', `当前桌面服务不支持此操作（${name}），请更新应用后重试。`)
+        throw new DesktopBridgeError('DESKTOP_METHOD_UNAVAILABLE', tr("browser.api.runtime.checkedMethods.88034cd", [name]))
       }
       return (...args: unknown[]) => {
         // Validate again at invocation if the bridge changed since lookup.
         if (typeof requireDesktopApp()?.[name] !== 'function') {
-          throw new DesktopBridgeError('DESKTOP_METHOD_UNAVAILABLE', '桌面服务已变化，操作未执行。请重新打开应用。')
+          throw new DesktopBridgeError('DESKTOP_METHOD_UNAVAILABLE', tr("browser.api.runtime.checkedMethods.7200152"))
         }
         return Reflect.apply(method, methods, args)
       }
@@ -53,7 +54,7 @@ export async function getBindings() {
   try {
     bindings = await import('../../../wailsjs/go/main/App')
   } catch {
-    throw new DesktopBridgeError('DESKTOP_BINDINGS_LOAD_FAILED', '桌面接口加载失败，操作未执行。请重新打开应用。')
+    throw new DesktopBridgeError('DESKTOP_BINDINGS_LOAD_FAILED', tr("browser.api.runtime.getBindings.7516b75"))
   }
   return checkedMethods(bindings)
 }
@@ -84,7 +85,7 @@ export function createDefaultBrowserSettings(): BrowserSettings {
 let mockProfiles: BrowserProfile[] = [
   {
     profileId: 'mock-1',
-    profileName: '默认指纹配置',
+    profileName: tr("browser.api.runtime.profileName.5048212"),
     userDataDir: 'data/default',
     coreId: 'default',
     fingerprintArgs: ['--fingerprint-brand=Chrome', '--fingerprint-platform=windows'],
@@ -92,7 +93,7 @@ let mockProfiles: BrowserProfile[] = [
     proxyConfig: '',
     memoryLimitMb: 0,
     launchArgs: ['--disable-features=Translate'],
-    tags: ['默认'],
+    tags: [tr("browser.api.runtime.message.c8d09cf")],
     keywords: [],
     running: false,
     debugPort: 0,

@@ -1,14 +1,15 @@
+import { tr, localized } from '../../../../shared/i18n'
 ﻿import type { StructuredApiEndpointDoc } from './structuredApiDocs.types'
 
-export const AUTOMATION_API_ENDPOINT_DOCS: StructuredApiEndpointDoc[] = [
+export const AUTOMATION_API_ENDPOINT_DOCS: StructuredApiEndpointDoc[] = localized(() => ([
   {
     id: 'api-automation-list-detail',
     parentId: 'api-automation',
-    label: '脚本列表',
+    label: tr("browser.pages.AutomationCardsSection.title.da72dc3"),
     method: 'GET',
     path: '/api/automation/scripts',
-    purpose: '查询可执行脚本清单。',
-    description: '返回脚本元数据，用于拿 scriptId、默认 selector / params 和脚本类型。',
+    purpose: tr("browser.pages.launchApiDocs.structuredApiDocs.automationEndpoints.purpose.74f173d"),
+    description: tr("browser.pages.launchApiDocs.structuredApiDocs.automationEndpoints.description.44b522c"),
     fields: [],
     requestExample: {
       language: 'bash',
@@ -17,43 +18,26 @@ export const AUTOMATION_API_ENDPOINT_DOCS: StructuredApiEndpointDoc[] = [
     },
     responseExample: {
       language: 'json',
-      code: () => `{
-  "ok": true,
-  "status": "success",
-  "data": {
-    "count": 1,
-    "items": [
-      {
-        "id": "news-query-txt",
-        "name": "查询新闻并写 TXT",
-        "type": "playwright-cdp",
-        "status": "ready",
-        "entryFile": "index.cjs",
-        "selector": { "code": "BUYER_001" },
-        "params": { "keyword": "OpenAI", "limit": 10 }
-      }
-    ]
-  }
-}`,
+      code: () => tr("browser.pages.launchApiDocs.structuredApiDocs.automationEndpoints.message.a26e75f"),
     },
     responseCodes: [
-      { code: '200', description: '返回脚本列表。' },
-      { code: '503', description: '自动化脚本能力未启用。' },
+      { code: '200', description: tr("browser.pages.launchApiDocs.structuredApiDocs.automationEndpoints.description.b97e2f5") },
+      { code: '503', description: tr("browser.pages.launchApiDocs.structuredApiDocs.automationEndpoints.description.16a5814") },
     ],
     notes: [
-      '不返回 scriptText。',
+      tr("browser.pages.launchApiDocs.structuredApiDocs.automationEndpoints.message.f165734"),
     ],
   },
   {
     id: 'api-automation-script-detail',
     parentId: 'api-automation',
-    label: '脚本详情',
+    label: tr("browser.components.AutomationScriptRunModalView.text.d54da6e"),
     method: 'GET',
     path: '/api/automation/scripts/{scriptId}',
-    purpose: '按 scriptId 查询单个脚本详情。',
-    description: '标准单资源读取接口，用于从脚本列表进入某个脚本时补充其来源和包格式等元数据。',
+    purpose: tr("browser.pages.launchApiDocs.structuredApiDocs.automationEndpoints.purpose.02d73b0"),
+    description: tr("browser.pages.launchApiDocs.structuredApiDocs.automationEndpoints.description.3446e5e"),
     fields: [
-      { name: 'scriptId', type: 'string', required: true, location: 'Path', description: '脚本唯一 ID。' },
+      { name: 'scriptId', type: 'string', required: true, location: 'Path', description: tr("browser.pages.launchApiDocs.structuredApiDocs.automationEndpoints.description.9bd094a") },
     ],
     requestExample: {
       language: 'bash',
@@ -62,53 +46,32 @@ export const AUTOMATION_API_ENDPOINT_DOCS: StructuredApiEndpointDoc[] = [
     },
     responseExample: {
       language: 'json',
-      code: () => `{
-  "ok": true,
-  "status": "success",
-  "data": {
-    "item": {
-      "id": "news-query-txt",
-      "name": "查询新闻并写 TXT",
-      "type": "playwright-cdp",
-      "status": "ready",
-      "entryFile": "index.cjs",
-      "selector": { "code": "BUYER_001" },
-      "params": { "keyword": "OpenAI", "limit": 10 },
-      "packageFormat": "ant-automation-script",
-      "manifestVersion": 1,
-      "source": {
-        "type": "git",
-        "uri": "https://example.com/repo.git",
-        "ref": "main"
-      }
-    }
-  }
-}`,
+      code: () => tr("browser.pages.launchApiDocs.structuredApiDocs.automationEndpoints.message.197f129"),
     },
     responseCodes: [
-      { code: '200', description: '返回脚本详情。' },
-      { code: '404', description: '脚本不存在。' },
-      { code: '503', description: '自动化脚本能力未启用。' },
+      { code: '200', description: tr("browser.pages.launchApiDocs.structuredApiDocs.automationEndpoints.description.57355e2") },
+      { code: '404', description: tr("browser.pages.launchApiDocs.structuredApiDocs.automationEndpoints.description.4fba921") },
+      { code: '503', description: tr("browser.pages.launchApiDocs.structuredApiDocs.automationEndpoints.description.16a5814") },
     ],
     notes: [
-      '不返回 scriptText。',
+      tr("browser.pages.launchApiDocs.structuredApiDocs.automationEndpoints.message.f165734"),
     ],
   },
   {
     id: 'api-automation-run-detail',
     parentId: 'api-automation',
-    label: '执行脚本',
+    label: tr("browser.components.AutomationScriptRunModalView.title.0ee58c6"),
     method: 'POST',
     path: '/api/automation/scripts/run',
-    purpose: '按 scriptId 执行脚本。',
-    description: '外部调用方只需传入脚本 ID 和对象形态的 selector / params。推荐优先传 selector.code；如果脚本已在 UI 中绑定目标实例，也可以只传 scriptId 直接执行。',
+    purpose: tr("browser.pages.launchApiDocs.structuredApiDocs.automationEndpoints.purpose.b2e093a"),
+    description: tr("browser.pages.launchApiDocs.structuredApiDocs.automationEndpoints.description.3841529"),
     fields: [
-      { name: 'scriptId', type: 'string', required: true, location: 'Body', description: '要执行的脚本 ID。' },
-      { name: 'selector', type: 'object', required: false, location: 'Body', description: '覆盖脚本默认 selector。' },
-      { name: 'params', type: 'object', required: false, location: 'Body', description: '覆盖脚本默认 params。' },
-      { name: 'useScriptSelector', type: 'boolean', required: false, location: 'Body', description: '显式指定是否沿用脚本默认 selector。' },
-      { name: 'useScriptParams', type: 'boolean', required: false, location: 'Body', description: '显式指定是否沿用脚本默认 params。' },
-      { name: 'timeoutMs', type: 'integer', required: false, location: 'Body', description: '本次脚本执行超时时间，范围 1000 到 1800000。' },
+      { name: 'scriptId', type: 'string', required: true, location: 'Body', description: tr("browser.pages.launchApiDocs.structuredApiDocs.automationEndpoints.description.d60c858") },
+      { name: 'selector', type: 'object', required: false, location: 'Body', description: tr("browser.pages.launchApiDocs.structuredApiDocs.automationEndpoints.description.1408cd4") },
+      { name: 'params', type: 'object', required: false, location: 'Body', description: tr("browser.pages.launchApiDocs.structuredApiDocs.automationEndpoints.description.2bb5311") },
+      { name: 'useScriptSelector', type: 'boolean', required: false, location: 'Body', description: tr("browser.pages.launchApiDocs.structuredApiDocs.automationEndpoints.description.693b2b4") },
+      { name: 'useScriptParams', type: 'boolean', required: false, location: 'Body', description: tr("browser.pages.launchApiDocs.structuredApiDocs.automationEndpoints.description.7a1ae61") },
+      { name: 'timeoutMs', type: 'integer', required: false, location: 'Body', description: tr("browser.pages.launchApiDocs.structuredApiDocs.automationEndpoints.description.2fd712b") },
     ],
     requestExample: {
       language: 'bash',
@@ -123,43 +86,28 @@ export const AUTOMATION_API_ENDPOINT_DOCS: StructuredApiEndpointDoc[] = [
     },
     responseExample: {
       language: 'json',
-      code: () => `{
-  "ok": true,
-  "status": "success",
-  "data": {
-    "run": {
-      "id": "run-1",
-      "scriptId": "news-query-txt",
-      "scriptName": "查询新闻并写 TXT",
-      "scriptType": "playwright-cdp",
-      "status": "success",
-      "summary": "已抓取 10 条新闻并写入 TXT",
-      "durationMs": 12034
-    },
-    "summary": "已抓取 10 条新闻并写入 TXT"
-  }
-}`,
+      code: () => tr("browser.pages.launchApiDocs.structuredApiDocs.automationEndpoints.message.fe8790d"),
     },
     responseCodes: [
-      { code: '200', description: '执行成功。' },
-      { code: '400', description: 'scriptId 缺失、selector / params 不是对象，或 timeoutMs 超出范围。' },
-      { code: '500', description: '脚本执行失败。' },
+      { code: '200', description: tr("browser.pages.launchApiDocs.structuredApiDocs.automationEndpoints.description.0068101") },
+      { code: '400', description: tr("browser.pages.launchApiDocs.structuredApiDocs.automationEndpoints.description.f3abb01") },
+      { code: '500', description: tr("browser.pages.launchApiDocs.structuredApiDocs.automationEndpoints.description.6da4a0f") },
     ],
     notes: [
-      'selector / params 必须是 object。',
-      '不传时沿用脚本默认配置。',
+      tr("browser.pages.launchApiDocs.structuredApiDocs.automationEndpoints.message.fc5ef6f"),
+      tr("browser.pages.launchApiDocs.structuredApiDocs.automationEndpoints.message.40a1484"),
     ],
   },
   {
     id: 'api-automation-runs-detail',
     parentId: 'api-automation',
-    label: '运行记录',
+    label: tr("config.navigation.config.name.24fb424"),
     method: 'GET',
     path: '/api/automation/scripts/runs?limit=20',
-    purpose: '查询最近脚本运行记录。',
-    description: '返回最近 N 次脚本执行记录，适合调试、审计和任务结果回看。',
+    purpose: tr("browser.pages.launchApiDocs.structuredApiDocs.automationEndpoints.purpose.0f7cac3"),
+    description: tr("browser.pages.launchApiDocs.structuredApiDocs.automationEndpoints.description.7360f82"),
     fields: [
-      { name: 'limit', type: 'integer', required: false, location: 'Query', description: '返回记录条数，默认 20，最小 1，最大 200。' },
+      { name: 'limit', type: 'integer', required: false, location: 'Query', description: tr("browser.pages.launchApiDocs.structuredApiDocs.automationEndpoints.description.0eb6da8") },
     ],
     requestExample: {
       language: 'bash',
@@ -168,28 +116,12 @@ export const AUTOMATION_API_ENDPOINT_DOCS: StructuredApiEndpointDoc[] = [
     },
     responseExample: {
       language: 'json',
-      code: () => `{
-  "ok": true,
-  "status": "success",
-  "data": {
-    "count": 1,
-    "limit": 20,
-    "items": [
-      {
-        "id": "run-1",
-        "scriptId": "news-query-txt",
-        "status": "success",
-        "summary": "已抓取 10 条新闻并写入 TXT",
-        "durationMs": 12034
-      }
-    ]
-  }
-}`,
+      code: () => tr("browser.pages.launchApiDocs.structuredApiDocs.automationEndpoints.message.3849eff"),
     },
     responseCodes: [
-      { code: '200', description: '返回运行记录。' },
-      { code: '503', description: '自动化脚本能力未启用。' },
+      { code: '200', description: tr("browser.pages.launchApiDocs.structuredApiDocs.automationEndpoints.description.14bfdaf") },
+      { code: '503', description: tr("browser.pages.launchApiDocs.structuredApiDocs.automationEndpoints.description.16a5814") },
     ],
     notes: [],
   },
-]
+]))

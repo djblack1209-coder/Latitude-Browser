@@ -1,60 +1,16 @@
 /** @type {import('tailwindcss').Config} */
 export default {
-  content: [
-    './index.html',
-    './src/**/*.{js,ts,jsx,tsx}',
-  ],
-  theme: {
-    extend: {
-      colors: {
-        /* Keep the old class names working while moving them to Signal Noir. */
-        primary: {
-          50: '#effff4',
-          100: '#d9ffe5',
-          200: '#b7ffcc',
-          300: '#8ff9ad',
-          400: '#72f59a',
-          500: 'var(--color-accent)',
-          600: '#54e77e',
-          700: '#36cb62',
-          800: '#1e9f4a',
-          900: '#11733a',
-        },
-        accent: {
-          DEFAULT: 'var(--color-accent)',
-          yellow: 'var(--color-warning)',
-          orange: 'var(--color-warning)',
-        },
-        background: {
-          DEFAULT: 'var(--color-bg-base)',
-          card: 'var(--color-bg-surface)',
-        },
-        surface: 'var(--color-bg-surface)',
-        foreground: 'var(--color-text-primary)',
-        muted: 'var(--color-bg-muted)',
-        border: 'var(--color-border-default)',
-        success: 'var(--color-success)',
-        warning: 'var(--color-warning)',
-        danger: 'var(--color-error)',
-        info: 'var(--color-info)',
-      },
-      fontFamily: {
-        sans: ['IBM Plex Sans', 'SF Pro Text', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Noto Sans SC', 'sans-serif'],
-        mono: ['JetBrains Mono', 'SFMono-Regular', 'Consolas', 'Liberation Mono', 'monospace'],
-      },
-      borderRadius: {
-        DEFAULT: '0.375rem',
-        sm: '0.25rem',
-        md: '0.375rem',
-        lg: '0.5rem',
-        xl: '0.75rem',
-        '2xl': '0.875rem',
-      },
-      boxShadow: {
-        card: 'var(--shadow-sm)',
-        'card-hover': 'var(--shadow-md)',
-      },
+  content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
+  theme: { extend: {
+    colors: {
+      primary: { DEFAULT: 'var(--accent)', 50: 'var(--accent-muted)', 100: 'var(--accent-muted)', 200: 'var(--accent-muted)', 300: 'var(--accent)', 400: 'var(--accent)', 500: 'var(--accent)', 600: 'var(--accent-hover)', 700: 'var(--accent-press)', 800: 'var(--accent-line)', 900: 'var(--accent-line)' },
+      accent: { DEFAULT: 'var(--accent)', yellow: 'var(--warn)', orange: 'var(--warn)' },
+      background: { DEFAULT: 'var(--bg-canvas)', card: 'var(--bg-surface)' },
+      surface: 'var(--bg-surface)', foreground: 'var(--text)', muted: 'var(--bg-inset)', border: 'var(--border)',
+      success: 'var(--ok)', warning: 'var(--warn)', danger: 'var(--err)', info: 'var(--text-2)',
     },
-  },
-  plugins: [],
+    fontFamily: { sans: ['var(--font-sans)'], mono: ['var(--font-mono)'] },
+    borderRadius: { DEFAULT: 'var(--r-1)', sm: 'var(--r-1)', md: 'var(--r-1)', lg: 'var(--r-2)', xl: 'var(--r-2)', '2xl': 'var(--r-2)' },
+    boxShadow: { card: 'none', 'card-hover': 'none' },
+  } }, plugins: [],
 }

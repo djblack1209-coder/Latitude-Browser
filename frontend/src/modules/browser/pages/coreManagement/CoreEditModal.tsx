@@ -1,3 +1,5 @@
+import { translateMessage } from '../../../../shared/i18n'
+import { tr, useLocale } from '../../../../shared/i18n'
 import type { Dispatch, SetStateAction } from 'react'
 import { Button, FormItem, Input, Modal } from '../../../../shared/components'
 import type { BrowserCoreValidateResult } from '../../types'
@@ -26,39 +28,41 @@ export function CoreEditModal({
   onClose,
   onSave,
 }: CoreEditModalProps) {
+  useLocale()
+
   return (
     <Modal
       open={open}
       onClose={onClose}
-      title={isEditing ? '编辑内核' : '新增内核'}
+      title={isEditing ? tr("browser.components.BrowserListLayout.BrowserCoreEditorModal.7863964") : tr("browser.components.BrowserListLayout.text.c5ae8df")}
       width="500px"
       footer={
         <>
-          <Button variant="secondary" onClick={onClose}>取消</Button>
-          <Button onClick={onSave} loading={saving}>保存</Button>
+          <Button variant="secondary" onClick={onClose}>{tr("App.CloseConfirmModal.4d0b468")}</Button>
+          <Button onClick={onSave} loading={saving}>{tr("browser.components.BrowserListLayout.text.fadf24d")}</Button>
         </>
       }
     >
       <div className="space-y-4">
-        <FormItem label="内核名称" required>
+        <FormItem label={tr("browser.components.BrowserListLayout.label.01e4c4a")} required>
           <Input
             value={form.coreName}
             onChange={e => setForm(prev => ({ ...prev, coreName: e.target.value }))}
-            placeholder="例如：Chrome 142"
+            placeholder={tr("browser.pages.coreManagement.CoreEditModal.placeholder.3103744")}
           />
         </FormItem>
-        <FormItem label="内核路径" required>
+        <FormItem label={tr("browser.components.BrowserListLayout.label.a1d450e")} required>
           <Input
             value={form.corePath}
             onChange={e => setForm(prev => ({ ...prev, corePath: e.target.value }))}
-            placeholder="相对路径（如 chrome）或绝对路径"
+            placeholder={tr("browser.pages.coreManagement.CoreEditModal.placeholder.4bfe401")}
           />
           {pathValidating && (
-            <p className="text-xs text-[var(--color-text-muted)] mt-1">验证中...</p>
+            <p className="text-xs text-[var(--color-text-muted)] mt-1">{tr("browser.pages.coreManagement.CoreEditModal.text.efafa93")}</p>
           )}
           {!pathValidating && pathValidResult && (
-            <p className={`text-xs mt-1 ${pathValidResult.valid ? 'text-green-600' : 'text-red-500'}`}>
-              {pathValidResult.message}
+            <p className={`text-xs mt-1 ${pathValidResult.valid ? 'text-[var(--color-success)]' : 'text-[var(--color-error)]'}`}>
+              {translateMessage(pathValidResult.message)}
             </p>
           )}
         </FormItem>

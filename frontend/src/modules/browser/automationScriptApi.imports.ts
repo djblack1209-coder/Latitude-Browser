@@ -1,3 +1,4 @@
+import { tr } from '../../shared/i18n'
 import { importAutomationScript, type AutomationScriptRecord } from "./automationScripts";
 import { getBindings, normalizeAutomationScriptRecord, type AutomationScriptBatchImportResult } from "./automationScriptApi.shared";
 
@@ -16,7 +17,7 @@ export async function importAutomationScriptFromLocalFile(): Promise<AutomationS
     );
   }
 
-  throw new Error("当前环境不支持本地文件导入");
+  throw new Error(tr("browser.automationScriptApi.imports.importAutomationScriptFromLocalFile.ea85856"));
 }
 
 export async function importAutomationScriptFromText(
@@ -24,7 +25,7 @@ export async function importAutomationScriptFromText(
 ): Promise<AutomationScriptRecord> {
   const normalizedText = String(text || "").trim();
   if (!normalizedText) {
-    throw new Error("导入内容不能为空");
+    throw new Error(tr("browser.automationScriptApi.imports.importAutomationScriptFromText.9b6e1c6"));
   }
 
   const bindings: any = await getBindings();
@@ -59,7 +60,7 @@ export async function importAutomationScriptFromLocalDirectory(): Promise<Automa
     );
   }
 
-  throw new Error("当前环境不支持本地目录导入");
+  throw new Error(tr("browser.automationScriptApi.imports.importAutomationScriptFromLocalDirectory.4ccd376"));
 }
 
 function normalizeAutomationScriptBatchImportResult(
@@ -99,13 +100,13 @@ export async function importAutomationScriptFromLocalLibrary(): Promise<Automati
     );
   }
 
-  throw new Error("当前环境不支持本地脚本库导入");
+  throw new Error(tr("browser.automationScriptApi.imports.importAutomationScriptFromLocalLibrary.7896650"));
 }
 
 export async function importAutomationScriptFromRemote(url: string): Promise<AutomationScriptRecord> {
   const normalizedURL = String(url || "").trim();
   if (!normalizedURL) {
-    throw new Error("远程脚本地址不能为空");
+    throw new Error(tr("browser.automationScriptApi.imports.importAutomationScriptFromRemote.ec95266"));
   }
 
   const bindings: any = await getBindings();
@@ -122,7 +123,7 @@ export async function importAutomationScriptFromRemote(url: string): Promise<Aut
     );
   }
 
-  throw new Error("当前环境不支持远程脚本导入");
+  throw new Error(tr("browser.automationScriptApi.imports.importAutomationScriptFromRemote.7f7b1c2"));
 }
 
 export async function importAutomationScriptFromGit(
@@ -132,7 +133,7 @@ export async function importAutomationScriptFromGit(
 ): Promise<AutomationScriptRecord> {
   const normalizedRepoURL = String(repoURL || "").trim();
   if (!normalizedRepoURL) {
-    throw new Error("Git 仓库地址不能为空");
+    throw new Error(tr("browser.automationScriptApi.imports.importAutomationScriptFromGit.6f999d4"));
   }
 
   const normalizedRef = String(ref || "").trim();
@@ -160,7 +161,7 @@ export async function importAutomationScriptFromGit(
     );
   }
 
-  throw new Error("当前环境不支持 Git 脚本导入");
+  throw new Error(tr("browser.automationScriptApi.imports.importAutomationScriptFromGit.6a6c768"));
 }
 
 export async function refreshAutomationScript(
@@ -168,7 +169,7 @@ export async function refreshAutomationScript(
 ): Promise<AutomationScriptRecord> {
   const normalizedScriptId = String(scriptId || "").trim();
   if (!normalizedScriptId) {
-    throw new Error("脚本 ID 不能为空");
+    throw new Error(tr("browser.automationScriptApi.exports.exportAutomationScriptTemplate.69e2e09"));
   }
 
   const bindings: any = await getBindings();
@@ -185,5 +186,5 @@ export async function refreshAutomationScript(
     );
   }
 
-  throw new Error("当前环境不支持按来源重新导入");
+  throw new Error(tr("browser.automationScriptApi.imports.refreshAutomationScript.d011740"));
 }

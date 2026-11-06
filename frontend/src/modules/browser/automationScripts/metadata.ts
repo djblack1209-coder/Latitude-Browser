@@ -1,3 +1,4 @@
+import { tr } from '../../../shared/i18n'
 import {
   AUTOMATION_SCRIPT_STATUS_OPTIONS,
   AUTOMATION_SCRIPT_TYPE_OPTIONS,
@@ -33,21 +34,21 @@ export function normalizeAutomationScriptSource(
 export function getAutomationScriptSourceLabel(source: AutomationScriptSource): string {
   switch (source.type) {
     case "builtin":
-      return "内置基线";
+      return tr("browser.automationScripts.metadata.getAutomationScriptSourceLabel.0bf50ac");
     case "local-file":
-      return "本地文件";
+      return tr("browser.automationScripts.metadata.getAutomationScriptSourceLabel.c8a69b6");
     case "local-dir":
-      return "本地目录";
+      return tr("browser.automationScripts.metadata.getAutomationScriptSourceLabel.530997c");
     case "remote-url":
-      return "远程 URL";
+      return tr("browser.automationScripts.metadata.getAutomationScriptSourceLabel.b17abb3");
     case "git":
       return "Git";
     case "text":
-      return "文本导入";
+      return tr("browser.automationScripts.metadata.getAutomationScriptSourceLabel.a1ce59a");
     case "manual":
-      return "手动维护";
+      return tr("browser.automationScripts.metadata.getAutomationScriptSourceLabel.e069342");
     default:
-      return source.type || "未标记";
+      return source.type || tr("browser.automationScripts.metadata.getAutomationScriptSourceLabel.b1bbc79");
   }
 }
 
@@ -67,9 +68,9 @@ export function getAutomationScriptRefreshLabel(
   source: AutomationScriptSource,
 ): string {
   if (source.type === "builtin") {
-    return "恢复基线";
+    return tr("browser.automationScripts.metadata.getAutomationScriptRefreshLabel.4e6dd47");
   }
-  return source.type === "git" ? "重新拉取" : "重新导入";
+  return source.type === "git" ? tr("browser.automationScripts.metadata.getAutomationScriptRefreshLabel.0124319") : tr("browser.automationScripts.metadata.getAutomationScriptRefreshLabel.4cce0eb");
 }
 
 export function getAutomationScriptTypeLabel(

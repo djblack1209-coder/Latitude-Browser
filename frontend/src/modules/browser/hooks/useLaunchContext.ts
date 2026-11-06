@@ -1,3 +1,4 @@
+import { tr } from '../../../shared/i18n'
 import { useEffect, useRef, useState } from 'react'
 import { toast } from '../../../shared/components'
 import { fetchLaunchServerInfo, type LaunchServerInfo } from '../api'
@@ -36,7 +37,7 @@ export function useLaunchContext({ enabled = true }: UseLaunchContextOptions = {
       return info
     } catch (error: unknown) {
       if (showError) {
-        const message = error instanceof Error ? error.message : 'Launch API 状态刷新失败'
+        const message = error instanceof Error ? error.message : tr("browser.hooks.useLaunchContext.useLaunchContext.bea44a6")
         toast.error(message)
       }
       return null

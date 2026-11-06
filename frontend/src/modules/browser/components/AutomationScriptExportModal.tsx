@@ -1,3 +1,4 @@
+import { tr, useLocale, localized } from '../../../shared/i18n'
 import { useEffect, useState } from "react";
 import { Button, Modal } from "../../../shared/components";
 
@@ -14,23 +15,23 @@ const EXPORT_OPTIONS: Array<{
   value: AutomationScriptExportFormat;
   title: string;
   description: string;
-}> = [
+}> = localized(() => ([
   {
     value: "json",
-    title: "JSON 模板",
-    description: "适合复制、粘贴、文本分发和远程单文件导入。",
+    title: tr("browser.components.AutomationScriptExportModal.title.846c895"),
+    description: tr("browser.components.AutomationScriptExportModal.description.1e8c909"),
   },
   {
     value: "zip",
-    title: "ZIP 脚本包",
-    description: "适合对外分发和备份，多文件脚本会按真实目录结构导出。",
+    title: tr("browser.components.AutomationScriptExportModal.title.fab2f65"),
+    description: tr("browser.components.AutomationScriptExportModal.description.bb75a56"),
   },
   {
     value: "directory",
-    title: "目录脚本包",
-    description: "适合本地维护、人工查看和继续提交到 Git。",
+    title: tr("browser.components.AutomationScriptExportModal.title.1ecbd0b"),
+    description: tr("browser.components.AutomationScriptExportModal.description.059a29d"),
   },
-];
+]));
 
 export function AutomationScriptExportModal({
   open,
@@ -38,6 +39,8 @@ export function AutomationScriptExportModal({
   onClose,
   onSubmit,
 }: AutomationScriptExportModalProps) {
+  useLocale()
+
   const [selectedFormat, setSelectedFormat] =
     useState<AutomationScriptExportFormat>("zip");
 
@@ -51,16 +54,12 @@ export function AutomationScriptExportModal({
     <Modal
       open={open}
       onClose={busy ? () => undefined : onClose}
-      title="导出脚本"
+      title={tr("browser.components.AutomationScriptExportModal.title.70d8514")}
       width="560px"
       footer={
         <>
-          <Button variant="secondary" onClick={onClose} disabled={busy}>
-            取消
-          </Button>
-          <Button onClick={() => onSubmit(selectedFormat)} loading={busy}>
-            导出
-          </Button>
+          <Button variant="secondary" onClick={onClose} disabled={busy}>{tr("App.CloseConfirmModal.4d0b468")}</Button>
+          <Button onClick={() => onSubmit(selectedFormat)} loading={busy}>{tr("browser.components.AutomationScriptExportModal.text.1888967")}</Button>
         </>
       }
     >

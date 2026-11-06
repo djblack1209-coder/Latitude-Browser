@@ -1,3 +1,4 @@
+import { tr, localized } from '../../../shared/i18n'
 // 指纹参数序列化/反序列化工具
 
 import type { FingerprintPersona } from './fingerprintCapabilities'
@@ -300,56 +301,56 @@ export function validateFingerprintArgs(rawArgs: string[]): FingerprintValidatio
     if (!trimmed.startsWith('--')) continue
     const key = argKey(trimmed)
     if (LEGACY_FINGERPRINT_ARG_KEYS.has(key)) {
-      issues.push({ level: 'warning', message: `${key} 配置中保留，但当前适配矩阵不作为独立运行参数；对应能力按 --fingerprint 种子或 --disable-spoofing 处理` })
+      issues.push({ level: 'warning', message: tr("browser.utils.fingerprintSerializer.message.049a198", [key]) })
     } else if (CONVERTED_FINGERPRINT_ARG_KEYS.has(key)) {
-      issues.push({ level: 'info', message: `${key} 保存时会转换为当前 Chrom-144 已验证的噪声开关` })
+      issues.push({ level: 'info', message: tr("browser.utils.fingerprintSerializer.message.8723502", [key]) })
     } else if (NO_EFFECT_FINGERPRINT_ARG_KEYS.has(key)) {
-      issues.push({ level: 'warning', message: `${key} 本地 Chrom-144 实测无效，保存后不会作为运行参数传递` })
+      issues.push({ level: 'warning', message: tr("browser.utils.fingerprintSerializer.message.b371371", [key]) })
     } else if (!KERNEL_SUPPORTED_ARG_KEYS.has(key)) {
-      issues.push({ level: 'info', message: `${key} 未在当前指纹面板建模，会作为原始参数保留` })
+      issues.push({ level: 'info', message: tr("browser.utils.fingerprintSerializer.message.1fff1a1", [key]) })
     }
   }
 
   if (config.seed && !isUint32Seed(config.seed)) {
-    issues.push({ level: 'error', message: '指纹种子必须是 1 到 2147483647 的整数' })
+    issues.push({ level: 'error', message: tr("browser.utils.fingerprintSerializer.message.3a246db") })
   }
   if (!config.seed) {
-    issues.push({ level: 'info', message: '未显式设置种子时，启动会按实例 ID 自动生成' })
+    issues.push({ level: 'info', message: tr("browser.utils.fingerprintSerializer.message.288f42d") })
   }
   if (config.brand && !KERNEL_BRANDS.has(config.brand)) {
-    issues.push({ level: 'error', message: `浏览器品牌仅支持 ${Array.from(KERNEL_BRANDS).join(' / ')}` })
+    issues.push({ level: 'error', message: tr("browser.utils.fingerprintSerializer.message.e9cb8e4", [Array.from(KERNEL_BRANDS).join(' / ')]) })
   }
   if (config.brandVersion && !isDottedVersion(config.brandVersion)) {
-    issues.push({ level: 'warning', message: '品牌版本建议使用数字点分格式，例如 144.0.7559.132' })
+    issues.push({ level: 'warning', message: tr("browser.utils.fingerprintSerializer.message.491aa7b") })
   }
   if (config.platform && !KERNEL_PLATFORMS.has(normalizeFingerprintPlatform(config.platform))) {
-    issues.push({ level: 'error', message: '平台仅支持 windows / linux / macos' })
+    issues.push({ level: 'error', message: tr("browser.utils.fingerprintSerializer.message.16fb16f") })
   }
   if (config.platformVersion && !isSafeVersionText(config.platformVersion)) {
-    issues.push({ level: 'warning', message: '系统版本建议只包含字母、数字、点、横线和下划线' })
+    issues.push({ level: 'warning', message: tr("browser.utils.fingerprintSerializer.message.65d3672") })
   }
   if (config.lang && !isLanguageTag(config.lang)) {
-    issues.push({ level: 'error', message: '语言格式不正确，例如 zh-CN、en-US、ja-JP' })
+    issues.push({ level: 'error', message: tr("browser.utils.fingerprintSerializer.message.20678ef") })
   }
   if (config.acceptLang && !isAcceptLanguage(config.acceptLang)) {
-    issues.push({ level: 'error', message: 'Accept-Language 格式不正确，例如 zh-CN,zh 或 en-US,en' })
+    issues.push({ level: 'error', message: tr("browser.utils.fingerprintSerializer.message.c801b1a") })
   }
   if (config.timezone && config.timezone !== 'system' && !isKnownTimezone(config.timezone)) {
-    issues.push({ level: 'warning', message: '时区未被当前系统 Intl 识别，启动后可能不会按预期生效' })
+    issues.push({ level: 'warning', message: tr("browser.utils.fingerprintSerializer.message.4a94ec1") })
   }
   if (config.resolution === 'custom' && !isWindowSize(config.customResolution || '')) {
-    issues.push({ level: 'error', message: '自定义窗口大小必须是 宽,高，例如 1920,1080' })
+    issues.push({ level: 'error', message: tr("browser.utils.fingerprintSerializer.message.ab9106e") })
   } else if (config.resolution && config.resolution !== 'custom' && !isWindowSize(config.resolution)) {
-    issues.push({ level: 'error', message: '窗口大小必须是 宽,高，例如 1920,1080' })
+    issues.push({ level: 'error', message: tr("browser.utils.fingerprintSerializer.message.23a63a7") })
   }
   if (config.hardwareConcurrency && !isPositiveIntInRange(config.hardwareConcurrency, 1, 128)) {
-    issues.push({ level: 'error', message: 'CPU 核心数必须是 1 到 128 的整数' })
+    issues.push({ level: 'error', message: tr("browser.utils.fingerprintSerializer.message.fe4665d") })
   }
   if (config.webrtcPolicy && !KERNEL_WEBRTC_POLICIES.has(config.webrtcPolicy)) {
-    issues.push({ level: 'warning', message: 'WebRTC 策略不是面板内置值，请确认当前内核是否支持' })
+    issues.push({ level: 'warning', message: tr("browser.utils.fingerprintSerializer.message.d628620") })
   }
   if (normalizeDisableSpoofing(config.disableSpoofing).length !== (config.disableSpoofing || []).length) {
-    issues.push({ level: 'warning', message: '排除伪装项仅支持 font、audio、canvas、clientrects、gpu' })
+    issues.push({ level: 'warning', message: tr("browser.utils.fingerprintSerializer.message.cef6cd3") })
   }
 
   return {
@@ -455,11 +456,11 @@ export interface FingerprintPreset {
   config: Partial<FingerprintConfig>
 }
 
-export const FINGERPRINT_PRESETS: FingerprintPreset[] = [
+export const FINGERPRINT_PRESETS: FingerprintPreset[] = localized(() => ([
   {
     id: 'win-chrome-office',
-    name: 'Windows / Chrome / 办公',
-    description: '模拟国内办公室 Windows 用户，中文环境，1920x1080',
+    name: tr("browser.utils.fingerprintSerializer.name.cfb98f2"),
+    description: tr("browser.utils.fingerprintSerializer.description.dc426a1"),
     config: {
       brand: 'Chrome',
       platform: 'windows',
@@ -473,8 +474,8 @@ export const FINGERPRINT_PRESETS: FingerprintPreset[] = [
   },
   {
     id: 'win-chrome-gaming',
-    name: 'Windows / Chrome / 游戏主机',
-    description: '模拟高配 Windows 用户，英文环境，2560x1440',
+    name: tr("browser.utils.fingerprintSerializer.name.68939f5"),
+    description: tr("browser.utils.fingerprintSerializer.description.e02cf9d"),
     config: {
       brand: 'Chrome',
       platform: 'windows',
@@ -488,8 +489,8 @@ export const FINGERPRINT_PRESETS: FingerprintPreset[] = [
   },
   {
     id: 'mac-chrome-designer',
-    name: 'macOS / Chrome / 设计师',
-    description: '模拟 Mac 设计师用户，中文环境，Retina 分辨率',
+    name: tr("browser.utils.fingerprintSerializer.name.b69ebf9"),
+    description: tr("browser.utils.fingerprintSerializer.description.3fcf350"),
     config: {
       brand: 'Chrome',
       platform: 'macos',
@@ -503,8 +504,8 @@ export const FINGERPRINT_PRESETS: FingerprintPreset[] = [
   },
   {
     id: 'win-edge-enterprise',
-    name: 'Windows / Edge / 企业',
-    description: '模拟企业 Windows 用户，Edge 浏览器，标准配置',
+    name: tr("browser.utils.fingerprintSerializer.name.38675ac"),
+    description: tr("browser.utils.fingerprintSerializer.description.9e6f5a6"),
     config: {
       brand: 'Edge',
       platform: 'windows',
@@ -518,8 +519,8 @@ export const FINGERPRINT_PRESETS: FingerprintPreset[] = [
   },
   {
     id: 'win-chrome-us-user',
-    name: 'Windows / Chrome / 美国用户',
-    description: '模拟美国普通用户，英文环境，1920x1080',
+    name: tr("browser.utils.fingerprintSerializer.name.005924c"),
+    description: tr("browser.utils.fingerprintSerializer.description.09c42d8"),
     config: {
       brand: 'Chrome',
       platform: 'windows',
@@ -533,8 +534,8 @@ export const FINGERPRINT_PRESETS: FingerprintPreset[] = [
   },
   {
     id: 'mac-chrome-jp',
-    name: 'macOS / Chrome / 日本用户',
-    description: '模拟日本 Mac 用户，Chrome 浏览器，日语环境',
+    name: tr("browser.utils.fingerprintSerializer.name.7d801e8"),
+    description: tr("browser.utils.fingerprintSerializer.description.c77c191"),
     config: {
       brand: 'Chrome',
       platform: 'macos',
@@ -548,8 +549,8 @@ export const FINGERPRINT_PRESETS: FingerprintPreset[] = [
   },
   {
     id: 'win-chrome-uk-office',
-    name: 'Windows / Chrome / 英国-办公',
-    description: '模拟英国办公室 Windows 用户，英文环境 (en-GB)',
+    name: tr("browser.utils.fingerprintSerializer.name.d091129"),
+    description: tr("browser.utils.fingerprintSerializer.description.0f59ecf"),
     config: {
       brand: 'Chrome',
       platform: 'windows',
@@ -563,8 +564,8 @@ export const FINGERPRINT_PRESETS: FingerprintPreset[] = [
   },
   {
     id: 'mac-chrome-us-edu',
-    name: 'macOS / Chrome / 美国-教育',
-    description: '模拟美国大学教育网 Mac 用户，英文环境 (en-US)',
+    name: tr("browser.utils.fingerprintSerializer.name.f953b21"),
+    description: tr("browser.utils.fingerprintSerializer.description.305028b"),
     config: {
       brand: 'Chrome',
       platform: 'macos',
@@ -576,7 +577,7 @@ export const FINGERPRINT_PRESETS: FingerprintPreset[] = [
       ...EFFECTIVE_RUNTIME_NOISE_CONFIG,
     },
   },
-]
+]))
 
 export function applyLocaleToFingerprintArgs(args: string[], lang: string, timezone: string): string[] {
   const nextConfig = deserialize(args || [])

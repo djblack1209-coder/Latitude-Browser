@@ -132,11 +132,11 @@ func Stop(a *App, ctx context.Context) {
 	a.shutdown(ctx)
 }
 
-func platformSupportsCloseConfirmation() bool {
-	return platformSupportsCloseConfirmationForOS(goruntime.GOOS)
+func platformUsesManagedClose() bool {
+	return platformUsesManagedCloseForOS(goruntime.GOOS)
 }
 
-func platformSupportsCloseConfirmationForOS(goos string) bool {
+func platformUsesManagedCloseForOS(goos string) bool {
 	switch strings.ToLower(strings.TrimSpace(goos)) {
 	case "windows", "darwin", "linux":
 		return true
@@ -162,13 +162,25 @@ func ShouldBlockClose(a *App, ctx context.Context) bool {
 	if quitRequested {
 		return true
 	}
-	// OnShutdown cannot veto an OS close. Intercept it before teardown on all
-	// desktop platforms, not just the Windows tray flow, so failures are shown
-	// while the manager is still alive and able to retry.
-	if !platformSupportsCloseConfirmation() {
+	// Keep the native callback non-blocking and close the start gate before
+	// returning. Authorize teardown after cleanup, without a confirmation event.
+	if !platformUsesManagedClose() {
 		return false
 	}
-	runtime.EventsEmit(ctx, "app:request-close")
+	if !a.requestQuit(quitModeFull) {
+		return true
+	}
+	go func() {
+		if err := a.stopRuntimeServices(); err != nil {
+			a.cancelQuitRequest()
+			logger.New("App").Error("Native quit cleanup failed", logger.F("error", err.Error()))
+			if a.ctx != nil {
+				runtime.EventsEmit(ctx, "app:quit-failed")
+			}
+			return
+		}
+		a.completeQuitRequest()
+	}()
 	return true
 }
 

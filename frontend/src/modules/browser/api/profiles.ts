@@ -1,3 +1,4 @@
+import { tr } from '../../../shared/i18n'
 import { applyBrowserProfileCopyOptionsToArgs, createBrowserProfileCopyOptions } from '../copyOptions'
 import { buildBrowserProfileCopyName } from '../copyName'
 import type {
@@ -42,10 +43,10 @@ export async function fetchBrowserProfileFingerprintMatrix(
       status: 'kept_unknown',
       inputArg: arg,
       runtimeArg: arg,
-      action: '保留',
-      note: '当前环境未连接后端，无法读取内核版本矩阵',
+      action: tr("browser.api.profiles.action.d046ac7"),
+      note: tr("browser.api.profiles.note.1580519"),
     })),
-    warnings: ['当前环境未连接后端，矩阵仅展示原始参数'],
+    warnings: [tr("browser.api.profiles.fetchBrowserProfileFingerprintMatrix.53c942b")],
   }
 }
 
@@ -56,7 +57,7 @@ export async function checkBrowserProfileFingerprint(profileId: string): Promise
   }
   const profile = getMockProfiles().find(item => item.profileId === profileId)
   if (!profile?.running || !profile?.debugReady) {
-    throw new Error('实例未处于可自测状态，请先启动实例并等待调试端口就绪')
+    throw new Error(tr("browser.api.profiles.checkBrowserProfileFingerprint.14a5c49"))
   }
   return {
     profileId,
@@ -153,7 +154,7 @@ export async function exportBrowserProfilePackage(profileIds: string[]): Promise
     zipPath: '',
     profileCount: 0,
     fileCount: 0,
-    message: '当前环境不支持导出实例',
+    message: tr("browser.api.profiles.message.8f7575f"),
   }
 }
 
@@ -166,7 +167,7 @@ export async function importBrowserProfilePackage(): Promise<BrowserProfilePacka
     cancelled: true,
     importedCount: 0,
     profileMappings: {},
-    message: '当前环境不支持导入实例',
+    message: tr("browser.api.profiles.message.1c08bc3"),
   }
 }
 

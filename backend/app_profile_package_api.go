@@ -1,6 +1,7 @@
 package backend
 
 import (
+	"ant-chrome/backend/internal/locale"
 	"archive/zip"
 	"encoding/json"
 	"fmt"
@@ -72,10 +73,10 @@ func (a *App) BrowserProfilePackageExport(profileIds []string) (ProfilePackageEx
 
 	defaultName := fmt.Sprintf("latitude-browser-profile-package-%s.zip", time.Now().Format("20060102-150405"))
 	savePath, err := wailsruntime.SaveFileDialog(a.ctx, wailsruntime.SaveDialogOptions{
-		Title:           "导出实例",
+		Title:           locale.Text("error.backend.message.ad092ee24e"),
 		DefaultFilename: defaultName,
 		Filters: []wailsruntime.FileFilter{
-			{DisplayName: "ZIP 文件 (*.zip)", Pattern: "*.zip"},
+			{DisplayName: locale.Text("error.backend.message.e3ae6a06fd"), Pattern: "*.zip"},
 		},
 	})
 	if err != nil {
@@ -108,9 +109,9 @@ func (a *App) BrowserProfilePackageImport() (ProfilePackageImportResult, error) 
 		return ProfilePackageImportResult{}, fmt.Errorf("应用上下文未初始化")
 	}
 	zipPath, err := wailsruntime.OpenFileDialog(a.ctx, wailsruntime.OpenDialogOptions{
-		Title: "导入实例",
+		Title: locale.Text("error.backend.message.f1f38acef7"),
 		Filters: []wailsruntime.FileFilter{
-			{DisplayName: "ZIP 文件 (*.zip)", Pattern: "*.zip"},
+			{DisplayName: locale.Text("error.backend.message.e3ae6a06fd"), Pattern: "*.zip"},
 		},
 	})
 	if err != nil {

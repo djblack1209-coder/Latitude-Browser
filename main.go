@@ -16,6 +16,7 @@ import (
 	"github.com/wailsapp/wails/v2/pkg/options"
 	"github.com/wailsapp/wails/v2/pkg/options/assetserver"
 	"github.com/wailsapp/wails/v2/pkg/options/linux"
+	"github.com/wailsapp/wails/v2/pkg/options/mac"
 	"github.com/wailsapp/wails/v2/pkg/options/windows"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
@@ -264,7 +265,7 @@ func main() {
 		AssetServer: &assetserver.Options{
 			Assets: assets,
 		},
-		BackgroundColour: &options.RGBA{R: 245, G: 247, B: 250, A: 255},
+		BackgroundColour: &options.RGBA{R: 7, G: 9, B: 11, A: 255},
 		OnStartup: func(ctx context.Context) {
 			close(startupReached)
 			if startupDebugEnabled {
@@ -298,7 +299,7 @@ func main() {
 			backend.QuitTray()
 			app.shutdown(ctx)
 		},
-		// 拦截关闭按钮事件，由前端处理自定义对话框
+		// Native close starts bounded runtime cleanup immediately, without a dialog.
 		OnBeforeClose: func(ctx context.Context) bool {
 			return app.shouldBlockClose(ctx)
 		},
@@ -310,7 +311,9 @@ func main() {
 			Icon:             linuxAppIcon,
 			WebviewGpuPolicy: linux.WebviewGpuPolicyNever,
 		},
+		Mac: &mac.Options{TitleBar: mac.TitleBarHiddenInset(), Appearance: mac.NSAppearanceNameDarkAqua},
 		Windows: &windows.Options{
+			Theme:                windows.Dark,
 			WebviewIsTransparent: false,
 			WindowIsTranslucent:  false,
 		},

@@ -1,3 +1,4 @@
+import { tr, useLocale } from '../../../../shared/i18n'
 ﻿import { Button, FormItem, Input, Modal, Textarea } from '../../../../shared/components'
 import type { ProxyCheckSettings } from '../../types'
 
@@ -22,40 +23,42 @@ export function ProxyPoolCheckSettingsModal({
   onCheckSettingsChange,
   onCheckTargetsTextChange,
 }: ProxyPoolCheckSettingsModalProps) {
+  useLocale()
+
   return (
     <Modal
       open={open}
       onClose={onClose}
-      title="检测设置"
+      title={tr("browser.pages.proxyPool.ProxyPoolCheckSettingsModal.title.a99f37b")}
       width="760px"
       footer={(
         <>
-          <Button variant="secondary" onClick={onClose}>取消</Button>
-          <Button onClick={onSave} loading={saving}>保存</Button>
+          <Button variant="secondary" onClick={onClose}>{tr("App.CloseConfirmModal.4d0b468")}</Button>
+          <Button onClick={onSave} loading={saving}>{tr("browser.components.BrowserListLayout.text.fadf24d")}</Button>
         </>
       )}
     >
       <div className="space-y-4">
-        <FormItem label="桥接启动等待" hint="毫秒" >
+        <FormItem label={tr("browser.pages.proxyPool.ProxyPoolCheckSettingsModal.label.f906b02")} >
           <Input
             type="number"
             value={checkSettings.bridgeStartTimeoutMs}
             onChange={(e) => onCheckSettingsChange(prev => ({ ...prev, bridgeStartTimeoutMs: Number(e.target.value) || 15000 }))}
           />
         </FormItem>
-        <FormItem label="测速目标 ID">
+        <FormItem label={tr("browser.pages.proxyPool.ProxyPoolCheckSettingsModal.label.be4e12f")}>
           <Input
             value={checkSettings.speedTargetId}
             onChange={(e) => onCheckSettingsChange(prev => ({ ...prev, speedTargetId: e.target.value }))}
           />
         </FormItem>
-        <FormItem label="IP 健康目标 ID">
+        <FormItem label={tr("browser.pages.proxyPool.ProxyPoolCheckSettingsModal.label.4b33e16")}>
           <Input
             value={checkSettings.ipHealthTargetId}
             onChange={(e) => onCheckSettingsChange(prev => ({ ...prev, ipHealthTargetId: e.target.value }))}
           />
         </FormItem>
-        <FormItem label="检测目标列表（JSON，每项一个）" hint="可直接编辑 URL、超时、期望状态码">
+        <FormItem label={tr("browser.pages.proxyPool.ProxyPoolCheckSettingsModal.label.87c41bb")}>
           <Textarea
             value={checkTargetsText}
             onChange={(e) => onCheckTargetsTextChange(e.target.value)}

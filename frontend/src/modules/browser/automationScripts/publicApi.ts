@@ -1,3 +1,4 @@
+import { tr, localized } from '../../../shared/i18n'
 import {
   AUTOMATION_SCRIPT_PUBLIC_API_BASE_PATH,
   AUTOMATION_SCRIPT_PUBLIC_API_DEFAULT_TIMEOUT_MS,
@@ -18,24 +19,24 @@ export {
 } from "./publicApiUtils";
 
 export const AUTOMATION_SCRIPT_PUBLIC_API_METHOD_OPTIONS = [
-  { value: "POST", label: "POST" },
+  { value: "POST", label: tr("ui.modules.browser.automationScripts.publicApi.label.61ff81c") },
 ] as const;
 
 export const AUTOMATION_SCRIPT_PUBLIC_API_REQUEST_MODE_OPTIONS: Array<{
   value: AutomationScriptPublicAPIRequestMode;
   label: string;
-}> = [
-  { value: "standard", label: "标准请求" },
-  { value: "params-only", label: "仅透传 params" },
-];
+}> = localized(() => ([
+  { value: "standard", label: tr("browser.automationScripts.publicApi.label.613a8ea") },
+  { value: "params-only", label: tr("browser.automationScripts.publicApi.label.7664c5b") },
+]));
 
 export const AUTOMATION_SCRIPT_PUBLIC_API_RESPONSE_MODE_OPTIONS: Array<{
   value: AutomationScriptPublicAPIResponseMode;
   label: string;
-}> = [
-  { value: "envelope", label: "标准信封" },
-  { value: "result-only", label: "仅返回 result" },
-];
+}> = localized(() => ([
+  { value: "envelope", label: tr("browser.automationScripts.publicApi.label.0856528") },
+  { value: "result-only", label: tr("browser.automationScripts.publicApi.label.1e37e66") },
+]));
 
 function normalizeAutomationScriptPublicAPIPathSegment(value: string): string {
   let result = "";
@@ -217,7 +218,7 @@ function buildAutomationScriptPublicAPIDefaultResponseExample(): string {
     {
       ok: true,
       status: "success",
-      message: "已返回脚本结果",
+      message: tr("browser.automationScripts.publicApi.message.3b2b107"),
       data: {
         verificationCode: "429792",
       },

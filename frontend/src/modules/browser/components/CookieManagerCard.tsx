@@ -1,3 +1,5 @@
+import { getLocale } from '../../../shared/i18n'
+import { tr, useLocale } from '../../../shared/i18n'
 import { useEffect, useMemo, useState } from 'react'
 import { Download, RefreshCw, Trash2 } from 'lucide-react'
 import { Badge, Button, Card, Input, Table, toast } from '../../../shared/components'
@@ -14,10 +16,12 @@ interface Props {
 
 const formatExpires = (expires: number) => {
   if (expires <= 0) return 'Session'
-  return new Date(expires * 1000).toLocaleString('zh-CN')
+  return new Date(expires * 1000).toLocaleString(getLocale())
 }
 
 export function CookieManagerCard({ profileId, profileName, running, ready }: Props) {
+  const uiLocale = useLocale()
+
   const [cookies, setCookies] = useState<CookieInfo[]>([])
   const [filterDomain, setFilterDomain] = useState('')
   const [loading, setLoading] = useState(false)
@@ -31,7 +35,7 @@ export function CookieManagerCard({ profileId, profileName, running, ready }: Pr
       const list = await fetchBrowserCookies(profileId)
       setCookies(list)
     } catch {
-      toast.error('获取 Cookie 失败')
+      toast.error(tr("browser.components.CookieManagerCard.CookieManagerCard.20a1bca"))
     } finally {
       setLoading(false)
     }
@@ -46,16 +50,16 @@ export function CookieManagerCard({ profileId, profileName, running, ready }: Pr
     if (!filterDomain.trim()) return cookies
     const kw = filterDomain.toLowerCase()
     return cookies.filter(c => c.domain.toLowerCase().includes(kw))
-  }, [cookies, filterDomain])
+  }, [cookies, filterDomain, uiLocale])
 
   const handleClear = async () => {
     setClearing(true)
     try {
       await clearBrowserCookies(profileId)
       setCookies([])
-      toast.success('Cookie 已清除')
+      toast.success(tr("browser.components.CookieManagerCard.CookieManagerCard.72573bb"))
     } catch {
-      toast.error('清除 Cookie 失败')
+      toast.error(tr("browser.components.CookieManagerCard.CookieManagerCard.e851151"))
     } finally {
       setClearing(false)
       setShowConfirm(false)
@@ -74,84 +78,68 @@ export function CookieManagerCard({ profileId, profileName, running, ready }: Pr
       a.download = filename
       a.click()
       URL.revokeObjectURL(url)
-      toast.success('Cookie 已导出')
+      toast.success(tr("browser.components.CookieManagerCard.CookieManagerCard.7905c7b"))
     } catch {
-      toast.error('导出 Cookie 失败')
+      toast.error(tr("browser.components.CookieManagerCard.CookieManagerCard.d9a0ee7"))
     }
   }
 
   const columns: TableColumn<CookieInfo>[] = [
-    { key: 'domain', title: '域名', render: v => <span className="font-mono text-xs">{v}</span> },
-    { key: 'name', title: '名称', render: v => <span className="font-mono text-xs">{v}</span> },
+    { key: 'domain', title: tr("browser.components.CookieManagerCard.title.282d684"), render: v => <span className="font-mono text-xs">{v}</span> },
+    { key: 'name', title: tr("browser.components.BrowserListLayout.title.1be7ae4"), render: v => <span className="font-mono text-xs">{v}</span> },
     {
       key: 'value',
-      title: '值',
+      title: tr("browser.components.CookieManagerCard.title.321b955"),
       render: v => (
         <span className="font-mono text-xs max-w-[120px] truncate block" title={v as string}>{v}</span>
       ),
     },
-    { key: 'expires', title: '过期时间', render: v => formatExpires(v as number) },
+    { key: 'expires', title: tr("browser.components.CookieManagerCard.title.27aefec"), render: v => formatExpires(v as number) },
     {
       key: 'httpOnly',
-      title: 'HttpOnly',
-      render: v => <Badge variant={v ? 'success' : 'default'}>{v ? '是' : '否'}</Badge>,
+      title: tr("ui.modules.browser.components.CookieManagerCard.label.151b29c"),
+      render: v => <Badge variant={v ? "success" : "default"}>{v ? tr("browser.components.CookieManagerCard.CookieManagerCard.30160a2") : tr("browser.components.CookieManagerCard.CookieManagerCard.8bf5c10")}</Badge>,
     },
     {
       key: 'secure',
-      title: 'Secure',
-      render: v => <Badge variant={v ? 'success' : 'default'}>{v ? '是' : '否'}</Badge>,
+      title: tr("ui.modules.browser.components.CookieManagerCard.label.ae6cf5c"),
+      render: v => <Badge variant={v ? "success" : "default"}>{v ? tr("browser.components.CookieManagerCard.CookieManagerCard.30160a2") : tr("browser.components.CookieManagerCard.CookieManagerCard.8bf5c10")}</Badge>,
     },
   ]
 
-  const subtitle = !running
-    ? '实例未运行，无法管理 Cookie'
-    : !ready
-      ? '实例运行中，等待调试接口就绪后可管理 Cookie'
-      : `共 ${cookies.length} 条${filterDomain ? `，已过滤 ${filteredCookies.length} 条` : ''}`
+
 
   return (
-    <Card title="Cookie 管理" subtitle={subtitle}>
+    <Card title={tr("browser.components.CookieManagerCard.title.e36804a")} >
       {!running ? (
-        <p className="text-sm text-[var(--color-text-muted)] py-4 text-center">
-          请先启动实例以查看 Cookie
-        </p>
+        <p className="text-sm text-[var(--color-text-muted)] py-4 text-center">{tr("browser.components.CookieManagerCard.text.326c3b8")}</p>
       ) : !ready ? (
-        <p className="text-sm text-[var(--color-text-muted)] py-4 text-center">
-          浏览器已启动，正在等待调试接口就绪
-        </p>
+        <p className="text-sm text-[var(--color-text-muted)] py-4 text-center">{tr("browser.components.CookieManagerCard.text.d728733")}</p>
       ) : (
         <div className="space-y-3">
           <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center justify-between">
             <Input
-              placeholder="按域名过滤..."
+              placeholder={tr("browser.components.CookieManagerCard.placeholder.4f4e7f9")}
               value={filterDomain}
               onChange={e => setFilterDomain(e.target.value)}
               className="w-full sm:w-64"
             />
             <div className="flex gap-2 flex-shrink-0">
               <Button size="sm" variant="ghost" onClick={loadCookies} disabled={loading}>
-                <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-                刷新
-              </Button>
+                <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />{tr("browser.components.AutomationRuntimeSnapshot.text.38108ea")}</Button>
               <Button size="sm" variant="ghost" onClick={handleExport}>
-                <Download className="w-4 h-4" />
-                导出 Netscape
-              </Button>
+                <Download className="w-4 h-4" />{tr("browser.components.CookieManagerCard.text.c233544")}</Button>
               <Button size="sm" variant="secondary" onClick={() => setShowConfirm(true)} disabled={clearing}>
-                <Trash2 className="w-4 h-4" />
-                清除全部
-              </Button>
+                <Trash2 className="w-4 h-4" />{tr("browser.components.CookieManagerCard.text.2e9ab49")}</Button>
             </div>
           </div>
 
           {showConfirm && (
             <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-elevated)] p-4 flex items-center justify-between gap-4">
-              <span className="text-sm text-[var(--color-text-secondary)]">
-                确认清除该实例的所有 Cookie？此操作不可撤销。
-              </span>
+              <span className="text-sm text-[var(--color-text-secondary)]">{tr("browser.components.CookieManagerCard.text.da4c93f")}</span>
               <div className="flex gap-2 flex-shrink-0">
-                <Button size="sm" variant="ghost" onClick={() => setShowConfirm(false)}>取消</Button>
-                <Button size="sm" onClick={handleClear} disabled={clearing}>确认清除</Button>
+                <Button size="sm" variant="ghost" onClick={() => setShowConfirm(false)}>{tr("App.CloseConfirmModal.4d0b468")}</Button>
+                <Button size="sm" onClick={handleClear} disabled={clearing}>{tr("browser.components.CookieManagerCard.text.3bc93e7")}</Button>
               </div>
             </div>
           )}

@@ -1,3 +1,5 @@
+import { getLocale } from '../../../shared/i18n'
+import { tr } from '../../../shared/i18n'
 ﻿import type { BrowserProfile } from '../types'
 
 export interface ProfileTagSection {
@@ -11,7 +13,8 @@ export interface GroupFilterOption {
   count: number
 }
 
-export const UNTAGGED_LABEL = '未打标签'
+export const UNTAGGED_LABEL = () => tr("browser.components.QuickLaunchModal.helpers.message.2e3d4ee")
+export const UNTAGGED_ID = '__untagged__'
 export const GROUP_ALL = '__all__'
 export const GROUP_UNGROUPED = '__ungrouped__'
 
@@ -38,10 +41,10 @@ export function sortProfiles(a: BrowserProfile, b: BrowserProfile): number {
   if (a.running !== b.running) {
     return a.running ? -1 : 1
   }
-  return a.profileName.localeCompare(b.profileName, 'zh-CN')
+  return a.profileName.localeCompare(b.profileName, getLocale())
 }
 
 export function pickPrimaryTag(profile: BrowserProfile): string {
   const tags = (profile.tags || []).map(t => t.trim()).filter(Boolean)
-  return tags.length > 0 ? tags[0] : UNTAGGED_LABEL
+  return tags.length > 0 ? tags[0] : UNTAGGED_ID
 }

@@ -1,3 +1,4 @@
+import { tr } from '../../../../shared/i18n'
 ﻿import type { Dispatch, SetStateAction } from 'react'
 import { toast } from '../../../../shared/components'
 import {
@@ -61,11 +62,11 @@ export function useBrowserProfileActions({
       if (startedProfile?.runtimeWarning) {
         toast.warning(startedProfile.runtimeWarning)
       } else {
-        toast.success(`实例已启动${startedProfile?.profileName ? `：${startedProfile.profileName}` : ''}`)
+        toast.success(tr("browser.pages.AutoConfigPage.AutoConfigPage.8b5a5ce", [startedProfile?.profileName ? `：${startedProfile.profileName}` : '']))
       }
       await loadProfiles({ silent: true, syncRuntimeState: true })
     } catch (error: any) {
-      const feedback = resolveActionFeedback(error, '实例启动失败')
+      const feedback = resolveActionFeedback(error, tr("browser.pages.AutoConfigPage.AutoConfigPage.176529e"))
       if (feedback.tone === 'warning') {
         toast.warning(feedback.message)
       } else {
@@ -87,13 +88,13 @@ export function useBrowserProfileActions({
       if (startedProfile?.runtimeWarning) {
         toast.warning(startedProfile.runtimeWarning)
       } else {
-        toast.success(`实例已直连启动${startedProfile?.profileName ? `：${startedProfile.profileName}` : ''}`)
+        toast.success(tr("browser.pages.browserList.useBrowserProfileActions.useBrowserProfileActions.5192a97", [startedProfile?.profileName ? `：${startedProfile.profileName}` : '']))
       }
       await loadProfiles({ silent: true, syncRuntimeState: true })
     } catch (error: any) {
       setProxyErrorModal(false)
       setPendingStartId(null)
-      const feedback = resolveActionFeedback(error, '实例直连启动失败')
+      const feedback = resolveActionFeedback(error, tr("browser.pages.browserList.useBrowserProfileActions.useBrowserProfileActions.52d7cf4"))
       if (feedback.tone === 'warning') {
         toast.warning(feedback.message)
       } else {
@@ -110,10 +111,10 @@ export function useBrowserProfileActions({
     try {
       const stoppedProfile = await stopBrowserInstance(profileId)
       mergeProfileState(stoppedProfile)
-      toast.success('实例已停止')
+      toast.success(tr("browser.pages.BrowserDetailPage.BrowserDetailPage.361960e"))
       await loadProfiles({ silent: true, syncRuntimeState: true })
     } catch (error: any) {
-      toast.error(resolveActionErrorMessage(error, '实例停止失败'))
+      toast.error(resolveActionErrorMessage(error, tr("browser.pages.BrowserDetailPage.BrowserDetailPage.531cbdd")))
       await loadProfiles({ silent: true, syncRuntimeState: true })
     } finally {
       updatePendingIds(setStoppingIds, profileId, false)
@@ -127,10 +128,10 @@ export function useBrowserProfileActions({
       await warmupProfileProxyBeforeStart(profile)
       const restartedProfile = await restartBrowserInstance(profileId)
       mergeProfileState(restartedProfile)
-      toast.success(`实例已重启${restartedProfile?.profileName ? `：${restartedProfile.profileName}` : ''}`)
+      toast.success(tr("browser.pages.browserList.useBrowserProfileActions.useBrowserProfileActions.fa62706", [restartedProfile?.profileName ? `：${restartedProfile.profileName}` : '']))
       await loadProfiles({ silent: true, syncRuntimeState: true })
     } catch (error: any) {
-      const feedback = resolveActionFeedback(error, '实例重启失败')
+      const feedback = resolveActionFeedback(error, tr("browser.pages.BrowserDetailPage.BrowserDetailPage.201d96f"))
       if (feedback.tone === 'warning') {
         toast.warning(feedback.message)
       } else {
@@ -144,7 +145,7 @@ export function useBrowserProfileActions({
 
   const handleDelete = async (profileId: string) => {
     await deleteBrowserProfile(profileId)
-    toast.success('配置已删除')
+    toast.success(tr("browser.pages.BrowserListPage.BrowserListPage.f9c34f0"))
     void loadProfiles()
   }
 

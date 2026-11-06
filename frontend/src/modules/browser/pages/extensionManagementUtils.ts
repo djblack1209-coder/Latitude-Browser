@@ -1,3 +1,4 @@
+import { tr } from '../../../shared/i18n'
 import type { BrowserExtension, BrowserProxy } from '../types'
 
 export const EXTENSION_HISTORY_STORAGE_KEY = 'ant-chrome.extensionManagement.history.v1'
@@ -94,9 +95,9 @@ export function createExtensionHistoryRecord(input: Omit<ExtensionHistoryRecord,
 }
 
 export function extensionHistoryActionLabel(action: ExtensionHistoryAction): string {
-  if (action === 'install') return '安装'
-  if (action === 'import') return '导入'
-  return '查询'
+  if (action === 'install') return tr("browser.pages.extensionManagementUtils.extensionHistoryActionLabel.087db63")
+  if (action === 'import') return tr("browser.components.BrowserListLayout.text.60e2bca")
+  return tr("browser.pages.extensionManagementUtils.extensionHistoryActionLabel.711363c")
 }
 
 export function getProxySpeedState(proxy: BrowserProxy): { ok: boolean; latencyMs: number; error: string } | undefined {
@@ -104,7 +105,7 @@ export function getProxySpeedState(proxy: BrowserProxy): { ok: boolean; latencyM
   return {
     ok: proxy.lastTestOk === true,
     latencyMs: proxy.lastTestOk ? proxy.lastLatencyMs || 0 : 0,
-    error: proxy.lastTestOk ? '' : '连接失败',
+    error: proxy.lastTestOk ? '' : tr("browser.pages.extensionManagementUtils.getProxySpeedState.2c056f1"),
   }
 }
 
@@ -137,10 +138,10 @@ export function getExtensionManifestMeta(item: BrowserExtension) {
 
 export function formatExtensionSource(value: string): string {
   const source = value.trim()
-  if (!source) return '来源未知'
+  if (!source) return tr("browser.pages.extensionManagementUtils.formatExtensionSource.a48c554")
   if (/^https?:\/\//i.test(source)) return 'Chrome Web Store'
-  if (/\.(crx|zip)$/i.test(source)) return '本地插件包'
-  return '本地目录'
+  if (/\.(crx|zip)$/i.test(source)) return tr("browser.pages.ExtensionManagementPage.ExtensionManagementPage.845e892")
+  return tr("browser.automationScripts.metadata.getAutomationScriptSourceLabel.530997c")
 }
 
 export function extensionStoreURL(item: BrowserExtension): string {

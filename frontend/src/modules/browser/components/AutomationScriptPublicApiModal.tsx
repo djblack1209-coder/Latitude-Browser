@@ -1,3 +1,5 @@
+import { translateMessage } from '../../../shared/i18n'
+import { tr, useLocale } from '../../../shared/i18n'
 import { useEffect, useRef, useState } from "react";
 import { toast } from "../../../shared/components";
 import {
@@ -64,6 +66,8 @@ export function AutomationScriptPublicApiModal({
   onChange,
   onBeforeInvoke,
 }: AutomationScriptPublicApiModalProps) {
+  useLocale()
+
   const storedConfig = prepareAutomationScriptPublicAPIConfigForSave(script);
   const resolvedConfig = resolveAutomationScriptPublicAPIConfig(script);
   const fullPath = buildAutomationScriptPublicAPIPath(resolvedConfig.path);
@@ -105,18 +109,18 @@ export function AutomationScriptPublicApiModal({
     (name) => visibleVariableNames.has(name),
   );
   const variableError = invalidVariableNames.length
-    ? `变量名只能使用字母、数字、下划线，且不能以数字开头：${invalidVariableNames.join(", ")}`
+    ? tr("browser.components.AutomationScriptPublicApiModal.AutomationScriptPublicApiModal.29d2c6d", [invalidVariableNames.join(", ")])
     : missingVisibleVariables.length
-      ? `必填变量缺少默认值：${missingVisibleVariables.join(", ")}`
+      ? tr("browser.components.AutomationScriptPublicApiModal.AutomationScriptPublicApiModal.8744859", [missingVisibleVariables.join(", ")])
       : "";
   const responseBodyValidation = parseJSONText(resolvedConfig.responseBodyText);
   const requestBodyError =
     resolvedRequestBodyText.trim() && !safeParseJSONObject(resolvedRequestBodyText)
-      ? "替换变量后的请求 Body 必须是 JSON 对象"
+      ? tr("browser.components.AutomationScriptPublicApiModal.AutomationScriptPublicApiModal.a948274")
       : "";
   const responseBodyError =
     resolvedConfig.responseBodyText.trim() && !responseBodyValidation.ok
-      ? `响应示例不是合法 JSON：${responseBodyValidation.error}`
+      ? tr("browser.components.AutomationScriptPublicApiModal.AutomationScriptPublicApiModal.d002308", [responseBodyValidation.error])
       : "";
   const isDualInstanceRuntimeScript = script.id === DUAL_INSTANCE_RUNTIME_SCRIPT_ID;
   const selectedTargetCode = readAutomationScriptPublicAPITargetCode(
@@ -137,12 +141,12 @@ export function AutomationScriptPublicApiModal({
     isDualInstanceRuntimeScript
       ? selectedPrimaryTargetCode && selectedSecondaryTargetCode
         ? ""
-        : "两个实例 Code 必填"
+        : tr("browser.components.AutomationScriptPublicApiModal.AutomationScriptPublicApiModal.d2d808a")
       : selectedTargetCode
         ? ""
         : selectedInstanceType === "script-default"
           ? ""
-          : "实例 Code 必填";
+          : tr("browser.components.AutomationScriptPublicApiModal.AutomationScriptPublicApiModal.433c8f7");
   const invokeDisabled =
     busy ||
     !resolvedConfig.enabled ||
@@ -261,7 +265,7 @@ export function AutomationScriptPublicApiModal({
 
   const handleInvoke = async () => {
     if (!resolvedConfig.enabled) {
-      toast.warning("请先启用对外接口");
+      toast.warning(tr("browser.components.AutomationScriptPublicApiModal.AutomationScriptPublicApiModal.1b00fbc"));
       return;
     }
     if (variableError) {
@@ -305,12 +309,12 @@ export function AutomationScriptPublicApiModal({
       });
       setInvokeResult(result);
       if (result.ok) {
-        toast.success("测试完成");
+        toast.success(tr("browser.components.AutomationScriptPublicApiModal.AutomationScriptPublicApiModal.506368a"));
       } else {
-        toast.warning(`接口返回 ${result.status}`);
+        toast.warning(tr("browser.components.AutomationScriptPublicApiModal.AutomationScriptPublicApiModal.9c0c993", [result.status]));
       }
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : "测试失败";
+      const message = error instanceof Error ? error.message : tr("browser.components.AutomationScriptPublicApiModal.AutomationScriptPublicApiModal.4184cd8");
       setInvokeError(message);
       toast.error(message);
     } finally {
@@ -322,7 +326,7 @@ export function AutomationScriptPublicApiModal({
     try {
       await openCorePath(path);
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : "打开目录失败";
+      const message = error instanceof Error ? error.message : tr("browser.components.AutomationScriptPublicApiModal.AutomationScriptPublicApiModal.6651d08");
       toast.error(message);
     }
   };
@@ -343,9 +347,9 @@ export function AutomationScriptPublicApiModal({
       requestExampleFallback={requestExampleFallback}
       responseExampleFallback={responseExampleFallback}
       visibleVariables={visibleVariables}
-      variableError={variableError}
-      requestBodyError={requestBodyError}
-      responseBodyError={responseBodyError}
+      variableError={translateMessage(variableError)}
+      requestBodyError={translateMessage(requestBodyError)}
+      responseBodyError={translateMessage(responseBodyError)}
       isDualInstanceRuntimeScript={isDualInstanceRuntimeScript}
       selectedTargetCode={selectedTargetCode}
       selectedPrimaryTargetCode={selectedPrimaryTargetCode}
@@ -355,7 +359,7 @@ export function AutomationScriptPublicApiModal({
       setApiKey={setApiKey}
       invoking={invoking}
       invokeResult={invokeResult}
-      invokeError={invokeError}
+      invokeError={translateMessage(invokeError)}
       outputEntries={outputEntries}
       testSectionRef={testSectionRef}
       updateConfig={updateConfig}

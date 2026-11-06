@@ -1,3 +1,4 @@
+import { tr } from '../../shared/i18n'
 ﻿import { type AutomationScriptRunInput, type AutomationScriptRunRecord } from "./automationScripts";
 import { startBrowserInstanceByCode } from "./api/instances";
 import { getBindings, normalizeAutomationScriptPublicApiInvokeResult, normalizeAutomationScriptRunInput, normalizeAutomationScriptRunRecord, type AutomationScriptPublicApiInvokeInput, type AutomationScriptPublicApiInvokeResult } from "./automationScriptApi.shared";
@@ -7,7 +8,7 @@ const AUTOMATION_RUN_LIST_TIMEOUT_MS = 8000;
 function withAutomationRunListTimeout<T>(promise: Promise<T>): Promise<T> {
   return new Promise((resolve, reject) => {
     const timer = window.setTimeout(() => {
-      reject(new Error("调用记录加载超时"));
+      reject(new Error(tr("browser.automationScriptApi.runs.withAutomationRunListTimeout.154eb48")));
     }, AUTOMATION_RUN_LIST_TIMEOUT_MS);
 
     promise
@@ -25,7 +26,7 @@ export async function runAutomationScript(
   if (startByCodeBeforeRun && launchCode) {
     const startedProfile = await startBrowserInstanceByCode(launchCode);
     if (!startedProfile) {
-      throw new Error(`通过 Launch Code 启动实例失败: ${launchCode}`);
+      throw new Error(tr("browser.automationScriptApi.runs.runAutomationScript.a764e52", [launchCode]));
     }
   }
 
@@ -70,7 +71,7 @@ export async function runAutomationScript(
     scriptName: "",
     scriptType: "",
     status: "failed",
-    summary: "当前环境未接入自动化脚本执行",
+    summary: tr("browser.automationScriptApi.runs.summary.c8a3863"),
     error: "AutomationScriptRun binding is unavailable",
     resultText: "",
     logText: "",
@@ -107,7 +108,7 @@ export async function invokeAutomationScriptPublicApi(
 ): Promise<AutomationScriptPublicApiInvokeResult> {
   const url = String(input?.url || "").trim();
   if (!url) {
-    throw new Error("接口地址不能为空");
+    throw new Error(tr("browser.automationScriptApi.runs.invokeAutomationScriptPublicApi.1a249ab"));
   }
 
   const method = String(input?.method || "POST").trim().toUpperCase() || "POST";

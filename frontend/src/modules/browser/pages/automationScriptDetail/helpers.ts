@@ -1,3 +1,5 @@
+import { getLocale } from '../../../../shared/i18n'
+import { tr } from '../../../../shared/i18n'
 ﻿import {
   AUTOMATION_SCRIPT_TARGET_MODE_OPTIONS,
   DUAL_INSTANCE_RUNTIME_SCRIPT_ID,
@@ -42,7 +44,7 @@ export function formatDateTime(value?: string): string {
     return value;
   }
 
-  return date.toLocaleString("zh-CN", { hour12: false });
+  return date.toLocaleString(getLocale(), { hour12: false });
 }
 
 export function targetModeBadgeVariant(
@@ -72,10 +74,10 @@ export function formatTargetModeLabel(
 export function formatScriptSource(script: AutomationScriptRecord): string {
   const { source } = script;
   if (!source.type && !source.uri && !source.path) {
-    return "手动维护";
+    return tr("browser.automationScripts.metadata.getAutomationScriptSourceLabel.e069342");
   }
 
-  const mainValue = source.uri || source.path || "已导入";
+  const mainValue = source.uri || source.path || tr("browser.pages.automationScriptDetail.helpers.formatScriptSource.5c5b7cf");
   const extras = [source.ref, source.path && source.uri ? source.path : ""]
     .filter(Boolean)
     .join(" · ");
@@ -186,7 +188,7 @@ export function buildDualRuntimeRequestPreviews(
   } catch (error: unknown) {
     return {
       requests: [],
-      error: error instanceof Error ? error.message : "JSON 解析失败",
+      error: error instanceof Error ? error.message : tr("browser.automationScripts.publicApiUtils.parseAutomationScriptPublicAPIJSONText.c18abb4"),
     };
   }
 }
@@ -225,15 +227,15 @@ export function buildOpenClawDualSiteCommand(
   const targetScriptID = scriptID.trim() || DUAL_INSTANCE_RUNTIME_SCRIPT_ID;
 
   return [
-    "使用 Latitude Browser OpenClaw skill。",
-    `请由 OpenClaw 触发执行预置脚本 ${targetScriptID}。`,
-    `参数里 browsers 使用 ${primaryCode} 和 ${secondaryCode}，并分别设置 startUrls。`,
-    `${primaryCode} 的 startUrls 固定为 ["https://finance.sina.com.cn/"]。`,
-    `${secondaryCode} 的 startUrls 固定为 ["https://map.baidu.com/"]。`,
-    "必须直接在 runtime/session 请求中带 startUrls，一次启动到目标站点。",
-    "不要先空启动 runtime/session 再调用 launch（否则会先出现 about:blank）。",
-    "两个站点必须分开实例执行，不要混用会话，不要停止实例。",
-    "返回两个实例各自的页面标题、当前 URL 和执行结果。",
+    tr("browser.pages.AutomationPage.helpers.buildAutomationSkillPrompt.fd391a9"),
+    tr("browser.pages.automationScriptDetail.helpers.buildOpenClawDualSiteCommand.495089c", [targetScriptID]),
+    tr("browser.pages.automationScriptDetail.helpers.buildOpenClawDualSiteCommand.c95815a", [primaryCode, secondaryCode]),
+    tr("browser.pages.automationScriptDetail.helpers.buildOpenClawDualSiteCommand.f6e3ec3", [primaryCode]),
+    tr("browser.pages.automationScriptDetail.helpers.buildOpenClawDualSiteCommand.0aac5cf", [secondaryCode]),
+    tr("browser.pages.automationScriptDetail.helpers.buildOpenClawDualSiteCommand.b2aa9b0"),
+    tr("browser.pages.automationScriptDetail.helpers.buildOpenClawDualSiteCommand.e914f9e"),
+    tr("browser.pages.automationScriptDetail.helpers.buildOpenClawDualSiteCommand.b6e98db"),
+    tr("browser.pages.automationScriptDetail.helpers.buildOpenClawDualSiteCommand.84bdbcc"),
   ].join("\n");
 }
 
@@ -259,7 +261,7 @@ export function buildProfileSuggestions(
   });
 
   return suggestions.sort((left, right) =>
-    left.value.localeCompare(right.value, "zh-CN"),
+    left.value.localeCompare(right.value, getLocale()),
   );
 }
 
@@ -297,7 +299,7 @@ export function buildExactProfileOptions(
       .sort((left, right) =>
         (left.profileName || left.profileId).localeCompare(
           right.profileName || right.profileId,
-          "zh-CN",
+          getLocale(),
         ),
       )
       .map((profile) => ({
@@ -319,7 +321,7 @@ export function buildExactProfileOptions(
   ) {
     options.push({
       value: currentProfileId,
-      label: [currentCode, currentProfileId || "未绑定实例", "已不存在"]
+      label: [currentCode, currentProfileId || tr("browser.pages.automationScriptDetail.helpers.buildExactProfileOptions.4d341e3"), tr("browser.pages.automationScriptDetail.helpers.buildExactProfileOptions.79b01bc")]
         .filter(Boolean)
         .join(" · "),
     });
@@ -350,11 +352,11 @@ export function validateTargetConfig(
     case "create":
       return hasTargetSelectorCondition(config.templateSelector)
         ? ""
-        : "“按模板新建实例”至少要填一个模板条件";
+        : tr("browser.pages.automationScriptDetail.helpers.validateTargetConfig.b556f16");
     case "rotate":
       return hasTargetSelectorCondition(config.selector)
         ? ""
-        : "“按条件轮询实例”至少要填一个轮询条件";
+        : tr("browser.pages.automationScriptDetail.helpers.validateTargetConfig.d01b09e");
     default:
       return "";
   }
@@ -374,13 +376,13 @@ export function formatTargetSelectorSummary(
     parts.push(identity);
   }
   if (selector.groupId.trim()) {
-    parts.push(`分组 ${selector.groupId.trim()}`);
+    parts.push(tr("browser.components.QuickLaunchModal.QuickLaunchModal.86f4898", [selector.groupId.trim()]));
   }
   if (selector.tags.length > 0) {
-    parts.push(`标签 ${selector.tags.join(" / ")}`);
+    parts.push(tr("browser.pages.automationScriptDetail.helpers.formatTargetSelectorSummary.5d9c4d3", [selector.tags.join(" / ")]));
   }
   if (selector.keywords.length > 0) {
-    parts.push(`关键字 ${selector.keywords.join(" / ")}`);
+    parts.push(tr("browser.pages.automationScriptDetail.helpers.formatTargetSelectorSummary.59a8f90", [selector.keywords.join(" / ")]));
   }
 
   return parts.length > 0 ? parts.join(" · ") : fallback;

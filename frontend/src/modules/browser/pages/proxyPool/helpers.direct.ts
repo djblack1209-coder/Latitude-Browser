@@ -1,3 +1,4 @@
+import { tr } from '../../../../shared/i18n'
 import type { DirectImportForm, ImportCandidate } from './helpers.types'
 
 function normalizeDirectProxyConfig(raw: string): string {
@@ -23,7 +24,7 @@ function resolveDirectProxyName(
   const name = rawName.trim()
   const fallbackName = server
     ? `${scheme.toUpperCase()}-${server}${port > 0 ? `:${port}` : ''}`
-    : `导入代理 ${index + 1}`
+    : tr("browser.components.ProxyImportModal.helpers.resolveDirectProxyName.5712901", [index + 1])
   const finalName = name || fallbackName
   return prefix ? `${prefix}-${finalName}` : finalName
 }
@@ -45,34 +46,34 @@ function normalizeDirectProtocol(raw: unknown): DirectImportForm['protocol'] {
   if (protocol === 'socks' || protocol === 'socket') {
     return 'socks5'
   }
-  throw new Error('protocol 仅支持 http / https / socks5')
+  throw new Error(tr("browser.pages.proxyPool.helpers.direct.normalizeDirectProtocol.de327cb"))
 }
 
 export function parseDirectProxyURL(raw: string): DirectImportForm {
   const normalized = normalizeDirectProxyConfig(raw)
   if (!normalized) {
-    throw new Error('请输入标准代理地址')
+    throw new Error(tr("browser.pages.proxyPool.helpers.direct.parseDirectProxyURL.98d4782"))
   }
   if (!/^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//.test(normalized)) {
-    throw new Error('单行文本需要包含协议头，需要包含协议头')
+    throw new Error(tr("browser.pages.proxyPool.helpers.direct.parseDirectProxyURL.f006f9f"))
   }
 
   let parsedURL: URL
   try {
     parsedURL = new URL(normalized)
   } catch {
-    throw new Error('单行代理文本格式无效')
+    throw new Error(tr("browser.pages.proxyPool.helpers.direct.parseDirectProxyURL.e845db6"))
   }
 
   const protocol = normalizeDirectProtocol(parsedURL.protocol.replace(/:$/, ''))
   const server = parsedURL.hostname.replace(/^\[(.*)\]$/, '$1').trim()
   if (!server) {
-    throw new Error('代理地址缺少主机名')
+    throw new Error(tr("browser.pages.proxyPool.helpers.direct.parseDirectProxyURL.58e5dde"))
   }
 
   const port = Number(parsedURL.port)
   if (!Number.isInteger(port) || port < 1 || port > 65535) {
-    throw new Error('代理地址缺少有效端口')
+    throw new Error(tr("browser.pages.proxyPool.helpers.direct.parseDirectProxyURL.4cb5850"))
   }
 
   return {
@@ -100,29 +101,29 @@ export function toDirectImportForm(proxyName: string, proxyConfig: string): Dire
 export function buildDirectImportCandidate(form: DirectImportForm): ImportCandidate {
   const serverInput = form.server.trim()
   if (!serverInput) {
-    throw new Error('请输入代理地址')
+    throw new Error(tr("browser.components.ProxyImportModal.helpers.buildDirectImportCandidate.e568d77"))
   }
   if (/^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//.test(serverInput)) {
-    throw new Error('代理地址只需要填写主机名或 IP，不需要协议头')
+    throw new Error(tr("browser.components.ProxyImportModal.helpers.buildDirectImportCandidate.1defaea"))
   }
 
   const portInput = form.port.trim()
   if (!portInput) {
-    throw new Error('请输入代理端口')
+    throw new Error(tr("browser.components.ProxyImportModal.helpers.buildDirectImportCandidate.42880dd"))
   }
   if (!/^\d+$/.test(portInput)) {
-    throw new Error('代理端口必须为数字')
+    throw new Error(tr("browser.components.ProxyImportModal.helpers.buildDirectImportCandidate.951cf39"))
   }
 
   const port = Number(portInput)
   if (port < 1 || port > 65535) {
-    throw new Error('代理端口必须在 1-65535 之间')
+    throw new Error(tr("browser.components.ProxyImportModal.helpers.buildDirectImportCandidate.9058228"))
   }
 
   const username = form.username.trim()
   const password = form.password
   if (password && !username) {
-    throw new Error('填写密码时请同时填写账号')
+    throw new Error(tr("browser.components.ProxyImportModal.helpers.buildDirectImportCandidate.d8c921f"))
   }
 
   const auth = username
@@ -134,11 +135,11 @@ export function buildDirectImportCandidate(form: DirectImportForm): ImportCandid
   try {
     parsedURL = new URL(rawConfig)
   } catch {
-    throw new Error('请输入有效的代理地址')
+    throw new Error(tr("browser.components.ProxyImportModal.helpers.buildDirectImportCandidate.f727921"))
   }
 
   if (!parsedURL.hostname) {
-    throw new Error('请输入有效的代理地址')
+    throw new Error(tr("browser.components.ProxyImportModal.helpers.buildDirectImportCandidate.f727921"))
   }
 
   const normalizedConfig = normalizeDirectProxyConfig(parsedURL.toString()).replace(/\/$/, '')
@@ -173,18 +174,18 @@ function parseDirectImportObject(payload: Record<string, unknown>, fallbackGroup
   const protocol = normalizeDirectProtocol(payload.protocol ?? payload.scheme)
   const server = String(payload.server ?? payload.host ?? '').trim()
   if (!server) {
-    throw new Error('JSON 缺少 server')
+    throw new Error(tr("browser.pages.proxyPool.helpers.direct.parseDirectImportObject.36a2400"))
   }
 
   const portValue = Number(payload.port)
   if (!Number.isInteger(portValue) || portValue < 1 || portValue > 65535) {
-    throw new Error('JSON 缺少有效 port')
+    throw new Error(tr("browser.pages.proxyPool.helpers.direct.parseDirectImportObject.8eae5ff"))
   }
 
   const username = String(payload.username ?? payload.user ?? '').trim()
   const password = payload.password === undefined || payload.password === null ? '' : String(payload.password)
   if (password && !username) {
-    throw new Error('填写 password 时请同时填写 username')
+    throw new Error(tr("browser.pages.proxyPool.helpers.direct.parseDirectImportObject.ef58b1c"))
   }
 
   return {
@@ -203,7 +204,7 @@ function parseDirectImportObject(payload: Record<string, unknown>, fallbackGroup
 function parseDirectImportItems(raw: string): { items: ParsedDirectImportItem[]; defaultGroupName: string } {
   const text = raw.trim()
   if (!text) {
-    throw new Error('请输入 HTTP / SOCKS5 文本')
+    throw new Error(tr("browser.pages.proxyPool.helpers.direct.parseDirectImportItems.90f1b4e"))
   }
 
   if (text.startsWith('{') || text.startsWith('[')) {
@@ -211,7 +212,7 @@ function parseDirectImportItems(raw: string): { items: ParsedDirectImportItem[];
     try {
       payload = JSON.parse(text)
     } catch {
-      throw new Error('JSON 格式无效')
+      throw new Error(tr("browser.pages.proxyPool.helpers.chain.parseChainImportJSON.6d4c12f"))
     }
 
     let defaultGroupName = ''
@@ -231,7 +232,7 @@ function parseDirectImportItems(raw: string): { items: ParsedDirectImportItem[];
         sources = [record]
       }
     } else {
-      throw new Error('JSON 根节点必须是对象或数组')
+      throw new Error(tr("browser.pages.proxyPool.helpers.direct.parseDirectImportItems.aaec107"))
     }
 
     const items = sources.map((item, index) => {
@@ -242,13 +243,13 @@ function parseDirectImportItems(raw: string): { items: ParsedDirectImportItem[];
         }
       }
       if (!item || typeof item !== 'object' || Array.isArray(item)) {
-        throw new Error(`第 ${index + 1} 项格式无效`)
+        throw new Error(tr("browser.pages.proxyPool.helpers.direct.parseDirectImportItems.4a228de", [index + 1]))
       }
       return parseDirectImportObject(item as Record<string, unknown>, defaultGroupName)
     })
 
     if (items.length === 0) {
-      throw new Error('JSON 未解析到可导入代理')
+      throw new Error(tr("browser.pages.proxyPool.helpers.direct.parseDirectImportItems.0f27e4f"))
     }
     return { items, defaultGroupName }
   }
@@ -258,7 +259,7 @@ function parseDirectImportItems(raw: string): { items: ParsedDirectImportItem[];
     .map((line) => line.trim())
     .filter((line) => line && !line.startsWith('#') && !line.startsWith('//'))
   if (lines.length === 0) {
-    throw new Error('请输入标准代理地址')
+    throw new Error(tr("browser.pages.proxyPool.helpers.direct.parseDirectProxyURL.98d4782"))
   }
 
   return {
@@ -273,7 +274,7 @@ function parseDirectImportItems(raw: string): { items: ParsedDirectImportItem[];
 export function parseDirectImportText(raw: string): { form: DirectImportForm; groupName: string } {
   const { items } = parseDirectImportItems(raw)
   if (items.length !== 1) {
-    throw new Error('检测到多条代理，请直接点击解析进行批量导入')
+    throw new Error(tr("browser.pages.proxyPool.helpers.direct.parseDirectImportText.622d531"))
   }
   return items[0]
 }

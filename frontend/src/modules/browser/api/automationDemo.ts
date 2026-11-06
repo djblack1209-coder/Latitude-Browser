@@ -1,3 +1,4 @@
+import { tr } from '../../../shared/i18n'
 import { createBrowserProfile, deleteBrowserProfile } from './profiles'
 import { fetchLaunchServerInfo } from './launch'
 import { getBindings, getGoApp, getMockProfiles, nowISOString } from './runtime'
@@ -153,7 +154,7 @@ export async function automationDemoCreateProfile(options: AutomationDemoCreateO
   }
 
   const launchCode = normalizedOptions.launchCode || nextMockDemoCode()
-  const profileName = normalizedOptions.profileName || `自动化 Demo ${launchCode}`
+  const profileName = normalizedOptions.profileName || tr("browser.api.automationDemo.automationDemoCreateProfile.d999abc", [launchCode])
   const profile = await createBrowserProfile({
     profileName,
     userDataDir: `automation-demo-${launchCode.toLowerCase()}`,
@@ -163,7 +164,7 @@ export async function automationDemoCreateProfile(options: AutomationDemoCreateO
     proxyConfig: '',
     memoryLimitMb: 0,
     launchArgs: normalizedOptions.launchArgs || [],
-    tags: ['自动化', 'Demo'],
+    tags: [tr("config.navigation.config.title.90e4e9b"), 'Demo'],
     keywords: ['automation-demo', 'launch-api-demo'],
     groupId: '',
   })

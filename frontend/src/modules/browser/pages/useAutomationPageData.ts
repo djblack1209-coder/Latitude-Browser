@@ -1,3 +1,4 @@
+import { tr } from '../../../shared/i18n'
 ﻿import { useEffect, useState } from "react";
 import { toast } from "../../../shared/components";
 import { fetchBrowserProfiles } from "../api";
@@ -21,7 +22,7 @@ export function useAutomationPageData() {
         }
       })
       .catch(() => {
-        toast.error("脚本列表加载失败");
+        toast.error(tr("browser.pages.useAutomationPageData.useAutomationPageData.78ab17b"));
       })
       .finally(() => {
         if (!disposed) {
@@ -68,7 +69,7 @@ export function useAutomationPageData() {
       if (scriptsResult.status === "fulfilled") {
         setScripts(scriptsResult.value);
       } else {
-        toast.error("脚本列表刷新失败");
+        toast.error(tr("browser.pages.useAutomationPageData.useAutomationPageData.1475312"));
       }
       if (profilesResult.status === "fulfilled") {
         setProfiles(profilesResult.value || []);

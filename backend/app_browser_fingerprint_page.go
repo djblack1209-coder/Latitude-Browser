@@ -9,6 +9,9 @@ import (
 	"runtime"
 	"strings"
 	"time"
+
+	"ant-chrome/backend/internal/locale"
+	"ant-chrome/backend/internal/uistyle"
 )
 
 const fingerprintCheckBookmarkURL = "ant://fingerprint-check"
@@ -84,6 +87,7 @@ func (a *App) writeFingerprintCheckPageForExpectedArgsAndProfile(profileId strin
 	}
 	pagePath := filepath.Join(pageDir, "index.html")
 	pageHTML := strings.Replace(fingerprintCheckHTML, "__FINGERPRINT_CHECK_CONTEXT__", string(contextData), 1)
+	pageHTML = strings.Replace(pageHTML, "__TERMINAL_TOKENS__", uistyle.Tokens, 1)
 	if err := os.WriteFile(pagePath, []byte(pageHTML), 0o644); err != nil {
 		return "", fmt.Errorf("写入指纹检测页失败: %w", err)
 	}
@@ -271,12 +275,19 @@ func (a *App) buildFingerprintCheckPageContextForExpectedArgsAndProfile(profileI
 		ProfileId:  profileId,
 		Expected:   expected,
 		Proxy:      a.buildFingerprintCheckProxyContext(profile),
-		UILanguage: fingerprintCheckPreferredUILanguage(expected),
+		UILanguage: fingerprintCheckApplicationLanguage(),
 	}, "", "  ")
 	if err != nil {
 		return nil, fmt.Errorf("生成指纹检测上下文失败: %w", err)
 	}
 	return append(data, '\n'), nil
+}
+
+func fingerprintCheckApplicationLanguage() string {
+	if locale.Language() == "zh-CN" {
+		return "zh"
+	}
+	return "en"
 }
 
 func (a *App) buildFingerprintCheckProxyContext(profile *BrowserProfile) fingerprintCheckProxyContext {
@@ -477,52 +488,53 @@ const fingerprintCheckHTML = `<!doctype html>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Latitude Browser 指纹检测</title>
   <style>
-    :root { color-scheme: light; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", "PingFang SC", "Hiragino Sans GB", "Noto Sans CJK SC", "Noto Sans SC", "WenQuanYi Micro Hei", sans-serif; }
-    body { margin: 0; background: #f6f7f9; color: #111827; }
+    __TERMINAL_TOKENS__
+    :root { font-family: var(--font-sans); }
+    body { margin: 0; background: var(--bg-canvas); color: var(--text); }
     main { max-width: 1480px; margin: 0 auto; padding: 24px; }
     header { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 18px; }
-    h1 { margin: 0; font-size: 22px; }
-    .meta { color: #6b7280; font-size: 13px; margin-top: 4px; }
+    h1 { margin: 0; font-size: 18px; }
+    .meta { color: var(--text-3); font-size: 13px; margin-top: 4px; }
     .actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
-    button { border: 1px solid #111827; background: #111827; color: #fff; border-radius: 8px; height: 34px; padding: 0 12px; cursor: pointer; }
-    button.secondary { background: #fff; color: #111827; }
+    button { border: 1px solid var(--accent-line); background: var(--accent); color: var(--on-accent); border-radius: 2px; height: 34px; padding: 0 12px; cursor: pointer; }
+    button.secondary { background: var(--bg-inset); color: var(--text-2); border-color: var(--border-strong); }
     .grid { display: block; }
-    section { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; overflow-x: auto; margin-bottom: 14px; }
-    h2 { margin: 0; padding: 11px 13px; font-size: 14px; border-bottom: 1px solid #e5e7eb; background: #fafafa; }
-    table { width: 100%; min-width: 1280px; border-collapse: collapse; }
-    th, td { padding: 9px 12px; border-bottom: 1px solid #f1f5f9; vertical-align: top; font-size: 13px; text-align: left; }
-    th { background: #f8fafc; color: #475569; font-weight: 600; white-space: nowrap; }
+    section { background: var(--bg-surface); border: 1px solid var(--border); border-radius: 2px; overflow-x: auto; margin-bottom: 14px; }
+    h2 { margin: 0; padding: 11px 13px; font-size: 14px; border-bottom: 1px solid var(--border); background: var(--bg-surface); }
+    table { width: 100%; min-width: 960px; border-collapse: collapse; }
+    th, td { padding: 9px 12px; border-bottom: 1px solid var(--border-muted); vertical-align: top; font-size: 13px; text-align: left; }
+    th { background: var(--bg-surface); color: var(--text-2); font-weight: 600; white-space: nowrap; }
     tr:last-child td { border-bottom: 0; }
-    td.item { width: 160px; color: #111827; font-weight: 600; white-space: nowrap; }
-    td.source { width: 108px; color: #334155; font-weight: 600; white-space: nowrap; }
+    td.item { width: 160px; color: var(--text); font-weight: 600; white-space: nowrap; }
+    td.source { width: 108px; color: var(--text-2); font-weight: 600; white-space: nowrap; }
     td.hit { width: 92px; font-weight: 700; white-space: nowrap; }
-    td.reason { width: 380px; color: #475569; }
+    td.reason { width: 380px; color: var(--text-2); }
     code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Microsoft YaHei", "PingFang SC", "Noto Sans CJK SC", "Noto Sans SC", "WenQuanYi Micro Hei", monospace; word-break: break-all; }
     .value-pair { display: grid; gap: 5px; }
     .value-line { display: grid; grid-template-columns: 42px minmax(0, 1fr); gap: 8px; align-items: start; }
-    .value-label { color: #64748b; }
-    .ok { color: #047857; }
-    .warn { color: #b45309; }
-    .bad { color: #b91c1c; }
-    .muted { color: #64748b; }
+    .value-label { color: var(--text-3); }
+    .ok { color: var(--ok); }
+    .warn { color: var(--warn); }
+    .bad { color: var(--err); }
+    .muted { color: var(--text-3); }
     .summary { display: none; }
     .flow { margin-bottom: 14px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
-    .flow-step { background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; padding: 10px 12px; font-size: 13px; color: #334155; }
-    .flow-step strong { display: block; color: #111827; margin-bottom: 3px; }
-    .diff-empty { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 12px; color: #475569; font-size: 13px; margin-bottom: 14px; }
+    .flow-step { background: var(--bg-surface); border: 1px solid var(--border); border-radius: 2px; padding: 10px 12px; font-size: 13px; color: var(--text-2); }
+    .flow-step strong { display: block; color: var(--text); margin-bottom: 3px; }
+    .diff-empty { background: var(--bg-surface); border: 1px solid var(--border); border-radius: 2px; padding: 12px; color: var(--text-2); font-size: 13px; margin-bottom: 14px; }
     .proxy-panel { overflow: hidden; }
     .proxy-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0; }
-    .proxy-card { padding: 12px 13px; border-right: 1px solid #e5e7eb; }
+    .proxy-card { padding: 12px 13px; border-right: 1px solid var(--border); }
     .proxy-card:last-child { border-right: 0; }
-    .proxy-title { font-size: 13px; font-weight: 700; color: #111827; margin-bottom: 8px; }
+    .proxy-title { font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 8px; }
     .proxy-lines { display: grid; gap: 6px; }
     .proxy-line { display: grid; grid-template-columns: 70px minmax(0, 1fr); gap: 8px; font-size: 13px; }
-    .proxy-label { color: #64748b; white-space: nowrap; }
-    .proxy-value { color: #111827; min-width: 0; word-break: break-all; }
-    .proxy-status { display: inline-flex; align-items: center; height: 22px; padding: 0 8px; border-radius: 999px; font-size: 12px; font-weight: 700; }
-    .proxy-status.ok { color: #047857; background: #ecfdf5; }
-    .proxy-status.warn { color: #b45309; background: #fffbeb; }
-    .proxy-status.bad { color: #b91c1c; background: #fef2f2; }
+    .proxy-label { color: var(--text-3); white-space: nowrap; }
+    .proxy-value { color: var(--text); min-width: 0; word-break: break-all; }
+    .proxy-status { display: inline-flex; align-items: center; height: 22px; padding: 0 8px; border-radius: 2px; font-size: 12px; font-weight: 700; }
+    .proxy-status.ok { color: var(--ok); background: var(--ok-bg); }
+    .proxy-status.warn { color: var(--warn); background: var(--bg-surface)beb; }
+    .proxy-status.bad { color: var(--err); background: var(--err-bg); }
     .proxy-source-list { line-height: 1.55; }
     pre { margin: 0; padding: 12px; white-space: pre-wrap; word-break: break-all; font-size: 12px; }
   </style>
@@ -542,11 +554,6 @@ const fingerprintCheckHTML = `<!doctype html>
       <button id="copyBtn">复制 JSON</button>
     </div>
   </header>
-  <div class="flow" id="flowSteps">
-    <div class="flow-step"><strong>1 保存修改前</strong>旧配置启动后检测，点保存修改前快照。</div>
-    <div class="flow-step"><strong>2 修改并重启</strong>改 Seed 或指纹配置后，关闭实例再启动。</div>
-    <div class="flow-step"><strong>3 重新检测</strong>进入本页点重新检测，看修改前后变化。</div>
-  </div>
   <div class="summary" id="summary"></div>
   <div id="changeApp"></div>
   <div id="proxyApp"></div>
@@ -742,18 +749,7 @@ function uiValue(value) {
   if (currentUILang === 'zh' && Object.prototype.hasOwnProperty.call(UI_ZH, text)) return UI_ZH[text];
   return text;
 }
-function platformUsesEnglish(value) {
-  var normalized = String(value || '').toLowerCase();
-  return normalized.indexOf('linux') >= 0 || normalized.indexOf('x11') >= 0 || normalized.indexOf('mac') >= 0 || normalized.indexOf('darwin') >= 0;
-}
 function resolveUILanguage(context, report) {
-  var expected = context && context.expected ? context.expected : {};
-  var identity = report && report.identity ? report.identity : {};
-  var uaData = identity.userAgentData || {};
-  var candidates = [expected.platform, expected.platformVersion, identity.platform, identity.userAgent, uaData.platform, navigator.platform || '', navigator.userAgent || ''];
-  for (var index = 0; index < candidates.length; index++) {
-    if (platformUsesEnglish(candidates[index])) return 'en';
-  }
   return context && context.uiLanguage === 'en' ? 'en' : 'zh';
 }
 function setNodeText(id, text) {

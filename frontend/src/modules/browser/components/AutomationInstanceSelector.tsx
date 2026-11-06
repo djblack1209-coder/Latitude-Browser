@@ -1,3 +1,5 @@
+import { translateMessage } from '../../../shared/i18n'
+import { tr, useLocale } from '../../../shared/i18n'
 import type { ReactNode } from "react";
 import { FormItem, Input, Select } from "../../../shared/components";
 import type { AutomationScriptTargetMode } from "../automationScripts";
@@ -60,12 +62,12 @@ function buildCodeOptions(profiles: BrowserProfile[]): AutomationInstanceOption[
 }
 
 function modeLabel(mode: AutomationInstanceSelectorMode): string {
-  if (mode === "manual") return "传入实例";
-  if (mode === "existing") return "传入实例";
-  if (mode === "create") return "模板创建";
-  if (mode === "rotate") return "条件轮询";
-  if (mode === "code") return "输入 Code";
-  return "已有实例";
+  if (mode === "manual") return tr("browser.automationScripts.definitions.label.6a30362");
+  if (mode === "existing") return tr("browser.automationScripts.definitions.label.6a30362");
+  if (mode === "create") return tr("browser.components.AutomationInstanceSelector.modeLabel.a1eb055");
+  if (mode === "rotate") return tr("browser.components.AutomationInstanceSelector.modeLabel.ce09657");
+  if (mode === "code") return tr("browser.components.AutomationInstanceSelector.modeLabel.99ec48e");
+  return tr("browser.components.AutomationInstanceSelector.modeLabel.b1615f5");
 }
 
 function optionsWithFallback(
@@ -74,14 +76,14 @@ function optionsWithFallback(
   loading?: boolean,
 ): AutomationInstanceOption[] {
   if (options.length > 0) return options;
-  return [{ value: "", label: loading ? "正在加载..." : placeholder }];
+  return [{ value: "", label: loading ? tr("browser.components.AutomationInstanceSelector.optionsWithFallback.30350f7") : placeholder }];
 }
 
 export function AutomationInstanceSelector({
-  title = "实例选择",
+  title = tr("browser.components.AutomationInstanceSelector.AutomationInstanceSelector.168f9e8"),
   mode,
   modes = ["select", "create", "code"],
-  codeSelectLabel = "选择实例",
+  codeSelectLabel = tr("browser.components.AutomationInstanceSelector.AutomationInstanceSelector.1e75bfe"),
   disabled = false,
   loading = false,
   required = false,
@@ -94,10 +96,10 @@ export function AutomationInstanceSelector({
   profiles = [],
   profileOptions,
   templateOptions = [],
-  selectPlaceholder = "暂无可选实例",
-  templatePlaceholder = "暂无模板",
-  codePlaceholder = "例如 EQV8K0",
-  createNamePlaceholder = "实例名称",
+  selectPlaceholder = tr("browser.components.AutomationInstanceSelector.AutomationInstanceSelector.deb0aa0"),
+  templatePlaceholder = tr("browser.components.AutomationInstanceSelector.AutomationInstanceSelector.71fdd5f"),
+  codePlaceholder = tr("browser.components.AutomationInstanceSelector.AutomationInstanceSelector.b216cd4"),
+  createNamePlaceholder = tr("browser.components.AutomationInstanceSelector.AutomationInstanceSelector.9c0531d"),
   hint,
   extra,
   onModeChange,
@@ -106,6 +108,8 @@ export function AutomationInstanceSelector({
   onCreateNameChange,
   onTemplateChange,
 }: AutomationInstanceSelectorProps) {
+  useLocale()
+
   const resolvedProfileOptions = profileOptions || buildCodeOptions(profiles);
   const codeOptions = optionsWithFallback(
     resolvedProfileOptions,
@@ -125,12 +129,12 @@ export function AutomationInstanceSelector({
   const showManualInstanceFields = mode === "manual" || mode === "existing";
   const renderCodeSelector = (selectValue: string) => (
     <div className="grid grid-cols-1 gap-3 md:grid-cols-[13rem_minmax(0,1fr)]">
-      <FormItem label="实例 Code" required={required} error={error}>
+      <FormItem label={tr("browser.components.AutomationInstanceSelector.label.7dc20c8")} required={required} error={translateMessage(error)}>
         <Input
           value={selectedCode}
           onChange={(event) => onCodeChange?.(event.target.value)}
           placeholder={codePlaceholder}
-          className="font-mono uppercase"
+          className="font-mono "
           disabled={disabled}
         />
       </FormItem>
@@ -181,7 +185,7 @@ export function AutomationInstanceSelector({
 
       {showFields && isExistingMode ? (
         <div className="mt-3 space-y-2">
-          <FormItem label="已有实例" required={required} error={error}>
+          <FormItem label={tr("browser.components.AutomationInstanceSelector.modeLabel.b1615f5")} required={required} error={translateMessage(error)}>
             <Select
               value={selectedProfileId}
               options={optionsWithFallback(
@@ -207,7 +211,7 @@ export function AutomationInstanceSelector({
       {showFields && mode === "create" ? (
         <div className="mt-3 space-y-2">
           <div className="grid grid-cols-1 gap-3 md:grid-cols-[13rem_minmax(0,1fr)]">
-            <FormItem label="新实例名称" required={required}>
+            <FormItem label={tr("browser.components.AutomationInstanceSelector.label.d1829a3")} required={required}>
               <Input
                 value={createName}
                 onChange={(event) => onCreateNameChange?.(event.target.value)}
@@ -215,7 +219,7 @@ export function AutomationInstanceSelector({
                 disabled={disabled}
               />
             </FormItem>
-            <FormItem label="模板实例" required={required} error={error}>
+            <FormItem label={tr("browser.components.AutomationInstanceSelector.label.d2ec7fb")} required={required} error={translateMessage(error)}>
               <Select
                 value={templateProfileId}
                 options={optionsWithFallback(
