@@ -3,13 +3,13 @@
 ## 交付状态
 
 - App：2.1.0 Fieldwork 已构建并安装到 `/Applications/Latitude Browser.app`，Bundle ID `com.latitude.browser.desktop`。最终包已实际重新启动，显示新界面与 v2.1.0，并直接退出。
-- 已验证：中英文、主要页面、实际 Chrome 157 浏览器流程、真实标签页读回、App 内打开地址、快捷启动、无确认退出及受管进程清理。
-- 待办：四份完整设计提示词和现有 Chrome 148 的 CDP 就绪验收，详见下文。未把待办写为通过。
-- 仓库：双语首页、原生截图、设计说明、工程/演示导览与更新日志已更新。已提交本地；GitHub 简介/topics 已更新，README/源码推送遇到 HTTP 408，远端 main 未更新。
+- 已验证：中英文、主要页面、实际 Chrome 157 浏览器流程、真实标签页读回、App 内打开地址、快捷启动、无确认退出及受管进程清理。续办中现有 Chrome 148.0.7778.215 也通过正式 App 的 CDP 就绪、导航、后退和标签页开关检查。
+- 原词：四份完整提示词均已从本机已登录 Chrome 的准确条目复制、完整阅读并私下保存；逐项比对发现的实质设计差异列入下文待办，本轮未重做 App。
+- 仓库：双语首页、原生截图、设计说明、工程/演示导览与更新日志已更新。续办推送成功，远端 main 已包含读回核对的 `7dff90f9b9cce6921fc161034d00a07d35b41dff` 及其 2.1.0 发布提交；此前 HTTP 408 阻断已关闭。
 
 ## 1. 实际取得的参考
 
-主要来源：[十两网站收录库](https://wangshiliang.cn/news)。四个标题均找到准确条目，取得公开预览帧；点击“复制提示词”跳转登录页。未绕过登录或付费限制，未取得完整原词。用户随后明确选择“先按公开预览继续，并记录原词待补”。MotionSites 的四个直接详情链接在本轮读取失败；未把搜索镜像或相似 Axon 条目当成原始来源。
+主要来源：[十两网站收录库](https://wangshiliang.cn/news)。初轮找到四个准确条目并取得公开预览帧；复制原词时遇到登录页，用户选择“先按公开预览继续，并记录原词待补”。随后按 `LATITUDE-APP-CONTINUE-2026-11-07.md`，使用本机已登录 Chrome 取得全部四份完整原词，见第 8 节。MotionSites 的四个直接详情链接在初轮读取失败；未把搜索镜像或相似 Axon 条目当成原始来源。
 
 | 准确标题 | 来源资源 ID | 观察与迁移 |
 | --- | --- | --- |
@@ -18,7 +18,7 @@
 | ASCII Studio | `sites:framesbase:9d231c1b-d1c3-4d18-94fc-42d9f74b8413` | 字符纹理与荧光绿命令 → 等宽元数据、主要操作和静态点阵 |
 | Cyber Layer | `sites:cyber-layer` | 黑色舞台、结构化层次 → 分层面板、分隔线；红色只表示错误 |
 
-这是从预览帧作出的设计推导，没有声称看过完整提示词或验证过参考站动效。原始提示词、视频、缩略图与模板源码没有加入公开仓库。[React Bits Pro App UI](https://pro.reactbits.dev/docs/app-ui) 目录已查看；本轮未复制组件源码、引入其依赖或购买许可。
+上表记录 2.1.0 发布时从预览帧作出的设计推导，不追溯改写为依据完整原词实现，也不声称验证过参考站动效。原始提示词、视频、缩略图与模板源码没有加入公开仓库。[React Bits Pro App UI](https://pro.reactbits.dev/docs/app-ui) 目录已查看；本轮未复制组件源码、引入其依赖或购买许可。
 
 ## 2. 新设计语言与实现
 
@@ -90,7 +90,7 @@ Fieldwork：黑色画布、荧光绿主要操作、淡紫定位图、清晰的�
 
 GitHub 仓库简介已更新为 Fieldwork 工作区说明，新增 macos、browser-management、local-automation topics；default 分支读回为 main。没有改动网站主页或部署。
 
-提交与推送：
+初轮提交与推送（后续成功证据见第 8 节）：
 
 - 本地发布提交：`bf7cc17ea4e7bc07e9d6a801fb59b33cc4b69eb4`，`feat: ship Fieldwork UI and Latitude Browser 2.1`，326 个文件；包含必要的既有 2.0 基础改动与本轮重设计/展示更新。
 - 执行 `git push user HEAD:main`，退出码 1：`RPC failed; HTTP 408 curl 22`，随后为 sideband 连接中断。客户端尾部的 `Everything up-to-date` 未作为成功证据。
@@ -100,12 +100,50 @@ GitHub 仓库简介已更新为 Fieldwork 工作区说明，新增 macos、brows
 
 ## 6. 待办
 
-1. 完整参考提示词：登录门槛未解除；用户已授权按公开预览继续，本轮未获得原词。
-2. Chrome 148：现有 148.0.7778.215 核心在 QA 中拉起进程但 CDP 一直未就绪。保留默认选择，157 仍为可选，不自动回退或跨连接栈。
-3. GitHub 源码推送：HTTP 408 导致请求失败，远端 main 保持旧提交；已按任务约定停止该步骤。
+原有三项阻断均已关闭：源码推送成功，四份原词已取得，Chrome 148 已通过本轮就绪及真实操作验收。目前待办是第 8 节列出的四项设计差异取舍；它们是原词与已交付组合设计的差异，不表示应机械移植四个营销网页。按续办要求，本轮只记录、不实施设计变更。
 
 范围说明：Developer ID、公证、另建 GitHub Release 与其他平台实机验证不是本轮已完成事项。
 
 ## 7. 资源与恢复
 
 已复用前端依赖、Wails CLI、已有内核与代理运行时。仅关闭本轮 App、浏览器、见证 HTTP 服务和 Vite/自动化页面；其他客户端、连接器与并行任务保留。旧版安装备份 `.local-backup/latitude-2.0.0-before-2.1.0.zip` 已进行 CRC、实际展开、签名及可执行文件/Info.plist 比对，作为回滚基线保留。已回收本轮临时目录中的 718 个常规文件，合计 318,651,762 字节（约 303.9 MiB，逻辑文件大小，不等同于实时磁盘可用空间）；另清理 2 个经 socket/cookie 归属和无活跃引用核验的 Chrome 临时目录，以及 5 个已知自动化浏览器中间产物。保留最终安装包/清单、4 张正式截图、验收输出、已核验的旧版安装与源文件回滚备份。既有备份未证明被覆盖，保留未删。
+
+## 8. 续办结果 · 2026-11-07 任务
+
+### GitHub 推送已关闭
+
+在不改 App 代码、remote 和历史的前提下，以 HTTP/1.1、`pack.window=0` 和两个打包线程正常重试，推送成功：`ee4a162..7dff90f HEAD -> main`。GitHub 提示已有的数个运行时二进制超过推荐的 50 MB，但接受了提交；没有强制推送或重写历史。
+
+源码推送后的两次独立读回均为 `7dff90f9b9cce6921fc161034d00a07d35b41dff`：`git ls-remote --heads user main` 与 GitHub commits API。该提交包含发布提交 [bf7cc17](https://github.com/djblack1209-coder/Latitude-Browser/commit/bf7cc17ea4e7bc07e9d6a801fb59b33cc4b69eb4)；[远端 7dff90f](https://github.com/djblack1209-coder/Latitude-Browser/commit/7dff90f9b9cce6921fc161034d00a07d35b41dff) 的仓库、分支和完整 SHA 均核对一致。本次续办说明单独作为 docs 提交发布；其完整 SHA、检查结果和远端 main 最终读回另存于本地 `output/playwright/latitude-continue-20261107/continuation-status.json`，与源码推送时的 SHA 分开记录。
+
+### 四份完整原词与设计差异
+
+复用用户本机 Chrome 的已登录配置；每次在准确标题卡片点击“复制提示词”，读取实际剪贴板全文，并核对文件读回与剪贴板逐字节一致。ASCII Studio 的首次复制为空，刷新本轮标签页后重新复制取得 44,266 字节正文，未把空值标为成功。没有注册、要求重新登录或退出账号，原本为空的剪贴板已恢复。
+
+原文合计 122,022 字节，保存在本地 `docs/references/private/fieldwork-2026-11-07/`：`axon.txt`、`particle-self.txt`、`ascii-studio.txt`、`cyber-layer.txt`。同目录 `manifest.json` 记录来源、准确资源 ID、取得时间、逐文件 SHA-256、完整性核对、原词章节及差异状态。该目录已通过 `git check-ignore` 核对，不加入公开仓库。
+
+| 原词 | 取得结果 | 对照 2.1.0 的实质差异与待办 |
+| --- | --- | --- |
+| AXON | 完整，10,148 字节 | `D-AXON-01`：原词 §7–9 的雕塑粒子主体会随指针扰动、跟随视角，并在约 1–2 秒回归。当前 `LatitudeField.tsx` 只有静态点阵。待取舍：工作区身份图形如何提供有边界、可中断的交互与归位；不是只补一种颜色。视频作品目录不属于 App 必须复制的内容。 |
+| Particle Self | 完整，53,315 字节；正文名为 Kin OS | `D-PARTICLE-01`：原词 §7–8 让同一身份主体在不同场景保持连续，通过缩框、位移、散开重组呈现状态变化，并要求按需渲染和减弱动态。当前淡紫地球在页面/选区改变时没有对应的连续变化，启动词语揭示与业务状态也独立。待取舍：把同一主体的连续变化用于真实的工作区状态转换；人像、长滚动故事和虚构 widgets 不自动移植。 |
+| ASCII Studio | 完整，44,266 字节；正文名为 Architecture — ASCII / Ublicloud | `D-ASCII-01`：原词 §7、10、12、15 的主体是实际字符单元渲染，同一对象跨视角可追认，指针留下渐隐荧光绿字符轨迹。当前仅迁移等宽元数据、绿操作与 SVG 点阵，没有字符渲染或对象变化。待取舍：以真实 App 状态驱动有边界的字符视觉；建筑模型、920svh 路径及漫游内容不机械引入。 |
+| Cyber Layer | 完整，14,293 字节 | `D-CYBER-01`：原词 §3–6、8 强调锐角红 CTA、左侧大字、右侧多层视频与有序的一次入场，明确排除紫色/卡片/圆角胶囊。当前主要迁移黑色与面板层次，仍为绿操作、紫身份、6/10/14 px 圆角，没有视频层次。待取舍：如何在四来源组合中体现锐利结构、非对称排字和时间层次，并保留 App 的红色状态语义及短、可跳过的启动。 |
+
+以上均标为 `material_gap_pending`，未把核心交互差异归为细节，也未把原词的逐像素复刻要求直接升级为 Latitude 的产品需求。色值微差、模板品牌/文案、字体精确别名与营销页技术栈是来源细节；不能替代上表需要明确取舍的设计问题。本轮只更新证据和说明，已安装 App、令牌、业务代码与 `website/` 均未改变。
+
+### Chrome 148 就绪项已关闭
+
+- 现有 `Chromium.app`：`148.0.7778.215`，arm64；完整签名检查通过，无 `com.apple.quarantine` 属性。未下载替代内核。
+- 首次最小参数探测在 25 秒内未开放 CDP，采样显示主线程在 `SecItemCopyMatching → SecKeychainSearchCopyNext → KeychainCore::ItemImpl::recordType → mutex wait`，另一线程等待 SecurityServer 返回。保留该次失败，不能据此声称已修复 macOS 钥匙串根因。
+- 随后通过唯一正式入口 `/Applications/Latitude Browser.app` 的现有 2.1.0 执行验收。App 使用全新 QA HOME；受约束启动器仅为 Chromium 保留正常 macOS HOME，并强制独立资料目录。未使用 mock 钥匙串、关闭沙箱或切换 157；指纹参数、默认 148/可选 157 和 `xray` 连接栈保持。
+- 正式 App PID `71274`，实际 148 PID `71306`；运行会话 API 返回 HTTP 200、`running=true`、`ready=true`、`debugReady=true`、`waitTimedOut=false`。调试端口 `64584` 的 `/json/version` 和 `/json/list` 均返回 200，实际版本读回 `Chrome/148.0.7778.215`。
+- 使用这个实际 CDP 会话访问仅本机的 HTTP 见证页，验证标题、第二页、后退、新标签页打开及关闭，均通过。测试为本地直连流程，不扩大为代理/匿名能力验收。
+- 通过 App 的 stop API 停止 148，随后原生 `⌘Q` 直接退出，退出码 0。App、所属浏览器及见证服务退出，API/CDP/见证端口均释放；安装可执行文件 SHA-256 前后一致，用户筛选、视图与语言偏好逐值读回一致。
+
+本地机器可读证据：`output/playwright/latitude-continue-20261107/native148.json`；首次阻塞采样与日志为 `chrome148-minimal-sample.txt`、`chrome148-minimal-stderr.log`、`chrome148-minimal.json`。成功的正式 App 日志为 `chrome148-native.log`。这次通过关闭了“148 未验证”的待办；首次钥匙串等待的具体触发条件尚未确定，未把一次通过写成所有冷启动均已根治。
+
+### 文档检查与收尾
+
+续办文档提交限定为本结果、`DESIGN.md`、两份 README、`docs/plan/latitude-signal-ui-sources.md`、`docs/showcase/DEMO.md` 和 `docs/showcase/ENGINEERING.md`，共 7 份。现有展示文档检查通过（12 份文档、107 个本地链接、SVG 有效）；另核对本次 7 份文档的本地链接、引用目标和差异空白。原词和验收输出仍被 Git 忽略，暂存与提交范围不含其他已有改动。
+
+续办测试进程、见证服务和所属浏览器均已退出；已核验并删除 205 个临时文件，共 14,861,322 字节，以及其所属测试目录和一个失去引用的 Chromium socket 目录。该数值是逻辑文件大小，不代表实时磁盘可用空间。保留四份私有原词、校验清单、验收证据、正式安装与回滚产物；现有 `AGENTS.md`、其他截图和未跟踪文件保持原状。

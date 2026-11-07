@@ -37,11 +37,11 @@ Native quit starts full managed cleanup without opening a confirmation dialog. A
 
 A missing fingerprint argument slice is treated as no reusable fingerprint configuration. A top-level rendering boundary provides retry and optional diagnostic details instead of an empty native window; failures are recorded through the existing frontend-operation logger.
 
-The 2026-11-06 pass checked 15 routes in both languages, table/card switching, search, quick launch and desktop/compact widths. Native checks used the canonical installed application, independent QA state and real Chrome 157. See [the result](LATITUDE-APP-REDESIGN-RESULT-2026-11-06.md) for the Chrome 148 limitation and the precise build/install evidence.
+The 2026-11-06 pass checked 15 routes in both languages, table/card switching, search, quick launch and desktop/compact widths. Native checks used the canonical installed application, independent QA state and real Chrome 157. The continuation also passed readiness, navigation, back and tab operations with the existing Chrome 148. See [the result](LATITUDE-APP-REDESIGN-RESULT-2026-11-06.md) for the initial Keychain wait, subsequent successful checks and precise build/install evidence.
 
 ## References and authorship
 
-The four exact entries were found at [十两 /news](https://wangshiliang.cn/news). Public preview frames were obtained; copying their complete prompts required login. The owner chose to continue from previews and record the full prompts as pending.
+The four exact entries were found at [十两 /news](https://wangshiliang.cn/news). The shipped 2.1.0 design was derived from public previews after the owner authorized that fallback. In the continuation, all four complete prompts were copied through the signed-in native Chrome session, read in full and saved privately outside Git. The result records material gaps in particle interaction, object continuity, actual ASCII rendering and Cyber Layer's sharp/red/video hierarchy; these remain design decisions for a later change. No App redesign was performed in the continuation.
 
 | Reference | Observed visual decision | Adaptation to Latitude |
 | --- | --- | --- |
@@ -50,4 +50,4 @@ The four exact entries were found at [十两 /news](https://wangshiliang.cn/news
 | ASCII Studio | Monochrome character texture and lime commands | Monospace metadata, lime primary actions, static dot graticule |
 | Cyber Layer | Black stage and explicit structural layers | Layered surfaces and separators; red reserved for errors |
 
-These are preview-derived observations, not quotations or claims about unread prompt requirements. The SVG graticule and interface implementation are original project code. No reference video, thumbnail, template source or full prompt is distributed. The React Bits Pro catalog was inspected; no component code was copied or added. Existing component and font notices remain in [third-party notices](third_party/NOTICE.md).
+The table records preview-derived implementation decisions, not a claim that 2.1.0 reproduced the complete prompts. The SVG graticule and interface implementation are original project code. No reference video, thumbnail, template source or full prompt is distributed. The React Bits Pro catalog was inspected; no component code was copied or added. Existing component and font notices remain in [third-party notices](third_party/NOTICE.md).

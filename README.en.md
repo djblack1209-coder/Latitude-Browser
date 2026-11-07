@@ -81,7 +81,7 @@ go test ./backend/...
 python3 tools/check-showcase.py
 ```
 
-This pass completed 121 frontend tests, backend tests, a bilingual sweep of 15 main pages, and installed-app checks for language switching, live tab discovery, opening a URL and direct quit. Chrome 157 passed launch, navigation, back and tab open/close checks with isolated data. The existing Chrome 148 core still failed CDP readiness; it remains a pending item, and the default was retained. See the [execution result](LATITUDE-APP-REDESIGN-RESULT-2026-11-06.md).
+This pass completed 121 frontend tests, backend tests, a bilingual sweep of 15 main pages, and installed-app checks for language switching, live tab discovery, opening a URL and direct quit. Chrome 157 passed launch, navigation, back and tab open/close checks with isolated data. In the continuation, the existing Chrome 148.0.7778.215 also passed CDP readiness and those real operations through the installed App; 148 remains the default and 157 optional. The initial Keychain wait and subsequent success are recorded in the [execution result](LATITUDE-APP-REDESIGN-RESULT-2026-11-06.md).
 
 | Path | Responsibility |
 | --- | --- |
