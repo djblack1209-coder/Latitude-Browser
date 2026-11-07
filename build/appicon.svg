@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024" role="img" aria-labelledby="title">
+  <title id="title">Latitude Browser</title>
+  <!-- Master for every Latitude Browser icon slot. Re-export with build/icons/export_icons.py.
+       Ink: one brand green, #04d64a, set once on #hooded-mark and drawn with currentColor.
+       Axis: the mark is mirror-symmetric about x = 512, except the hand-drawn folds.
+       Strokes: .outline 9.5, seams and .cord 7.5, butt ends. The 16-64 px exports
+       thicken .outline and .cord and drop .detail below 64 px; the size table is in
+       build/icons/export_icons.py. -->
+  <rect id="canvas" width="1024" height="1024" fill="#000"/>
+  <g id="hooded-mark" color="#04d64a" transform="translate(20.48 20.48) scale(.96)">
+    <g id="silhouette" fill="none" stroke="currentColor" stroke-width="9.5" stroke-linejoin="round">
+      <path class="outline" d="M475.5 680
+        C432.5 653 371 612 328 575 C288 541 253 504 249 477
+        C246 467 250 455 255 444 C285 371 304 311 326 248
+        C344 197 351 170 376 142 C412 98 465 59 506 43
+        Q512 40 519 43
+        C562 60 612 97 649 139 C674 167 679 191 694 233
+        C716 303 740 373 768 445 C775 462 778 474 770 491
+        C750 531 705 568 662 601 C622 632 591.5 653 548.5 680"/>
+      <path class="outline" d="M281 421 C343 374 409 328 476 297
+        C500 285 521 285 545 296 C611 326 681 373 742 421"/>
+      <path class="outline" d="M126.5 632 C160 606 212.5 580 251.5 561 M263.5 555.5 L292.5 541
+        M731.5 541 L760.5 555.5 M772.5 561 C811.5 580 864 606 897.5 632
+        M114 645 C99.5 675.5 87.5 705 79 729 M74 741 C57.5 799.5 41 879 24.5 951
+        M910 645 C924.5 675.5 936.5 705 945 729 M950 741 C966.5 799.5 983 879 999.5 951
+        M123.5 644 L158.5 729 M900.5 644 L865.5 729"/>
+    </g>
+    <g id="seams" fill="none" stroke="currentColor" stroke-width="7.5" stroke-linejoin="round">
+      <path class="detail" d="M512 43 V137 M512 150 V233 M512 251 V281
+        M270 430 Q259 440 252 451 M752 430 Q763 440 771 451"/>
+      <path class="cord" d="M443 699 V908 M581 699 V908"/>
+    </g>
+    <g id="tapered-details" fill="currentColor">
+      <!-- The hood edges taper into the open neckline; each taper starts at the stroke's end. -->
+      <path id="collar-tip" class="detail" d="M476.3 674.9 L478 676 C484.8 680.2 489 686 493.5 693
+        C486.5 690.5 478.1 687.2 473 684 L471.3 683Z"/>
+      <use class="detail" href="#collar-tip" transform="translate(1024 0) scale(-1 1)"/>
+      <path class="detail" d="M470.5 272.5 C483.5 257.5 498.5 245 512 245 C525.5 245 540.5 257.5 553.5 272.5
+        C539.5 266 525 253 512 253 C499 253 484.5 266 470.5 272.5Z"/>
+      <!-- Paired folds share one centre line; each keeps its own hand-drawn shape. -->
+      <path class="detail" d="M363.5 267.5 C345.5 288.5 320.5 312.5 296.5 332.5 C304.5 312.5 336.5 289.5 363.5 267.5Z
+        M665.5 269.5 C688.5 289.5 713.5 308.5 728.5 331.5 C705.5 317.5 680.5 292.5 665.5 269.5Z
+        M356.5 320 C339.5 344 315.5 370 298.5 377 C294.5 372 322.5 346 356.5 320Z
+        M671.5 322 C689.5 336 715.5 360 722.5 373 C713.5 376 688.5 343 671.5 322Z
+        M298 380 C289 392 276 406 266 415 C272 400 284 384 298 380Z
+        M726 380 C740 384 752 400 758 415 C747 406 733 390 726 380Z"/>
+      <path class="detail" d="M311 482 C323 514 343 550 367 575 C340 561 320 522 311 482Z
+        M369 533 C389 559 410 590 430 614 C406 598 380 564 369 533Z
+        M704 488 C692 525 664 569 635 591 C657 566 687 524 704 488Z
+        M321 605 C340 628 358 650 381 668 C355 658 331 632 321 605Z
+        M695 606 C684 634 659 658 634 671 C657 651 677 629 695 606Z"/>
+      <path class="detail" d="M190.5 713.5 C196.5 741.5 207.5 812.5 215.5 859.5 L208.5 860.5 C200.5 811.5 188.5 737.5 190.5 713.5Z
+        M211.5 875.5 H218.5 C222.5 908.5 228.5 951.5 231.5 979.5 C223.5 950.5 215.5 907.5 211.5 875.5Z
+        M834.5 718.5 C835.5 742.5 822.5 816.5 814.5 865.5 L807.5 864.5 C814.5 817.5 825.5 747.5 832.5 718.5Z
+        M806.5 876.5 H813.5 C807.5 910.5 799.5 951.5 792.5 980.5 C795.5 952.5 801.5 909.5 806.5 876.5Z"/>
+      <path class="detail" d="M125.5 758 C145.5 792 171.5 844 182.5 866 C160.5 850 136.5 795 125.5 758Z
+        M122.5 856.5 C139.5 873.5 160.5 903.5 175.5 926.5 C152.5 914.5 132.5 881.5 122.5 856.5Z
+        M171.5 942 C181.5 943 202.5 975 210.5 990 C191.5 975 174.5 951 171.5 942Z
+        M898.5 758 C887.5 795 862.5 850 840.5 866 C852.5 844 878.5 792 898.5 758Z
+        M902.5 855.5 C890.5 883.5 870.5 914.5 848.5 925.5 C864.5 900.5 885.5 874.5 902.5 855.5Z
+        M853.5 941 C850.5 950 832.5 975 813.5 990 C821.5 975 843.5 943 853.5 941Z"/>
+      <!-- Drawstring eyelets and cord tips are drawn once and mirrored about x = 512. -->
+      <path id="left-eyelet" class="detail" d="M428.5 675 Q437.5 670 441.5 678 L447.5 690 L437.5 693Z"/>
+      <use class="detail" href="#left-eyelet" transform="translate(1024 0) scale(-1 1)"/>
+      <path id="left-cord-tip" class="detail" d="M440.5 911 H447.5 Q451.5 911 451.5 915 V926 H446.5 V920 H441.5 V938
+        H446.5 V932 H451.5 V946 H437.5 Q434.5 946 434.5 943 V917 Q434.5 911 440.5 911Z"/>
+      <use class="detail" href="#left-cord-tip" transform="translate(1024 0) scale(-1 1)"/>
+    </g>
+  </g>
+</svg>

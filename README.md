@@ -3,7 +3,7 @@
   <h1>Latitude Browser</h1>
   <p>隔离浏览器环境，明确连接路径，在本地完成自动化。</p>
   <p><strong>2.2.0 · Fieldwork</strong> · 简体中文 / English · Go / Wails / React</p>
-  <p><a href="README.en.md">English</a> · <a href="https://github.com/djblack1209-coder/Latitude-Browser/releases">下载</a> · <a href="docs/showcase/ENGINEERING.md">工程导览</a> · <a href="LICENSE-SCOPE.md">非商业许可</a></p>
+  <p><a href="README.en.md">English</a> · <a href="https://latitude.de5.net/">官网</a> · <a href="docs/showcase/ENGINEERING.md">工程导览</a> · <a href="LICENSE-SCOPE.md">非商业许可</a></p>
 </div>
 
 ![Latitude Browser 2.2.0 中文原生工作区](images/showcase/fieldwork22-workspace-zh.png)
@@ -39,7 +39,7 @@ Latitude Browser 把浏览器实例、代理连接、内核、扩展和自动化
 
 ## 安装与第一次运行
 
-从[Releases](https://github.com/djblack1209-coder/Latitude-Browser/releases)选择已经发布的平台包。仓库当前版本为 2.2.0；本轮生成并验收了本地 macOS arm64 包，尚未另外创建 2.2.0 GitHub Release。
+仓库源码版本为 **2.2.0**，macOS arm64 本地包已验证。可以按下方步骤从源码构建，项目介绍见[官网](https://latitude.de5.net/)。
 
 macOS 只保留一个正式入口：`/Applications/Latitude Browser.app`，Bundle ID 为 `com.latitude.browser.desktop`。启动后在“资产 → 内核”登记或下载内核，再创建实例并选择网络入口。现有安装保留原数据和内核默认项。可写状态位于 `~/Library/Application Support/latitude-browser`。
 
@@ -92,7 +92,6 @@ python3 tools/check-showcase.py
 | `publish/`、`tools/runtime/` | 平台打包、运行时来源与完整性校验 |
 | `docs/` | [工程导览](docs/showcase/ENGINEERING.md)、[演示](docs/showcase/DEMO.md)、连接栈与历史决策 |
 | `images/showcase/` | 可追溯的实际界面截图 |
-| `website/` | 独立网站工作区；本轮 App 重设计未修改或发布网站 |
 
 [更新日志](CHANGELOG.md) · [设计约定](DESIGN.md) · [贡献](CONTRIBUTING.md) · [安全](SECURITY.md) · [后续方向](ROADMAP.md)
 

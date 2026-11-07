@@ -3,7 +3,7 @@
   <h1>Latitude Browser</h1>
   <p>Isolated browser workspaces. Explicit network routes. Local automation.</p>
   <p><strong>2.2.0 · Fieldwork</strong> · English / 简体中文 · Go / Wails / React</p>
-  <p><a href="README.md">简体中文</a> · <a href="https://github.com/djblack1209-coder/Latitude-Browser/releases">Downloads</a> · <a href="docs/showcase/ENGINEERING.md">Engineering</a> · <a href="LICENSE-SCOPE.md">Noncommercial license</a></p>
+  <p><a href="README.md">简体中文</a> · <a href="https://latitude.de5.net/">Website</a> · <a href="docs/showcase/ENGINEERING.md">Engineering</a> · <a href="LICENSE-SCOPE.md">Noncommercial license</a></p>
 </div>
 
 ![Latitude Browser 2.2.0 running as a native macOS application](images/showcase/fieldwork22-workspace-en.png)
@@ -39,7 +39,7 @@ Quitting no longer opens a warning or confirmation. Native close starts managed 
 
 ## Install and get started
 
-Choose a published platform package from [Releases](https://github.com/djblack1209-coder/Latitude-Browser/releases). The source is now 2.2.0. This pass built and verified a local macOS arm64 package; it did not create a separate 2.2.0 GitHub Release.
+The source version is **2.2.0**, with a verified local macOS arm64 build. Follow the instructions below to build from source, or visit the [official website](https://latitude.de5.net/) for an overview.
 
 The sole macOS installation is `/Applications/Latitude Browser.app`, with Bundle ID `com.latitude.browser.desktop`. Register or download a core in Assets → Browser cores, then create a profile and choose its network route. Existing installations retain their data and default core. Writable state lives in `~/Library/Application Support/latitude-browser`.
 
@@ -92,7 +92,6 @@ Version 2.2 passed frontend and Wails builds, 124 frontend tests, backend tests,
 | `publish/`, `tools/runtime/` | Packaging, runtime provenance and integrity checks |
 | `docs/` | [Engineering](docs/showcase/ENGINEERING.md), [demo](docs/showcase/DEMO.md), connector rules and historical decisions |
 | `images/showcase/` | Traceable application screenshots |
-| `website/` | Separate website workspace, unchanged and unpublished by this App redesign |
 
 [Changelog](CHANGELOG.md) · [Design](DESIGN.md) · [Contributing](CONTRIBUTING.md) · [Security](SECURITY.md) · [Roadmap](ROADMAP.md)
 
