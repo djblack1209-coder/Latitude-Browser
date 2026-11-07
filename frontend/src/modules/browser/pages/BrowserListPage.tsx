@@ -15,6 +15,7 @@ import { createBrowserProfileCopyOptions, isBrowserProfileCopyOptionsValid } fro
 import { buildBrowserProfileCopyName } from '../copyName'
 import { resolveActionFeedback } from '../utils/actionErrors'
 import { BrowserListDialogs } from './browserList/BrowserListDialogs'
+import { useFieldScene } from '../../../shared/layout/LatitudeField'
 import { useBrowserListDerived, useBrowserListViewState } from './browserList/useBrowserListViewState'
 import { useBrowserListSettings } from './browserList/useBrowserListSettings'
 import { useBrowserListData } from './browserList/useBrowserListData'
@@ -172,6 +173,9 @@ export function BrowserListPage() {
     isProfileBusy,
     getProfileStatus,
   } = useBrowserListDerived(profiles, cores, filters, startingIds, stoppingIds)
+  const fieldProfile = selectedIds.size === 1 ? profiles.find(profile => selectedIds.has(profile.profileId)) : undefined
+  const fieldIdentity = fieldProfile?.profileId || (selectedIds.size ? `selection:${[...selectedIds].sort().join(',')}` : 'workspace')
+  useFieldScene({ id: fieldIdentity, view: viewMode, status: fieldProfile?.lastError ? 'error' : fieldProfile?.running ? (fieldProfile.debugReady ? 'running' : 'pending') : 'idle' })
   const {
     handleStart,
     handleStartDirect,
@@ -572,6 +576,7 @@ export function BrowserListPage() {
   return (
     <div className="apple-page flex min-h-full flex-col gap-4">
       <BrowserListHeader
+        selectionLabel={fieldProfile?.profileName || (selectedIds.size ? tr('shell.selectedInstances', [selectedIds.size]) : undefined)}
         workspaceMode={workspaceMode}
         profileCount={profiles.length}
         filteredProfileCount={workspaceProfiles.length}

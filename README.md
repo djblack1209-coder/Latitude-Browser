@@ -2,15 +2,15 @@
   <img src="build/appicon.png" width="76" alt="Latitude Browser 应用图标" />
   <h1>Latitude Browser</h1>
   <p>隔离浏览器环境，明确连接路径，在本地完成自动化。</p>
-  <p><strong>2.1.0 · Fieldwork</strong> · 简体中文 / English · Go / Wails / React</p>
+  <p><strong>2.2.0 · Fieldwork</strong> · 简体中文 / English · Go / Wails / React</p>
   <p><a href="README.en.md">English</a> · <a href="https://github.com/djblack1209-coder/Latitude-Browser/releases">下载</a> · <a href="docs/showcase/ENGINEERING.md">工程导览</a> · <a href="LICENSE-SCOPE.md">非商业许可</a></p>
 </div>
 
-![Latitude Browser 2.1.0 中文原生工作区](images/showcase/fieldwork-workspace-zh.png)
+![Latitude Browser 2.2.0 中文原生工作区](images/showcase/fieldwork22-workspace-zh.png)
 
 Latitude Browser 把浏览器实例、代理连接、内核、扩展和自动化放在同一个桌面工作区。适合需要多个独立浏览器环境、重复验证网页流程和管理本地脚本的非商业使用场景。
 
-上图来自正式安装路径的 macOS App，使用独立 QA 数据；四个展示实例是真实创建的测试配置。截图中的运行实例使用 Chrome 157，没有私人账号或生产代理。截图来源与验收边界见[演示说明](docs/showcase/DEMO.md)。
+上图来自正式安装路径的 macOS App，使用独立 QA 数据，显示四个真实创建的测试配置；总数还包含 App 自动建立的默认实例。没有私人账号或生产代理。截图来源与验收边界见[演示说明](docs/showcase/DEMO.md)。
 
 ## 一个工作区，从配置到运行
 
@@ -29,15 +29,17 @@ Latitude Browser 把浏览器实例、代理连接、内核、扩展和自动化
 
 ## Fieldwork 界面
 
-黑色画布、荧光绿操作色、淡紫定位图和清晰的分层面板，覆盖导航、实例列表、表单、设置、弹窗与状态栏。点阵图是静态导航意象；运行数量和连接栈来自应用状态。启动层很短，可直接跳过，并遵守减弱动态效果设置。
+黑色画布、锐利边框、荧光绿操作与淡紫身份主体贯穿列表、表单、设置和弹窗。指针会扰动字符粒子并让其归位；选择实例、切换表格/卡片或进入详情时，同一主体连续变换。停止和破坏性操作使用红色，运行数量与连接栈来自应用状态。
+
+字符场是本地绘制的身份插图，静止后停止逐帧渲染；减弱动态效果下直接切换，Canvas 不可用时保留 SVG。启动层仍可直接跳过。四份完整参考提示词的融合方式见[设计约定](DESIGN.md)。
 
 退出不再弹出警告或确认框；原生关闭直接进入受管进程清理，完成后退出。渲染异常提供恢复入口，空指纹参数不会使实例列表变成空白。
 
-![原生 App 中保留的 Chrome 148 默认项与 Chrome 157 可选项](images/showcase/fieldwork-cores-en.png)
+![正式安装的 Latitude Browser 2.2.0 与真实 Chrome 148 运行状态](images/showcase/fieldwork22-running-en.png)
 
 ## 安装与第一次运行
 
-从[Releases](https://github.com/djblack1209-coder/Latitude-Browser/releases)选择已经发布的平台包。仓库当前版本为 2.1.0；本轮生成并验收了本地 macOS arm64 包，尚未另外创建 2.1.0 GitHub Release。
+从[Releases](https://github.com/djblack1209-coder/Latitude-Browser/releases)选择已经发布的平台包。仓库当前版本为 2.2.0；本轮生成并验收了本地 macOS arm64 包，尚未另外创建 2.2.0 GitHub Release。
 
 macOS 只保留一个正式入口：`/Applications/Latitude Browser.app`，Bundle ID 为 `com.latitude.browser.desktop`。启动后在“资产 → 内核”登记或下载内核，再创建实例并选择网络入口。现有安装保留原数据和内核默认项。可写状态位于 `~/Library/Application Support/latitude-browser`。
 
@@ -81,7 +83,7 @@ go test ./backend/...
 python3 tools/check-showcase.py
 ```
 
-2.1.0 已完成 121 项前端测试、后端测试、中英文 15 个主要页面巡检，以及正式安装 App 的语言切换、真实标签页读回、打开地址和直接退出验证。Chrome 157 在隔离数据中通过启动、导航、后退和标签页开关检查；续办中现有 Chrome 148.0.7778.215 也通过正式 App 的 CDP 就绪及同类真实操作，保留 148 默认、157 可选。初次钥匙串等待与后续通过证据均见[本轮结果](LATITUDE-APP-REDESIGN-RESULT-2026-11-06.md)。
+2.2.0 已通过前端与 Wails 构建、124 项前端测试、后端测试、34 项双语/尺寸/降级检查和 9 项交互动效检查。正式安装 App 已取得中英文原生截图；Chrome 148.0.7778.215 与 157.0.8103.38 均在隔离资料中通过就绪、导航、后退和标签页开关检查。保持 148 默认、157 可选，正常退出释放所属进程与端口。具体证据和验证边界见[本轮结果](LATITUDE-APP-REDESIGN-RESULT-2026-11-06.md)。
 
 | 路径 | 内容 |
 | --- | --- |

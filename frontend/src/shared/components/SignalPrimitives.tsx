@@ -2,6 +2,7 @@ import { useLocale } from '../i18n'
 import type { ReactNode } from 'react'
 import { FileCode2, Fingerprint, FolderOpen, Network, Terminal } from 'lucide-react'
 import clsx from 'clsx'
+import { LatitudeField } from '../layout/LatitudeField'
 
 export type SignalTone = 'neutral' | 'accent' | 'success' | 'warning' | 'danger'
 
@@ -23,6 +24,7 @@ export function WorkspaceHeader({ title, actions, children, className }: Workspa
         <div className="min-w-0">
           <h1>{title}</h1>
         </div>
+        <LatitudeField variant="compact" />
         {actions && <div className="signal-page-actions">{actions}</div>}
       </div>
       {children}

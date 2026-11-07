@@ -17,7 +17,8 @@
   --t-xs: 11px; --t-sm: 12px; --t-base: 13px; --t-md: 16px; --t-lg: 26px; --t-xl: 32px;
   --s-1: 2px; --s-2: 4px; --s-3: 8px; --s-4: 12px; --s-5: 16px; --s-6: 24px; --s-7: 32px; --s-8: 48px;
   --h-sm: 30px; --h-md: 36px; --h-lg: 42px;
-  --r-0: 0; --r-1: 6px; --r-2: 10px;
+  --r-0: 0; --r-1: 2px; --r-2: 4px; --r-dialog: 6px;
+  --danger-fill: #b92f32; --danger-fill-hover: #cf383b; --on-danger: #fff;
   --layout-sidebar: 216px; --layout-sidebar-collapsed: 64px; --layout-topbar: 56px;
   --content-gutter: 28px; --motion-fast: 100ms; --motion-base: 160ms; --motion-slow: 220ms;
   --motion-ease: cubic-bezier(.2,0,0,1);

@@ -1,5 +1,17 @@
 # Changelog
 
+## 2.2.0 - 2026-11-06
+
+- 落实四份完整原词的设计差异：可扰动并归位的粒子、跨页面连续的同一身份主体、实际 ASCII 字符渲染、锐利分层与一次入场，融合为 Fieldwork 2.2。
+- 选择实例、表格/卡片切换与详情状态驱动主体变化；保留双语、现有功能、148 默认/157 可选和两套连接栈。
+- 统一 2/4/6 px 几何与红色停止/破坏性操作；静止停止逐帧渲染、隐藏暂停、减弱动态效果直接切换，并提供 Canvas 不可用时的 SVG 降级。
+- 完成 macOS arm64 构建、正式安装与双语原生截图；124 项前端测试、后端测试、34 项 UI 检查及 9 项动效检查通过。真实 148 与 157 均通过就绪、导航、后退及标签页开关，原生退出完成受管清理。
+
+- Unify the four prompt differences as Fieldwork 2.2: spring-return particles, persistent identity, actual ASCII cells and sharp layered composition.
+- Drive the object with profile selection, view mode and detail state while preserving bilingual workflows, configured core defaults and connector stacks.
+- Add sharp geometry, red Stop/destructive actions, on-demand rendering, reduced-motion behavior and an SVG fallback.
+- Build and install the macOS arm64 application; pass 124 frontend tests, backend tests, 34 UI checks, nine motion checks and real 148/157 browser operations with managed quit cleanup.
+
 ## 2.1.0 - 2026-11-06
 
 - Fieldwork 全界面重设计：黑色画布、荧光绿操作色、淡紫点阵、分层工作区与统一组件；保留中英文和现有功能入口。
@@ -7,13 +19,13 @@
 - 修复空指纹参数导致实例列表渲染失败，增加渲染恢复入口与错误记录。
 - 保留既有 Chrome 148 默认项、157 可选项和两套连接栈规则。
 - 更新双语 README、原生截图、工程导览与设计来源记录。
-- macOS arm64 安装及 Chrome 157 流程通过；Chrome 148 的 CDP 就绪检查和四份完整参考提示词仍待补齐。
+- macOS arm64 安装及 Chrome 157 流程通过；当时待补的 Chrome 148 就绪检查和四份完整参考提示词已在后续续办中完成，设计差异于 2.2 落实。
 
 - Redesign the application as Fieldwork while retaining bilingual controls and existing workflows.
 - Remove quit confirmation and retain managed runtime cleanup and ownership on failure.
 - Handle empty fingerprint arguments and provide recovery from rendering failures.
 - Retain configured Chrome 148 defaults, optional 157, and explicit connector stacks.
-- Refresh bilingual documentation and real native screenshots; record the remaining Chrome 148 and reference-prompt limitations.
+- Refresh bilingual documentation and real native screenshots. The initial Chrome 148 and reference-prompt gaps were closed in the continuation, followed by the 2.2 design implementation.
 
 ## 2.0.0 - 2026-11-06
 

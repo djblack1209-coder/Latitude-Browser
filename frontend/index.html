@@ -6,11 +6,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#080a09" />
     <title>Latitude Browser</title>
+    <link rel="preload" href="/fonts/jetbrains-mono-latin.woff2" as="font" type="font/woff2" crossorigin />
     <style>
       html,body{margin:0;background:#080a09;color:#edf1e9}
       #latitude-splash{position:fixed;inset:0;z-index:9999;display:grid;place-content:center;background:#080a09;pointer-events:auto;font:24px/32px 'JetBrains Mono',ui-monospace,monospace;isolation:isolate}#latitude-splash:before{content:'';position:absolute;inset:0;z-index:-1;background-image:radial-gradient(#bcacee45 .7px,transparent 1px);background-size:18px 18px;mask-image:radial-gradient(ellipse at center,#000,transparent 55%)}
-      #latitude-splash[hidden]{display:none}.splash-word{display:flex;align-items:center}.splash-word span{width:0;overflow:hidden;white-space:nowrap;animation:type 400ms 120ms steps(8) forwards}.splash-word b{font-weight:400;color:#d2fa69;text-shadow:0 0 8px #d2fa6933;animation:blink 120ms 1}
-      .splash-line{height:1px;background:#d2fa69;transform:scaleX(0);transform-origin:left;animation:lock 160ms 520ms forwards}.splash-version{margin-top:12px;color:#889482;font-size:11px;opacity:0;animation:reveal 160ms 520ms forwards}
+      #latitude-splash[hidden]{display:none}.splash-word{display:flex;align-items:center;border:1px solid #3d473e;padding:14px 20px}.splash-word span{width:0;overflow:hidden;white-space:nowrap;animation:type 400ms 120ms steps(8) forwards}.splash-word b{font-weight:400;color:#d2fa69;text-shadow:0 0 8px #d2fa6933;animation:blink 120ms 1}
+      .splash-line{height:2px;background:linear-gradient(90deg,#d2fa69 0 74%,#b92f32 74%);transform:scaleX(0);transform-origin:left;animation:lock 160ms 520ms forwards}.splash-version{margin-top:12px;color:#889482;font-size:11px;opacity:0;animation:reveal 160ms 520ms forwards}
       @keyframes type{to{width:8ch}}@keyframes blink{50%{opacity:0}}@keyframes lock{to{transform:scaleX(1)}}@keyframes reveal{to{opacity:1}}
       @media(prefers-reduced-motion:reduce){.splash-word span{width:8ch;animation:none}.splash-word b,.splash-line,.splash-version{animation:none}.splash-line{transform:scaleX(1)}.splash-version{opacity:1}}
       #dev-boot-status{position:fixed;inset:0;z-index:9998;place-content:center;background:#080a09;color:#adb5aa;font:13px/20px system-ui}#dev-boot-status:not([hidden]){display:grid}#dev-boot-status button{margin-top:16px;background:#191d1a;color:#edf1e9;border:1px solid #3d473e;padding:4px 12px}

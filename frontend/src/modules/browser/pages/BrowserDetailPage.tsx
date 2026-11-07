@@ -22,6 +22,7 @@ import { SnapshotTab } from '../components/SnapshotTab'
 import { resolveActionErrorMessage, resolveActionFeedback } from '../utils/actionErrors'
 import { warmupProfileProxyBeforeStart } from '../utils/proxyWarmup'
 import { TorModeNotice } from './TorModeNotice'
+import { useFieldScene } from '../../../shared/layout/LatitudeField'
 
 const resolveRuntimeStatus = (running: boolean, debugReady: boolean) => {
   if (!running) return { variant: 'warning' as const, label: tr("browser.components.InstanceFilterBar.label.75dddf5") }
@@ -53,6 +54,7 @@ export function BrowserDetailPage() {
   const [targetUrl, setTargetUrl] = useState('https://example.com')
   const [activeTab, setActiveTab] = useState<TabKey>('overview')
   const [pendingAction, setPendingAction] = useState<'starting' | 'stopping' | 'restarting' | null>(null)
+  useFieldScene({ id: id || 'workspace', view: 'table', status: profile?.lastError ? 'error' : profile?.running ? (profile.debugReady ? 'running' : 'pending') : 'idle' })
 
   const loadProfile = async () => {
     const list = await fetchBrowserProfiles()
@@ -223,7 +225,7 @@ export function BrowserDetailPage() {
     <div className="space-y-5 animate-fade-in">
       <WorkspaceHeader
 
-        title={tr("browser.pages.BrowserDetailPage.title.53d9738")}
+        title={profile.profileName}
 
         actions={(
           <>
@@ -235,7 +237,7 @@ export function BrowserDetailPage() {
             </Link>
           </>
         )}
-      />
+      ><p className="latitude-detail-caption">{tr("browser.pages.BrowserDetailPage.title.53d9738")}</p></WorkspaceHeader>
 
       {/* Tab 导航 */}
       <div className="flex border-b border-[var(--color-border)]">
@@ -361,7 +363,7 @@ export function BrowserDetailPage() {
           <Card title={tr("browser.pages.BrowserDetailPage.title.309c0a9")} >
             <div className="flex flex-wrap items-center gap-2">
               {profile.running ? (
-                <Button size="sm" variant="secondary" onClick={handleStop} loading={isStopping} disabled={isBusy && !isStopping}>
+                <Button size="sm" variant="danger" onClick={handleStop} loading={isStopping} disabled={isBusy && !isStopping}>
                   {!isStopping && <Square className="w-4 h-4" />}
                   {isStopping ? tr("browser.components.BrowserProfilesPanel.BrowserProfileCard.434eb8e") : tr("browser.components.BrowserListWidgets.text.a17f70a")}
                 </Button>

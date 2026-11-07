@@ -2,15 +2,15 @@
   <img src="build/appicon.png" width="76" alt="Latitude Browser application icon" />
   <h1>Latitude Browser</h1>
   <p>Isolated browser workspaces. Explicit network routes. Local automation.</p>
-  <p><strong>2.1.0 · Fieldwork</strong> · English / 简体中文 · Go / Wails / React</p>
+  <p><strong>2.2.0 · Fieldwork</strong> · English / 简体中文 · Go / Wails / React</p>
   <p><a href="README.md">简体中文</a> · <a href="https://github.com/djblack1209-coder/Latitude-Browser/releases">Downloads</a> · <a href="docs/showcase/ENGINEERING.md">Engineering</a> · <a href="LICENSE-SCOPE.md">Noncommercial license</a></p>
 </div>
 
-![Latitude Browser 2.1.0 running as a native macOS application](images/showcase/fieldwork-workspace-en.png)
+![Latitude Browser 2.2.0 running as a native macOS application](images/showcase/fieldwork22-workspace-en.png)
 
 Latitude Browser brings browser profiles, proxy connections, cores, extensions and automation into one local desktop workspace. It is intended for permitted noncommercial work that needs separate browser environments and repeatable web workflows.
 
-The screenshot shows the installed macOS application with disposable QA data. The four displayed profiles are real test configurations; the running profile uses Chrome 157. No personal accounts or production proxies were used. See [screenshot provenance](docs/showcase/DEMO.md).
+The screenshot shows the installed macOS application with disposable QA data and four real test configurations. The overview total also includes the profile automatically created by the App. No personal accounts or production proxies were used. See [screenshot provenance](docs/showcase/DEMO.md).
 
 ## From configuration to a running browser
 
@@ -29,15 +29,17 @@ Stock Chrome does not implement every patched fingerprint flag. Browser cores ar
 
 ## Fieldwork
 
-A black canvas, lime actions, a lilac graticule and layered surfaces carry through navigation, tables, forms, settings, dialogs and status. The static dot graphic is a visual motif; running counts and the connector stack come from application state. Startup is short, skippable and respects reduced motion.
+A black canvas, sharp borders, lime actions and a lilac identity object carry through tables, forms, settings and dialogs. The pointer disturbs character particles that spring back to rest. Selection, table/card changes and detail navigation transform the same object. Stop and destructive actions use red; running counts and connector selection come from application state.
+
+The field is a locally drawn identity illustration. It stops requesting frames when settled, snaps under reduced motion and keeps an SVG fallback when Canvas is unavailable. Startup remains skippable. Read the [design contract](DESIGN.md) for how the four complete reference prompts were adapted into one system.
 
 Quitting no longer opens a warning or confirmation. Native close starts managed runtime cleanup and exits when it finishes. Rendering failures offer recovery, and empty fingerprint arguments no longer blank the profile list.
 
-![Real browser tabs opened through the installed Latitude Browser application](images/showcase/fieldwork-instance-tabs-en.png)
+![Installed Latitude Browser 2.2.0 with a real Chrome 148 instance running](images/showcase/fieldwork22-running-en.png)
 
 ## Install and get started
 
-Choose a published platform package from [Releases](https://github.com/djblack1209-coder/Latitude-Browser/releases). The source is now 2.1.0. This pass built and verified a local macOS arm64 package; it did not create a separate 2.1.0 GitHub Release.
+Choose a published platform package from [Releases](https://github.com/djblack1209-coder/Latitude-Browser/releases). The source is now 2.2.0. This pass built and verified a local macOS arm64 package; it did not create a separate 2.2.0 GitHub Release.
 
 The sole macOS installation is `/Applications/Latitude Browser.app`, with Bundle ID `com.latitude.browser.desktop`. Register or download a core in Assets → Browser cores, then create a profile and choose its network route. Existing installations retain their data and default core. Writable state lives in `~/Library/Application Support/latitude-browser`.
 
@@ -81,7 +83,7 @@ go test ./backend/...
 python3 tools/check-showcase.py
 ```
 
-This pass completed 121 frontend tests, backend tests, a bilingual sweep of 15 main pages, and installed-app checks for language switching, live tab discovery, opening a URL and direct quit. Chrome 157 passed launch, navigation, back and tab open/close checks with isolated data. In the continuation, the existing Chrome 148.0.7778.215 also passed CDP readiness and those real operations through the installed App; 148 remains the default and 157 optional. The initial Keychain wait and subsequent success are recorded in the [execution result](LATITUDE-APP-REDESIGN-RESULT-2026-11-06.md).
+Version 2.2 passed frontend and Wails builds, 124 frontend tests, backend tests, 34 bilingual/viewport/fallback checks and nine motion/state checks. Native English/Chinese windows were captured from the installed App. Chrome 148.0.7778.215 and 157.0.8103.38 both passed readiness, navigation, back and tab operations with isolated data. Chrome 148 remains the default and 157 optional; normal quit released managed processes and ports. Exact evidence and verification limits are in the [execution result](LATITUDE-APP-REDESIGN-RESULT-2026-11-06.md).
 
 | Path | Responsibility |
 | --- | --- |

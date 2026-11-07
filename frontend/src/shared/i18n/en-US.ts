@@ -10,6 +10,7 @@ export const enUS = {
   "shell.filterResults": "{0} of {1} instances",
   "shell.viewTable": "Table view",
   "shell.viewCards": "Card view",
+  "shell.selectedInstances": "{0} selected",
 
   "error.platform.memoryLimit": "This system cannot enforce instance memory limits. Use 0 for unlimited.",
   "network.customProxy": "Custom proxy",

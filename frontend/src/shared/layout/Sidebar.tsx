@@ -3,7 +3,7 @@ import { NavLink, useLocation } from 'react-router-dom'
 import { LayoutDashboard, Globe, Bot, Blocks, ScrollText, BookOpenText, Settings, PanelLeftClose, PanelLeftOpen, ArrowUpRight } from 'lucide-react'
 import { useLayoutStore } from '../../store/layoutStore'
 import { tr, useLocale, type MessageKey } from '../i18n'
-import { LatitudeMark } from './LatitudeMark'
+import { LatitudeField } from './LatitudeField'
 
 const items: { key: MessageKey; path: string; icon: typeof Globe }[] = [
   { key: 'nav.instances', path: '/browser/list', icon: LayoutDashboard },
@@ -29,7 +29,7 @@ export function Sidebar() {
   const collapsed = compact || sidebarCollapsed
   return <aside className="terminal-sidebar" data-collapsed={collapsed}>
     <NavLink to="/browser/list" className="latitude-brand" aria-label="Latitude Browser">
-      <LatitudeMark />{!collapsed && <span>Latitude<span className="latitude-brand-sub">Browser</span></span>}
+      <LatitudeField variant="mark" />{!collapsed && <span>Latitude<span className="latitude-brand-sub">Browser</span></span>}
     </NavLink>
     {!collapsed && <div className="latitude-nav-caption">{tr('shell.workspace')}</div>}
     <nav aria-label={tr('shell.workspace')}>

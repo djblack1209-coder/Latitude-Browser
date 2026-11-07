@@ -32,13 +32,14 @@
 .signal-button--primary { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
 .signal-button--primary:hover { background: var(--accent-hover); }
 .signal-button--secondary, .signal-button--ghost { color: var(--text); background: transparent; }
-.signal-button--danger { color: var(--err); background: transparent; border-color: var(--err); }
+.signal-button--danger { color: var(--on-danger); background: var(--danger-fill); border-color: var(--danger-fill); }
+.signal-button--danger:hover { background: var(--danger-fill-hover); border-color: var(--danger-fill-hover); }
 .terminal-spinner { display: inline-flex; align-items: center; gap: var(--s-3); color: var(--text-3); font-size: var(--t-sm); }
 .terminal-spinner > span:first-child { font-family: var(--font-mono); }
 .ascii-meter-segments { flex: 0 1 auto; gap: 0; overflow: hidden; }
 .ascii-meter-segments > span { flex: 0 0 auto; height: auto; background: none; color: var(--border-strong); }
 .ascii-meter-segments > span[data-active] { background: none; color: var(--accent); }
 [data-status=error] .ascii-meter { color: var(--err); }
-.signal-dialog { background: var(--bg-raised); border-radius: 14px; border-color: var(--border-strong); }
+.signal-dialog { background: var(--bg-raised); border-radius: var(--r-dialog); border-color: var(--border-strong); }
 .signal-dialog-header, .signal-dialog-footer { padding: 18px 24px; }
 .signal-dialog h3 { font-size: var(--t-md); font-weight: 600; }

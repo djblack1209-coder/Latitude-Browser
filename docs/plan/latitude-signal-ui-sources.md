@@ -1,6 +1,6 @@
 # Latitude Signal UI：历史复用来源与许可证边界
 
-> 2.1.0（2026-11-06）当前界面为 Fieldwork，发布实现依据用户同意使用的 AXON、Particle Self、ASCII Studio 和 Cyber Layer 公开预览。续办已从已登录 Chrome 取得四份完整原词并私下保存；实质差异已登记，尚未改 App。当前令牌、原创 SVG 与参考迁移见 [DESIGN.md](../../DESIGN.md)，逐项差异见[结果文件](../../LATITUDE-APP-REDESIGN-RESULT-2026-11-06.md)；本文下方只保留历史来源与许可证记录。
+> 2.2.0（2026-11-06）当前界面为 Fieldwork。2.1 基于用户同意使用的公开预览；续办取得 AXON、Particle Self、ASCII Studio 和 Cyber Layer 四份完整原词并私下保存后，2.2 已落实四项实质差异：交互粒子、连续身份、实际字符场与锐利分层。共享令牌、原创 Canvas/SVG 和参考取舍见 [DESIGN.md](../../DESIGN.md)，实现及验证见[结果文件](../../LATITUDE-APP-REDESIGN-RESULT-2026-11-06.md)第 9 节；本文下方只保留历史来源与许可证记录。
 
 > 2.0.0（2026-11-06）已改用 Terminal 界面，删除 Globe、RadarSpinner、COBE 与图表展示。本文保留旧实现的来源记录；当前组件、字体、运行时和许可证见 [第三方声明](../../third_party/NOTICE.md)。
 

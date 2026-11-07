@@ -433,13 +433,14 @@ function BrowserProfileCard({
 
   return (
     <div
-      className={`browser-profile-card relative flex min-h-[176px] flex-col overflow-visible rounded-sm border bg-[var(--color-bg-surface)] p-4 shadow-none transition-[border-color,background-color] duration-150
+      data-selected={isSelected}
+      className={`browser-profile-card relative flex min-h-[128px] flex-col overflow-visible rounded-sm border bg-[var(--color-bg-surface)] p-4 shadow-none transition-[border-color,background-color] duration-150
         ${isSelected ? 'border-[var(--color-accent)] bg-[var(--color-accent-muted)]/35' : 'border-[var(--color-border-default)] hover:border-[var(--color-border-strong)]'}
       `}
     >
       <div className="flex items-start gap-3">
         {profile.running ? (
-          <Button size="sm" variant="secondary" onClick={() => onStop(profile.profileId)} aria-label={isStopping ? tr("browser.components.BrowserProfilesPanel.BrowserProfileCard.ad62a97", [profile.profileName]) : tr("browser.components.BrowserProfilesPanel.BrowserProfileCard.ea36e55", [profile.profileName])} title={isStopping ? tr("browser.components.BrowserProfilesPanel.BrowserProfileCard.434eb8e") : tr("browser.components.BrowserListWidgets.text.a17f70a")} loading={isStopping} className="shrink-0">
+          <Button size="sm" variant="danger" onClick={() => onStop(profile.profileId)} aria-label={isStopping ? tr("browser.components.BrowserProfilesPanel.BrowserProfileCard.ad62a97", [profile.profileName]) : tr("browser.components.BrowserProfilesPanel.BrowserProfileCard.ea36e55", [profile.profileName])} title={isStopping ? tr("browser.components.BrowserProfilesPanel.BrowserProfileCard.434eb8e") : tr("browser.components.BrowserListWidgets.text.a17f70a")} loading={isStopping} className="shrink-0">
             {!isStopping && <Square className="w-3.5 h-3.5" />}
             <span className="hidden sm:inline">{isStopping ? tr("browser.components.BrowserProfilesPanel.BrowserProfileCard.434eb8e") : tr("browser.components.BrowserListWidgets.text.a17f70a")}</span>
           </Button>
@@ -561,7 +562,7 @@ export function BrowserProfilesPanel({
         const isStopping = isProfileStopping(record.profileId)
         const isBusy = isProfileBusy(record.profileId)
         return record.running ? (
-          <Button size="sm" variant="secondary" onClick={() => onStop(record.profileId)} aria-label={isStopping ? tr("browser.components.BrowserProfilesPanel.BrowserProfileCard.ad62a97", [record.profileName]) : tr("browser.components.BrowserProfilesPanel.BrowserProfileCard.ea36e55", [record.profileName])} title={isStopping ? tr("browser.components.BrowserProfilesPanel.BrowserProfileCard.434eb8e") : tr("browser.components.BrowserListWidgets.text.a17f70a")} loading={isStopping} className="min-w-[68px]">
+          <Button size="sm" variant="danger" onClick={() => onStop(record.profileId)} aria-label={isStopping ? tr("browser.components.BrowserProfilesPanel.BrowserProfileCard.ad62a97", [record.profileName]) : tr("browser.components.BrowserProfilesPanel.BrowserProfileCard.ea36e55", [record.profileName])} title={isStopping ? tr("browser.components.BrowserProfilesPanel.BrowserProfileCard.434eb8e") : tr("browser.components.BrowserListWidgets.text.a17f70a")} loading={isStopping} className="min-w-[68px]">
             {!isStopping && <Square className="w-3.5 h-3.5" />}
             <span>{isStopping ? tr("browser.components.BrowserProfilesPanel.BrowserProfileCard.434eb8e") : tr("browser.components.BrowserListWidgets.text.a17f70a")}</span>
           </Button>

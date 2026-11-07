@@ -39,9 +39,10 @@ interface BrowserListHeaderProps {
   onOpenBackup: () => void
   importingProfiles?: boolean
   onViewModeChange: (next: BrowserViewMode) => void
+  selectionLabel?: string
 }
 
-export function BrowserListHeader({ profileCount, filteredProfileCount, runningCount, attentionCount, viewMode, onViewModeChange, onOpenBackup, filters, onFiltersChange, proxies, cores, groups, allTags, headerCollapsed, onToggleHeaderCollapsed, onRefresh, onOpenSettings, onOpenTrash, onImportProfiles, importingProfiles = false }: BrowserListHeaderProps) {
+export function BrowserListHeader({ profileCount, filteredProfileCount, runningCount, attentionCount, viewMode, onViewModeChange, onOpenBackup, filters, onFiltersChange, proxies, cores, groups, allTags, headerCollapsed, onToggleHeaderCollapsed, onRefresh, onOpenSettings, onOpenTrash, onImportProfiles, importingProfiles = false, selectionLabel }: BrowserListHeaderProps) {
   useLocale()
 
   return <>
@@ -55,7 +56,7 @@ export function BrowserListHeader({ profileCount, filteredProfileCount, runningC
           <div className={attentionCount ? 'needs-attention' : ''}><dd>{attentionCount}</dd><dt>{tr('shell.attention')}</dt></div>
         </dl>
       </div>
-      <LatitudeField />
+      <div className="latitude-overview-identity"><LatitudeField /><span className="latitude-selection-label">{selectionLabel}</span></div>
     </section>
     <section className="latitude-instance-workspace" aria-label={tr('shell.allInstances')}>
       <div className="latitude-instance-heading">

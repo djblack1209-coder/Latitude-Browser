@@ -11,6 +11,7 @@ export const zhCN = {
   "shell.filterResults": "共 {1} 个实例，显示 {0} 个",
   "shell.viewTable": "表格视图",
   "shell.viewCards": "卡片视图",
+  "shell.selectedInstances": "已选择 {0} 个实例",
 
   "error.platform.memoryLimit": "当前系统不支持实例内存硬限制；0 表示不限制。",
   "network.customProxy": "自定义代理",
